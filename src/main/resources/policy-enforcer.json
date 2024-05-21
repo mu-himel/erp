@@ -1,0 +1,8 @@
+{
+    "realm": "aesl",
+    "auth-server-url": "http://172.17.18.46:8080/",
+    "resource": "erp-scm",
+    "credentials": {
+      "secret": "BaruRlVyBYdR6JaBQ72cnSow923d3eMf"
+    }
+  }
