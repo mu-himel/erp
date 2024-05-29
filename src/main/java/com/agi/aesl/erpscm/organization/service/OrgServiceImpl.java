@@ -49,7 +49,7 @@ public class OrgServiceImpl implements OrgService{
         orgRequestDto.setServicePassword("12345678");
         Optional<Long> cpsOrgRegId = createOrgInCps(orgRequestDto);
         if(!cpsOrgRegId.isEmpty()){
-            org.setCpsVenderRegistrationId(cpsOrgRegId.get());
+            org.setCpsVendorRegistrationId(cpsOrgRegId.get());
             orgRepository.save(org);
         }
     }
