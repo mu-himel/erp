@@ -1,5 +1,8 @@
 package com.agi.aesl.erpscm.inventory.service;
 
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
+
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
@@ -169,8 +172,8 @@ public class CategoryServiceImpl implements CategoryService {
         if(cwsOp.isEmpty()){
             CategoryWarehouseStore categoryWarehouseStore = new CategoryWarehouseStore();
             categoryWarehouseStore.setCategory(category);
-//            categoryWarehouseStore.setWarehouse(new Warehouse(categoryRequestDto.getWarehouse().getId()));
-//            categoryWarehouseStore.setWarehouseStore(new WarehouseStore(categoryRequestDto.getWarehouseStore().getId()));
+            categoryWarehouseStore.setWarehouse(new Warehouse(categoryRequestDto.getWarehouse().getId()));
+            categoryWarehouseStore.setWarehouseStore(new WarehouseStore(categoryRequestDto.getWarehouseStore().getId()));
             categoryWarehouseStoreRepository.save(categoryWarehouseStore);
         }
 

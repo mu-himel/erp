@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.inventory.controller;
 
 
+import com.agi.aesl.erpscm.common.BaseController;
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 import com.agi.aesl.erpscm.inventory.dto.request.BulkCategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
@@ -23,9 +24,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+
 @RestController
 @RequestMapping("/api/v1/item-categories")
-public class ItemCategoryController {
+public class ItemCategoryController extends BaseController{
 
     @Autowired
     private CategoryService categoryService;

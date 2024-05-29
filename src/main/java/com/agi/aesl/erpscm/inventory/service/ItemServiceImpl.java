@@ -2,8 +2,8 @@ package com.agi.aesl.erpscm.inventory.service;
 
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
-//import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
-//import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 //import com.agi.aesl.erpscm.demand.repository.DemandRepository;
@@ -121,21 +121,21 @@ public class ItemServiceImpl implements ItemService {
         itemDetail.setStockThresholdQty(detail.getStockThresholdQty());
         Map<String, List<Map<String,Object>>> warehouses = new HashMap<>();
         detail.getStocks().stream().forEach(itemStock -> {
-//            if(warehouses.containsKey(""+itemStock.getWarehouse().getId())) {
-//                List<Map<String,Object>> itemStocks = warehouses.get(""+itemStock.getWarehouse().getId());
-//
-//                Optional<Map<String,Object>> mapOp = itemStocks.stream().filter(
-//                        iStock->{
-//                            return ((Long)iStock.get("warehouseId")).equals(itemStock.getWarehouse().getId())
-//                                    && ((Long)iStock.get("warehouseStoreId")).equals(itemStock.getWarehouseStore().getId());
-//                        }).findFirst();
-//                  processItemStock(itemStock,warehouses,itemStocks,mapOp);
-//
-//            }else{
-//                List<Map<String,Object>> itemStocks = new ArrayList<>();
-//                processItemStock(itemStock,warehouses,itemStocks,Optional.ofNullable(null));
-//
-//            }
+           if(warehouses.containsKey(""+itemStock.getWarehouse().getId())) {
+               List<Map<String,Object>> itemStocks = warehouses.get(""+itemStock.getWarehouse().getId());
+
+               Optional<Map<String,Object>> mapOp = itemStocks.stream().filter(
+                       iStock->{
+                           return ((Long)iStock.get("warehouseId")).equals(itemStock.getWarehouse().getId())
+                                   && ((Long)iStock.get("warehouseStoreId")).equals(itemStock.getWarehouseStore().getId());
+                       }).findFirst();
+                 processItemStock(itemStock,warehouses,itemStocks,mapOp);
+
+           }else{
+               List<Map<String,Object>> itemStocks = new ArrayList<>();
+               processItemStock(itemStock,warehouses,itemStocks,Optional.ofNullable(null));
+
+           }
         });
         itemDetail.setWarehouses(warehouses);
         return Optional.ofNullable(itemDetail);
@@ -150,10 +150,10 @@ public class ItemServiceImpl implements ItemService {
         }
         BigDecimal sQty = (BigDecimal) stockInfo.get("stockQty");
         stockInfo.put("stockQty",((sQty!=null)?sQty:new BigDecimal(0)).add(itemStock.getStockQty()));
-//        stockInfo.put("warehouseId",itemStock.getWarehouse().getId());
-//        stockInfo.put("warehouseName",itemStock.getWarehouse().getName());
-//        stockInfo.put("warehouseStoreId",itemStock.getWarehouseStore().getId());
-//        stockInfo.put("warehouseStoreName",itemStock.getWarehouseStore().getStoreName());
+       stockInfo.put("warehouseId",itemStock.getWarehouse().getId());
+       stockInfo.put("warehouseName",itemStock.getWarehouse().getName());
+       stockInfo.put("warehouseStoreId",itemStock.getWarehouseStore().getId());
+       stockInfo.put("warehouseStoreName",itemStock.getWarehouseStore().getStoreName());
         if(mapOp.isEmpty()) {
             itemStocks.add(stockInfo);
         }
@@ -304,9 +304,9 @@ public class ItemServiceImpl implements ItemService {
         StringBuilder sb = new StringBuilder();
 
         attributes.stream().forEach(itemAttribute -> {
-            sb.append(itemAttribute.getAttributeType()
-                    +" "+itemAttribute.getAttributeValue()
-                    +" "+itemAttribute.getAttributeUnit());
+            sb.append(itemAttribute.getAttributeType().trim()
+                    +" "+itemAttribute.getAttributeValue().trim()
+                    +" "+itemAttribute.getAttributeUnit().trim());
             sb.append(" - ");
         });
 
@@ -321,27 +321,25 @@ public class ItemServiceImpl implements ItemService {
 
         String itemAttributeName = generateItemAttribute(itemRequestDto.getAttributes());
 
-//        Warehouse warehouse = null;
-//        WarehouseStore warehouseStore = null;
+       Warehouse warehouse = null;
+       WarehouseStore warehouseStore = null;
 
         if(itemRequestDto.getWarehouse().getId()!=null) {
-//            warehouse = new Warehouse(itemRequestDto.getWarehouse().getId()) ;
-//            item.setWarehouse(new Warehouse(itemRequestDto.getWarehouse().getId()));
+           warehouse = new Warehouse(itemRequestDto.getWarehouse().getId()) ;
         }else{
-//            warehouse = new Warehouse();//loggedInUser.getEmployee().getWarehouseId()
-//            item.setWarehouse(new Warehouse(loggedInUser.getEmployee().getWarehouseId()));
+           warehouse = new Warehouse();//loggedInUser.getEmployee().getWarehouseId()
         }
 
         if(itemRequestDto.getWarehouseStore() !=null && itemRequestDto.getWarehouseStore().getId() != null){
-//            warehouseStore = new WarehouseStore(itemRequestDto.getWarehouseStore().getId());
+           warehouseStore = new WarehouseStore(itemRequestDto.getWarehouseStore().getId());
 
         }
 
         Long brandId = (itemRequestDto.getBrand()!=null)? itemRequestDto.getBrand().getId() : null;
-//        List<?> itemExistByAttr = this.getByAttributes(brandId,itemAttributeName,warehouse.getId());
-//        if(itemExistByAttr.size()>0){
-//            throw new AesException("Sorry! Item Already exist with same attributes for this brand");
-//        }
+       List<?> itemExistByAttr = this.getByAttributes(brandId,itemAttributeName,warehouse.getId());
+       if(itemExistByAttr.size()>0){
+           throw new AesException("Sorry! Item Already exist with same attributes for this brand");
+       }
 
         Optional<Item> itemOp = itemRepository.findByCode(item.getCode());
         if(itemOp.isPresent()){
@@ -350,17 +348,17 @@ public class ItemServiceImpl implements ItemService {
             itemStocks.add(new ItemStock(
                     itemRequestDto.getCurrentStockQty(),
                     itemExist,
-                    StockType.STOCK_IN
-//                    warehouse,
-//                    warehouseStore
+                    StockType.STOCK_IN,
+                    warehouse,
+                    warehouseStore
             ));
             itemExist.setStocks(itemStocks);
             return;
         }
 
-//        if(item.getItemParentCategory()==null && item.getItemCategory()==null){
-//            throw new AesException("Item Sub Category Missing");
-//        }
+       if(item.getItemParentCategory()==null && item.getItemCategory()==null){
+           throw new AesException("Item Sub Category Missing");
+       }
 
         if(item.getItemParentCategory()==null){
             throw new AesException("Item Main Category Missing");
@@ -376,7 +374,7 @@ public class ItemServiceImpl implements ItemService {
         item.setStocks(Arrays.asList(new ItemStock(
                 itemRequestDto.getCurrentStockQty(),
                 item,
-                StockType.STOCK_IN
+                StockType.STOCK_IN,warehouse,warehouseStore
                 )));
         if(itemRequestDto.getAttributes()!=null && itemRequestDto.getAttributes().size()>0) {
             item.setAttributes(itemRequestDto.getAttributes().stream().map(itemAttribute -> {
@@ -399,15 +397,13 @@ public class ItemServiceImpl implements ItemService {
 
         String itemAttributeName = generateItemAttribute(itemRequestDto.getAttributes());
 
-//        Warehouse warehouse = null;
-//        WarehouseStore warehouseStore = null;
+       Warehouse warehouse = null;
+       WarehouseStore warehouseStore = null;
 
         if(itemRequestDto.getWarehouse().getId()!=null) {
-//            warehouse = new Warehouse(itemRequestDto.getWarehouse().getId()) ;
-//            item.setWarehouse(new Warehouse(itemRequestDto.getWarehouse().getId()));
+           warehouse = new Warehouse(itemRequestDto.getWarehouse().getId()) ;
         }else{
-//            warehouse = new Warehouse();//loggedInUser.getEmployee().getWarehouseId()
-//            item.setWarehouse(new Warehouse(loggedInUser.getEmployee().getWarehouseId()));
+           warehouse = new Warehouse();//loggedInUser.getEmployee().getWarehouseId()
         }
 
         Optional<ItemCategory> catOp = categoryService.getCategoryByCode(itemRequestDto.getCategoryCode());
@@ -420,18 +416,18 @@ public class ItemServiceImpl implements ItemService {
         Optional<CategoryBrand> catBrandOp = categoryBrandRepository.findByCategoryIdAndName(catOp.get().getId(), itemRequestDto.getBrandName());
 
         Long brandId = (catBrandOp.isPresent())? catBrandOp.get().getId() : null;
-//        List<?> itemExistByAttr = this.getByAttributes(brandId,itemAttributeName,warehouse.getId());
-//        if(itemExistByAttr.size()>0){
-//            throw new AesException("Sorry! Item Already exist with same attributes for this brand");
-//        }
+       List<?> itemExistByAttr = this.getByAttributes(brandId,itemAttributeName,warehouse.getId());
+       if(itemExistByAttr.size()>0){
+           throw new AesException("Sorry! Item Already exist with same attributes for this brand");
+       }
 
         item.setItemAttributeName(itemAttributeName);
 
-//        Optional<CategoryWarehouseStore> cwsOp = categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseId(catOp.get().getId(),warehouse.getId());
+       Optional<CategoryWarehouseStore> cwsOp = categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseId(catOp.get().getId(),warehouse.getId());
 
-//        if(cwsOp.isPresent()){
-////            warehouseStore = cwsOp.get().getWarehouseStore();
-//        }
+       if(cwsOp.isPresent()){
+           warehouseStore = cwsOp.get().getWarehouseStore();
+       }
 
         Optional<Item> itemOp = itemRepository.findByCode(item.getCode());
         if(itemOp.isPresent()){
@@ -440,7 +436,7 @@ public class ItemServiceImpl implements ItemService {
             itemStocks.add(new ItemStock(
                     itemRequestDto.getCurrentStockQty(),
                     itemExist,
-                    StockType.STOCK_IN
+                    StockType.STOCK_IN,warehouse,warehouseStore
             ));
             itemExist.setStocks(itemStocks);
             return;
@@ -460,7 +456,7 @@ public class ItemServiceImpl implements ItemService {
         item.setStocks(Arrays.asList(new ItemStock(
                 itemRequestDto.getCurrentStockQty(),
                 item,
-                StockType.STOCK_IN
+                StockType.STOCK_IN,warehouse,warehouseStore
                 )));
         if(itemRequestDto.getAttributes()!=null && itemRequestDto.getAttributes().size()>0) {
             item.setAttributes(itemRequestDto.getAttributes().stream().map(itemAttribute -> {
@@ -519,7 +515,9 @@ public class ItemServiceImpl implements ItemService {
             itemStocks.add(new ItemStock(
                     itemRequestDto.getCurrentStockQty(),
                     item,
-                    StockType.STOCK_IN
+                    StockType.STOCK_IN,
+                    new Warehouse(itemRequestDto.getWarehouse().getId()),
+                    new WarehouseStore(itemRequestDto.getWarehouseStore().getId())
             ));
             item.setStocks(itemStocks);
         }
@@ -567,9 +565,9 @@ public class ItemServiceImpl implements ItemService {
 //    public void stockUpdateByDemand(Long warehouseId,
 //                                    DemandDetail demandDetail,
 //                                    StockType stockType) {
-//
+
 //        var itemDetailOp = this.getItemDetailWithWarehouse(demandDetail.getItem().getId());
-//
+
 //        if(itemDetailOp instanceof Optional && itemDetailOp.isPresent()){
 //            ItemDetail itemDetail = (ItemDetail) itemDetailOp.get();
 //            List<Map<String,Object>> warehouses = (List<Map<String,Object>>)itemDetail.getWarehouses().get(warehouseId.toString());
@@ -585,11 +583,11 @@ public class ItemServiceImpl implements ItemService {
 //                    (Long)warehouseStoreInfo.get("warehouseId"),
 //                    (Long)warehouseStoreInfo.get("warehouseStoreId"));
 //                }
-//
+
 //            }
-//
+
 //        }
-//
+
 //    }
 
     @Override
@@ -600,8 +598,8 @@ public class ItemServiceImpl implements ItemService {
 
     private void updateStock(Item item,BigDecimal qty, StockType stockType, Long warehouseId, Long warehouseStoreId){
         
-//        ItemStock itemStock = new ItemStock(qty, item,stockType,new Warehouse(warehouseId),new WarehouseStore(warehouseStoreId));
-//        itemStockRepository.save(itemStock);
+       ItemStock itemStock = new ItemStock(qty, item,stockType,new Warehouse(warehouseId),new WarehouseStore(warehouseStoreId));
+       itemStockRepository.save(itemStock);
     }
 
     @Override
@@ -684,9 +682,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional
-    public void syncItemsBySubCatCode(Long warehouseId, Long warehouseStoreId, String subCatCode) {
+    public void syncItemsBySubCatCode(Jwt token, Long warehouseId, Long warehouseStoreId, String subCatCode) {
         
-        List<SyncItemDetail> items = this.fetchItemsBySubCat(subCatCode);
+        List<SyncItemDetail> items = this.fetchItemsBySubCat(token,subCatCode);
         items.stream().forEach(i->{
            this.createItem(warehouseId,warehouseStoreId,i);
         });
@@ -738,7 +736,9 @@ public class ItemServiceImpl implements ItemService {
             item.setStocks(Arrays.asList(new ItemStock(
                 new BigDecimal(0l),
                 item,
-                StockType.STOCK_IN
+                StockType.STOCK_IN,
+                new Warehouse(warehouseId),
+                new WarehouseStore(warehouseStoreId)
             )));
     
             if(syncItemDetail.getAttributes()!=null && syncItemDetail.getAttributes().size()>0) {
@@ -753,18 +753,15 @@ public class ItemServiceImpl implements ItemService {
             itemRepository.save(item);
         }
 
-        
-
-        
-        
     }
 
     @Transactional
-    private List<SyncItemDetail> fetchItemsBySubCat(String subCatCode){
+    private List<SyncItemDetail> fetchItemsBySubCat(Jwt token, String subCatCode){
         HttpHeaders headers = new HttpHeaders();
-        Optional<Organization> orgOp = orgService.getOrgByCode(cpsConfig.getOrgCode());
+        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
         if(orgOp.isPresent()){
-            headers.set("orgId",orgOp.get().getCpsVenderRegistrationId().toString());
+            headers.setBearerAuth(token.getTokenValue());
+            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
         }
         HttpEntity<?> payload = new HttpEntity<>(headers);
         String url = cpsConfig.getItemFetchEndpoint(subCatCode);

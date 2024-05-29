@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.organization.service;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,9 @@ public class OrgServiceImpl implements OrgService{
 
     @Autowired
     private CpsServerConfig cpsServerConfig;
+
+    @Value("${acl.apiEndpoint}")
+    private String aclApiEndpoint;
 
     @Override
     public void createOrg(OrgRequestDto orgRequestDto) {
@@ -77,6 +81,24 @@ public class OrgServiceImpl implements OrgService{
     public Optional<Organization> getOrgByCode(String orgCode) {
         return orgRepository.findByOrgCode(orgCode);
     }
+
+    @Override
+    public Optional<Organization> getOrgByCodeFromAcl(String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(token);
+        HttpEntity<?> payload = new HttpEntity<>(headers);
+        try{
+            String url = aclApiEndpoint.concat("/organization");
+            ResponseEntity<Organization> response = (ResponseEntity<Organization>) networkService.get(url, payload, Organization.class);
+            return Optional.ofNullable(response.getBody());
+        }catch(Exception ex){
+            log.error(ex.getLocalizedMessage());
+        }
+        return Optional.empty();
+    }
+
+    
 
     
     

@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.inventory.controller;
 
+import com.agi.aesl.erpscm.common.BaseController;
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.RemoteItemRequestDto;
@@ -24,7 +25,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/items")
-public class ItemController {
+public class ItemController extends BaseController{
 
     @Autowired
     private ItemService itemService;
@@ -133,9 +134,11 @@ public class ItemController {
     }
 
    @PutMapping("/sync-item")
-    public ResponseEntity<?> syncItem(@RequestBody SyncItemReqDto syncItemReqDto
+    public ResponseEntity<?> syncItem(
+        @AuthenticationPrincipal Jwt token,
+        @RequestBody SyncItemReqDto syncItemReqDto
    ){
-       itemService.syncItemsBySubCatCode(syncItemReqDto.warehouseId(), 
+       itemService.syncItemsBySubCatCode(token,syncItemReqDto.warehouseId(), 
                         syncItemReqDto.warehouseStoreId(),
                          syncItemReqDto.subCatCode());
        return new ResponseEntity<>(

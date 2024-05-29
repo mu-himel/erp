@@ -22,6 +22,7 @@ public class Organization {
 
     private String orgCode;
 
-    private Long cpsVenderRegistrationId;
+    private Long cpsVendorRegistrationId;
+    
     
 }

@@ -1,0 +1,28 @@
+package com.agi.aesl.erpscm.control_panel.inventory_control.service;
+
+// import com.agi.aesl.erpscm.control_panel.inventory_control.dto.CopyToStoreDto;
+import com.agi.aesl.erpscm.control_panel.inventory_control.dto.StoreDto;
+
+import org.springframework.data.domain.Page;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface WarehouseStoreService {
+
+    void deleteWarehouseStore(Long id);
+
+    Page<?> getStores(Long warehouseId, Optional<Integer> page, Optional<Integer> size);
+
+    List<?> getStoresByWarehouse(Optional<Long> warehouseId);
+
+    Optional<?> getStore(Long warehouseId);
+
+    // void copyToStore(Long wId, CopyToStoreDto copyToStoreDto);
+
+    List<?> getStoreSubCategories(Long warehouseId, Long storeId);
+
+    void createStore(StoreDto storeDto);
+
+    void updateStore(Long id, StoreDto storeDto);
+}

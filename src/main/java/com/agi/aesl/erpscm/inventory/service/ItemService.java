@@ -64,7 +64,7 @@ public interface ItemService {
 
     void importItems(Optional<MultipartFile> file);
 
-    void syncItemsBySubCatCode(Long warehouseId,Long warehosueStoreId, String subCatCode);
+    void syncItemsBySubCatCode(Jwt token, Long warehouseId,Long warehosueStoreId, String subCatCode);
 
     Optional<Item> getByBrandAndAttributeName(String string,Long subCatId, String string2);
 }

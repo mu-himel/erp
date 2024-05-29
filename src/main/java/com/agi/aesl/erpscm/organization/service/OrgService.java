@@ -10,4 +10,5 @@ public interface OrgService {
     void createOrg(OrgRequestDto orgRequestDto);
 
     Optional<Organization> getOrgByCode(String orgCode);
+    Optional<Organization> getOrgByCodeFromAcl(String token);
 }

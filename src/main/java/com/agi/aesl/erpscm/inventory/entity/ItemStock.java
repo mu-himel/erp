@@ -2,6 +2,8 @@ package com.agi.aesl.erpscm.inventory.entity;
 
 
 
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.inventory.enums.StockType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -44,7 +46,11 @@ public class ItemStock {
     @JsonIgnore
     private Item item;
 
+    @ManyToOne
+    private Warehouse warehouse;
 
+    @ManyToOne
+    private WarehouseStore warehouseStore;
 
     public ItemStock(BigDecimal stockQty, Item item) {
         this.stockQty = stockQty;
@@ -57,18 +63,18 @@ public class ItemStock {
         this.stockType = stockType;
     }
 
-//    public ItemStock(BigDecimal stockQty,  Item item,StockType stockType, Warehouse warehouse) {
-//        this.stockQty = stockQty;
-//        this.stockType = stockType;
-//        this.item = item;
-//        this.warehouse = warehouse;
-//    }
-//
-//    public ItemStock(BigDecimal stockQty, Item item,StockType stockType, Warehouse warehouse, WarehouseStore warehouseStore) {
-//        this.stockQty = stockQty;
-//        this.stockType = stockType;
-//        this.item = item;
-//        this.warehouse = warehouse;
-//        this.warehouseStore = warehouseStore;
-//    }
+   public ItemStock(BigDecimal stockQty,  Item item,StockType stockType, Warehouse warehouse) {
+       this.stockQty = stockQty;
+       this.stockType = stockType;
+       this.item = item;
+       this.warehouse = warehouse;
+   }
+
+   public ItemStock(BigDecimal stockQty, Item item,StockType stockType, Warehouse warehouse, WarehouseStore warehouseStore) {
+       this.stockQty = stockQty;
+       this.stockType = stockType;
+       this.item = item;
+       this.warehouse = warehouse;
+       this.warehouseStore = warehouseStore;
+   }
 }
