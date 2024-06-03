@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.inventory.service;
 
+import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
@@ -58,7 +59,7 @@ public interface ItemService {
     void stockIn(Item item,BigDecimal qty,Long warehouseId, Long warehouseStoreId);
     void stockOut(Item item, BigDecimal qty,Long warehouseId, Long warehouseStoreId);
 
-//    void stockUpdateByDemand(Long warehouseId, DemandDetail demandDetail, StockType stockType);
+   void stockUpdateByDemand(Long warehouseId, DemandDetail demandDetail, StockType stockType);
 
     String getNextItemCode();
 

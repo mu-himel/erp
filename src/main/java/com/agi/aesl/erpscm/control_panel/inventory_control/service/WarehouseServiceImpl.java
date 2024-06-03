@@ -8,13 +8,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseRepository;
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseStoreRepository;
+import com.agi.aesl.erpscm.erpn_integration.service.IntegrationWriterService;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.repository.CategoryWarehouseStoreRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class WarehouseServiceImpl implements WarehouseService{
@@ -28,42 +32,43 @@ public class WarehouseServiceImpl implements WarehouseService{
     @Autowired
     private WarehouseStoreRepository warehouseStoreRepository;
 
+    @Autowired
+    private IntegrationWriterService integrationWriterService;
+
 
     @Override
-    public void createWarehouse(Warehouse warehouse) {
+    @Transactional
+    public void createWarehouse(Jwt token, Warehouse warehouse) {
         Optional<Warehouse> warehouseOptional = warehouseRepository.findByName(warehouse.getName());
 
         if(warehouseOptional.isPresent()){
             throw new AesException("Name already exist");
         }
 
-        // if(warehouse.getWarehouseStores().size()==0){
-        //     throw new AesException("Please Select Store");
-        // }
 
-        warehouse.setWarehouseStores(warehouse.getWarehouseStores().stream().map(warehouseStore -> {
-            warehouseStore.setId(null);
-
-            warehouseStore.setAlias(warehouse.getName().toLowerCase()+"-"
-                                +warehouseStore.getStoreName().toLowerCase());
-
-            warehouseStore.setWarehouse(warehouse);
-            return warehouseStore;
-        }).collect(Collectors.toList()));
         warehouseRepository.save(warehouse);
+
+        if(warehouse.getId()!=null){
+            integrationWriterService.createWarehouse(token, warehouse);
+        }
+
     }
 
     @Override
-    public void updateWarehouse(Warehouse warehouse) {
+    @Transactional
+    public void updateWarehouse(Jwt token, Warehouse warehouse) {
         Optional<Warehouse> warehouseOptional = warehouseRepository.findById(warehouse.getId());
         if(warehouseOptional.isEmpty()){
             throw new AesException("Warehouse not found");
         }
-        warehouse.setWarehouseStores(warehouse.getWarehouseStores().stream().map(warehouseStore -> {
-            warehouseStore.setWarehouse(warehouse);
-            return warehouseStore;
-        }).collect(Collectors.toList()));
+        // warehouse.setWarehouseStores(warehouse.getWarehouseStores().stream().map(warehouseStore -> {
+        //     warehouseStore.setWarehouse(warehouse);
+        //     return warehouseStore;
+        // }).collect(Collectors.toList()));
         warehouseRepository.save(warehouse);
+        if(warehouse.getId()!=null){
+            integrationWriterService.updateWarehouse(token, warehouse);
+        }
     }
 
     @Override
@@ -78,14 +83,17 @@ public class WarehouseServiceImpl implements WarehouseService{
     }
 
     @Override
-    public void deleteWarehouse(Long id) {
+    public void deleteWarehouse(Jwt token, Long id) {
         Optional<Warehouse> warehouseOptional = warehouseRepository.findById(id);
         Boolean exist = categoryWarehouseStoreRepository.existsByWarehouseId(id);
         Boolean exist1 = warehouseStoreRepository.existsByWarehouseIdAndActive(id,true);
         if(exist || exist1){
             throw new AesException("Sorry! This warehouse cannot be deleted");
         }
-        warehouseOptional.ifPresent(warehouse -> warehouse.setActive(false));
+        warehouseOptional.ifPresent(warehouse -> {
+            warehouse.setActive(false);
+            integrationWriterService.deleteWarehouse(token, warehouse.getName());
+        });
     }
 
     @Override

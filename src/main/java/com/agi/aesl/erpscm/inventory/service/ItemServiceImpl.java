@@ -4,6 +4,7 @@ package com.agi.aesl.erpscm.inventory.service;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
+import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 //import com.agi.aesl.erpscm.demand.repository.DemandRepository;
@@ -561,34 +562,34 @@ public class ItemServiceImpl implements ItemService {
 
     
 
-//    @Override
-//    public void stockUpdateByDemand(Long warehouseId,
-//                                    DemandDetail demandDetail,
-//                                    StockType stockType) {
+   @Override
+   public void stockUpdateByDemand(Long warehouseId,
+                                   DemandDetail demandDetail,
+                                   StockType stockType) {
 
-//        var itemDetailOp = this.getItemDetailWithWarehouse(demandDetail.getItem().getId());
+       var itemDetailOp = this.getItemDetailWithWarehouse(demandDetail.getItem().getId());
 
-//        if(itemDetailOp instanceof Optional && itemDetailOp.isPresent()){
-//            ItemDetail itemDetail = (ItemDetail) itemDetailOp.get();
-//            List<Map<String,Object>> warehouses = (List<Map<String,Object>>)itemDetail.getWarehouses().get(warehouseId.toString());
-//            if(warehouses.size()>0){
-//                Map<String,Object> warehouseStoreInfo = warehouses.get(0);
-//                if(stockType == StockType.STOCK_IN){
-//                    this.stockIn(new Item(itemDetail.getId()), demandDetail.getApprovedQuantity(),
-//                    (Long)warehouseStoreInfo.get("warehouseId"),
-//                    (Long)warehouseStoreInfo.get("warehouseStoreId"));
-//                }
-//                if(stockType == StockType.STOCK_OUT){
-//                    this.stockOut(new Item(itemDetail.getId()), demandDetail.getApprovedQuantity(),
-//                    (Long)warehouseStoreInfo.get("warehouseId"),
-//                    (Long)warehouseStoreInfo.get("warehouseStoreId"));
-//                }
+       if(itemDetailOp instanceof Optional && itemDetailOp.isPresent()){
+           ItemDetail itemDetail = (ItemDetail) itemDetailOp.get();
+           List<Map<String,Object>> warehouses = (List<Map<String,Object>>)itemDetail.getWarehouses().get(warehouseId.toString());
+           if(warehouses.size()>0){
+               Map<String,Object> warehouseStoreInfo = warehouses.get(0);
+               if(stockType == StockType.STOCK_IN){
+                   this.stockIn(new Item(itemDetail.getId()), demandDetail.getApprovedQuantity(),
+                   (Long)warehouseStoreInfo.get("warehouseId"),
+                   (Long)warehouseStoreInfo.get("warehouseStoreId"));
+               }
+               if(stockType == StockType.STOCK_OUT){
+                   this.stockOut(new Item(itemDetail.getId()), demandDetail.getApprovedQuantity(),
+                   (Long)warehouseStoreInfo.get("warehouseId"),
+                   (Long)warehouseStoreInfo.get("warehouseStoreId"));
+               }
 
-//            }
+           }
 
-//        }
+       }
 
-//    }
+   }
 
     @Override
     @Transactional
@@ -786,6 +787,8 @@ public class ItemServiceImpl implements ItemService {
         }
         return Optional.empty();
     }
+
+    
 
     
     

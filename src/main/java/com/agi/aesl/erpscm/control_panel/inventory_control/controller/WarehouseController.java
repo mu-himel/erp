@@ -10,6 +10,8 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -24,14 +26,14 @@ public class WarehouseController extends BaseController{
 
 
     @PostMapping
-    // @ApiOperation(value = "Create Warehouse with Store")
-    public ResponseEntity<?> createWarehouse(@RequestBody @Valid Warehouse warehouse){
-        warehouseService.createWarehouse(warehouse);
+    public ResponseEntity<?> createWarehouse(
+        @AuthenticationPrincipal Jwt token,
+        @RequestBody @Valid Warehouse warehouse){
+        warehouseService.createWarehouse(token, warehouse);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @GetMapping
-    // @ApiOperation(value = "Get Warehouse with pagination")
     public ResponseEntity<?> getWarehouses(
                 @RequestParam("name") Optional<String> name,
                 @RequestParam("page") Optional<Integer> page,
@@ -61,16 +63,18 @@ public class WarehouseController extends BaseController{
     }
 
     @PutMapping
-    // @ApiOperation(value = "Update Warehouse info")
-    public ResponseEntity<?> updateWarehouse(@RequestBody @Valid Warehouse warehouse){
-        warehouseService.updateWarehouse(warehouse);
+    public ResponseEntity<?> updateWarehouse(
+        @AuthenticationPrincipal Jwt token,
+        @RequestBody @Valid Warehouse warehouse){
+        warehouseService.updateWarehouse(token, warehouse);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @DeleteMapping("/{id}")
-    // @ApiOperation(value = "Delete Warehouse by id")
-    public ResponseEntity<?> deleteWarehouse(@PathVariable("id") Long id){
-        warehouseService.deleteWarehouse(id);
+    public ResponseEntity<?> deleteWarehouse(
+        @AuthenticationPrincipal Jwt token,
+        @PathVariable("id") Long id){
+        warehouseService.deleteWarehouse(token, id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
