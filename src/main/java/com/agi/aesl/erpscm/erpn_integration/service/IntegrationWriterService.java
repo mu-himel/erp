@@ -6,6 +6,6 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 
 public interface IntegrationWriterService {
     void createWarehouse(Jwt token, Warehouse warehouse);
-    void updateWarehouse(Jwt token, Warehouse warehouse);
+    void updateWarehouse(Jwt token, String oldName, Warehouse warehouse);
     void deleteWarehouse(Jwt token, String warehouseName);
 }

@@ -52,9 +52,10 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     }
 
     @Override
-    public void updateWarehouse(Jwt token, Warehouse warehouse) {
+    public void updateWarehouse(Jwt token, String oldName, Warehouse warehouse) {
         HttpHeaders headers = networkService.getHttpHeaders(token);
         Map<String,Object> data = new HashMap<>();
+        data.put("oldName",oldName);
         data.put("warehouseName",warehouse.getName());
         data.put("warehouseLocation",warehouse.getLocation());
         HttpEntity<?> payload = new HttpEntity<>(data,headers);

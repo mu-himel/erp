@@ -61,13 +61,18 @@ public class WarehouseServiceImpl implements WarehouseService{
         if(warehouseOptional.isEmpty()){
             throw new AesException("Warehouse not found");
         }
+        String oldName = warehouseOptional.get().getName();
+        Warehouse newWarehouse = new Warehouse(warehouse.getId());
+        newWarehouse.setName(warehouse.getName());
+        newWarehouse.setLocation(warehouse.getLocation());
         // warehouse.setWarehouseStores(warehouse.getWarehouseStores().stream().map(warehouseStore -> {
         //     warehouseStore.setWarehouse(warehouse);
         //     return warehouseStore;
         // }).collect(Collectors.toList()));
-        warehouseRepository.save(warehouse);
-        if(warehouse.getId()!=null){
-            integrationWriterService.updateWarehouse(token, warehouse);
+        warehouseRepository.save(newWarehouse);
+        if(newWarehouse.getId()!=null){
+            
+            integrationWriterService.updateWarehouse(token,oldName, newWarehouse);
         }
     }
 
@@ -83,6 +88,7 @@ public class WarehouseServiceImpl implements WarehouseService{
     }
 
     @Override
+    @Transactional
     public void deleteWarehouse(Jwt token, Long id) {
         Optional<Warehouse> warehouseOptional = warehouseRepository.findById(id);
         Boolean exist = categoryWarehouseStoreRepository.existsByWarehouseId(id);
