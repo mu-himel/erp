@@ -34,11 +34,11 @@ public class User {
     private Long warehouseId;
     private String warehouseName;
 
-    private Long reportingManagerId;
+    private String reportingManagerId;
     private String reportingManager;
 
     private Long reportingManagerDepartmentId;
-    private Long reportingManageDepartmentName;
+    private String reportingManageDepartmentName;
 
     private Long departmentId;
     private String departmentName;
