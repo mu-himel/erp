@@ -8,8 +8,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.enums.DemandStatus;
+import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
-import com.agi.aesl.erpscm.user.entity.User;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -78,5 +78,5 @@ public class Demand {
     private List<DemandDetail> demandDetails;
 
     @ManyToOne
-    private User requestedBy;
+    private Employee requestedBy;
 }

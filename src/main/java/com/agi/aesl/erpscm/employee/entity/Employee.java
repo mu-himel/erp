@@ -1,4 +1,4 @@
-package com.agi.aesl.erpscm.user.entity;
+package com.agi.aesl.erpscm.employee.entity;
 
 import java.time.LocalDateTime;
 
@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "acl_users")
-public class User {
+public class Employee {
 
     @Id
     private String id;
@@ -53,7 +53,7 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    public User(String userId) {
+    public Employee(String userId) {
         this.id = userId;
     }
     

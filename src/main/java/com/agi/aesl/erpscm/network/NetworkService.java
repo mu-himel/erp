@@ -16,7 +16,14 @@ public class NetworkService {
     @Autowired
     private RestTemplate restTemplate;
 
-    public HttpHeaders getHttpHeaders(Jwt token){
+    public HttpHeaders setHttpHeaders(Jwt token){
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization","Bearer "+token.getTokenValue());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
+    }
+
+    public HttpHeaders setHttpHeadersForHr(Jwt token){
         HttpHeaders headers = new HttpHeaders();
         headers.set("KCAuthorization","Bearer "+token.getTokenValue());
         headers.setContentType(MediaType.APPLICATION_JSON);

@@ -198,4 +198,154 @@ interface DemandQuery {
         AND (:warehouseId IS NULL OR w.id = :warehouseId) 
         AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
         GROUP BY d.id """;
+
+
+    String getAllPendingVerification = """
+        SELECT 
+            d.id as id,
+            d.demand_no as demandNo,
+            d.status as status,
+            (SELECT demand_status FROM `demand_verification_approval_histories` 
+                    where `employee_id` = :nextVerifierId AND `demand_id`=d.id) as demandStatus,
+            d.demand_date as demandDate,
+            pc.name as category,
+            COUNT(dd.id) as itemsQty,
+            CONCAT(e.employee_id,'-',e.employee_name) as requestedBy 
+        FROM demands d 
+        LEFT JOIN acl_users e ON e.id = d.requested_by_id
+        LEFT JOIN warehouses w ON w.id = d.warehouse_id
+        LEFT JOIN demand_details dd ON dd.demand_id = d.id
+        LEFT JOIN item_categories ic ON d.item_category_id
+        LEFT JOIN item_categories pc ON d.item_parent_category_id
+        LEFT JOIN demand_verification_approval_histories dvah ON dvah.demand_id = d.id
+        WHERE (ic.id IN (:categories) OR pc.id IN (:categories)) 
+        AND ((d.next_verifier_id = :nextVerifierId AND d.status IN (:pendingVerification)) 
+            OR (dvah.employee_id = :nextVerifierId AND dvah.demand_status='VERIFIED'))
+        AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate))
+        GROUP BY d.id 
+        ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_VERIFICATION') THEN 1 ELSE 2 END ASC
+        """;
+
+    String countAllPendingVerification="SELECT COUNT(*) FROM ("+getAllPendingVerification+") total";
+
+
+    String getAllCloseDemands = """
+        SELECT 
+            d.id as id,
+            d.demandNo as demandNo,
+            d.status as status,
+            d.demandDate as demandDate,
+            d.category as category,
+            COUNT(dd) as itemsQty,
+            d.requestedBy as requestedBy 
+        FROM Demand d 
+        LEFT JOIN d.requestedBy r 
+        LEFT JOIN d.warehouse w 
+        LEFT JOIN d.demandDetails dd 
+        LEFT JOIN dd.item i 
+        LEFT JOIN dd.itemCategory c
+        WHERE d.status IN ('REJECTED','COMPLETED','CANCELED','DECLINED','RECEIVED')
+        AND (:warehouseId IS NULL OR w.id = :warehouseId)
+        AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
+        GROUP BY d.id
+        """;
+
+    String countAllCloseDemands = """
+        SELECT count(d) FROM Demand d
+            LEFT JOIN d.requestedBy r 
+            LEFT JOIN d.warehouse w 
+            WHERE d.status IN ('REJECTED','COMPLETED','CANCELED','DECLINED','RECEIVED')
+            AND (:warehouseId IS NULL OR w.id = :warehouseId)
+            AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
+            GROUP BY d.id
+        """;
+
+    String getAllPendingApprovalDemands = """
+        SELECT d.id as id,
+            d.demand_no as demandNo,
+            d.status as status,
+            (SELECT demand_status FROM `demand_verification_approval_histories` 
+                    where `employee_id` = :nextApproverId AND `demand_id`=d.id) as demandStatus,
+            d.demand_date as demandDate,
+            pc.name as category,
+            COUNT(dd.id) as itemsQty,
+            CONCAT(e.employee_id,'-',e.employee_name) as requestedBy  
+        FROM demands d 
+        LEFT JOIN acl_users e ON e.id = d.requested_by_id 
+        LEFT JOIN warehouses w ON w.id = d.warehouse_id 
+        LEFT JOIN demand_details dd ON dd.demand_id = d.id 
+        LEFT JOIN item_categories ic ON ic.id = dd.item_category_id
+        LEFT JOIN item_categories pc ON pc.id = dd.item_parent_category_id
+        LEFT JOIN demand_verification_approval_histories dvah ON dvah.demand_id = d.id
+        WHERE ((d.next_approver_id = :nextApproverId AND d.status IN (:demandStatus))
+            OR (dvah.employee_id = :nextApproverId AND dvah.demand_status = 'APPROVED')) 
+        AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate)) 
+        GROUP BY d.id ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_APPROVAL') THEN 1 ELSE 2 END ASC
+        """;
+
+    String countAllPendingApprovalDemands = "SELECT COUNT(*) FROM ("+getAllPendingApprovalDemands+") total";
+
+    String getAllDemandsByCategory = """
+        SELECT 
+            d.id as id,
+            d.demandNo as demandNo,
+            d.status as status,
+            d.demandDate as demandDate,
+            d.category as category,
+            COUNT(dd) as itemsQty,
+            r.employeeName as requestedBy
+        FROM Demand d 
+            LEFT JOIN d.requestedBy r 
+            LEFT JOIN d.warehouse w 
+            LEFT JOIN d.demandDetails dd 
+            LEFT JOIN dd.item i 
+            LEFT JOIN dd.itemCategory c 
+            WHERE (dd.itemCategory.id IN :categories OR dd.itemParentCategory.id IN :categories)
+            AND d.status NOT IN ('PENDING_APPROVAL','REJECTED','PENDING_VERIFICATION','RECEIVED','COMPLETED','CANCELED','DECLINED')
+            AND (w.id IN :warehouseId) 
+            AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
+            GROUP BY d.id
+            """;
+
+    String countAllDemandsByCategory="""
+        SELECT count(d) FROM Demand d
+            LEFT JOIN d.requestedBy r
+            LEFT JOIN d.warehouse w
+            LEFT JOIN d.demandDetails dd
+            LEFT JOIN dd.item i 
+            LEFT JOIN dd.itemCategory c 
+        WHERE (dd.itemCategory.id IN :categories OR dd.itemParentCategory.id IN :categories)
+         AND d.status NOT IN ('PENDING_APPROVAL','REJECTED','PENDING_VERIFICATION','RECEIVED','COMPLETED','CANCELED','DECLINED')
+         AND (w.id IN :warehouseId) 
+         AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
+         GROUP BY d.id 
+            """;
+
+    String getAllFilteredPendingVerificationDemands = """
+            SELECT 
+            d.id as id,
+            d.demand_no as demandNo,
+            d.status as status,
+            (SELECT demand_status FROM `demand_verification_approval_histories` 
+                    where `employee_id` = :nextVerifierId AND `demand_id`=d.id) as demandStatus,
+            d.demand_date as demandDate,
+            pc.name as category,
+            COUNT(dd.id) as itemsQty,
+            CONCAT(e.employee_id,'-',e.name) as requestedBy 
+        FROM demands d 
+        LEFT JOIN employees e ON e.id = d.requested_by_id
+        LEFT JOIN warehouses w ON w.id = d.warehouse_id
+        LEFT JOIN demand_details dd ON dd.demand_id = d.id
+        LEFT JOIN item_categories ic ON d.item_category_id
+        LEFT JOIN item_categories pc ON d.item_parent_category_id
+        LEFT JOIN demand_verification_approval_histories dvah ON dvah.demand_id = d.id
+        WHERE (ic.id IN (:categories) OR pc.id IN (:categories)) 
+        AND ((d.next_verifier_id = :nextVerifierId AND d.status IN (:pendingVerification)) 
+            OR (dvah.employee_id = :nextVerifierId AND dvah.demand_status='VERIFIED'))
+        AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate))
+        GROUP BY d.id 
+        ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_VERIFICATION') THEN 1 ELSE 2 END ASC
+                    """;
+    String countAllFilteredPendingVerificationDemands = " SELECT COUNT(*) FROM ("+getAllFilteredPendingVerificationDemands+") total";
+            
 }

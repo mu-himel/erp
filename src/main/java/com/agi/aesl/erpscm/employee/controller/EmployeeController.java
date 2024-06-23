@@ -1,4 +1,4 @@
-package com.agi.aesl.erpscm.user.controller;
+package com.agi.aesl.erpscm.employee.controller;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,20 +12,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.agi.aesl.erpscm.common.BaseController;
-import com.agi.aesl.erpscm.user.entity.User;
-import com.agi.aesl.erpscm.user.service.UserService;
+import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.employee.service.EmployeeService;
 
 @RestController
 @RequestMapping("/api/v1/users")
-public class UserController extends BaseController{
+public class EmployeeController extends BaseController{
     
     @Autowired
-    private UserService userService;
+    private EmployeeService userService;
 
     @PostMapping
     public ResponseEntity<?> createUser(
         @AuthenticationPrincipal Jwt token,
-        @RequestBody User user
+        @RequestBody Employee user
     ){
         userService.createUser(token, user);
         return new ResponseEntity<>(HttpStatus.CREATED);

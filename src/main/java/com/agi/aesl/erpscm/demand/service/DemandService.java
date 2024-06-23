@@ -27,7 +27,7 @@ public interface DemandService {
     void receiveDemandItem(Jwt loggedInUser, DemandReceiveDto demandReceiveDto);
     void declineDemandItem(Jwt loggedInUser, DemandReceiveDto demandReceiveDto);
 
-    void sentDemandItem(DemandReceiveDto demandReceiveDto);
+    void sentDemandItem(Jwt token, DemandReceiveDto demandReceiveDto);
 
     Page<?> getAllCloseDemands(Jwt loggedInUser,
                                Optional<Integer> page, Optional<Integer> size,

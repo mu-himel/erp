@@ -31,7 +31,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     @Override
     public void createWarehouse(Jwt token, Warehouse warehouse) {
 
-        HttpHeaders headers = networkService.getHttpHeaders(token);
+        HttpHeaders headers = networkService.setHttpHeadersForHr(token);
         Map<String,Object> data = new HashMap<>();
         data.put("warehouseName",warehouse.getName());
         data.put("warehouseLocation",warehouse.getLocation());
@@ -43,7 +43,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
     @Override
     public void deleteWarehouse(Jwt token, String warehouseName) {
-        HttpHeaders headers = networkService.getHttpHeaders(token);
+        HttpHeaders headers = networkService.setHttpHeadersForHr(token);
         Map<String,Object> data = new HashMap<>();
         data.put("warehouseName",warehouseName);
         HttpEntity<?> payload = new HttpEntity<>(data,headers);
@@ -53,7 +53,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
     @Override
     public void updateWarehouse(Jwt token, String oldName, Warehouse warehouse) {
-        HttpHeaders headers = networkService.getHttpHeaders(token);
+        HttpHeaders headers = networkService.setHttpHeadersForHr(token);
         Map<String,Object> data = new HashMap<>();
         data.put("oldName",oldName);
         data.put("warehouseName",warehouse.getName());

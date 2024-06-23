@@ -151,10 +151,11 @@ public class DemandController {
     }
 
     @PostMapping("/sent")
-    public ResponseEntity<?> demandReceive(
+    public ResponseEntity<?> demandSent(
+           @AuthenticationPrincipal Jwt token,
             @RequestBody DemandReceiveDto demandReceiveDto
     ){
-        demandService.sentDemandItem(demandReceiveDto);
+        demandService.sentDemandItem(token, demandReceiveDto);
         return new ResponseEntity<>(
                 HttpStatus.NO_CONTENT
         );
