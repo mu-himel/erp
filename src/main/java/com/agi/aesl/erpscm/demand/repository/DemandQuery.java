@@ -347,5 +347,30 @@ interface DemandQuery {
         ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_VERIFICATION') THEN 1 ELSE 2 END ASC
                     """;
     String countAllFilteredPendingVerificationDemands = " SELECT COUNT(*) FROM ("+getAllFilteredPendingVerificationDemands+") total";
-            
+     
+    String getAllFilteredPendingApprovalDemands = """
+        SELECT d.id as id,
+        d.demand_no as demandNo,
+        d.status as status,
+        (SELECT demand_status FROM `demand_verification_approval_histories` 
+                where `employee_id` = :nextApproverId AND `demand_id`=d.id) as demandStatus,
+        d.demand_date as demandDate,
+        pc.name as category,
+        COUNT(dd.id) as itemsQty,
+        CONCAT(e.employee_id,'-',e.name) as requestedBy 
+    FROM demands d 
+    LEFT JOIN employees e ON e.id = d.requested_by_id
+    LEFT JOIN warehouses w ON w.id = d.warehouse_id 
+    LEFT JOIN demand_details dd ON dd.demand_id = d.id  
+    LEFT JOIN item_categories ic ON ic.id = dd.item_category_id
+    LEFT JOIN item_categories pc ON pc.id = dd.item_parent_category_id
+    LEFT JOIN demand_verification_approval_histories dvah ON dvah.demand_id = d.id
+    WHERE (c.id IN (:categoryIds) OR pc.id IN (:categoryIds)) 
+    AND ((d.next_approver_id = :nextApproverId AND d.status IN (:demandStatuses))
+        OR (dvah.employee_id = :nextApproverId AND dvah.demand_status = 'APPROVED')) 
+    AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate)) 
+    GROUP BY d.id ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_APPROVAL') THEN 1 ELSE 2 END ASC
+            """;
+
+    String countAllFilteredPendingApprovalDemands = "SELECT COUNT(*) FROM ("+getAllFilteredPendingApprovalDemands+") total";
 }
