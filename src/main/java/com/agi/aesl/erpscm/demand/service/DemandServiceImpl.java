@@ -183,9 +183,12 @@ public class DemandServiceImpl implements DemandService{
                 Sort sort = Sort.by(Sort.Direction.ASC,"id");
                 Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
         
+                // TODO Old commented code should be deleted if works new code
                 // Optional<Map<String,List<Long>>> modulePermission = moduleAccessPermissionService
                 //             .getModulePermissionFilterByUri(loggedInUser,moduleUri);
-                Optional<Map<String,List<Long>>> modulePermission = integrationReaderService.getModuleFilterByUri(loggedInUser, moduleUri);
+
+                Optional<Map<String,List<Long>>> modulePermission = integrationReaderService
+                                        .getModuleFilterByUri(loggedInUser, moduleUri);
 
                 List<Long> categoryIds = new ArrayList<>();
                 List<Long> warehouseIds = new ArrayList<>();
@@ -214,15 +217,18 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
-    public Page<?> getAllPendingApprovalDemands(Jwt loggedInUser, Optional<Integer> page, Optional<Integer> size,
+    public Page<?> getAllPendingApprovalDemands(Jwt token, Optional<Integer> page, Optional<Integer> size,
             Optional<String> fromDateStr, Optional<String> toDateStr) {
+                ClaimResolver claimResolver = new ClaimResolver();
+                claimResolver.setToken(token);
         
                 String moduleUri = "demand/pending-approval";
                 // Sort sort = Sort.by(Sort.Direction.ASC,"id");
                 Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10));
                 // Optional<Map<String,List<Long>>> modulePermission = moduleAccessPermissionService
                 //         .getModulePermissionFilterByUri(loggedInUser,moduleUri);
-        
+                Optional<Map<String,List<Long>>> modulePermission = integrationReaderService
+                        .getModuleFilterByUri(token, moduleUri);
         
                 LocalDateTime fromDate = null;
                 LocalDateTime toDate = null;
@@ -238,19 +244,17 @@ public class DemandServiceImpl implements DemandService{
                 demandStatuses.add(DemandStatus.REVIEW.toString());
         
                 List<Long> categoryIds = new ArrayList<>();
-        //         if(modulePermission.isPresent()){
-        //             categoryIds = modulePermission.get().get("category_id");
-        //             return demandRepository.findAllDemandsByCategoryAndDemandStatusAndNextApproverId(categoryIds,
-        //                     loggedInUser.getEmployee().getId(),
-        // //                    loggedInUser.getEmployee().getWarehouseId(),
-        //                     demandStatuses,
-        //                     fromDate,toDate,
-        //                     pageable);
-        //         }
+                if(modulePermission.isPresent()){
+                    categoryIds = modulePermission.get().get("category_id");
+                    return demandRepository.findAllDemandsByCategoryAndDemandStatusAndNextApproverId(categoryIds,
+                            claimResolver.getUserId(),
+                            demandStatuses,
+                            fromDate,toDate,
+                            pageable);
+                }
                 return demandRepository.findAllDemandsByDemandStatusAndNextApproverId(
                         demandStatuses,
-                        loggedInUser.getSubject(),
-        //                loggedInUser.getEmployee().getWarehouseId(),
+                        claimResolver.getUserId(),
                         fromDate,toDate,
                         pageable);
     }
@@ -262,8 +266,9 @@ public class DemandServiceImpl implements DemandService{
         claimResolver.setToken(token);
         
         String moduleUri = "demand/pending-verification";
-        // Sort sort = Sort.by(Sort.Direction.DESC,"updated_at","id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10));
+
+        //TODO following commented code should be removed if new code works
         // Optional<Map<String,List<Long>>> modulePermission = moduleAccessPermissionService
         //         .getModulePermissionFilterByUri(loggedInUser,moduleUri);
         Optional<Map<String,List<Long>>> modulePermission = integrationReaderService
@@ -287,7 +292,6 @@ public class DemandServiceImpl implements DemandService{
             categoryIds = modulePermission.get().get("category_id");
             return demandRepository.findAllDemandsByCategoryAndDemandStatusAndNextVerifierId(categoryIds,
                     claimResolver.getUserId(),
-//                    loggedInUser.getEmployee().getWarehouseId(),
                     demandStatuses,
                     fromDate,toDate,
                     pageable);
@@ -296,7 +300,6 @@ public class DemandServiceImpl implements DemandService{
         return demandRepository.findAllDemandsByDemandStatusAndNextVerifierId(
             demandStatuses,
                 claimResolver.getUserId(),
-//                loggedInUser.getEmployee().getWarehouseId(),
                 fromDate,toDate,
                 pageable);
     }
@@ -360,15 +363,14 @@ public class DemandServiceImpl implements DemandService{
                 .demandPriority(demandDetailItem.getDemandPriority())
                 .itemUnit(demandDetailItem.getItemUnit())
                         .inTransit(demandDetailItem.getInTransit())
-//                .totalStockInCurrentMonth(demandDetailItem.getTotalStockInCurrentMonth())
-//                .avgTotalConsumeInCurrentMonth(demandDetailItem.getAvgTotalConsumeInCurrentMonth())
-//                .totalConsumeInCurrentMonth(demandDetailItem.getTotalConsumeInCurrentMonth())
+
                 .build()
             );
 
         }
 
         if(resDto.getDemandId()!=null) {
+            // TODO modification required on following code
             // List<VerificationResponse> verifiers = new ArrayList<>();
             // List<VerificationResponse> approvers = new ArrayList<>();
             // verificationService
@@ -394,11 +396,12 @@ public class DemandServiceImpl implements DemandService{
         ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
 
-    //    Optional<Employee> employeeOptional = employeeService.getEmployeeByUserId(loggedInUser.getId());
+       Optional<Employee> employeeOptional = userService.getUserById(claimResolver.getUserId());
 
-        // if(employeeOptional.isEmpty()){
-        //     throw new AesException("No Employee Profile Found");
-        // }
+        if(employeeOptional.isEmpty()){
+            throw new AesException("No Employee Profile Found");
+        }
+
         Sort sort = Sort.by(Sort.Direction.DESC,"reviewDate","demandDate");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
 
@@ -563,6 +566,7 @@ public class DemandServiceImpl implements DemandService{
             setDemandDetail(demandRequestDto, demand);
             demand.setReviewerId(null);
             demandRepository.save(demand);
+            // TODO following code needs to modify to maintain same behavior
             // remove all previous verification and approval request
             // verificationService.removeVerification(demand.getId(), DomainType.DEMAND);
             // dvahistoryRepository.deleteAllByDemandId(demand.getId());

@@ -125,7 +125,7 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
     Page<DemandListInfo> findAllCloseDemands(Long warehouseId, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
     @Query(value = getAllPendingApprovalDemands, countQuery=countAllPendingApprovalDemands, nativeQuery = true)
-    Page<?> findAllDemandsByDemandStatusAndNextApproverId(List<String> demandStatus, String nextApproverId,
+    Page<DemandPendingVerificationApprovalList> findAllDemandsByDemandStatusAndNextApproverId(List<String> demandStatus, String nextApproverId,
             LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
     @Query(value = getAllDemandsByCategory, countQuery = countAllDemandsByCategory)
@@ -136,5 +136,10 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
     Page<DemandPendingVerificationApprovalList> findAllDemandsByCategoryAndDemandStatusAndNextVerifierId(
             List<Long> categories, String nextVerifierId,
             List<String> pendingVerification, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
+    
+    @Query(value = getAllFilteredPendingApprovalDemands, countQuery = countAllFilteredPendingApprovalDemands,nativeQuery = true)
+    Page<DemandPendingVerificationApprovalList> findAllDemandsByCategoryAndDemandStatusAndNextApproverId(
+            List<Long> categoryIds, String nextApproverId,
+            List<String> demandStatuses, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
 }
