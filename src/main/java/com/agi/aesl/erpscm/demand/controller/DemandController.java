@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.demand.dto.request.DemandReceiveDto;
 import com.agi.aesl.erpscm.demand.dto.request.DemandRequestDto;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
@@ -28,7 +30,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/demands")
-public class DemandController {
+public class DemandController extends BaseController{
     
     @Autowired
     private DemandService demandService;
@@ -36,7 +38,7 @@ public class DemandController {
     @PostMapping
     public ResponseEntity<?> createDemand(
             @AuthenticationPrincipal Jwt token,
-            @RequestAttribute String uri,
+            @RequestHeader("uri") String uri,
             @RequestBody @Valid DemandRequestDto demandRequestDto){
         demandService.createDemand(token, uri, demandRequestDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
@@ -53,7 +55,7 @@ public class DemandController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<?> getMyDemands(@RequestAttribute Jwt loggedInUser,
+    public ResponseEntity<?> getMyDemands(@AuthenticationPrincipal Jwt loggedInUser,
                                           @RequestParam("page") Optional<Integer> page,
                                           @RequestParam("size") Optional<Integer> size,
                                           @RequestParam("fromDate") Optional<String> fromDate,

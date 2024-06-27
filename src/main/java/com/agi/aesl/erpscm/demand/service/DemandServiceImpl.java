@@ -15,6 +15,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import com.agi.aesl.erpscm.comment.enums.DomainType;
+import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.dto.request.DemandReceiveDto;
 import com.agi.aesl.erpscm.demand.dto.request.DemandRequestDto;
@@ -35,6 +37,7 @@ import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.entity.CategoryBrand;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.enums.StockType;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 
@@ -60,12 +63,34 @@ public class DemandServiceImpl implements DemandService{
     private ItemService itemService;
 
     @Autowired
+    private CommentService commentService;
+
+    @Autowired
     private IntegrationReaderService integrationReaderService;
     
 
     @Override
-    public void closeDemandItem(Jwt loggedInUser, DemandReceiveDto demandReceiveDto) {
-        // TODO Auto-generated method stub
+    public void closeDemandItem(Jwt token, DemandReceiveDto demandReceiveDto) {
+        ClaimResolver claimResolver = new ClaimResolver();
+        claimResolver.setToken(token);
+
+        Optional<DemandDetail> demandDetailOp = demandDetailRepository
+                .findById(demandReceiveDto.getDemandDetailId());
+
+        if(demandDetailOp.isPresent()){
+            DemandDetail demandDetail = demandDetailOp.get();
+            
+            //itemService.stockUpdateByDemand(demandReceiveDto.getWarehouseId(), demandDetail, StockType.STOCK_IN);
+
+            if(demandReceiveDto.getNote() !=null && !demandReceiveDto.getNote().isEmpty()){
+
+                commentService.addComment(commentService.prepareComment(claimResolver.getEmployee().get(),
+                        DomainType.DEMAND, demandDetail.getId(), demandReceiveDto.getNote(),
+                        demandReceiveDto.getAttachments()
+                        ));
+            }
+            demandDetail.setStatus(DemandStatus.CLOSED_BY_STORE);
+        }
         
     }
 
@@ -93,9 +118,9 @@ public class DemandServiceImpl implements DemandService{
         if(demandRequestDto.getRequestedBy()!=null) {
             demand.setRequestedBy(new Employee(claimResolver.getUserId()));
         }
-        // if(loggedInUser.getEmployee().getWarehouseId()!=null){
-        //     demand.setWarehouse(new Warehouse(loggedInUser.getEmployee().getWarehouseId()));
-        // }
+        if(claimResolver.getEmployee().isPresent() && claimResolver.getEmployee().get().getWarehouseId()!=null){
+            demand.setWarehouse(new Warehouse(claimResolver.getEmployee().get().getWarehouseId()));
+        }
         setDemandDetail(demandRequestDto, demand);
         demandRepository.save(demand);
         // setVerifiers(demand, verifiers);
@@ -385,8 +410,8 @@ public class DemandServiceImpl implements DemandService{
             // resDto.setVerifiers(verifiers);
             // resDto.setApprovers(approvers);
         }
-        // List<?> comments = commentService.getCommentsByDomain(DomainType.DEMAND, resDto.getDemandId());
-        resDto.setComments(new ArrayList<>());
+        List<?> comments = commentService.getCommentsByDomain(DomainType.DEMAND, resDto.getDemandId());
+        resDto.setComments(comments);
         return Optional.ofNullable(resDto);
     }
 
@@ -470,27 +495,94 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
-    public void rejectDemand(Jwt loggedInUser, DemandReceiveDto demandReceiveDto) {
-        // TODO Auto-generated method stub
+    public void rejectDemand(Jwt token, DemandReceiveDto demandReceiveDto) {
+        ClaimResolver claimResolver = new ClaimResolver();
+        claimResolver.setToken(token);
+        Optional<Demand> demandOp = demandRepository.findById(demandReceiveDto.getDemandId());
+        if(demandOp.isPresent()){
+            Demand demand = demandOp.get();
+
+            if(demandReceiveDto.getNote()!=null && !demandReceiveDto.getNote().isEmpty()){
+
+                commentService.addComment(commentService.prepareComment(claimResolver.getEmployee().get(),
+                        DomainType.DEMAND, demand.getId(), demandReceiveDto.getNote(),
+                        demandReceiveDto.getAttachments()
+                        ));
+            }
+            demand.setStatus(DemandStatus.REJECTED);
+        }
+    }
+
+    @Override
+    public void rejectDemandItem(Jwt token, DemandReceiveDto demandReceiveDto) {
+        ClaimResolver claimResolver = new ClaimResolver();
+        claimResolver.setToken(token);
+        Optional<DemandDetail> demandDetailOp = demandDetailRepository
+                                        .findById(demandReceiveDto.getDemandDetailId());
+
+        if(demandDetailOp.isPresent()){
+            DemandDetail demandDetail = demandDetailOp.get();
+
+            itemService.stockUpdateByDemand(demandReceiveDto.getWarehouseId(), demandDetail, StockType.STOCK_IN);
+
+            if(demandReceiveDto.getNote()!=null && !demandReceiveDto.getNote().isEmpty()){
+
+                commentService.addComment(commentService.prepareComment(claimResolver.getEmployee().get(),
+                        DomainType.DEMAND, demandDetail.getId(), demandReceiveDto.getNote(),
+                        demandReceiveDto.getAttachments()));
+            }
+            demandDetail.setStatus(DemandStatus.REJECTED);
+        }
+    }
+
+    @Override
+    public void resendDemandItem(Jwt token, DemandReceiveDto demandReceiveDto) {
+        
+        ClaimResolver claimResolver = new ClaimResolver();
+        claimResolver.setToken(token);
+        Optional<DemandDetail> demandDetailOp = demandDetailRepository
+                .findById(demandReceiveDto.getDemandDetailId());
+
+        if(demandDetailOp.isPresent()){
+            DemandDetail demandDetail = demandDetailOp.get();
+
+            itemService.stockUpdateByDemand(demandReceiveDto.getWarehouseId(), demandDetail, StockType.STOCK_OUT);
+
+            if(demandReceiveDto.getNote()!=null && !demandReceiveDto.getNote().isEmpty()){
+
+                commentService.addComment(commentService.prepareComment(claimResolver.getEmployee().get(),
+                        DomainType.DEMAND, demandDetail.getId(), demandReceiveDto.getNote(),
+                        demandReceiveDto.getAttachments()
+                        ));
+            }
+            demandDetail.setStatus(DemandStatus.PENDING_QC);
+            demandDetail.getDemand().setStatus(DemandStatus.PENDING_QC);
+        }
         
     }
 
     @Override
-    public void rejectDemandItem(Jwt loggedInUser, DemandReceiveDto demandReceiveDto) {
-        // TODO Auto-generated method stub
-        
-    }
+    public void reviewDemand(Jwt token, Long id, ReviewDto reviewDto) {
+        ClaimResolver claimResolver = new ClaimResolver();
+        claimResolver.setToken(token);
+        Optional<Demand> demandOp = demandRepository.findById(id);
+        if(demandOp.isEmpty()){
+            throw new RuntimeException("Demand not found");
+        }
+        Demand demand = demandOp.get();
+        demand.setReviewerId(null);
+        demand.setStatus(demand.getReviewPrevStatus());
+        demand.setReviewPrevStatus(null);
+        demand.setReviewDate(LocalDateTime.now());
 
-    @Override
-    public void resendDemandItem(Jwt loggedInUser, DemandReceiveDto demandReceiveDto) {
-        // TODO Auto-generated method stub
-        
-    }
+        commentService.addComment(commentService.prepareComment(
+            claimResolver.getEmployee().get(),
+            reviewDto.getDomainType(),
+            demand.getId(),
+            reviewDto.getMessage(),
+            reviewDto.getAttachments()
+        ));
 
-    @Override
-    public void reviewDemand(Jwt loggedInUser, Long id, ReviewDto reviewDto) {
-        // TODO Auto-generated method stub
-        
     }
 
     @Override

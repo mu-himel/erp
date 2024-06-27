@@ -29,7 +29,7 @@ public class DemandDetailResDto {
         Long nextApproverId;
         Long nextVerifierId;
         Long reviewerId;
-        Long empId;
+        String empId;
         String employeeId;
         String employeeName;
         String reportingManager;

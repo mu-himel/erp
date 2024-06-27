@@ -10,4 +10,6 @@ public interface EmployeeService {
     void createUser(Jwt token, Employee user);
 
     Optional<Employee> getUserById(String subject);
+
+    void deleteUser(Employee user);
 }

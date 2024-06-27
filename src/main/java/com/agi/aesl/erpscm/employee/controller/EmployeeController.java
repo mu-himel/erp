@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,5 +30,14 @@ public class EmployeeController extends BaseController{
     ){
         userService.createUser(token, user);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<?> deleteUser(
+        @AuthenticationPrincipal Jwt token,
+        @RequestBody Employee user
+    ){
+        userService.deleteUser(user);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

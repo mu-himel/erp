@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.employee.repository.EmployeeRepository;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class EmployeeServiceImpl implements EmployeeService{
 
@@ -24,6 +26,18 @@ public class EmployeeServiceImpl implements EmployeeService{
     public Optional<Employee> getUserById(String subject) {
         return userRepository.findById(subject);
     }
+
+    @Override
+    @Transactional
+    public void deleteUser(Employee user) {
+        Optional<Employee> eOptional = userRepository.findByEmployeeId(user.getEmployeeId());
+        if(eOptional.isPresent()){
+            userRepository.delete(eOptional.get());
+        }
+        
+    }
+
+    
 
     
     

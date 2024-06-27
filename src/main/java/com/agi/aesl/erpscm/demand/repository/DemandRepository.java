@@ -68,7 +68,7 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
         Integer getTotalStockInCurrentMonth();
         Integer getTotalConsumeInCurrentMonth();
         BigDecimal getAvgTotalConsumeInCurrentMonth();
-        Long getEmpId();
+        String getEmpId();
         String getEmployeeId();
         String getEmployeeName();
         String getReportingManager();

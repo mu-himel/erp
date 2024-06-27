@@ -39,7 +39,8 @@ public class Employee {
 
     private Long reportingManagerDepartmentId;
     private String reportingManageDepartmentName;
-
+    private Long level;
+    private Long parentDepartmentId;
     private Long departmentId;
     private String departmentName;
 

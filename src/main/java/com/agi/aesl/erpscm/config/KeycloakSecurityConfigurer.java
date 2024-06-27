@@ -83,9 +83,9 @@ public class KeycloakSecurityConfigurer {
                     
                     Set<String> roles = request.getPrincipal().getToken().getRealmAccess().getRoles();
                     // System.out.println("ROLES"+roles);
-                    if(!roles.contains("ADMIN")){
-                        throw new RuntimeException("Sorry! Need Admin Profile to access this");
-                    }
+                    // if(!roles.contains("ADMIN")){
+                    //     throw new RuntimeException("Sorry! Need Admin Profile to access this");
+                    // }
                 };
                 return config;
             }
