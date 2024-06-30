@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties.AssertingParty.Verification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.dto.request.DemandReceiveDto;
 import com.agi.aesl.erpscm.demand.dto.request.DemandRequestDto;
@@ -26,10 +28,12 @@ import com.agi.aesl.erpscm.demand.dto.response.DemandDetailResDto;
 import com.agi.aesl.erpscm.demand.entity.Demand;
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 import com.agi.aesl.erpscm.demand.entity.DemandDetailAttribute;
+import com.agi.aesl.erpscm.demand.entity.DemandVerificationApprovalHistory;
 import com.agi.aesl.erpscm.demand.enums.DemandStatus;
 import com.agi.aesl.erpscm.demand.repository.DemandDetailAttributeRepository;
 import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 import com.agi.aesl.erpscm.demand.repository.DemandRepository;
+import com.agi.aesl.erpscm.demand.repository.DemandVerificationApprovalHistoryRepository;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.employee.service.EmployeeService;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
@@ -39,12 +43,24 @@ import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.enums.StockType;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
+import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
+import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
+import com.agi.aesl.erpscm.modules.service.ModuleService;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.Verifier;
+import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
+import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
+import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository.VerificationResponse;
+import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 
 import jakarta.transaction.Transactional;
 
 @Service
 public class DemandServiceImpl implements DemandService{
+
+    @Autowired
+    private ClaimResolver claimResolver;
 
     @Autowired
     private DemandRepository demandRepository;
@@ -54,6 +70,9 @@ public class DemandServiceImpl implements DemandService{
 
     @Autowired
     private DemandDetailAttributeRepository demandDetailAttributeRepository;
+
+    @Autowired
+    private DemandVerificationApprovalHistoryRepository dvahistoryRepository;
 
     
     @Autowired
@@ -67,6 +86,12 @@ public class DemandServiceImpl implements DemandService{
 
     @Autowired
     private IntegrationReaderService integrationReaderService;
+
+    @Autowired
+    private UserApplicationValidatorService<Demand> verificationService;
+
+    @Autowired
+    private ModuleService moduleService;
     
 
     @Override
@@ -94,19 +119,52 @@ public class DemandServiceImpl implements DemandService{
         
     }
 
+    private void setVerifiers(Demand demand, List<VerifierInfo> verifiers) {
+        if(verifiers.size()>0){
+            Optional<VerifierInfo> firstOp = verifiers.stream().findFirst();
+            VerifierInfo _verifier = firstOp.get();
+            List<UserApplicationValidation> verifications = verifiers.stream().map(verifier -> {
+                UserApplicationValidation verification = new UserApplicationValidation();
+                verification.setDomainId(demand.getId());
+                verification.setDomainType(DomainType.DEMAND);
+                verification.setVerified(false);
+                verification.setIsApproval(false);
+                verification.setVerifier(new Employee(verifier.getId()));
+                return verification;
+            }).collect(Collectors.toList());
+            demand.setNextVerifierId(_verifier.getId());
+            verificationService.addVerification(verifications);
+        }
+    }
+
+    private void setApprovers(Demand demand, List<ApprovalPanel> approvalPanels) {
+        if(approvalPanels.size()>0){
+            List<UserApplicationValidation> verifications = approvalPanels.stream().map(approvalPanel -> {
+                UserApplicationValidation verification = new UserApplicationValidation();
+                verification.setDomainId(demand.getId());
+                verification.setDomainType(DomainType.DEMAND);
+                verification.setVerified(false);
+                verification.setIsApproval(true);
+                verification.setVerifier(new Employee(approvalPanel.getUserId()));
+                return verification;
+            }).collect(Collectors.toList());
+            
+            verificationService.addVerification(verifications);
+        }
+    }
+
     @Override
     @Transactional
     public Optional<DemandDetailResDto> createDemand(Jwt token, String uri, DemandRequestDto demandRequestDto) {
         
-        ClaimResolver claimResolver = new ClaimResolver();
+        
         claimResolver.setToken(token);
         
-        // Optional<Map<String,Object>> verifierOp = (Optional<Map<String,Object>>)verificationService
-        //         .getVerifiers(loggedInUser,uri,demandRequestDto.getCategories());
-        // List<Verifier> verifiers = getVerifiers(demand, verifierOp);
-
+        Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver,uri,"CATEGORY",demandRequestDto.getCategories());
         
         Demand demand = demandRequestDto.getEntity();
+
+        List<VerifierInfo> verifiers = getVerifiers(demand, verifierOp);
 
         demand.setDemandDate(LocalDateTime.now());
         if(demandRequestDto.getCategory()!=null) {
@@ -123,8 +181,17 @@ public class DemandServiceImpl implements DemandService{
         }
         setDemandDetail(demandRequestDto, demand);
         demandRepository.save(demand);
-        // setVerifiers(demand, verifiers);
-        // setApprovers(demand, getApprovalPanels(uri, demandRequestDto));
+        setVerifiers(demand, verifiers);
+        List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, demandRequestDto);
+        if(verifiers.size()==0 && panels.size()>0){
+            demand.setStatus(DemandStatus.PENDING_APPROVAL);
+            Optional<ApprovalPanel> firstPanel = panels.stream().findFirst();
+            if(firstPanel.isPresent()){
+                ApprovalPanel panel = firstPanel.get();
+                demand.setNextApproverId(panel.getUserId());
+            }
+        }
+        setApprovers(demand, panels);
 
         return this.getDemandDetail(demand.getId());
     }
@@ -163,6 +230,30 @@ public class DemandServiceImpl implements DemandService{
             demandDetail.setStatus(demand.getStatus());
             return demandDetail;
         }).collect(Collectors.toList()));
+    }
+
+    private List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, DemandRequestDto demandRequestDto) {
+        List<ApprovalPanel> approvalPanels = moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
+                Optional.ofNullable(demandRequestDto.getCategories()),Optional.empty());
+        return approvalPanels;
+    }
+
+    private List<VerifierInfo> getVerifiers(Demand demand, Optional<VerifierConfig> verifierOp) {
+        List<VerifierInfo> verifiers = new ArrayList<>();
+        if(verifierOp.isPresent()){
+            VerifierConfig verification = verifierOp.get();
+            verifiers = verification.getVerifiers();
+            Boolean verificationRequired = verification.getVerificationRequired();
+            if(verificationRequired!=null && verificationRequired==true && verifiers!=null && verifiers.size()>0){
+                demand.setStatus(DemandStatus.PENDING_VERIFICATION);
+            }else{
+                demand.setStatus(DemandStatus.PENDING);
+            }
+
+        }else{
+            demand.setStatus(DemandStatus.PENDING);
+        }
+        return verifiers;
     }
 
     @Override
@@ -329,6 +420,8 @@ public class DemandServiceImpl implements DemandService{
                 pageable);
     }
 
+
+
     @Override
     public Optional<DemandDetailResDto> getDemandDetail(Long id) {
         LocalDateTime localDateTime = LocalDateTime.now();
@@ -396,19 +489,19 @@ public class DemandServiceImpl implements DemandService{
 
         if(resDto.getDemandId()!=null) {
             // TODO modification required on following code
-            // List<VerificationResponse> verifiers = new ArrayList<>();
-            // List<VerificationResponse> approvers = new ArrayList<>();
-            // verificationService
-            //         .getVerificationsByDomainTypeAndDomainId(DomainType.DEMAND, resDto.getDemandId())
-            //         .stream().forEach(verifier->{
-            //             if(verifier.getIsApproval()==false){
-            //                 verifiers.add(verifier);
-            //             }else{
-            //                 approvers.add(verifier);
-            //             }
-            //         });
-            // resDto.setVerifiers(verifiers);
-            // resDto.setApprovers(approvers);
+            List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
+            List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
+            verificationService
+                    .getVerificationsByDomainTypeAndDomainId(DomainType.DEMAND, resDto.getDemandId())
+                    .stream().forEach(verifier->{
+                        if(verifier.getIsApproval()==false){
+                            verifiers.add(verifier);
+                        }else{
+                            approvers.add(verifier);
+                        }
+                    });
+            resDto.setVerifiers(verifiers);
+            resDto.setApprovers(approvers);
         }
         List<?> comments = commentService.getCommentsByDomain(DomainType.DEMAND, resDto.getDemandId());
         resDto.setComments(comments);
@@ -660,16 +753,74 @@ public class DemandServiceImpl implements DemandService{
             demandRepository.save(demand);
             // TODO following code needs to modify to maintain same behavior
             // remove all previous verification and approval request
-            // verificationService.removeVerification(demand.getId(), DomainType.DEMAND);
+            verificationService.removeVerification(demand.getId(), DomainType.DEMAND);
             // dvahistoryRepository.deleteAllByDemandId(demand.getId());
 
-            // Optional<Map<String,Object>> verifierOp = (Optional<Map<String,Object>>)verificationService
-            //     .getVerifiers(loggedInUser,uri,demandRequestDto.getCategories());
+            Optional<VerifierConfig> verifierOp = verificationService
+                .getVerifiers(claimResolver,uri,"CATEGORY",demandRequestDto.getCategories());
 
-            // setVerifiers(demand, getVerifiers(demand, verifierOp));
-            // setApprovers(demand, getApprovalPanels(uri, demandRequestDto));
+            setVerifiers(demand, getVerifiers(demand, verifierOp));
+            setApprovers(demand, getApprovalPanels(claimResolver,uri, demandRequestDto));
 
         return this.getDemandDetail(demand.getId());
     }
+
+    @Override
+    @Transactional
+    public void approveComplete(Long id) {
+        Optional<Demand> demandOp  = demandRepository.findById(id);
+        if(demandOp.isPresent()){
+            Demand demand = demandOp.get();
+            demand.setStatus(DemandStatus.PENDING);
+            demand.setDemandDetails(
+                    demand.getDemandDetails().stream().map(demandDetail -> {
+                        demandDetail.setStatus(DemandStatus.PENDING);
+                        return demandDetail;
+                    }).collect(Collectors.toList())
+            );
+            DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
+            demandVAHistory.setDemand(demand);
+            demandVAHistory.setEmployee(new Employee(demand.getNextApproverId()));
+            demandVAHistory.setDemandStatus(DemandStatus.VERIFIED);
+            dvahistoryRepository.save(demandVAHistory);
+        }
+        
+    }
+
+    @Override
+    @Transactional
+    public void onApprove(Long id, UserApplicationValidation verification, VerificationResponse verificationResponse) {
+        Optional<Demand> demandOp  = demandRepository.findById(id);
+        if(demandOp.isPresent()){
+            Demand demand = demandOp.get();
+            DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
+            demandVAHistory.setDemand(demand);
+            demandVAHistory.setEmployee(verification.getVerifier());
+            demandVAHistory.setDemandStatus(DemandStatus.APPROVED);
+            dvahistoryRepository.save(demandVAHistory);
+            demand.setNextApproverId(verificationResponse.getVerifier().getId());
+        }
+    }
+
+    @Override
+    public void onVerify(Long id, UserApplicationValidation verification, VerificationResponse nextVerifier) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void sendForReview(Long id, ReferenceObjectDto reviewer, String comment) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void verifyComplete(Long id, Optional<UserApplicationValidation> firstApprover) {
+        // TODO Auto-generated method stub
+        
+    }
+
+
+    
     
 }

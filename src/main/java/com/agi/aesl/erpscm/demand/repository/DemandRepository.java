@@ -76,9 +76,9 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
         String getDesignation();
         Long getPrQty();
         Long getOpenPrQty();
-        Long getNextVerifierId();
-        Long getNextApproverId();
-        Long getReviewerId();
+        String getNextVerifierId();
+        String getNextApproverId();
+        String getReviewerId();
     }
 
 
@@ -100,12 +100,22 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime getDemandDate();
         DemandStatus getStatus();
-
         ItemCategoryInfo getCategory();
+    
 
         Long getItemsQty();
 
         String getRequestedBy();
+    }
+
+    /**
+     * ItemCategoryInfo
+     */
+    public interface ItemCategoryInfo {
+        Long getId();
+        String getName();
+        String getCode();
+        
     }
 
     public interface DemandPendingVerificationApprovalList {

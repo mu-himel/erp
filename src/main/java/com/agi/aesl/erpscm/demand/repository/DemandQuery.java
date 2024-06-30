@@ -205,21 +205,20 @@ interface DemandQuery {
             d.id as id,
             d.demand_no as demandNo,
             d.status as status,
-            (SELECT demand_status FROM `demand_verification_approval_histories` 
+            (SELECT demand_status FROM `scm_demand_verification_approval_histories` 
                     where `employee_id` = :nextVerifierId AND `demand_id`=d.id) as demandStatus,
             d.demand_date as demandDate,
             pc.name as category,
             COUNT(dd.id) as itemsQty,
             CONCAT(e.employee_id,'-',e.employee_name) as requestedBy 
-        FROM demands d 
+        FROM scm_demands d 
         LEFT JOIN acl_users e ON e.id = d.requested_by_id
-        LEFT JOIN warehouses w ON w.id = d.warehouse_id
-        LEFT JOIN demand_details dd ON dd.demand_id = d.id
-        LEFT JOIN item_categories ic ON d.item_category_id
-        LEFT JOIN item_categories pc ON d.item_parent_category_id
-        LEFT JOIN demand_verification_approval_histories dvah ON dvah.demand_id = d.id
-        WHERE (ic.id IN (:categories) OR pc.id IN (:categories)) 
-        AND ((d.next_verifier_id = :nextVerifierId AND d.status IN (:pendingVerification)) 
+        LEFT JOIN scm_warehouses w ON w.id = d.warehouse_id
+        LEFT JOIN scm_demand_details dd ON dd.demand_id = d.id
+        LEFT JOIN scm_item_categories ic ON d.sub_category_id
+        LEFT JOIN scm_item_categories pc ON d.category_id
+        LEFT JOIN scm_demand_verification_approval_histories dvah ON dvah.demand_id = d.id
+        WHERE ((d.next_verifier_id = :nextVerifierId AND d.status IN (:pendingVerification)) 
             OR (dvah.employee_id = :nextVerifierId AND dvah.demand_status='VERIFIED'))
         AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate))
         GROUP BY d.id 
@@ -264,19 +263,19 @@ interface DemandQuery {
         SELECT d.id as id,
             d.demand_no as demandNo,
             d.status as status,
-            (SELECT demand_status FROM `demand_verification_approval_histories` 
+            (SELECT demand_status FROM `scm_demand_verification_approval_histories` 
                     where `employee_id` = :nextApproverId AND `demand_id`=d.id) as demandStatus,
             d.demand_date as demandDate,
             pc.name as category,
             COUNT(dd.id) as itemsQty,
             CONCAT(e.employee_id,'-',e.employee_name) as requestedBy  
-        FROM demands d 
+        FROM scm_demands d 
         LEFT JOIN acl_users e ON e.id = d.requested_by_id 
-        LEFT JOIN warehouses w ON w.id = d.warehouse_id 
-        LEFT JOIN demand_details dd ON dd.demand_id = d.id 
-        LEFT JOIN item_categories ic ON ic.id = dd.item_category_id
-        LEFT JOIN item_categories pc ON pc.id = dd.item_parent_category_id
-        LEFT JOIN demand_verification_approval_histories dvah ON dvah.demand_id = d.id
+        LEFT JOIN scm_warehouses w ON w.id = d.warehouse_id 
+        LEFT JOIN scm_demand_details dd ON dd.demand_id = d.id 
+        LEFT JOIN scm_item_categories ic ON ic.id = dd.item_category_id
+        LEFT JOIN scm_item_categories pc ON pc.id = dd.item_parent_category_id
+        LEFT JOIN scm_demand_verification_approval_histories dvah ON dvah.demand_id = d.id
         WHERE ((d.next_approver_id = :nextApproverId AND d.status IN (:demandStatus))
             OR (dvah.employee_id = :nextApproverId AND dvah.demand_status = 'APPROVED')) 
         AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate)) 

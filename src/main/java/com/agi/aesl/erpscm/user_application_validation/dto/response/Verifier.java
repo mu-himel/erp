@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class Verifier {
-    private Long id;
+    private String id;
     private String name;
     private Boolean verified;
     private Long departmentId;
@@ -18,7 +18,7 @@ public class Verifier {
 
     String designation;
 
-    public Verifier(Long id, String name, Boolean verified,
+    public Verifier(String id, String name, Boolean verified,
                     Long departmentId,  Long parentDepartmentId,
                     String departmentName, Integer departmentLevel,
                     Long designationId, String designation) {

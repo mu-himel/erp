@@ -1,13 +1,16 @@
 package com.agi.aesl.erpscm.modules.dto;
 
+import java.util.List;
+
+
 import lombok.Data;
 
 @Data
 public class VerifierConfig {
-    private Long id;
-    private String criteriaGroup;
-    private String criteriaColumn;
-    private String criteriaIdValue;
-    private String criteriaText;
+    private Long parentDepartment;
+    private String reportingManager;
+    private Boolean verificationRequired;
+    private String employeeDepartment;
+    private List<VerifierInfo> verifiers;
     private Long level;
 }

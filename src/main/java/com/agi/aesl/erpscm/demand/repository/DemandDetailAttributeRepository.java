@@ -10,4 +10,5 @@ import com.agi.aesl.erpscm.demand.entity.DemandDetailAttribute;
 @Repository
 public interface DemandDetailAttributeRepository extends JpaRepository<DemandDetailAttribute,Long>{
     List<DemandDetailAttribute> findByDemandDetailId(Long id);
+    
 }

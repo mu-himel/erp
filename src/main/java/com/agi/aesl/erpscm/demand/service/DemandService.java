@@ -9,8 +9,9 @@ import com.agi.aesl.erpscm.demand.dto.request.DemandReceiveDto;
 import com.agi.aesl.erpscm.demand.dto.request.DemandRequestDto;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.demand.dto.response.DemandDetailResDto;
+import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomainService;
 
-public interface DemandService {
+public interface DemandService extends VerificationDomainService{
     Optional<DemandDetailResDto> createDemand(Jwt loggedInUser, String uri, DemandRequestDto demandRequestDto);
 
     Optional<DemandDetailResDto> updateDemand(Jwt loggedInUser, String uri, Long id, DemandRequestDto demandRequestDto);

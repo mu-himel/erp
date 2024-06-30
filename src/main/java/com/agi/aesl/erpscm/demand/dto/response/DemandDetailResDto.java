@@ -26,9 +26,9 @@ public class DemandDetailResDto {
         String warehouseLocation;
         List<DemandDetailItemResDto> details;
         List<CategoryAttribute> attributes;
-        Long nextApproverId;
-        Long nextVerifierId;
-        Long reviewerId;
+        String nextApproverId;
+        String nextVerifierId;
+        String reviewerId;
         String empId;
         String employeeId;
         String employeeName;

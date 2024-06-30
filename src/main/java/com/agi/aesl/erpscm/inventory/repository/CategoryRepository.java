@@ -161,6 +161,18 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
         Long getCpsCategoryId();
     }
 
+    interface ItemCategoryInfo2 {
+        Long getId();
+        String getName();
+        String getCode();
+        String getParentCategoryCode();
+        String getParentCategoryName();
+        String getWarehouses();
+        Long getSubcategoryCount();
+        Boolean getActive();
+        Long getCpsCategoryId();
+    }
+
     interface ItemCategoryInfoExt extends ItemCategoryInfo{
 
 

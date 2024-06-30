@@ -327,7 +327,7 @@ public class CategoryServiceImpl implements CategoryService {
         Page<?> result = null;
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(10));
 
-
+                                        
         result = categoryRepository.findAllSubCategories(
                             name.orElse(null),
                             code.orElse(null),

@@ -68,8 +68,8 @@ public class Demand {
 
     private LocalDateTime reviewDate;
 
-    private Long nextVerifierId;
-    private Long nextApproverId;
+    private String nextVerifierId;
+    private String nextApproverId;
 
     @ManyToOne
     private Warehouse warehouse;

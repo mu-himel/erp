@@ -26,11 +26,15 @@ public class IntegrationReaderServiceImpl implements IntegrationReaderService{
     @Override
     public Optional<Map<String, List<Long>>> getModuleFilterByUri(Jwt token, String uri) {
         HttpHeaders headers = networkService.setHttpHeaders(token);
+        headers.set("uri", uri);
         HttpEntity<?> payload = new HttpEntity<>(headers);
-        ResponseEntity<String> response = networkService.get(aclApiEndpoint+"/modules/filter/"+uri,payload, String.class);
+        String url = aclApiEndpoint+"/modules/filter-by-uri";
+        ResponseEntity<?> response = networkService.get(url,payload, Map.class);
         System.out.println(response.getStatusCode());
         System.out.println(response.getBody());
-        return Optional.empty();
+        System.out.println(response.getBody());
+
+        return (response.getBody()==null)? Optional.empty(): Optional.ofNullable((Map<String, List<Long>>)response.getBody());
     }
     
 }
