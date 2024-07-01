@@ -8,6 +8,8 @@ import com.agi.aesl.erpscm.demand.entity.DemandVerificationApprovalHistory;
 @Repository
 public interface DemandVerificationApprovalHistoryRepository extends JpaRepository<DemandVerificationApprovalHistory,Long> {
 
+    void deleteAllByDemandId(Long id);
+
     
   
 }

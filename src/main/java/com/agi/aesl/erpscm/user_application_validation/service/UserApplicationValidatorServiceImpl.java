@@ -18,6 +18,7 @@ import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.ApproveDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.VerifyDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.Verifier;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
@@ -121,6 +122,51 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
         return verificationRepository.findAllByDomainTypeAndDomainId(domainType,domainId);
     }
 
+    
+
+    @Override
+    @Transactional
+    public void verify(VerifyDto verifyDto) {
+        Employee verifier = new Employee(verifyDto.getVerifier().getId());
+        DomainType domainType = verifyDto.getDomainType();
+        Long domainId = verifyDto.getDomainId();
+        String msg = verifyDto.getComment();
+
+        List<UserApplicationValidationRepository.VerificationResponse> count = verificationRepository
+                    .findAllByDomainTypeAndDomainIdAndVerifiedAndIsApproval(
+                            domainType, domainId,false,false);
+
+
+        Optional<UserApplicationValidation> verificationOp = verificationRepository
+                .findByDomainTypeAndDomainIdAndVerifierAndIsApproval(domainType,domainId,verifier,false);
+        if(verificationOp.isPresent()){
+            UserApplicationValidation verification = verificationOp.get();
+            
+            verification.setVerified(true);
+            verification.setVerificationDate(LocalDateTime.now());
+            verificationRepository.save(verification);
+            if(count!=null && count.size()>1 && verificationDomainService!=null){
+                if(count.get(1)!=null) {
+                    verificationDomainService.onVerify(domainId, verification, count.get(1));
+                }
+            }
+
+            if(count!=null && count.size()==1 && verificationDomainService!=null){
+                List<VerificationResponse> approvalCount = verificationRepository
+                        .findAllByDomainTypeAndDomainIdAndVerifiedAndIsApproval(
+                                domainType, domainId,false,true);
+                Optional<VerificationResponse> firstApprover = Optional.empty();
+                if(approvalCount.size()>0){
+                    firstApprover = approvalCount.stream().findFirst();
+                }
+                verificationDomainService.verifyComplete(domainId,firstApprover);
+            }
+
+            comment(verifier, domainType, domainId, msg,verifyDto.getAttachments());
+        }
+        
+    }
+
 
 
     @Override
@@ -156,6 +202,26 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
         }
         
     }
+
+    
+
+    @Override
+    @Transactional
+    public void review(VerifyDto verifyDto) {
+        if(verificationDomainService!=null){
+            if((verifyDto.getComment()==null || verifyDto.getComment().isEmpty())){
+                throw new RuntimeException("Message Required");
+            }
+            verificationDomainService.sendForReview(verifyDto.getDomainId(),verifyDto.getReviewer(),verifyDto.getComment());
+
+            comment(new Employee(verifyDto.getVerifier().getId()),
+                    verifyDto.getDomainType(),verifyDto.getDomainId(),
+                    verifyDto.getComment(),verifyDto.getAttachments());
+        }
+        
+    }
+
+
 
     private void comment(Employee verifier, DomainType domainType, Long domainId, String msg, List<CommentAttachment> attachments) {
         if(msg !=null && !msg.isEmpty()){

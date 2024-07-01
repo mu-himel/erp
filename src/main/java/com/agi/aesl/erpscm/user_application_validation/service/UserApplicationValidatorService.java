@@ -9,6 +9,7 @@ import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.demand.service.DemandService;
 import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.ApproveDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.VerifyDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.Verifier;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
@@ -29,4 +30,6 @@ public interface UserApplicationValidatorService<T> {
     void removeVerification(Long id, DomainType demand);
     void setVerificationDomainService(VerificationDomainService verificationDonainService);
     void approve(ApproveDto approveDto);
+    void verify(VerifyDto verifyDto);
+    void review(VerifyDto verifyDto);
 }

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -22,6 +23,7 @@ import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.demand.service.DemandService;
 import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.ApproveDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.VerifyDto;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 
 @RestController
@@ -46,6 +48,27 @@ public class CommentController extends BaseController{
         
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+    @PutMapping("/verify")
+    public ResponseEntity<?> verify(@RequestBody VerifyDto verifyDto){
+        if(verifyDto.getDomainType().equals(DomainType.DEMAND)){
+            verificationService.setVerificationDomainService(demandService);
+            verificationService.verify(verifyDto);
+        
+        }
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/review")
+    public ResponseEntity<?> review(@RequestBody VerifyDto verifyDto){
+        if(verifyDto.getDomainType().equals(DomainType.DEMAND)){
+            verificationService.setVerificationDomainService(demandService);
+            verificationService.review(verifyDto);
+        }
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+
 
     
         @PostMapping

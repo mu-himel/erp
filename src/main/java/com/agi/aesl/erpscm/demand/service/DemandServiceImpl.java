@@ -46,6 +46,7 @@ import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.Verifier;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
@@ -548,6 +549,7 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
+    @Transactional
     public void receiveDemandItem(Jwt loggedInUser, DemandReceiveDto demandReceiveDto) {
         Optional<Demand> demandOptional = demandRepository.findById(demandReceiveDto.getDemandId());
         if(demandOptional.isEmpty()){
@@ -588,6 +590,7 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
+    @Transactional
     public void rejectDemand(Jwt token, DemandReceiveDto demandReceiveDto) {
         ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
@@ -607,6 +610,7 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
+    @Transactional
     public void rejectDemandItem(Jwt token, DemandReceiveDto demandReceiveDto) {
         ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
@@ -629,6 +633,7 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
+    @Transactional
     public void resendDemandItem(Jwt token, DemandReceiveDto demandReceiveDto) {
         
         ClaimResolver claimResolver = new ClaimResolver();
@@ -655,6 +660,7 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
+    @Transactional
     public void reviewDemand(Jwt token, Long id, ReviewDto reviewDto) {
         ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
@@ -754,7 +760,7 @@ public class DemandServiceImpl implements DemandService{
             // TODO following code needs to modify to maintain same behavior
             // remove all previous verification and approval request
             verificationService.removeVerification(demand.getId(), DomainType.DEMAND);
-            // dvahistoryRepository.deleteAllByDemandId(demand.getId());
+            dvahistoryRepository.deleteAllByDemandId(demand.getId());
 
             Optional<VerifierConfig> verifierOp = verificationService
                 .getVerifiers(claimResolver,uri,"CATEGORY",demandRequestDto.getCategories());
@@ -787,6 +793,8 @@ public class DemandServiceImpl implements DemandService{
         
     }
 
+
+
     @Override
     @Transactional
     public void onApprove(Long id, UserApplicationValidation verification, VerificationResponse verificationResponse) {
@@ -803,21 +811,67 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
+    @Transactional
     public void onVerify(Long id, UserApplicationValidation verification, VerificationResponse nextVerifier) {
-        // TODO Auto-generated method stub
+        Optional<Demand> demandOp  = demandRepository.findById(id);
+        if(demandOp.isPresent()){
+            Demand demand = demandOp.get();
+            DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
+            demandVAHistory.setDemand(demand);
+            demandVAHistory.setEmployee(verification.getVerifier());
+            demandVAHistory.setDemandStatus(DemandStatus.VERIFIED);
+            dvahistoryRepository.save(demandVAHistory);
+            demand.setNextVerifierId(nextVerifier.getVerifier().getId());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void sendForReview(Long id, RefDto reviewer, String comment) {
+        Optional<Demand> demandOp  = demandRepository.findById(id);
+        if(demandOp.isPresent()){
+            Demand demand = demandOp.get();
+            demand.setReviewPrevStatus(demand.getStatus());
+            demand.setReviewerId(reviewer.getId());
+            demand.setStatus(DemandStatus.REVIEW);
+            demand.setReviewDate(LocalDateTime.now());
+        }
         
     }
 
     @Override
-    public void sendForReview(Long id, ReferenceObjectDto reviewer, String comment) {
-        // TODO Auto-generated method stub
-        
-    }
+    @Transactional
+    public void verifyComplete(Long id, Optional<VerificationResponse> firstApprover) {
+        Optional<Demand> demandOp  = demandRepository.findById(id);
+        if(demandOp.isPresent()){
+            Demand demand = demandOp.get();
+            if(firstApprover.isPresent()){
+                demand.setNextApproverId(firstApprover.get().getVerifier().getId());
+                demand.setStatus(DemandStatus.PENDING_APPROVAL);
+                demand.setDemandDetails(
+                        demand.getDemandDetails().stream().map(demandDetail -> {
+                            demandDetail.setStatus(DemandStatus.PENDING_APPROVAL);
+                            return demandDetail;
+                        }).collect(Collectors.toList())
+                );
+            }else {
+                
+                demand.setStatus(DemandStatus.PENDING);
+                demand.setDemandDetails(
+                        demand.getDemandDetails().stream().map(demandDetail -> {
+                            demandDetail.setStatus(DemandStatus.PENDING);
+                            return demandDetail;
+                        }).collect(Collectors.toList())
+                );
 
-    @Override
-    public void verifyComplete(Long id, Optional<UserApplicationValidation> firstApprover) {
-        // TODO Auto-generated method stub
-        
+                DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
+                demandVAHistory.setDemand(demand);
+                demandVAHistory.setEmployee(new Employee(demand.getNextVerifierId()));
+                demandVAHistory.setDemandStatus(DemandStatus.VERIFIED);
+                dvahistoryRepository.save(demandVAHistory);
+            }
+
+        }
     }
 
 
