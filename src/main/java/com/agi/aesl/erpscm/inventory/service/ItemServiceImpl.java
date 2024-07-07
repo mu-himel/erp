@@ -158,7 +158,7 @@ public class ItemServiceImpl implements ItemService {
         if(mapOp.isEmpty()) {
             itemStocks.add(stockInfo);
         }
-//        warehouses.put(""+itemStock.getWarehouse().getId(), itemStocks);
+       warehouses.put(""+itemStock.getWarehouse().getId(), itemStocks);
     }
 
     @Override
@@ -242,7 +242,11 @@ public class ItemServiceImpl implements ItemService {
 
         List<ItemListWithAttributesDto> itemListWithAttributesDtos = new ArrayList<>();
 
-        items.stream().forEach(itemInfoExt -> {
+        for(ItemRepository.ItemInfoExt itemInfoExt : items){
+            
+            if(itemInfoExt.getAttributeTypes()==null){
+                continue;
+            }
             StringBuilder sb = new StringBuilder();
             ItemListWithAttributesDto dto = new ItemListWithAttributesDto();
             dto.setId(itemInfoExt.getId());
@@ -280,7 +284,7 @@ public class ItemServiceImpl implements ItemService {
             dto.setItemAttribute(sb.toString().substring(0,sb.length()-3));
             itemListWithAttributesDtos.add(dto);
 
-        });
+        }
         List<ItemListWithAttributesDto> filteredList = new ArrayList<>();
         filteredList = itemListWithAttributesDtos;
         
@@ -291,6 +295,8 @@ public class ItemServiceImpl implements ItemService {
                 String _perItemAttr = "";
                 if(_attr.contains(itemListWithAttributesDto.getBrandName()) &&  itemListWithAttributesDto.getBrandName()!=null){
                     _perItemAttr = itemListWithAttributesDto.getBrandName() + " - " + itemListWithAttributesDto.getItemAttribute().replaceAll("  ", " ");
+                }else{
+                    _perItemAttr = itemListWithAttributesDto.getItemAttribute();;
                 }
                 return (_attr.contains(_perItemAttr) || _perItemAttr.contains(_attr));
             }).collect(Collectors.toList());

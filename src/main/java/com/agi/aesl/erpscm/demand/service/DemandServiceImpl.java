@@ -38,6 +38,7 @@ import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.employee.service.EmployeeService;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.exception.AesException;
+import com.agi.aesl.erpscm.inventory.dto.response.ItemDetail;
 import com.agi.aesl.erpscm.inventory.entity.CategoryBrand;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
@@ -556,8 +557,6 @@ public class DemandServiceImpl implements DemandService{
             throw new AesException("Demand not found");
         }
 
-       
-
         Demand demand = demandOptional.get();
 
         Integer completeCount  = demandDetailRepository.countByStatusAndDemandId(DemandStatus.RECEIVED,demand.getId());
@@ -567,12 +566,25 @@ public class DemandServiceImpl implements DemandService{
             Long demandDetailId = demandDetail.getId();
             if(demandDetailId.equals(demandReceiveDto.getDemandDetailId())) {
                 Item item = demandDetail.getItem();
+                List<Map<String,Object>> stocks = null;
+                Long warehouseStoreId = null;
+                Optional<ItemDetail> itemDetailOp = (Optional<ItemDetail>) itemService.getItemDetailWithWarehouse(item.getId());
+                if(itemDetailOp.isPresent()){
+                    ItemDetail itemDetail = itemDetailOp.get();
+                    stocks = itemDetail.getWarehouses().get(demandReceiveDto.getWarehouseId().toString());
+                    if(stocks.size()>0){
+                        Map<String,Object> lastStock = stocks.get(0);
+                        warehouseStoreId = (Long)lastStock.get("warehouseStoreId");
+                    }
+                }
+
+
                 if(demandReceiveDto.getQty()!=null && (demandDetail.getApprovedQuantity().compareTo(demandReceiveDto.getQty()) >= 0)) {
                     itemService.stockOut(item, demandReceiveDto.getQty(),demandReceiveDto.getWarehouseId(),
-                                demandReceiveDto.getWarehouseStoreId());
+                    warehouseStoreId);
                 }else{
                     itemService.stockOut(item, demandDetail.getApprovedQuantity(),demandReceiveDto.getWarehouseId(),
-                                demandReceiveDto.getWarehouseStoreId());
+                    warehouseStoreId);
                 }
                 if(demandReceiveDto.getNote()!=null && !demandReceiveDto.getNote().isEmpty()){
                     demandDetail.setReceiveNote(demandReceiveDto.getNote());
@@ -685,6 +697,7 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
+    @Transactional
     public void sentDemandItem(Jwt token, DemandReceiveDto demandReceiveDto) {
         Optional<Demand> demandOptional = demandRepository.findById(demandReceiveDto.getDemandId());
         if(demandOptional.isEmpty()){
@@ -787,7 +800,7 @@ public class DemandServiceImpl implements DemandService{
             DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
             demandVAHistory.setDemand(demand);
             demandVAHistory.setEmployee(new Employee(demand.getNextApproverId()));
-            demandVAHistory.setDemandStatus(DemandStatus.VERIFIED);
+            demandVAHistory.setDemandStatus(DemandStatus.APPROVED);
             dvahistoryRepository.save(demandVAHistory);
         }
         
@@ -845,6 +858,13 @@ public class DemandServiceImpl implements DemandService{
         Optional<Demand> demandOp  = demandRepository.findById(id);
         if(demandOp.isPresent()){
             Demand demand = demandOp.get();
+
+            DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
+            demandVAHistory.setDemand(demand);
+            demandVAHistory.setEmployee(new Employee(demand.getNextVerifierId()));
+            demandVAHistory.setDemandStatus(DemandStatus.VERIFIED);
+            dvahistoryRepository.save(demandVAHistory);
+
             if(firstApprover.isPresent()){
                 demand.setNextApproverId(firstApprover.get().getVerifier().getId());
                 demand.setStatus(DemandStatus.PENDING_APPROVAL);
@@ -864,11 +884,7 @@ public class DemandServiceImpl implements DemandService{
                         }).collect(Collectors.toList())
                 );
 
-                DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
-                demandVAHistory.setDemand(demand);
-                demandVAHistory.setEmployee(new Employee(demand.getNextVerifierId()));
-                demandVAHistory.setDemandStatus(DemandStatus.VERIFIED);
-                dvahistoryRepository.save(demandVAHistory);
+                
             }
 
         }

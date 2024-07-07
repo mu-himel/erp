@@ -8,8 +8,10 @@ interface DemandQuery {
             SELECT
             	i.id as id,
             	dd.id as demandDetailId,
-                0 as prQty,
-                0 as openPrQty,
+                """+prSql+"""
+                     as prQty,
+                """+openPr+"""
+                     as openPrQty,
                 d.id as demandId,
                 d.next_verifier_id as nextVerifierId,
                 d.next_approver_id as nextApproverId,
@@ -206,10 +208,10 @@ interface DemandQuery {
             d.demand_no as demandNo,
             d.status as status,
             (SELECT demand_status FROM `scm_demand_verification_approval_histories` 
-                    where `employee_id` = :nextVerifierId AND `demand_id`=d.id) as demandStatus,
+                    where `employee_id` = :nextVerifierId AND `demand_id`=d.id AND demand_status='VERIFIED') as demandStatus,
             d.demand_date as demandDate,
             pc.name as category,
-            COUNT(dd.id) as itemsQty,
+            (select count(dd1.id) from scm_demand_details dd1 WHERE dd1.demand_id = d.id) as itemsQty,
             CONCAT(e.employee_id,'-',e.employee_name) as requestedBy 
         FROM scm_demands d 
         LEFT JOIN acl_users e ON e.id = d.requested_by_id
@@ -264,10 +266,10 @@ interface DemandQuery {
             d.demand_no as demandNo,
             d.status as status,
             (SELECT demand_status FROM `scm_demand_verification_approval_histories` 
-                    where `employee_id` = :nextApproverId AND `demand_id`=d.id) as demandStatus,
+                    where `employee_id` = :nextApproverId AND `demand_id`=d.id AND demand_status='APPROVED') as demandStatus,
             d.demand_date as demandDate,
             pc.name as category,
-            COUNT(dd.id) as itemsQty,
+            (select count(dd1.id) from scm_demand_details dd1 WHERE dd1.demand_id = d.id) as itemsQty,
             CONCAT(e.employee_id,'-',e.employee_name) as requestedBy  
         FROM scm_demands d 
         LEFT JOIN acl_users e ON e.id = d.requested_by_id 
