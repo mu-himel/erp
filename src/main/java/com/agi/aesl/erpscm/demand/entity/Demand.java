@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.demand.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.enums.DemandStatus;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -70,6 +72,9 @@ public class Demand {
 
     private String nextVerifierId;
     private String nextApproverId;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate deliveryDate;
 
     @ManyToOne
     private Warehouse warehouse;

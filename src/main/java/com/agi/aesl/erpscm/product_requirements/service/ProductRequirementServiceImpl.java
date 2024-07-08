@@ -1,9 +1,16 @@
 package com.agi.aesl.erpscm.product_requirements.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -58,6 +65,54 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
             return LocalDateTime.now();
         }
     }
+
+    @Override
+    public Page<?> getAllProductRequirements(Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
+            Optional<Long> subCategoryId, Optional<LocalDateTime> startDate, Optional<LocalDateTime> endDate) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Page<?> result = null;
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+        result = productRequirementRepository.findAllProductRequirements(categoryId.orElse(null),
+        subCategoryId.orElse(null),
+        startDate.orElse(null),
+        endDate.orElse(null),
+        pageable);
+        return result;
+    }
+
+    @Override
+    public List<?> getAllProductRequirementView(Optional<Long> categoryId, Optional<Long> subCategoryId) {
+        List<?> result = productRequirementRepository.getAllProductRequirementView(
+            categoryId.orElseThrow(()-> new RuntimeException("Sorry! Category should not empty")),
+            subCategoryId.orElseThrow(()->new RuntimeException("Sorry! Sub Category should not empty"))
+        );
+        return result;
+    }
+
+    @Override
+    public List<?> getWarehouseRequirements(String attribute) {
+        return productRequirementRepository.getWarehouseRequirements(attribute);
+    }
+
+    @Override
+    @Transactional
+    public void reOpen(String productRequirementsIds) {
+        List<Long> ids = List.of(productRequirementsIds.split(",")).stream()
+        .map(id->Long.parseLong(id))
+        .collect(Collectors.toList());
+        productRequirementRepository.updateStatusByIds(ids);
+    }
+
+    @Override
+    public int updateStatusByCategoryAndSubCategory(ProductRequirementStatus toStatus,
+            ProductRequirementStatus fromStatus, Long categoryId, Long subCategoryId) {
+        int result = productRequirementRepository
+                    .updateStatusByCategoryAndSubCategory(toStatus,fromStatus,
+                        categoryId, subCategoryId);
+        return result;
+    }
+
+    
 
     
 }

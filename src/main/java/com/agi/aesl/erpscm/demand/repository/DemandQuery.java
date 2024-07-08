@@ -127,6 +127,8 @@ interface DemandQuery {
                                 ' ',attribute_unit separator ' - '),'%')),0)
                 
                 END as currentStockQty,
+                d.delivery_date as deliveryDate,
+                (DATEDIFF(d.delivery_date,CURRENT_DATE)) as daysRemain,
             	0 as inTransit,
             	GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ') deamndAttributes
             FROM scm_demand_details dd

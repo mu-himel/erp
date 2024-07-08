@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.demand.repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -46,7 +47,8 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
         String getWarehouseName();
         String getWarehouseLocation();
         String getParentCategoryCode();
-
+        LocalDate getDeliveryDate();
+        String getDaysRemain();
         Long getBrandId();
         String getBrandName();
 

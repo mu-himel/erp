@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.demand.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -169,6 +170,12 @@ public class DemandServiceImpl implements DemandService{
         List<VerifierInfo> verifiers = getVerifiers(demand, verifierOp);
 
         demand.setDemandDate(LocalDateTime.now());
+
+        if(demandRequestDto.getDeliveryDate()!=null){
+
+            demand.setDeliveryDate(LocalDate.parse(demandRequestDto.getDeliveryDate()));
+        }
+
         if(demandRequestDto.getCategory()!=null) {
             demand.setCategory(new ItemCategory(demandRequestDto.getCategory().getId()));
         }
@@ -434,7 +441,8 @@ public class DemandServiceImpl implements DemandService{
 
             List<DemandDetailAttribute> demandDetailAttrs= demandDetailAttributeRepository.findByDemandDetailId(demandDetailItem.getDemandDetailId());
             
-            
+            resDto.setDaysRemain(demandDetailItem.getDaysRemain());
+            resDto.setDeliveryDate(demandDetailItem.getDeliveryDate());
             resDto.setDemandNo(demandDetailItem.getDemandNo());
             resDto.setDemandId(demandDetailItem.getDemandId());
             resDto.setDemandDate(demandDetailItem.getDemandDate());
@@ -483,7 +491,6 @@ public class DemandServiceImpl implements DemandService{
                 .demandPriority(demandDetailItem.getDemandPriority())
                 .itemUnit(demandDetailItem.getItemUnit())
                         .inTransit(demandDetailItem.getInTransit())
-
                 .build()
             );
 

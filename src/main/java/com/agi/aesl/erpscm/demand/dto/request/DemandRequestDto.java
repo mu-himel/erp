@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.demand.dto.request;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.agi.aesl.erpscm.common.EntityConvertable;
@@ -32,6 +33,8 @@ public class DemandRequestDto implements EntityConvertable<Demand>{
 
     ReferenceObjectDto subCategory;
     String categories;
+
+    private String deliveryDate;
 
     Boolean isVerificationRequired;
 

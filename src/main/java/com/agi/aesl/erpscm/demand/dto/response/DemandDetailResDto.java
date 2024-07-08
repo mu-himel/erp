@@ -1,11 +1,13 @@
 package com.agi.aesl.erpscm.demand.dto.response;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.agi.aesl.erpscm.demand.enums.DemandStatus;
 import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,6 +37,9 @@ public class DemandDetailResDto {
         String reportingManager;
         String department;
         String designation;
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDate deliveryDate;
+        String daysRemain;
     
         List<?> verifiers;
         List<?> approvers;
