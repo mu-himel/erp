@@ -267,8 +267,34 @@ public class DemandServiceImpl implements DemandService{
 
     @Override
     public void declineDemandItem(Jwt loggedInUser, DemandReceiveDto demandReceiveDto) {
-        // TODO Auto-generated method stub
-        
+        Optional<Demand> demandOptional = demandRepository.findById(demandReceiveDto.getDemandId());
+        if(demandOptional.isEmpty()){
+            throw new RuntimeException("Demand not found");
+        }
+
+        if(demandReceiveDto.getNote() == null || demandReceiveDto.getNote().isEmpty()){
+            throw new RuntimeException("Note Required");
+        }
+
+        Demand demand = demandOptional.get();
+
+        demand.setDemandDetails(demand.getDemandDetails().stream().map(demandDetail -> {
+            Long demandDetailId = demandDetail.getId();
+            if(demandDetailId.equals(demandReceiveDto.getDemandDetailId())) {
+                itemService.stockUpdateByDemand(demandReceiveDto.getWarehouseId(),
+                        demandDetail,
+                        StockType.STOCK_IN);
+
+                if (demandReceiveDto.getNote() != null && !demandReceiveDto.getNote().isEmpty()) {
+                    demandDetail.setDeclineNote(demandReceiveDto.getNote());
+                }
+
+                demandDetail.setReceivedByUserDate(LocalDateTime.now());
+                demandDetail.setStatus(DemandStatus.DECLINED);
+            }
+            return  demandDetail;
+        }).collect(Collectors.toList()));
+        demand.setStatus(DemandStatus.PENDING);
     }
 
     @Override
@@ -302,7 +328,7 @@ public class DemandServiceImpl implements DemandService{
 
     @Override
     public Page<?> getAllDemands(Jwt loggedInUser, Optional<Integer> page, Optional<Integer> size,
-            Optional<String> fromDateStr, Optional<String> toDateStr) {
+            Optional<String> fromDateStr, Optional<String> toDateStr, Optional<Integer> daysRemain) {
                 String moduleUri = "demand/pending";
                 // get filter options according to module permission
                 Sort sort = Sort.by(Sort.Direction.ASC,"id");
@@ -333,12 +359,12 @@ public class DemandServiceImpl implements DemandService{
                     warehouseIds = modulePermission.get().get("warehouse_id");
                     return demandRepository.findAllDemandsByCategory(categoryIds,
                             (warehouseIds !=null && warehouseIds.size()>0)? warehouseIds : List.of(1L),
-                            fromDate,toDate,
+                            fromDate,toDate,daysRemain.orElse(null),
                             pageable);
                 }
         
         
-                return demandRepository.findAllDemands(1L,fromDate,toDate,pageable);
+                return demandRepository.findAllDemands(1L,fromDate,toDate, daysRemain.orElse(null),pageable);
     }
 
     @Override
@@ -773,7 +799,11 @@ public class DemandServiceImpl implements DemandService{
                 throw new AesException("Sorry! demand not found for update");
             }
             Demand demand = demandOp.get();
-            
+
+            if(demandRequestDto.getDeliveryDate()!=null){
+
+                demand.setDeliveryDate(LocalDate.parse(demandRequestDto.getDeliveryDate()));
+            }
             setDemandDetail(demandRequestDto, demand);
             demand.setReviewerId(null);
             demandRepository.save(demand);

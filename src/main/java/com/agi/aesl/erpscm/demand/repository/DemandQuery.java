@@ -181,7 +181,8 @@ interface DemandQuery {
            d.demandDate as demandDate,
            d.category as category,
            COUNT(dd) as itemsQty,
-           d.requestedBy as requestedBy
+           d.requestedBy as requestedBy,
+           DATEDIFF(d.deliveryDate,CURRENT_DATE) as daysRemain
        FROM Demand d 
         LEFT JOIN d.requestedBy r 
         LEFT JOIN d.warehouse w 
@@ -191,6 +192,7 @@ interface DemandQuery {
         WHERE d.status NOT IN ('PENDING_APPROVAL','PENDING_VERIFICATION','REJECTED','RECEIVED','COMPLETED','CANCELED','DECLINED')
         AND (:warehouseId IS NULL OR w.id = :warehouseId) 
         AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
+        AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
         GROUP BY d.id 
         """;
 
@@ -201,6 +203,7 @@ interface DemandQuery {
         WHERE d.status NOT IN ('PENDING_APPROVAL','REJECTED','PENDING_VERIFICATION','RECEIVED','COMPLETED','CANCELED','DECLINED')
         AND (:warehouseId IS NULL OR w.id = :warehouseId) 
         AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
+        AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
         GROUP BY d.id """;
 
 
@@ -307,6 +310,7 @@ interface DemandQuery {
             AND d.status NOT IN ('PENDING_APPROVAL','REJECTED','PENDING_VERIFICATION','RECEIVED','COMPLETED','CANCELED','DECLINED')
             AND (w.id IN :warehouseId) 
             AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
+            AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
             GROUP BY d.id
             """;
 
@@ -321,6 +325,7 @@ interface DemandQuery {
          AND d.status NOT IN ('PENDING_APPROVAL','REJECTED','PENDING_VERIFICATION','RECEIVED','COMPLETED','CANCELED','DECLINED')
          AND (w.id IN :warehouseId) 
          AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
+         AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
          GROUP BY d.id 
             """;
 
