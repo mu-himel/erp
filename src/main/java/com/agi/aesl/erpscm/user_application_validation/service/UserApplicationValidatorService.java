@@ -15,6 +15,7 @@ import com.agi.aesl.erpscm.user_application_validation.dto.response.Verifier;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 public interface UserApplicationValidatorService<T> {
     Optional<VerifierConfig> getVerifiers(ClaimResolver claimResolver, String uri,String criteriaGroup, String categories);
@@ -30,6 +31,6 @@ public interface UserApplicationValidatorService<T> {
     void removeVerification(Long id, DomainType demand);
     void setVerificationDomainService(VerificationDomainService verificationDonainService);
     void approve(ApproveDto approveDto);
-    void verify(VerifyDto verifyDto);
+    void verify(Jwt token, VerifyDto verifyDto);
     void review(VerifyDto verifyDto);
 }

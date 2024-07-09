@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
+import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties.AssertingParty.Verification;
 import org.springframework.data.domain.Page;
@@ -94,6 +96,12 @@ public class DemandServiceImpl implements DemandService{
     private UserApplicationValidatorService<Demand> verificationService;
 
     @Autowired
+    private  CategoryBrandRepository categoryBrandRepository;
+
+    @Autowired
+    private DemandMailService demandMailService;
+
+    @Autowired
     private ModuleService moduleService;
     
 
@@ -126,6 +134,10 @@ public class DemandServiceImpl implements DemandService{
         if(verifiers.size()>0){
             Optional<VerifierInfo> firstOp = verifiers.stream().findFirst();
             VerifierInfo _verifier = firstOp.get();
+
+            demandMailService.prepareMailContent(_verifier.getName(), "Verification", demand);
+            demandMailService.sentMail(_verifier.getEmail(),"Pending Demand Verification Request");
+
             List<UserApplicationValidation> verifications = verifiers.stream().map(verifier -> {
                 UserApplicationValidation verification = new UserApplicationValidation();
                 verification.setDomainId(demand.getId());
@@ -162,6 +174,10 @@ public class DemandServiceImpl implements DemandService{
         
         
         claimResolver.setToken(token);
+        Optional<Employee> employeeOp = claimResolver.getEmployee();
+        if(employeeOp.isEmpty()){
+            throw new RuntimeException("Sorry! Employee not found");
+        }
         
         Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver,uri,"CATEGORY",demandRequestDto.getCategories());
         
@@ -183,7 +199,7 @@ public class DemandServiceImpl implements DemandService{
             demand.setSubCategory(new ItemCategory(demandRequestDto.getSubCategory().getId()));
         }
         if(demandRequestDto.getRequestedBy()!=null) {
-            demand.setRequestedBy(new Employee(claimResolver.getUserId()));
+            demand.setRequestedBy(employeeOp.get());
         }
         if(claimResolver.getEmployee().isPresent() && claimResolver.getEmployee().get().getWarehouseId()!=null){
             demand.setWarehouse(new Warehouse(claimResolver.getEmployee().get().getWarehouseId()));
@@ -197,6 +213,8 @@ public class DemandServiceImpl implements DemandService{
             Optional<ApprovalPanel> firstPanel = panels.stream().findFirst();
             if(firstPanel.isPresent()){
                 ApprovalPanel panel = firstPanel.get();
+                demandMailService.prepareMailContent(panel.getName(), "Approval", demand);
+                demandMailService.sentMail(panel.getEmail(),"Pending Demand Approval Request");
                 demand.setNextApproverId(panel.getUserId());
             }
         }
@@ -206,7 +224,7 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Transactional
-    private static void setDemandDetail(DemandRequestDto demandRequestDto, Demand demand) {
+    private void setDemandDetail(DemandRequestDto demandRequestDto, Demand demand) {
         demand.setDemandDetails(demandRequestDto.getDemandDetails().stream().map(demandDetailDto -> {
             DemandDetail demandDetail = new DemandDetail();
             if(demandDetailDto.getId()!=null){
@@ -223,7 +241,11 @@ public class DemandServiceImpl implements DemandService{
             }
 
             if(demandDetailDto.getBrand()!=null && demandDetailDto.getBrand().getId()!=null){
-                demandDetail.setBrand(new CategoryBrand(demandDetailDto.getBrand().getId()));
+                Optional<CategoryBrand> catBrandOp = categoryBrandRepository.findById(demandDetailDto.getBrand().getId());
+                if(catBrandOp.isPresent()){
+                    demandDetail.setBrand(catBrandOp.get());
+                }
+
             }
 
             demandDetail.setAttributes(demandDetailDto.getAttributes()
@@ -827,6 +849,9 @@ public class DemandServiceImpl implements DemandService{
         Optional<Demand> demandOp  = demandRepository.findById(id);
         if(demandOp.isPresent()){
             Demand demand = demandOp.get();
+
+
+
             demand.setStatus(DemandStatus.PENDING);
             demand.setDemandDetails(
                     demand.getDemandDetails().stream().map(demandDetail -> {
@@ -851,6 +876,9 @@ public class DemandServiceImpl implements DemandService{
         Optional<Demand> demandOp  = demandRepository.findById(id);
         if(demandOp.isPresent()){
             Demand demand = demandOp.get();
+            demandMailService.prepareMailContent(verificationResponse.getVerifier().getEmployeeName(),"Approval",demand);
+            demandMailService.sentMail(verificationResponse.getVerifier().getEmailAddress(),"Pending Demand Approval Request");
+
             DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
             demandVAHistory.setDemand(demand);
             demandVAHistory.setEmployee(verification.getVerifier());
@@ -866,6 +894,10 @@ public class DemandServiceImpl implements DemandService{
         Optional<Demand> demandOp  = demandRepository.findById(id);
         if(demandOp.isPresent()){
             Demand demand = demandOp.get();
+
+            demandMailService.prepareMailContent(nextVerifier.getVerifier().getEmployeeName(),"Approval",demand);
+            demandMailService.sentMail(nextVerifier.getVerifier().getEmailAddress(),"Pending Demand Approval Request");
+
             DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
             demandVAHistory.setDemand(demand);
             demandVAHistory.setEmployee(verification.getVerifier());
@@ -896,6 +928,11 @@ public class DemandServiceImpl implements DemandService{
         if(demandOp.isPresent()){
             Demand demand = demandOp.get();
 
+            demandMailService.setClaimResolver(claimResolver);
+            demandMailService.setDemand(demand);
+            demandMailService.getStoreUsers("demand/pending");
+            demandMailService.sentMail(null,"Pending Demand");
+
             DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
             demandVAHistory.setDemand(demand);
             demandVAHistory.setEmployee(new Employee(demand.getNextVerifierId()));
@@ -912,7 +949,9 @@ public class DemandServiceImpl implements DemandService{
                         }).collect(Collectors.toList())
                 );
             }else {
-                
+
+
+
                 demand.setStatus(DemandStatus.PENDING);
                 demand.setDemandDetails(
                         demand.getDemandDetails().stream().map(demandDetail -> {

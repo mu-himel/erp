@@ -23,6 +23,13 @@ public class NetworkService {
         return headers;
     }
 
+    public HttpHeaders setHttpHeaders(String token){
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization","Bearer "+ token);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
+    }
+
     public HttpHeaders setHttpHeadersForHr(Jwt token){
         HttpHeaders headers = new HttpHeaders();
         headers.set("KCAuthorization","Bearer "+token.getTokenValue());

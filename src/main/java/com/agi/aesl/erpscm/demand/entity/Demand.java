@@ -43,6 +43,8 @@ public class Demand {
     private Long id;
 
     private String demandNo;
+
+    @JsonFormat(pattern = "dd MMM yyyy")
     private LocalDateTime demandDate;
 
     @CreationTimestamp

@@ -10,6 +10,7 @@ public class VerifierInfo {
 
     String id;
     String name;
+    String email;
     Boolean verified;
     Long departmentId;
     Long parentDepartmentId;
