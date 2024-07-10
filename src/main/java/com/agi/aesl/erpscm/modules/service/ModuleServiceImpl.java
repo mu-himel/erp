@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -54,9 +55,8 @@ public class ModuleServiceImpl implements ModuleService{
                 ResponseEntity<String> response = (ResponseEntity<String>) networkService.get(url, payload, String.class);
                 ObjectMapper mapper = new ObjectMapper();
                 try {
-                    List<ApprovalPanel> panels = mapper.readValue(response.getBody(), new TypeReference<List<ApprovalPanel>>() {
-                        
-                    });
+                    List<ApprovalPanel> panels = mapper.readValue(response.getBody(),
+                            new TypeReference<List<ApprovalPanel>>() {});
                     return panels;
                 } catch (JsonProcessingException e) {
                     // TODO Auto-generated catch block
@@ -66,6 +66,22 @@ public class ModuleServiceImpl implements ModuleService{
                 return new ArrayList<>();
     }
 
-    
-    
+    @Override
+    public List<UserAssignInfo> getUsersByPermission(ClaimResolver claimResolver, String uri) {
+        HttpHeaders httpHeaders = networkService.setHttpHeaders(claimResolver.getToken());
+        httpHeaders.set("uri", uri);
+        String url = aclAPIEndpoint+"/modules/permissions/get-users-by-permission";
+        HttpEntity<?> payload = new HttpEntity<>(httpHeaders);
+        ResponseEntity<String> response = (ResponseEntity<String>) networkService.get(url, payload, String.class);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            List<UserAssignInfo> panels = mapper.readValue(response.getBody(),
+                    new TypeReference<List<UserAssignInfo>>() {});
+            return panels;
+        } catch (JsonProcessingException e) {
+
+            e.printStackTrace();
+        }
+        return new ArrayList<>();
+    }
 }

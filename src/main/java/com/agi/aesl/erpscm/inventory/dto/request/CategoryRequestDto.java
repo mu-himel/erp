@@ -46,6 +46,8 @@ public class CategoryRequestDto implements EntityConvertable<ItemCategory>{
 
     private BigDecimal vat;
 
+    private Long scmCategoryId;
+
     private Long cpsCategoryId;
 
     private Long requestedBy;

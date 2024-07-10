@@ -20,7 +20,7 @@ public interface DemandService extends VerificationDomainService{
     Page<?> getMyDemands(Jwt loggedInUser, Optional<Integer> page, Optional<Integer> size,
                          Optional<String> fromDate, Optional<String> toDate);
     Page<?> getAllDemands(Jwt loggedInUser, Optional<Integer> page, Optional<Integer> size,
-                            Optional<String> fromDate, Optional<String> toDate
+                            Optional<String> fromDate, Optional<String> toDate, Optional<Integer> daysRemain
                           );
 
     Optional<DemandDetailResDto> getDemandDetail(Long id);

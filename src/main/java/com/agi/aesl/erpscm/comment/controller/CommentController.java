@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,21 +42,24 @@ public class CommentController extends BaseController{
     
  
     @PostMapping("/approve")
-    public ResponseEntity<?> approve(@RequestBody ApproveDto approveDto){
+    public ResponseEntity<?> approve(
+            @AuthenticationPrincipal Jwt token,
+            @RequestBody ApproveDto approveDto){
         if(approveDto.getDomainType().equals(DomainType.DEMAND)){
             verificationService.setVerificationDomainService(demandService);
-            verificationService.approve(approveDto);
+            verificationService.approve(token, approveDto);
         }
         
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/verify")
-    public ResponseEntity<?> verify(@RequestBody VerifyDto verifyDto){
+    public ResponseEntity<?> verify(
+            @AuthenticationPrincipal Jwt token,
+            @RequestBody VerifyDto verifyDto){
         if(verifyDto.getDomainType().equals(DomainType.DEMAND)){
             verificationService.setVerificationDomainService(demandService);
-            verificationService.verify(verifyDto);
-        
+            verificationService.verify(token, verifyDto);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

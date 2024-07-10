@@ -81,13 +81,14 @@ public class DemandController extends BaseController{
                     @RequestParam("page") Optional<Integer> page,
                     @RequestParam("size") Optional<Integer> size,
                     @RequestParam("fromDate") Optional<String> fromDate,
-                    @RequestParam("toDate") Optional<String> toDate
+                    @RequestParam("toDate") Optional<String> toDate,
+                    @RequestParam("daysRemain") Optional<Integer> daysRemain
 
                     ){
 
         return new ResponseEntity<>(
                 demandService.getAllDemands(loggedInUser, page,size,
-                        fromDate,toDate
+                        fromDate,toDate, daysRemain
                         ),
                 HttpStatus.OK
         );

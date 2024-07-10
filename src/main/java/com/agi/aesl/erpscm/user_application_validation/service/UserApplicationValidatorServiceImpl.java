@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.hibernate.annotations.Any;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties.AssertingParty.Verification;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import com.agi.aesl.erpscm.comment.entity.Comment;
@@ -42,6 +43,9 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
 
     @Autowired
     private CommentService commentService;
+
+    @Autowired
+    private ClaimResolver claimResolver;
 
     @Override
     public Optional<VerifierConfig> getVerifiers(ClaimResolver claimResolver, String uri, String criteriaGroup, String categories) {
@@ -126,7 +130,8 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
 
     @Override
     @Transactional
-    public void verify(VerifyDto verifyDto) {
+    public void verify(Jwt token, VerifyDto verifyDto) {
+        claimResolver.setToken(token);
         Employee verifier = new Employee(verifyDto.getVerifier().getId());
         DomainType domainType = verifyDto.getDomainType();
         Long domainId = verifyDto.getDomainId();
@@ -171,7 +176,8 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
 
     @Override
     @Transactional
-    public void approve(ApproveDto verifyDto) {
+    public void approve(Jwt token, ApproveDto verifyDto) {
+        claimResolver.setToken(token);
         Employee verifier = new Employee(verifyDto.getVerifier().getId());
         DomainType domainType = verifyDto.getDomainType();
         Long domainId = verifyDto.getDomainId();
