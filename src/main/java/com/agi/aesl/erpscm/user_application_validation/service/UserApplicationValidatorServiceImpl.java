@@ -176,7 +176,8 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
 
     @Override
     @Transactional
-    public void approve(ApproveDto verifyDto) {
+    public void approve(Jwt token, ApproveDto verifyDto) {
+        claimResolver.setToken(token);
         Employee verifier = new Employee(verifyDto.getVerifier().getId());
         DomainType domainType = verifyDto.getDomainType();
         Long domainId = verifyDto.getDomainId();

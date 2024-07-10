@@ -8,4 +8,5 @@ public class UserInfo {
     String employeeName;
     String email;
     String employeeId;
+    String warehouseName;
 }

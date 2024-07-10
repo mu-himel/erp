@@ -3,6 +3,8 @@ package com.agi.aesl.erpscm.user_application_validation.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -27,11 +29,12 @@ public class VerifiyController extends BaseController{
     
  
     @PostMapping("/approve")
-    public ResponseEntity<?> approve(@RequestBody ApproveDto approveDto){
+    public ResponseEntity<?> approve(
+            @AuthenticationPrincipal Jwt token, @RequestBody ApproveDto approveDto){
         if(approveDto.getDomainType().equals(DomainType.DEMAND)){
             verificationService.setVerificationDomainService(demandService);
         }
-        verificationService.approve(approveDto);
+        verificationService.approve(token,approveDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

@@ -850,7 +850,10 @@ public class DemandServiceImpl implements DemandService{
         if(demandOp.isPresent()){
             Demand demand = demandOp.get();
 
-
+            demandMailService.setClaimResolver(claimResolver);
+            demandMailService.setDemand(demand);
+            demandMailService.getStoreUsers("demand/pending");
+            demandMailService.sentMail(null,"Pending Demand");
 
             demand.setStatus(DemandStatus.PENDING);
             demand.setDemandDetails(
@@ -895,8 +898,8 @@ public class DemandServiceImpl implements DemandService{
         if(demandOp.isPresent()){
             Demand demand = demandOp.get();
 
-            demandMailService.prepareMailContent(nextVerifier.getVerifier().getEmployeeName(),"Approval",demand);
-            demandMailService.sentMail(nextVerifier.getVerifier().getEmailAddress(),"Pending Demand Approval Request");
+            demandMailService.prepareMailContent(nextVerifier.getVerifier().getEmployeeName(),"Verification",demand);
+            demandMailService.sentMail(nextVerifier.getVerifier().getEmailAddress(),"Pending Demand Verification Request");
 
             DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
             demandVAHistory.setDemand(demand);
@@ -928,11 +931,6 @@ public class DemandServiceImpl implements DemandService{
         if(demandOp.isPresent()){
             Demand demand = demandOp.get();
 
-            demandMailService.setClaimResolver(claimResolver);
-            demandMailService.setDemand(demand);
-            demandMailService.getStoreUsers("demand/pending");
-            demandMailService.sentMail(null,"Pending Demand");
-
             DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
             demandVAHistory.setDemand(demand);
             demandVAHistory.setEmployee(new Employee(demand.getNextVerifierId()));
@@ -940,6 +938,9 @@ public class DemandServiceImpl implements DemandService{
             dvahistoryRepository.save(demandVAHistory);
 
             if(firstApprover.isPresent()){
+                demandMailService.prepareMailContent(firstApprover.get().getVerifier().getEmployeeName(),"Approval",demand);
+                demandMailService.sentMail(firstApprover.get().getVerifier().getEmailAddress(),"Pending Demand Approval Request");
+
                 demand.setNextApproverId(firstApprover.get().getVerifier().getId());
                 demand.setStatus(DemandStatus.PENDING_APPROVAL);
                 demand.setDemandDetails(
@@ -950,7 +951,10 @@ public class DemandServiceImpl implements DemandService{
                 );
             }else {
 
-
+                demandMailService.setClaimResolver(claimResolver);
+                demandMailService.setDemand(demand);
+                demandMailService.getStoreUsers("demand/pending");
+                demandMailService.sentMail(null,"Pending Demand");
 
                 demand.setStatus(DemandStatus.PENDING);
                 demand.setDemandDetails(

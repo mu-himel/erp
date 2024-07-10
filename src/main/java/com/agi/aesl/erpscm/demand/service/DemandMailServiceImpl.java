@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
@@ -45,10 +46,11 @@ public class DemandMailServiceImpl implements DemandMailService{
 
     @Override
     public void prepareMailContent(String name, String actionType, Demand demand) {
-        template = setMailFor("Mr. "+name);
+        template = setMailFor(name);
         processTemplate(actionType,demand);
     }
 
+    @Transactional
     private void processTemplate(String actionType, Demand demand){
         template = setInitiatorName(
                 setActionType(template,actionType),demand.getRequestedBy().getEmployeeName()
@@ -80,7 +82,7 @@ public class DemandMailServiceImpl implements DemandMailService{
     }
 
     private String setActionType(String tmp, String actionType){
-        return tmp.replaceAll("\\{actionType\\}",actionType);
+        return tmp.replaceAll("\\{actionType\\}",(actionType!=null)? actionType:"");
     }
 
     private String setProductDetail(String tmp, String productDetail){
@@ -108,24 +110,22 @@ public class DemandMailServiceImpl implements DemandMailService{
 
     @Override
     @Async
+    @Transactional
     public void sentMail(String to, String subject) {
         if(template!=null){
-
+                emailSenderService.refreshRecipient();
+                emailSenderService.addRecipient(to);
+                emailSenderService.sendEmail(subject,template);
+        }else{
             if(this.users.size()>0 && to==null){
                 for(UserAssignInfo uai :users){
                     emailSenderService.refreshRecipient();
-                    template = setMailFor("Mr."+uai.getUser().getEmployeeName());
+                    template = setMailFor(uai.getUser().getEmployeeName());
                     emailSenderService.addRecipient(uai.getUser().getEmail());
                     processTemplate(null,demand);
                     emailSenderService.sendEmail(subject,template);
                 }
-            }else{
-                emailSenderService.refreshRecipient();
-                emailSenderService.addRecipient(to);
-                emailSenderService.sendEmail(subject,template);
             }
-
-
         }
     }
 
@@ -135,11 +135,13 @@ public class DemandMailServiceImpl implements DemandMailService{
     }
 
     @Override
+    @Transactional
     public void setDemand(Demand demand) {
         this.demand = demand;
     }
 
     @Override
+    @Transactional
     public List<UserAssignInfo> getStoreUsers(String uri) {
         this.users = moduleService.getUsersByPermission(claimResolver,uri);
         return this.users;

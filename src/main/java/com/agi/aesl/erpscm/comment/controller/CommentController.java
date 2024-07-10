@@ -42,10 +42,12 @@ public class CommentController extends BaseController{
     
  
     @PostMapping("/approve")
-    public ResponseEntity<?> approve(@RequestBody ApproveDto approveDto){
+    public ResponseEntity<?> approve(
+            @AuthenticationPrincipal Jwt token,
+            @RequestBody ApproveDto approveDto){
         if(approveDto.getDomainType().equals(DomainType.DEMAND)){
             verificationService.setVerificationDomainService(demandService);
-            verificationService.approve(approveDto);
+            verificationService.approve(token, approveDto);
         }
         
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
