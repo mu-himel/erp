@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.inventory.service;
 
+import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 
@@ -24,11 +25,16 @@ import com.agi.aesl.erpscm.inventory.repository.CategoryRepository;
 import com.agi.aesl.erpscm.inventory.repository.CategoryWarehouseStoreRepository;
 import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
 
+import com.agi.aesl.erpscm.network.NetworkService;
+import com.agi.aesl.erpscm.organization.entity.Organization;
+import com.agi.aesl.erpscm.organization.service.OrgService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +69,12 @@ public class CategoryServiceImpl implements CategoryService {
     @Autowired
     private ItemRepository itemRepository;
 
+    @Autowired
+    private CpsServerConfig cpsServerConfig;
+
+    @Autowired
+    private OrgService orgService;
+
 //    @Autowired
 //    private DemandDetailRepository demandDetailRepository;
 //
@@ -72,7 +84,8 @@ public class CategoryServiceImpl implements CategoryService {
 //    @Autowired
 //    private WarehouseStoreRepository warehouseStoreRepository;
 
-    
+    @Autowired
+    private NetworkService networkService;
 
     @Override
     @Transactional
@@ -164,7 +177,7 @@ public class CategoryServiceImpl implements CategoryService {
 
 
 
-        category.setActive(true);
+        category.setActive(false);
         categoryRepository.save(category);
         
         Optional<CategoryWarehouseStore> cwsOp =  categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseId(category.getId() ,categoryRequestDto.getWarehouse().getId());
@@ -177,6 +190,18 @@ public class CategoryServiceImpl implements CategoryService {
             categoryWarehouseStoreRepository.save(categoryWarehouseStore);
         }
 
+        if(category.getId()!=null){
+            categoryRequestDto.setScmCategoryId(category.getId());
+            HttpHeaders headers = networkService.setHttpHeaders(token);
+
+            Optional<Organization> orgOp = orgService.getOrgByCode(cpsServerConfig.getOrgCode());
+            if(orgOp.isPresent()){
+                headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
+            }
+            HttpEntity<CategoryRequestDto> payload = new HttpEntity<>(categoryRequestDto,headers);
+            String url = cpsServerConfig.getItemCategoriesEndpoint();
+            networkService.post(url,payload,Void.class);
+        }
         return categoryRepository.findById(category.getId());
 
     }

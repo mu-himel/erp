@@ -160,7 +160,6 @@ public class ItemCategoryController extends BaseController{
     }
 
     @PostMapping
-    // @ApiOperation(value = "Create a new Item Category")
     public ResponseEntity<?> createItemCategory(
         @AuthenticationPrincipal Jwt loggedInUser,
         @RequestBody @Valid CategoryRequestDto categoryRequestDto){
@@ -169,9 +168,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @PutMapping("/{id}")
-    // @ApiOperation(value = "Update Category Information")
     public ResponseEntity<?> updateItemCategory(
-        // @ApiParam(value = "Category Id",example = "1", required = true) 
         @PathVariable("id") Long id,
                                                 @RequestBody CategoryRequestDto categoryRequestDto){
         categoryService.updateCategory(id,categoryRequestDto);
@@ -179,7 +176,6 @@ public class ItemCategoryController extends BaseController{
     }
 
     @DeleteMapping("/{id}")
-    // @ApiOperation(value = "Delete Category Information")
     public ResponseEntity<?> deleteItemCategory(
             // @ApiParam(value = "Category Id",example = "1", required = true) 
             @PathVariable("id") Long id,

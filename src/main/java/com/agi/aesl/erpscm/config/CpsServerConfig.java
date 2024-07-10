@@ -36,6 +36,8 @@ public class CpsServerConfig {
 
     private String pendingItemReqEndpoint;
 
+    private  String itemCategoriesEndpoint;
+
     private String erpIpAddress;
 
     public String getTenderEndpoint(){
@@ -125,6 +127,12 @@ public class CpsServerConfig {
     public String getPendingItemReqEndpoint(){
         StringBuilder sb = new StringBuilder();
         sb.append(this.host).append(this.pendingItemReqEndpoint);
+        return sb.toString();
+    }
+
+    public String getItemCategoriesEndpoint(){
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.host).append(this.itemCategoriesEndpoint);
         return sb.toString();
     }
 }
