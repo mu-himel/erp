@@ -35,6 +35,8 @@ public class ItemRequestDto implements EntityConvertable<Item> {
 
     private String sku;
 
+    private Long orgId;
+
     private ItemCategory itemCategory;
     private ItemCategory itemParentCategory;
 
@@ -54,8 +56,10 @@ public class ItemRequestDto implements EntityConvertable<Item> {
 
     private ReferenceObjectDto warehouseStore;
 
+    private Boolean active;
+    private Long scmItemId;
+
     @Override
-    // @ApiModelProperty(hidden = true)
     public Item getEntity() {
         Item item = new Item(id);
         BeanUtils.copyProperties(this,item);

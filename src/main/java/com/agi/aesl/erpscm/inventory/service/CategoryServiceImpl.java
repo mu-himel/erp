@@ -35,6 +35,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -192,15 +194,21 @@ public class CategoryServiceImpl implements CategoryService {
 
         if(category.getId()!=null){
             categoryRequestDto.setScmCategoryId(category.getId());
-            HttpHeaders headers = networkService.setHttpHeaders(token);
-
-            Optional<Organization> orgOp = orgService.getOrgByCode(cpsServerConfig.getOrgCode());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
             if(orgOp.isPresent()){
                 headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
             }
             HttpEntity<CategoryRequestDto> payload = new HttpEntity<>(categoryRequestDto,headers);
             String url = cpsServerConfig.getItemCategoriesEndpoint();
-            networkService.post(url,payload,Void.class);
+            ResponseEntity<?> response = networkService.post(url,payload,Void.class);
+            HttpHeaders httpHeaders = response.getHeaders();
+            List<String> headerId = httpHeaders.get("id");
+            if(headerId.size()>0){
+                category.setCpsCategoryId(Long.parseLong(headerId.get(0)));
+            }
+
         }
         return categoryRepository.findById(category.getId());
 
@@ -418,7 +426,19 @@ public class CategoryServiceImpl implements CategoryService {
                 code.orElse(null));
     }
 
-    
+    @Override
+    public List<?> getPendingSubCategoriesForInventoryControl(Optional<Long> categoryId,
+                                                              Optional<Long> warehouseId,
+                                                              Optional<Long> storeId,
+                                                              Optional<String> name,
+                                                              Optional<String> code) {
+        return categoryRepository.findAllPendingSubCategoriesForInventoryControl(
+                categoryId.orElse(null),
+                warehouseId.orElse(null),
+                storeId.orElse(null),
+                name.orElse(null),
+                code.orElse(null));
+    }
 
     @Override
     @Transactional
@@ -549,9 +569,15 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryRepository.findByCode(subCategoryCode);
     }
 
-    
 
-    
-
-    
+    @Override
+    public List<?> getPendingCategories(
+            Optional<Long> warehouseId,
+            Optional<Long> warehouseStoreId,
+            Optional<String> name,
+            Optional<String> code
+    ) {
+        return categoryRepository.findAllPendingCategories(warehouseId.orElse(null),warehouseStoreId.orElse(null),
+                name.orElse(null),code.orElse(null));
+    }
 }

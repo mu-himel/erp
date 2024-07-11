@@ -45,8 +45,17 @@ public class DemandMailServiceImpl implements DemandMailService{
 
 
     @Override
+    @Transactional
     public void prepareMailContent(String name, String actionType, Demand demand) {
         template = setMailFor(name);
+        processTemplate(actionType,demand);
+    }
+
+    @Override
+    @Transactional
+    public void prepareMailContentForInitiator(String name, String actionType, Demand demand) {
+        template = setMailFor(name);
+        template.replaceAll("pending demand","pending qc");
         processTemplate(actionType,demand);
     }
 

@@ -12,6 +12,7 @@ import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
 import com.agi.aesl.erpscm.fileupload.service.FileUploadService;
 // import com.agi.aesl.erpscm.indent.entity.Indent;
+import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.RemoteItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.response.ItemDetail;
@@ -25,6 +26,7 @@ import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.entity.ItemStock;
 import com.agi.aesl.erpscm.inventory.enums.ItemHeader;
+import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import com.agi.aesl.erpscm.inventory.enums.StockType;
 import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
 import com.agi.aesl.erpscm.inventory.repository.CategoryWarehouseStoreRepository;
@@ -392,7 +394,25 @@ public class ItemServiceImpl implements ItemService {
                 return itemAttribute;
             }).collect(Collectors.toList()));
         }
+        item.setActive(false);
+        item.setItemInactiveStatus(ItemInactiveStatus.PENDING);
         itemRepository.save(item);
+
+        if(item.getId()!=null){
+
+            itemRequestDto.setActive(false);
+            itemRequestDto.setScmItemId(item.getId());
+
+            HttpHeaders headers = networkService.setHttpHeaders(loggedInUser);
+            Optional<Organization> orgOp = orgService.getOrgByCode(cpsConfig.getOrgCode());
+            if(orgOp.isPresent()){
+                headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
+                itemRequestDto.setOrgId(orgOp.get().getId());
+            }
+            HttpEntity<ItemRequestDto> payload = new HttpEntity<>(itemRequestDto,headers);
+            String url = cpsConfig.getItemsEndpoint();
+            networkService.post(url,payload,Void.class);
+        }
 
     }
 

@@ -761,6 +761,10 @@ public class DemandServiceImpl implements DemandService{
         Demand demand = demandOptional.get();
         Integer pendingQcCount  = demandDetailRepository.countByStatusAndDemandId(DemandStatus.PENDING_QC,demand.getId());
 
+
+        demandMailService.prepareMailContentForInitiator(demand.getRequestedBy().getEmployeeName(),null,demand);
+        demandMailService.sentMail(demand.getRequestedBy().getEmailAddress(),"Pending Pending QC");
+
         System.out.println("Item Pending "+ pendingQcCount);
 
         Integer demandCount = demand.getDemandDetails().size();

@@ -44,7 +44,6 @@ public class ItemCategory {
   private ItemCategory parentCategory;
 
   @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
-  // @ApiModelProperty(hidden = true)
   private List<CategoryBudget> budgets;
 
   @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)

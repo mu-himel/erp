@@ -88,7 +88,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             ) as subcategoryCount
             FROM scm_item_categories ic
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
-            WHERE ic.parent_category_id IS NULL
+            WHERE ic.parent_category_id IS NULL AND ic.active=true AND ic.cps_category_id IS NOT NULL
             AND (:warehouseId IS NULL OR cws.warehouse_id = :warehouseId)
             AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
             AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
@@ -105,7 +105,8 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             FROM scm_item_categories ic
             LEFT JOIN scm_item_categories ipc ON ipc.id = ic.parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
-            WHERE ic.parent_category_id IS NOT NULL
+            WHERE ic.parent_category_id IS NOT NULL AND ic.cps_category_id IS NOT NULL
+            AND ic.active=true
             AND (:warehouseId IS NULL OR cws.warehouse_id = :warehouseId)
             AND (:storeId IS NULL OR cws.warehouse_store_id = :storeId)
             AND (:parentCategoryId IS NULL OR ic.parent_category_id = :parentCategoryId)
@@ -114,6 +115,28 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             GROUP BY ic.id
             """,nativeQuery = true)
     List<ItemCategoryInfo> findAllSubCategoriesForInventoryControl(
+            Long parentCategoryId,
+            Long warehouseId,
+            Long storeId,
+            String name, String code);
+
+    @Query(value = """
+            SELECT ic.id as id, ic.name as name, ic.code as code,
+            ipc.name as parentCategoryName, ipc.code as parentCategoryCode,
+            ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses
+            FROM scm_item_categories ic
+            LEFT JOIN scm_item_categories ipc ON ipc.id = ic.parent_category_id
+            LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
+            WHERE ic.parent_category_id IS NOT NULL AND ic.cps_category_id IS NOT NULL
+            AND ic.active=false
+            AND (:warehouseId IS NULL OR cws.warehouse_id = :warehouseId)
+            AND (:storeId IS NULL OR cws.warehouse_store_id = :storeId)
+            AND (:parentCategoryId IS NULL OR ic.parent_category_id = :parentCategoryId)
+            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
+            AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+            GROUP BY ic.id
+            """,nativeQuery = true)
+    List<ItemCategoryInfo> findAllPendingSubCategoriesForInventoryControl(
             Long parentCategoryId,
             Long warehouseId,
             Long storeId,
@@ -144,6 +167,30 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
 
     @Query("select max(ic.id) from ItemCategory ic")
     Optional<ItemCategory> findMaxOrderById();
+
+    @Query(value = """
+            SELECT ic.id as id, ic.name as name, ic.code as code,
+            ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses,
+            ic.cps_category_id as cpsCategoryId,
+            (SELECT COUNT(*) FROM scm_item_categories subCat 
+            LEFT JOIN scm_category_warehouse_stores subCws ON subCws.category_id=subCat.id
+            WHERE subCat.active=1 AND subCat.parent_category_id = ic.id
+            AND (:warehouseId IS NULL OR subCws.warehouse_id = :warehouseId)
+            AND (:warehouseStoreId IS NULL OR subCws.warehouse_store_id = :warehouseStoreId)
+            ) as subcategoryCount
+            FROM scm_item_categories ic
+            LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
+            WHERE ic.parent_category_id IS NULL AND ic.active=false
+            AND ic.cps_category_id IS NOT NULL
+            AND (:warehouseId IS NULL OR cws.warehouse_id = :warehouseId)
+            AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
+            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
+            AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+            GROUP BY ic.id
+            """, nativeQuery = true)
+    List<ItemCategoryInfo> findAllPendingCategories(Long warehouseId,
+                                                    Long warehouseStoreId,
+                                                    String name, String code);
 
     interface MainCategoriesInfo extends ItemCategoryInfo{
         Long getWarehouseId();
