@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/goods-receive-note")
@@ -36,5 +37,25 @@ public class GrnController {
             ){
         grnService.addGrn(token,goodReceiveNoteDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllGrn(
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+            ){
+        return new ResponseEntity<>(
+                grnService.getAllGrn(page,size,fromDate,toDate),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getGrnById(
+            @PathVariable("id") Long id
+    ){
+        return new ResponseEntity<>(grnService.getGrnById(id,false),HttpStatus.OK);
     }
 }

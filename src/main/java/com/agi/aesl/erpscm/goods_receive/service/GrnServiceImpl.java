@@ -11,11 +11,16 @@ import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -75,5 +80,31 @@ public class GrnServiceImpl implements GrnService{
                 ).collect(Collectors.toList())
         );
         grnRepository.save(goodReceiveNote);
+    }
+
+    @Override
+    public Page<?> getAllGrn(Optional<Integer> page,
+                             Optional<Integer> size,
+                             Optional<String> fromDate, Optional<String> toDate) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+        LocalDateTime fromDateObj = null;
+        LocalDateTime toDateObj = null;
+
+        if(fromDate.isPresent() && toDate.isPresent()){
+            fromDateObj = LocalDateTime.parse(fromDate.get()+"T00:00:00");
+            toDateObj = LocalDateTime.parse(toDate.get()+"T23:59:59");
+        }
+        return grnRepository.findAllGrn(pageable,fromDateObj,toDateObj);
+    }
+
+    @Override
+    public Optional<?> getGrnById(Long id, Boolean returnTypeEntity) {
+        if(returnTypeEntity){
+            return grnRepository.findById(id);
+        }else{
+            Optional<?> goodReceiveItemDetailOp = grnRepository.findGrnById(id);
+            return  goodReceiveItemDetailOp;
+        }
     }
 }
