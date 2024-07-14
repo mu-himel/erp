@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,6 +30,7 @@ import com.agi.aesl.erpscm.user_application_validation.dto.request.VerifyDto;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 
 @RestController
+@CrossOrigin(originPatterns = "*")
 @RequestMapping("/api/v1/comments")
 public class CommentController extends BaseController{
     @Autowired

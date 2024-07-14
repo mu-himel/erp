@@ -38,7 +38,7 @@ public class CategoryRequestDto implements EntityConvertable<ItemCategory>{
     private ItemCategory parentCategory;
 
     private List<CategoryAttribute> attributes;
-    private List<CategoryBrand> brands;
+    private List<String> brands;
 
 
 

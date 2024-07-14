@@ -33,4 +33,8 @@ public class CategoryBrand {
     public CategoryBrand(Long id) {
         this.id = id;
     }
+
+    public CategoryBrand(String name){
+        this.name = name;
+    }
 }

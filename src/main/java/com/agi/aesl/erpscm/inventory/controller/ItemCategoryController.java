@@ -183,7 +183,7 @@ public class ItemCategoryController extends BaseController{
     @PutMapping("/{id}")
     public ResponseEntity<?> updateItemCategory(
         @PathVariable("id") Long id,
-                                                @RequestBody CategoryRequestDto categoryRequestDto){
+        @RequestBody CategoryRequestDto categoryRequestDto){
         categoryService.updateCategory(id,categoryRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
