@@ -23,6 +23,7 @@ public interface AccountQuery {
 
     String countPendingAccounts = "SELECT COUNT(*) FROM ("+getPendingAccounts+") total";
 
+    //accounts query
     String ledgerAccDetail = """
         SELECT 
         la.id,
@@ -46,7 +47,7 @@ public interface AccountQuery {
         LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
         WHERE la.id=:id
             """;
-            
+
     String getApprovedAccountsList = """
         SELECT 
                 la.id,

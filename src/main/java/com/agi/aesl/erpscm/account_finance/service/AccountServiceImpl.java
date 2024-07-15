@@ -47,8 +47,8 @@ public class AccountServiceImpl implements AccountService{
     @Override
     public Page<?> getAllApprovedAccounts(Optional<Integer> page, Optional<Integer> size) {
         //TODO for Sourav
-        // accountRepository.findBy
-        return null;
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
+        return accountRepository.getApprovedLedgerAccounts(pageable);
     }
 
     @Override
