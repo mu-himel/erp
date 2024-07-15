@@ -112,6 +112,7 @@ public class CategoryServiceImpl implements CategoryService {
 //                    }).collect(Collectors.toList()));
                 }
                 cr.setCurrentYearBudget(new BigDecimal(0));
+                cr.setIsForCps(categoryRequestDto.getIsForCps());
                 this.addCategory(null,cr);
             }
         }
@@ -183,8 +184,12 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
 
+        if(categoryRequestDto.getIsForCps()==false){
+            category.setActive(true);
+        }else{
+            category.setActive(false);
+        }
 
-        category.setActive(false);
         categoryRepository.save(category);
         
         Optional<CategoryWarehouseStore> cwsOp =  categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseId(category.getId() ,categoryRequestDto.getWarehouse().getId());
@@ -197,15 +202,17 @@ public class CategoryServiceImpl implements CategoryService {
             categoryWarehouseStoreRepository.save(categoryWarehouseStore);
         }
 
-        if(category.getId()!=null){
+        if(category.getId()!=null && categoryRequestDto.getIsForCps()){
             RemoteCategoryRequestDto remoteCategoryRequestDto = new RemoteCategoryRequestDto();
             remoteCategoryRequestDto.setName(categoryRequestDto.getName());
             remoteCategoryRequestDto.setCode(category.getCode());
 
-            Optional<ItemCategory> parentCategoryOp = categoryRepository.findById(category.getParentCategory().getId());
+            if(categoryRequestDto.getParentCategory()!=null) {
+                Optional<ItemCategory> parentCategoryOp = categoryRepository.findById(category.getParentCategory().getId());
 
-            if(parentCategoryOp.isPresent()){
-                remoteCategoryRequestDto.setParentCategory(new ReferenceObjectDto(parentCategoryOp.get().getCpsCategoryId()));
+                if (parentCategoryOp.isPresent()) {
+                    remoteCategoryRequestDto.setParentCategory(new ReferenceObjectDto(parentCategoryOp.get().getCpsCategoryId()));
+                }
             }
 
             remoteCategoryRequestDto.setAttributes(categoryRequestDto.getAttributes().stream().map(attr->{

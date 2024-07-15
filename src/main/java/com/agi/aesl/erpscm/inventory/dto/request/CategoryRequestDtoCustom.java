@@ -40,7 +40,7 @@ public class CategoryRequestDtoCustom implements EntityConvertable<ItemCategory>
     private List<CategoryAttribute> attributes;
     private List<String> brands;
 
-
+    private Boolean isForCps;
 
     private ReferenceObjectDto warehouse;
     private ReferenceObjectDto warehouseStore;
