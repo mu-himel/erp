@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.account_finance.service;
 
+import com.agi.aesl.erpscm.account_finance.dto.request.LedgerAccountRequestDto;
 import com.agi.aesl.erpscm.account_finance.repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -56,5 +57,10 @@ public class AccountServiceImpl implements AccountService{
         //TODO for Sourav
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
         return accountRepository.getRejectedLedgerAccounts(pageable);
+    }
+
+    @Override
+    public void updateAccount(Long id, LedgerAccountRequestDto ledgerAccountRequestDto) {
+
     }
 }

@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.account_finance.controller;
 
+import com.agi.aesl.erpscm.account_finance.dto.request.LedgerAccountRequestDto;
 import com.agi.aesl.erpscm.account_finance.service.AccountService;
 import com.agi.aesl.erpscm.common.BaseController;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +28,12 @@ public class AccountFinanceController extends BaseController {
                          String group, String status){}
 
 
-    @GetMapping("/next-id")
-    public ResponseEntity<?> getNextNumber(){
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateLedgerAccount(@PathVariable("id") Long id,
+                                                 @RequestBody LedgerAccountRequestDto ledgerAccountRequestDto){
+        accountService.updateAccount(id, ledgerAccountRequestDto);
         return new ResponseEntity<>(
-                accountService,
-                HttpStatus.OK
+                HttpStatus.NO_CONTENT
         );
     }
 
