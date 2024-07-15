@@ -37,4 +37,22 @@ public class AccountServiceImpl implements AccountService{
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
         return accountRepository.getPendingLedgerAccounts(pageable);
     }
+
+    @Override
+    public Optional<?> getLedgerDetailById(Long id) {
+        //TODO for Sourav
+        return Optional.empty();
+    }
+
+    @Override
+    public Page<?> getAllApprovedAccounts(Optional<Integer> page, Optional<Integer> size) {
+        //TODO for Sourav
+        return null;
+    }
+
+    @Override
+    public Page<?> getAllRejectedAccounts(Optional<Integer> page, Optional<Integer> size) {
+        //TODO for Sourav
+        return null;
+    }
 }
