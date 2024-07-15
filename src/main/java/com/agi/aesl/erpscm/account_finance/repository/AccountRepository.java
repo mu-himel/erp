@@ -21,7 +21,10 @@ public interface AccountRepository extends JpaRepository<LedgerAccount,Long> , A
     @Query(value =ledgerAccDetail ,nativeQuery = true)
     Optional<PendingAccountDetail> findLedgerAccountById(Long id);
 
-    @Query(value = getApprovedAccountsList, nativeQuery = true)
+    @Query(value = getApprovedAccountsList,countQuery = countApprovedAccounts, nativeQuery = true)
     Page<PendingAccount> getApprovedLedgerAccounts(Pageable pageable);
+
+    @Query(value = getRejectedAccountsList,countQuery = countRejectedAccounts, nativeQuery = true)
+    Page<PendingAccount> getRejectedLedgerAccounts(Pageable pageable);
 
 }

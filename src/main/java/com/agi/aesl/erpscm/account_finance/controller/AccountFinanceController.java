@@ -55,30 +55,15 @@ public class AccountFinanceController extends BaseController {
 
     @GetMapping("/ledgers/approved")
     public ResponseEntity<?> getApprovedLedgerRequests(@RequestParam("page") Optional<Integer> page, @RequestParam("size") Optional<Integer> size){
-//        LedgerRequest lr = new LedgerRequest(2L,"A-10001","Store","Category","SubCategory",
-//                "Product-01","Group","Approved");
-//        ledgerRequestList.add(lr);
-//        Pageable pageable = PageRequest.of(0,10);
-//        Page<?> page = new PageImpl<LedgerRequest>(ledgerRequestList,pageable,10);
         /**TODO for Sourav -> Please replace commented out code with actual result
          * Set null with actual value
         */
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        return new ResponseEntity<>(accountService.getAllApprovedAccounts(page, size), HttpStatus.OK);
 
     }
 
     @GetMapping("/ledgers/rejected")
-    public ResponseEntity<?> getRejectedLedgerRequests(){
-//        List<LedgerRequest> ledgerRequestList = new ArrayList<>();
-//        LedgerRequest lr = new LedgerRequest(1L,"A-10001","Store","Category",
-//                "SubCategory","Product-01","Group","Rejected");
-//        ledgerRequestList.add(lr);
-//        Pageable pageable = PageRequest.of(0,10);
-//        Page<?> page = new PageImpl<LedgerRequest>(ledgerRequestList,pageable,10);
-        /**TODO for Sourav -> Please replace commented out code with actual result
-         * Set null with actual value
-         */
-        return new ResponseEntity<>(null, HttpStatus.OK);
-
+    public ResponseEntity<?> getRejectedLedgerRequests(@RequestParam("page") Optional<Integer> page, @RequestParam("size") Optional<Integer> size){
+        return new ResponseEntity<>(accountService.getAllRejectedAccounts(page, size), HttpStatus.OK);
     }
 }
