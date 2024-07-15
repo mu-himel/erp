@@ -41,12 +41,13 @@ public class AccountServiceImpl implements AccountService{
     @Override
     public Optional<?> getLedgerDetailById(Long id) {
         //TODO for Sourav
-        return Optional.empty();
+        return accountRepository.findLedgerAccountById(id);
     }
 
     @Override
     public Page<?> getAllApprovedAccounts(Optional<Integer> page, Optional<Integer> size) {
         //TODO for Sourav
+        // accountRepository.findBy
         return null;
     }
 
