@@ -32,7 +32,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
 
 
     @Query("SELECT ic FROM ItemCategory ic LEFT JOIN FETCH ic.budgets b " +
-            "WHERE ic.id=:id and b.category.id=:id and b.currentYear<=:year " +
+            "WHERE ic.id=:id and b.category.id=:id and (:year IS NULL OR b.currentYear<=:year) " +
             "GROUP BY ic.id")
     Optional<ItemCategory> findById(@Param("id") Long id, @Param("year") Integer Year);
 

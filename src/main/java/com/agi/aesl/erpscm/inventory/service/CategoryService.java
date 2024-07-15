@@ -16,12 +16,15 @@ import java.util.Optional;
 public interface CategoryService {
 
     Optional<ItemCategory> addCategory(Jwt loggedInUser, CategoryRequestDto categoryRequestDto);
+
     void addCategories(List<CategoryRequestDtoCustom> categoryRequestDtos);
 
-    void updateCategory(Long id,CategoryRequestDto categoryRequestDto);
+    void updateCategory(Long id, CategoryRequestDto categoryRequestDto);
+
     Optional<ItemCategory> existByCode(String Code);
 
     Optional<ItemCategory> getItemCategory(Long id);
+    Optional<ItemCategory> getPendingItemCategory(Long id);
 
 
     Page<?> getItemCategories(Optional<Integer> page, Optional<Integer> size,
@@ -31,23 +34,28 @@ public interface CategoryService {
                               Optional<Long> warehouseId,
                               Optional<Long> warehouseStoreId
     );
-    Page<?> getItemCategories( Optional<Integer> page, Optional<Integer> size,
-                               Optional<String> name, Optional<String> code,
-                               Optional<BigDecimal> currentYearBudget, Optional<Long> productCount,
-                               Optional<Long> categoryId,
-                               Optional<Long> warehouseId,
-                               Optional<Long> warehouseStoreId
+
+    Page<?> getItemCategories(Optional<Integer> page, Optional<Integer> size,
+                              Optional<String> name, Optional<String> code,
+                              Optional<BigDecimal> currentYearBudget, Optional<Long> productCount,
+                              Optional<Long> categoryId,
+                              Optional<Long> warehouseId,
+                              Optional<Long> warehouseStoreId
     );
 
     void activeCategory(Long id, Long warehouseId, Long storeId);
+
     void deleteCategory(Long id, Long warehouseId, Long storeId);
 
-    List<?> getCategories(Optional<Long> warehouseId,Optional<Long> warehouseStoreId,  Optional<String> name, Optional<String> code);
+    List<?> getCategories(Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name, Optional<String> code);
+
     List<?> getCategoriesForInventoryControl(Optional<Long> warehouse, Optional<Long> warehouseStore, Optional<String> name, Optional<String> code);
 
 
-    List<?> getSubCategories(Optional<Long>storeId, Optional<Long>categoryId, Optional<String> name, Optional<String> code);
-    List<?> getSubCategoriesAll(Optional<Long>categoryId, Optional<String> name, Optional<String> code);
+    List<?> getSubCategories(Optional<Long> storeId, Optional<Long> categoryId, Optional<String> name, Optional<String> code);
+
+    List<?> getSubCategoriesAll(Optional<Long> categoryId, Optional<String> name, Optional<String> code);
+
     List<?> getSubCategoriesForInventoryControl(
             Optional<Long> categoryId,
             Optional<Long> warehouseId,
