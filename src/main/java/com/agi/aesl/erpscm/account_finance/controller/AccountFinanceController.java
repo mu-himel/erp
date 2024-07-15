@@ -54,8 +54,7 @@ public class AccountFinanceController extends BaseController {
     }
 
     @GetMapping("/ledgers/approved")
-    public ResponseEntity<?> getApprovedLedgerRequests(){
-//        List<LedgerRequest> ledgerRequestList = new ArrayList<>();
+    public ResponseEntity<?> getApprovedLedgerRequests(@RequestParam("page") Optional<Integer> page, @RequestParam("size") Optional<Integer> size){
 //        LedgerRequest lr = new LedgerRequest(2L,"A-10001","Store","Category","SubCategory",
 //                "Product-01","Group","Approved");
 //        ledgerRequestList.add(lr);
