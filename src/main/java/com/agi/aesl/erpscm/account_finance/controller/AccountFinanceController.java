@@ -29,12 +29,9 @@ public class AccountFinanceController extends BaseController {
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateLedgerAccount(@PathVariable("id") Long id,
-                                                 @RequestBody LedgerAccountRequestDto ledgerAccountRequestDto){
+    public ResponseEntity<?> updateLedgerAccount(@PathVariable("id") Long id, @RequestBody LedgerAccountRequestDto ledgerAccountRequestDto){
         accountService.updateAccount(id, ledgerAccountRequestDto);
-        return new ResponseEntity<>(
-                HttpStatus.NO_CONTENT
-        );
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
 

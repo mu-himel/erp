@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.account_finance.service;
 
 import com.agi.aesl.erpscm.account_finance.dto.request.LedgerAccountRequestDto;
+import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
 import com.agi.aesl.erpscm.account_finance.repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Service
@@ -61,6 +63,16 @@ public class AccountServiceImpl implements AccountService{
 
     @Override
     public void updateAccount(Long id, LedgerAccountRequestDto ledgerAccountRequestDto) {
-
+        Optional<LedgerAccount> update_data = accountRepository.findById(id);
+        if(update_data.isPresent()){
+            LedgerAccount ledgerAccount = update_data.get();
+            ledgerAccount.setGroupAccount(ledgerAccountRequestDto.getGroupAccount());
+            ledgerAccount.setMasterAccount(ledgerAccountRequestDto.getMasterAccount());
+            ledgerAccount.setSubGroupAccount(ledgerAccountRequestDto.getSubGroupAccount());
+            ledgerAccount.setOpeningDate(LocalDate.parse(ledgerAccountRequestDto.getOpeningDate()));
+            ledgerAccount.setOpeningCreditAmount(ledgerAccountRequestDto.getOpeningCreditAmount());
+            ledgerAccount.setOpeningDebitAmount(ledgerAccountRequestDto.getOpeningDebitAmount());
+            accountRepository.save(ledgerAccount);
+        }
     }
 }
