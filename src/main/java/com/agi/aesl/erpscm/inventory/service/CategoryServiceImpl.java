@@ -213,17 +213,17 @@ public class CategoryServiceImpl implements CategoryService {
                 if (parentCategoryOp.isPresent()) {
                     remoteCategoryRequestDto.setParentCategory(new ReferenceObjectDto(parentCategoryOp.get().getCpsCategoryId()));
                 }
-            }
 
-            remoteCategoryRequestDto.setAttributes(categoryRequestDto.getAttributes().stream().map(attr->{
-                CategoryAttribute ca = new CategoryAttribute();
-                ca.setAttributeType(attr.getAttributeType());
-                ca.setAttributeUnit(attr.getAttributeUnit());
-                ca.setAttributeValue(attr.getAttributeValue());
-                return ca;
-            }).collect(Collectors.toList()));
-            remoteCategoryRequestDto.setBrands(categoryRequestDto.getBrands());
-            remoteCategoryRequestDto.setVat(categoryRequestDto.getVat());
+                remoteCategoryRequestDto.setAttributes(categoryRequestDto.getAttributes().stream().map(attr->{
+                    CategoryAttribute ca = new CategoryAttribute();
+                    ca.setAttributeType(attr.getAttributeType());
+                    ca.setAttributeUnit(attr.getAttributeUnit());
+                    ca.setAttributeValue(attr.getAttributeValue());
+                    return ca;
+                }).collect(Collectors.toList()));
+                remoteCategoryRequestDto.setBrands(categoryRequestDto.getBrands());
+                remoteCategoryRequestDto.setVat(categoryRequestDto.getVat());
+            }
             remoteCategoryRequestDto.setScmCategoryId(category.getId());
 
             HttpHeaders headers = new HttpHeaders();

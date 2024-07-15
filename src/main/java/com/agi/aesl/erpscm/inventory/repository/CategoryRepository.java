@@ -174,7 +174,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             ic.cps_category_id as cpsCategoryId,
             (SELECT COUNT(*) FROM scm_item_categories subCat 
             LEFT JOIN scm_category_warehouse_stores subCws ON subCws.category_id=subCat.id
-            WHERE subCat.active=1 AND subCat.parent_category_id = ic.id
+            WHERE subCat.active=0 AND subCat.parent_category_id = ic.id
             AND (:warehouseId IS NULL OR subCws.warehouse_id = :warehouseId)
             AND (:warehouseStoreId IS NULL OR subCws.warehouse_store_id = :warehouseStoreId)
             ) as subcategoryCount
