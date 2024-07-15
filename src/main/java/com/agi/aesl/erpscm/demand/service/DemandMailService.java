@@ -24,7 +24,7 @@ public interface DemandMailService {
             """;
 
     void prepareMailContent(String name, String actionType, Demand demand);
-//    void prepareMailContent(ApprovalPanel approvalPanel, String actionType, Demand demand);
+    void prepareMailContentForInitiator(String name, String actionType, Demand demand);
 
     void sentMail(String to, String subject);
 

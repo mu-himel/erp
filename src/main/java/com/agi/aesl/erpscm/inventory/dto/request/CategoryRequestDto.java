@@ -31,13 +31,14 @@ public class CategoryRequestDto implements EntityConvertable<ItemCategory>{
     // @ApiModelProperty(required = true)
     private String code;
 
+
     private BigDecimal currentYearBudget;
     private Optional<Long> budgetId;
 
     private ItemCategory parentCategory;
 
     private List<CategoryAttribute> attributes;
-    private List<CategoryBrand> brands;
+    private List<String> brands;
 
 
 

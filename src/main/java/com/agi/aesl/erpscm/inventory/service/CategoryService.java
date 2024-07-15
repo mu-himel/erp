@@ -68,4 +68,13 @@ public interface CategoryService {
     Optional<ItemCategory> getItemCategoryByName(String catName);
 
     Optional<ItemCategory> getCategoryByCode(String subCategoryCode);
+
+    List<?> getPendingCategories(Optional<Long> warehouseId,
+                                 Optional<Long> warehouseStoreId,
+                                 Optional<String> name,
+                                 Optional<String> code);
+
+    List<?> getPendingSubCategoriesForInventoryControl(Optional<Long> categoryId, Optional<Long> warehouseId,
+                                                       Optional<Long> storeId, Optional<String> name,
+                                                       Optional<String> code);
 }

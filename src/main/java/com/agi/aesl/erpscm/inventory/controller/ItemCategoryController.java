@@ -129,6 +129,19 @@ public class ItemCategoryController extends BaseController{
         );
     }
 
+    @GetMapping("/inventory-control/list/pending")
+    public ResponseEntity<?> getPendingSubCategoryListForInventoryControl(
+            @RequestParam("categoryId")  Optional<Long> categoryId,
+            @RequestParam("warehouseId")  Optional<Long> warehouseId,
+            @RequestParam("storeId")  Optional<Long> storeId,
+            @RequestParam("name")  Optional<String> name,
+            @RequestParam("code") Optional<String> code){
+        return new ResponseEntity<>(
+                categoryService.getPendingSubCategoriesForInventoryControl(categoryId,warehouseId,storeId, name,code),
+                HttpStatus.OK
+        );
+    }
+
     @GetMapping("/{id}")
     // @ApiOperation(value = "Get Category Detail By ID")
     public ResponseEntity<?> getItemCategory(
@@ -170,7 +183,7 @@ public class ItemCategoryController extends BaseController{
     @PutMapping("/{id}")
     public ResponseEntity<?> updateItemCategory(
         @PathVariable("id") Long id,
-                                                @RequestBody CategoryRequestDto categoryRequestDto){
+        @RequestBody CategoryRequestDto categoryRequestDto){
         categoryService.updateCategory(id,categoryRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
@@ -194,6 +207,19 @@ public class ItemCategoryController extends BaseController{
     ){
         categoryService.activeCategory(id, warehouseId, warehouseStoreId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/inventory-control/main-categories/pending")
+    public ResponseEntity<?> getPendingCategories(
+            Optional<Long> warehouseId,
+            Optional<Long> warehouseStoreId,
+            Optional<String> name,
+            Optional<String> code
+    ){
+        return new ResponseEntity<>(
+                categoryService.getPendingCategories(warehouseId,warehouseStoreId,name,code),
+                HttpStatus.OK
+        );
     }
 
     @DeleteMapping("/{categoryId}/{attributeId}")

@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.inventory.entity;
 
 
+import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
 
 import jakarta.persistence.CascadeType;
@@ -82,6 +83,9 @@ public class Item {
 
     // @ManyToOne
     private String createdBy;
+
+    @Enumerated(EnumType.STRING)
+    private ItemInactiveStatus itemInactiveStatus;
 
 
     public Item(Long id) {

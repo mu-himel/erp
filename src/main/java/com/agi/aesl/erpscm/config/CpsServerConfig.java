@@ -38,6 +38,8 @@ public class CpsServerConfig {
 
     private  String itemCategoriesEndpoint;
 
+    private String itemsEndpoint;
+
     private String erpIpAddress;
 
     public String getTenderEndpoint(){
@@ -133,6 +135,12 @@ public class CpsServerConfig {
     public String getItemCategoriesEndpoint(){
         StringBuilder sb = new StringBuilder();
         sb.append(this.host).append(this.itemCategoriesEndpoint);
+        return sb.toString();
+    }
+
+    public String getItemsEndpoint(){
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.host).append(this.itemsEndpoint);
         return sb.toString();
     }
 }
