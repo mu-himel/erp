@@ -54,7 +54,6 @@ public class AccountServiceImpl implements AccountService{
     @Override
     public Page<?> getAllRejectedAccounts(Optional<Integer> page, Optional<Integer> size) {
         //TODO for Sourav
-        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return accountRepository.getRejectedLedgerAccounts(pageable);
+        return null;
     }
 }
