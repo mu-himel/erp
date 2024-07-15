@@ -1,5 +1,7 @@
 package com.agi.aesl.erpscm.account_finance.entity;
 
+import com.agi.aesl.erpscm.account_finance.enums.AccountType;
+import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -30,6 +32,9 @@ public class LedgerAccount {
     private String subGroupAccount;
     private BigDecimal openingCreditAmount;
     private BigDecimal openingDebitAmount;
+
+    @Enumerated(EnumType.STRING)
+    private AccountType accountStatus;
 
     @ManyToOne
     private Employee requestedBy;
