@@ -153,6 +153,17 @@ public class ItemCategoryController extends BaseController{
         );
     }
 
+    @GetMapping("/pending/{id}")
+    // @ApiOperation(value = "Get Category Detail By ID")
+    public ResponseEntity<?> getPendingItemCategory(
+            // @ApiParam(value = "Category Id",example = "1", required = true)
+            @PathVariable("id") Long id){
+        return new ResponseEntity<>(
+                categoryService.getPendingItemCategory(id),
+                HttpStatus.OK
+        );
+    }
+
     @GetMapping("/inventory-control/{id}")
     // @ApiOperation(value = "Get Category Detail By ID")
     public ResponseEntity<?> getItemCategoryForInventoryControl(

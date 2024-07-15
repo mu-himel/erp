@@ -32,9 +32,14 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
 
 
     @Query("SELECT ic FROM ItemCategory ic LEFT JOIN FETCH ic.budgets b " +
-            "WHERE ic.id=:id and b.category.id=:id and b.currentYear<=:year " +
+            "WHERE ic.id=:id and b.category.id=:id and (:year IS NULL OR b.currentYear<=:year) " +
             "GROUP BY ic.id")
     Optional<ItemCategory> findById(@Param("id") Long id, @Param("year") Integer Year);
+
+    @Query("SELECT ic FROM ItemCategory ic " +
+            "WHERE ic.id=:id AND ic.active=false " +
+            "GROUP BY ic.id")
+    Optional<ItemCategory> findPendingCategoryById(@Param("id") Long id);
 
 
     @Query(value = getSubCategoriesWithSearch,countQuery = countSubCategoriesWithSearch,nativeQuery = true)
@@ -174,7 +179,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             ic.cps_category_id as cpsCategoryId,
             (SELECT COUNT(*) FROM scm_item_categories subCat 
             LEFT JOIN scm_category_warehouse_stores subCws ON subCws.category_id=subCat.id
-            WHERE subCat.active=1 AND subCat.parent_category_id = ic.id
+            WHERE subCat.active=0 AND subCat.parent_category_id = ic.id
             AND (:warehouseId IS NULL OR subCws.warehouse_id = :warehouseId)
             AND (:warehouseStoreId IS NULL OR subCws.warehouse_store_id = :warehouseStoreId)
             ) as subcategoryCount
