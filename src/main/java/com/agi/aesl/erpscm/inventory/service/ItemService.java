@@ -44,6 +44,30 @@ public interface ItemService {
 
     );
 
+    Page<?> getPendingAllItems(Optional<Integer> page, Optional<Integer> size,
+                        Optional<String> name,
+                        Optional<String> code,
+                        Optional<Integer> reorderPercentage,
+                        Optional<Integer> stockThresholdQty,
+                        Optional<Long> categoryId,
+                        Optional<Long> subCategoryId,
+                        Optional<Long> warehouseId,
+                        Optional<Long> warehouseStoreId
+
+    );
+
+    Page<?> getPendingVerificationAllItems(Optional<Integer> page, Optional<Integer> size,
+                        Optional<String> name,
+                        Optional<String> code,
+                        Optional<Integer> reorderPercentage,
+                        Optional<Integer> stockThresholdQty,
+                        Optional<Long> categoryId,
+                        Optional<Long> subCategoryId,
+                        Optional<Long> warehouseId,
+                        Optional<Long> warehouseStoreId
+
+    );
+
     List<?> getAllItems(Optional<Long> categoryId,Optional<String> name, Optional<String> code);
     List<?> getAllItemsBySubCategoryAndAttribute(
             Optional<Long> warehouseId,

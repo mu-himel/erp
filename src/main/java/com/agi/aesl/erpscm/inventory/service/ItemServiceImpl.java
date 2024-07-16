@@ -198,6 +198,44 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    public Page<?> getPendingAllItems(Optional<Integer> page, Optional<Integer> size, Optional<String> name, Optional<String> code, Optional<Integer> reorderPercentage, Optional<Integer> stockThresholdQty, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<Long> warehouseId, Optional<Long> warehouseStoreId) {
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+        Page<?> result  = itemRepository.findAllPendingItems(
+                name.orElse(null),
+                code.orElse(null),
+                reorderPercentage.orElse(null),
+                stockThresholdQty.orElse(null),
+                categoryId.orElse(null),
+                subCategoryId.orElse(null),
+                warehouseId.orElse(null),
+                warehouseStoreId.orElse(null),
+                pageable);
+
+
+        return result;
+    }
+
+    @Override
+    public Page<?> getPendingVerificationAllItems(Optional<Integer> page, Optional<Integer> size, Optional<String> name, Optional<String> code, Optional<Integer> reorderPercentage, Optional<Integer> stockThresholdQty, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<Long> warehouseId, Optional<Long> warehouseStoreId) {
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+        Page<?> result  = itemRepository.findAllPendingVerificationItems(
+                name.orElse(null),
+                code.orElse(null),
+                reorderPercentage.orElse(null),
+                stockThresholdQty.orElse(null),
+                categoryId.orElse(null),
+                subCategoryId.orElse(null),
+                warehouseId.orElse(null),
+                warehouseStoreId.orElse(null),
+                pageable);
+
+
+        return result;
+    }
+
+    @Override
     public List<?> getAllItems(Optional<Long> categoryId, Optional<String> name, Optional<String> code) {
 
 

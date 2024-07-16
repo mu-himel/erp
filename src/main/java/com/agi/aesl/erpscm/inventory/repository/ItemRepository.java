@@ -46,6 +46,34 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             Pageable pageable
     );
 
+    @Query(value = getPendingItemsWithSearch,
+            countQuery = countAllPendingItems, nativeQuery = true)
+    Page<PageItemList> findAllPendingItems(
+            @Param("name") String name,
+            @Param("code") String code,
+            @Param("reorderPercentage") Integer reorderPercentage,
+            @Param("stockThresholdQty") Integer stockThresholdQty,
+            @Param("categoryId") Long categoryId,
+            @Param("subCategoryId") Long subCategoryId,
+            @Param("warehouseId") Long warehouseId,
+            @Param("warehouseStoreId") Long warehouseStoreId,
+            Pageable pageable
+    );
+
+    @Query(value = getPendingVerificationItemsWithSearch,
+            countQuery = countAllPendingVerificationItems, nativeQuery = true)
+    Page<PageItemList> findAllPendingVerificationItems(
+            @Param("name") String name,
+            @Param("code") String code,
+            @Param("reorderPercentage") Integer reorderPercentage,
+            @Param("stockThresholdQty") Integer stockThresholdQty,
+            @Param("categoryId") Long categoryId,
+            @Param("subCategoryId") Long subCategoryId,
+            @Param("warehouseId") Long warehouseId,
+            @Param("warehouseStoreId") Long warehouseStoreId,
+            Pageable pageable
+    );
+
 
     List<ItemInfo> findAllByActiveAndNameLikeIgnoreCase(Boolean active, String name);
 

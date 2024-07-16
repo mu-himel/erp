@@ -61,7 +61,6 @@ public class ItemController extends BaseController{
     }
 
     @GetMapping
-    // @ApiOperation(value = "Get Items with Pagination")
     public ResponseEntity<?> getItems(@RequestParam("page") Optional<Integer> page,
                                       @RequestParam("size") Optional<Integer> size,
                                       @RequestParam("name") Optional<String> name,
@@ -76,6 +75,46 @@ public class ItemController extends BaseController{
 
         return new ResponseEntity<>(
                 itemService.getAllItems(page,size, name,code,reorderPercentage,stockThresholdQty,
+                        categoryId,subCategoryId, warehouseId,warehouseStoreId),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/pending")
+    public ResponseEntity<?> getPendingItems(@RequestParam("page") Optional<Integer> page,
+                                      @RequestParam("size") Optional<Integer> size,
+                                      @RequestParam("name") Optional<String> name,
+                                      @RequestParam("code") Optional<String> code,
+                                      @RequestParam("reorderPercentage") Optional<Integer> reorderPercentage,
+                                      @RequestParam("stockThresholdQty") Optional<Integer> stockThresholdQty,
+                                      @RequestParam("categoryId") Optional<Long> categoryId,
+                                      @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+                                      @RequestParam("warehouseId") Optional<Long> warehouseId,
+                                      @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId
+    ){
+
+        return new ResponseEntity<>(
+                itemService.getPendingAllItems(page,size, name,code,reorderPercentage,stockThresholdQty,
+                        categoryId,subCategoryId, warehouseId,warehouseStoreId),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/pending-verifications")
+    public ResponseEntity<?> getPendingVerificationItems(@RequestParam("page") Optional<Integer> page,
+                                             @RequestParam("size") Optional<Integer> size,
+                                             @RequestParam("name") Optional<String> name,
+                                             @RequestParam("code") Optional<String> code,
+                                             @RequestParam("reorderPercentage") Optional<Integer> reorderPercentage,
+                                             @RequestParam("stockThresholdQty") Optional<Integer> stockThresholdQty,
+                                             @RequestParam("categoryId") Optional<Long> categoryId,
+                                             @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+                                             @RequestParam("warehouseId") Optional<Long> warehouseId,
+                                             @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId
+    ){
+
+        return new ResponseEntity<>(
+                itemService.getPendingVerificationAllItems(page,size, name,code,reorderPercentage,stockThresholdQty,
                         categoryId,subCategoryId, warehouseId,warehouseStoreId),
                 HttpStatus.OK
         );
