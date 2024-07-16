@@ -3,10 +3,13 @@ package com.agi.aesl.erpscm.goods_receive.service;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
+import com.agi.aesl.erpscm.goods_receive.dto.response.GoodReceiveNoteItemDetailInfo;
+import com.agi.aesl.erpscm.goods_receive.dto.response.GrnDetailInfo;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
 import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository;
+import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository.*;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
@@ -19,9 +22,10 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -103,7 +107,32 @@ public class GrnServiceImpl implements GrnService{
         if(returnTypeEntity){
             return grnRepository.findById(id);
         }else{
-            Optional<?> goodReceiveItemDetailOp = grnRepository.findGrnById(id);
+            Optional<GoodReceiveNoteDetailInfo> goodReceiveItemDetailOp = grnRepository.findGrnById(id);
+            Map<String,Object> _detailinfo = new HashMap<>();
+            if(goodReceiveItemDetailOp.isPresent()){
+                GoodReceiveNoteDetailInfo detailInfo = goodReceiveItemDetailOp.get();
+                GrnDetailInfo grnDetailInfo = new GrnDetailInfo();
+                grnDetailInfo.setIndentNo(detailInfo.getIndentNo());
+                grnDetailInfo.setCreatedAt(detailInfo.getCreatedAt());
+                grnDetailInfo.setId(detailInfo.getId());
+                grnDetailInfo.setGrnNo(detailInfo.getGrnNo());
+                grnDetailInfo.setGrnStatus(detailInfo.getGrnStatus());
+                grnDetailInfo.setWarehouse(detailInfo.getWarehouse());
+                grnDetailInfo.setIsReceivedByStore(detailInfo.getIsReceivedByStore());
+                grnDetailInfo.setCreatedBy(detailInfo.getCreatedBy());
+                Long vendorId = detailInfo.getVendorId();
+                List<GoodReceiveNoteItemDetailInfo> detailInfos = new ArrayList<>();
+                detailInfo.getGoodReceiveItemDetails().stream().forEach(goodReceiveNoteItemDetailInfo -> {
+                    GoodReceiveNoteItemDetailInfo grnidi = new GoodReceiveNoteItemDetailInfo();
+
+//                    Optional<PriceQuotationDetailInfo> pqDetailOp = priceQuotationDetailRepository.findByItemAttribute(
+//                            vendorId,
+//                            goodReceiveNoteItemDetailInfo.getWarehouse().getId(),
+//                            goodReceiveNoteItemDetailInfo.getItemAttribute()
+//                    );
+                });
+
+            }
             return  goodReceiveItemDetailOp;
         }
     }

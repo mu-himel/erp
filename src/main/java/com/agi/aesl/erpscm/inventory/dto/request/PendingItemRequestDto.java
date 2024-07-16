@@ -1,0 +1,24 @@
+package com.agi.aesl.erpscm.inventory.dto.request;
+
+import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+public class PendingItemRequestDto {
+    private Long scmItemId;
+    private String subCategoryCode;
+    private String brand;
+    private String requestedBy;
+    private String employeeId;
+    private String reportingManager;
+    private String designation;
+    private String department;
+    private Long warehouseId;
+    private String warehouseName;
+    private Long organizationId;
+    private String warehouseLocation;
+    private String extendedAttributes;
+    private List<ItemAttribute> attributes;
+}

@@ -41,6 +41,9 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             "GROUP BY ic.id")
     Optional<ItemCategory> findPendingCategoryById(@Param("id") Long id);
 
+    @Query(value = "SELECT ic FROM ItemCategory ic WHERE ic.id=:id")
+    Optional<ItemCategory> findAnyCategoryById(Long id);
+
 
     @Query(value = getSubCategoriesWithSearch,countQuery = countSubCategoriesWithSearch,nativeQuery = true)
     Page<SubCategoryInfoExt> findAllSubCategories(

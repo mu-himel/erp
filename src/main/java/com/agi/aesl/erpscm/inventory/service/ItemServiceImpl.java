@@ -8,12 +8,14 @@ import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 //import com.agi.aesl.erpscm.demand.repository.DemandRepository;
+import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
 import com.agi.aesl.erpscm.fileupload.service.FileUploadService;
 // import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
+import com.agi.aesl.erpscm.inventory.dto.request.PendingItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.RemoteItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.response.ItemDetail;
 import com.agi.aesl.erpscm.inventory.dto.response.ItemListWithAttributesDto;
@@ -37,6 +39,7 @@ import com.agi.aesl.erpscm.organization.service.OrgService;
 // import com.agi.aesl.erpscm.scm.dto.request.OfferRequestDto;
 import com.agi.aesl.erpscm.network.NetworkService;
 
+import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,10 +47,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +67,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private ItemRepository itemRepository;
+
+    @Autowired
+    private ClaimResolver claimResolver;
 
 
 //    @Autowired
@@ -325,7 +329,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public void createItem(Jwt loggedInUser, ItemRequestDto itemRequestDto) {
-
+        claimResolver.setToken(loggedInUser);
         Item item = itemRequestDto.getEntity();
 
         String itemAttributeName = generateItemAttribute(itemRequestDto.getAttributes());
@@ -381,7 +385,7 @@ public class ItemServiceImpl implements ItemService {
         }
 
         item.setStocks(Arrays.asList(new ItemStock(
-                itemRequestDto.getCurrentStockQty(),
+                ((itemRequestDto.getCurrentStockQty()!=null)? itemRequestDto.getCurrentStockQty() : new BigDecimal(0)),
                 item,
                 StockType.STOCK_IN,warehouse,warehouseStore
                 )));
@@ -400,18 +404,43 @@ public class ItemServiceImpl implements ItemService {
 
         if(item.getId()!=null){
 
-            itemRequestDto.setActive(false);
-            itemRequestDto.setScmItemId(item.getId());
+            PendingItemRequestDto pendingItemRequestDto = new PendingItemRequestDto();
+            Employee employee = claimResolver.getEmployee().orElse(null);
 
-            HttpHeaders headers = networkService.setHttpHeaders(loggedInUser);
-            Optional<Organization> orgOp = orgService.getOrgByCode(cpsConfig.getOrgCode());
+            if(employee!=null) {
+                pendingItemRequestDto.setRequestedBy(employee.getId());
+            }
+            Optional<ItemCategory> catOp = categoryService.getAnyItemCategory(item.getItemCategory().getId());
+
+
+            pendingItemRequestDto.setDesignation(employee.getDesignationName());
+            pendingItemRequestDto.setDepartment(employee.getDepartmentName());
+            pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
+
+            pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
+            pendingItemRequestDto.setSubCategoryCode(catOp.get().getCode());
+            if(item.getBrand()!=null) {
+                Optional<CategoryBrand> brandOp = categoryBrandRepository.findById(item.getBrand().getId());
+                pendingItemRequestDto.setBrand(brandOp.get().getName());
+            }
+            pendingItemRequestDto.setReportingManager(employee.getReportingManager());
+            pendingItemRequestDto.setEmployeeId(employee.getId());
+            pendingItemRequestDto.setAttributes(itemRequestDto.getAttributes());
+            pendingItemRequestDto.setRequestedBy(item.getCreatedBy());
+            pendingItemRequestDto.setScmItemId(item.getId());
+
+            HttpHeaders headers =  new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(loggedInUser.getTokenValue());
             if(orgOp.isPresent()){
+                pendingItemRequestDto.setOrganizationId(orgOp.get().getCpsVendorRegistrationId());
                 headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
                 itemRequestDto.setOrgId(orgOp.get().getId());
             }
-            HttpEntity<ItemRequestDto> payload = new HttpEntity<>(itemRequestDto,headers);
-            String url = cpsConfig.getItemsEndpoint();
-            networkService.post(url,payload,Void.class);
+            HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(pendingItemRequestDto,headers);
+            String url = cpsConfig.getPendingItemReqEndpoint();
+            ResponseEntity<?> response = networkService.post(url,payload,Void.class);
+            System.out.println("STATUS CODE: "+response.getStatusCode());
         }
 
     }
@@ -495,6 +524,7 @@ public class ItemServiceImpl implements ItemService {
                 return _itemAttribute;
             }).collect(Collectors.toList()));
         }
+        item.setActive(false);
         itemRepository.save(item);
         
     }
@@ -755,11 +785,13 @@ public class ItemServiceImpl implements ItemService {
             }
             // throw new AesException("Sorry! Item Already exist with same attributes for this brand");
         }else{
+
             item.setItemUnit(syncItemDetail.getItemUnit());
             item.setManufacturer(syncItemDetail.getManufacturer());
             item.setName(syncItemDetail.getName());
             item.setItemAttributeName(itemAttributeName);
-    
+            item.setActive(false);
+
             item.setStocks(Arrays.asList(new ItemStock(
                 new BigDecimal(0l),
                 item,

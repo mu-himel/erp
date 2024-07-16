@@ -10,6 +10,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -29,8 +31,11 @@ public class AccountFinanceController extends BaseController {
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateLedgerAccount(@PathVariable("id") Long id, @RequestBody LedgerAccountRequestDto ledgerAccountRequestDto){
-        accountService.updateAccount(id, ledgerAccountRequestDto);
+    public ResponseEntity<?> updateLedgerAccount(
+            @RequestHeader("uri") String uri,
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id, @RequestBody LedgerAccountRequestDto ledgerAccountRequestDto){
+        accountService.updateAccount(token, uri,  id, ledgerAccountRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

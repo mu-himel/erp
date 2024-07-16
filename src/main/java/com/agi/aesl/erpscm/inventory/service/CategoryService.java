@@ -24,6 +24,8 @@ public interface CategoryService {
     Optional<ItemCategory> existByCode(String Code);
 
     Optional<ItemCategory> getItemCategory(Long id);
+
+    Optional<ItemCategory> getAnyItemCategory(Long id);
     Optional<ItemCategory> getPendingItemCategory(Long id);
 
 

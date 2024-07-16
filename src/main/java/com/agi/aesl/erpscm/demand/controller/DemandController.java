@@ -48,7 +48,7 @@ public class DemandController extends BaseController{
     public ResponseEntity<?> updateDemand(
         @AuthenticationPrincipal Jwt token,
         @PathVariable("id") Long id,
-    @RequestAttribute String uri,
+        @RequestHeader("uri") String uri,
     @RequestBody @Valid DemandRequestDto demandRequestDto){
         demandService.updateDemand(token, uri,id, demandRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

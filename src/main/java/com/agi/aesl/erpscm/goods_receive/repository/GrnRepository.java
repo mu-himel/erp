@@ -1,8 +1,12 @@
 package com.agi.aesl.erpscm.goods_receive.repository;
 
+import com.agi.aesl.erpscm.common.ReferenceObjectDto;
+import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseStoreRepository;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
+import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
+import com.agi.aesl.erpscm.inventory.entity.ItemStock;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +33,9 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
                                          @Param("toDate") LocalDateTime toDate
     );
 
+    @Query(value = """
+            SELECT grn FROM GoodReceiveNote grn WHERE grn.id=:id
+            """)
     Optional<GoodReceiveNoteDetailInfo> findGrnById(Long id);
 
     interface GoodReceiveNoteDetailInfo{
@@ -39,6 +46,8 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
         LocalDateTime getCreatedAt();
 
         Boolean getIsReceivedByStore();
+        String getIndentNo();
+        Long getVendorId();
 //        PurchaseOrder getPurchaseOrder();
         WarehouseInfo getWarehouse();
         Employee getCreatedBy();
@@ -67,5 +76,26 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
 
     interface GoodReceiveNoteItemDetailInfo{
         Long getId();
+        GrnItemInfo getItem();
+        LocalDate getManufactureDate();
+        LocalDate getExpireDate();
+        String getItemAttribute();
+        Long getReceiveQty();
+        WarehouseInfo getWarehouse();
+    }
+
+    interface GrnItemInfo{
+        Long getId();
+        String getCode();
+        String getName();
+        List<ItemStock> getStocks();
+        List<ItemAttribute> getAttributes();
+        ReferenceObjectDto getItemCategory();
+         WarehouseStoreInfo getWarehouseStore();
+    }
+
+    interface WarehouseStoreInfo{
+        Long getId();
+        String getStoreName();
     }
 }
