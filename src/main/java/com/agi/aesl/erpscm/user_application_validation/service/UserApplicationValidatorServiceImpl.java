@@ -113,6 +113,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     }
 
     @Override
+    @Transactional
     public void removeVerification(Long domainId, DomainType domainType) {
         verificationRepository.deleteAllByDomainIdAndDomainType(domainId, domainType);
     }

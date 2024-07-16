@@ -2,12 +2,18 @@ package com.agi.aesl.erpscm.account_finance.service;
 
 import com.agi.aesl.erpscm.account_finance.dto.request.LedgerAccountRequestDto;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
+import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.account_finance.repository.AccountRepository;
+import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.erpn_integration.service.IntegrationWriterService;
+import com.agi.aesl.erpscm.inventory.entity.Item;
+import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,6 +25,12 @@ public class AccountServiceImpl implements AccountService{
     private static final Integer PAGE_SIZE = 10;
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    private ClaimResolver claimResolver;
+
+    @Autowired
+    private IntegrationWriterService integrationWriterService;
 
     @Override
     public String getNextAccountNo() {
@@ -62,7 +74,12 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public void updateAccount(Long id, LedgerAccountRequestDto ledgerAccountRequestDto) {
+    public void updateAccount(Jwt token, String uri, Long id, LedgerAccountRequestDto ledgerAccountRequestDto) {
+        claimResolver.setToken(token);
+        Optional<Employee> employeeOp = claimResolver.getEmployee();
+        Employee employee = employeeOp.orElse(null);
+
+
         Optional<LedgerAccount> update_data = accountRepository.findById(id);
         if(update_data.isPresent()){
             LedgerAccount ledgerAccount = update_data.get();
@@ -72,7 +89,13 @@ public class AccountServiceImpl implements AccountService{
             ledgerAccount.setOpeningDate(LocalDate.parse(ledgerAccountRequestDto.getOpeningDate()));
             ledgerAccount.setOpeningCreditAmount(ledgerAccountRequestDto.getOpeningCreditAmount());
             ledgerAccount.setOpeningDebitAmount(ledgerAccountRequestDto.getOpeningDebitAmount());
+            ledgerAccount.setRequestedBy(employee);
+            ledgerAccount.setAccountStatus(AccountType.PENDING_VERIFICATION);
             accountRepository.save(ledgerAccount);
+//            Item item = ledgerAccount.getItem();
+//            String itemAttributeName = item.getItemAttributeName();
+//            String brandName = item.getName();
+//            integrationWriterService.createLedgerAccount();
         }
     }
 }

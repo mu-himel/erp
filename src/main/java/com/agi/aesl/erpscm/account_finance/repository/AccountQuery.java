@@ -18,7 +18,7 @@ public interface AccountQuery {
             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
-            WHERE la.account_status IN ('PENDING')
+            WHERE la.account_status IN ('PENDING','PENDING_VERIFICATION','PENDING_APPROVAL')
             """;
 
     String countPendingAccounts = "SELECT COUNT(*) FROM ("+getPendingAccounts+") total";

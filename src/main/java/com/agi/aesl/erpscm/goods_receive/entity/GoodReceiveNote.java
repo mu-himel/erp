@@ -45,6 +45,9 @@ public class GoodReceiveNote {
 
     private  Boolean isReceivedByStore;
 
+    private String indentNo;
+    private Long vendorId;
+
     @ManyToOne
     private Warehouse warehouse;
 

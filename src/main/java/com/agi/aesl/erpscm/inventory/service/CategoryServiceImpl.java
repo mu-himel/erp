@@ -321,6 +321,11 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    public Optional<ItemCategory> getAnyItemCategory(Long id) {
+        return categoryRepository.findAnyCategoryById(id);
+    }
+
+    @Override
     public Optional<ItemCategory> getPendingItemCategory(Long id) {
         return categoryRepository.findPendingCategoryById(id);
     }
