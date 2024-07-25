@@ -225,7 +225,8 @@ public class CategoryServiceImpl implements CategoryService {
                 remoteCategoryRequestDto.setVat(categoryRequestDto.getVat());
             }
             remoteCategoryRequestDto.setScmCategoryId(category.getId());
-
+            remoteCategoryRequestDto.setCreatedBy(categoryRequestDto.getEmployee());
+            remoteCategoryRequestDto.setCategoryStatus("PENDING");
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
@@ -288,9 +289,6 @@ public class CategoryServiceImpl implements CategoryService {
                     categoryBudgetRepository.save(categoryBudget);
 
                 }
-
-
-
             }
         }
 

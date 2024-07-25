@@ -1,5 +1,7 @@
 package com.agi.aesl.erpscm.account_finance.repository;
 
+import java.math.BigDecimal;
+
 public interface AccountQuery {
 
     String getPendingAccounts = """
@@ -34,7 +36,9 @@ public interface AccountQuery {
         la.opening_date as openingDate,
         la.opening_debit_amount as openingDebitAmount,
         ws.store_name as store,
+        ipc.id as categoryId,
         ipc.name as category,
+        ic.id as subCategoryId,
         ic.name as subCategory,
         i.item_attribute_name as product,
         la.group_account as groupAccount,
@@ -72,8 +76,10 @@ public interface AccountQuery {
                 la.id,
                 la.account_no accountNo,
                 ws.store_name as store,
+                ipc.id as categoryId,
                 ipc.name as category,
                 ic.name as subCategory,
+                ic.id as subCategoryId,
                 i.item_attribute_name as product,
                 la.group_account as groupAccount,
                 la.account_status as accountStatus
@@ -91,7 +97,9 @@ public interface AccountQuery {
         Long getId();
         String getAccountNo();
         String getStore();
+        Long getCategoryId();
         String getCategory();
+        Long getSubCategoryId();
         String getSubCategory();
         String getProduct();
         String getGroupAccount();
@@ -105,8 +113,8 @@ public interface AccountQuery {
     public interface PendingAccountDetail extends PendingAccount {
         String getMasterAccount();
         String getSubGroupAccount();
-        int getOpeningCreditAmount();
+        BigDecimal getOpeningCreditAmount();
         String getOpeningDate();
-        int getOpeningDebitAmount();
+        BigDecimal getOpeningDebitAmount();
     }
 }

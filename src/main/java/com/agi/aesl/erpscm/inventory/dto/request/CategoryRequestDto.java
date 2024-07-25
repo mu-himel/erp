@@ -55,6 +55,8 @@ public class CategoryRequestDto implements EntityConvertable<ItemCategory>{
 
     private Long requestedBy;
 
+    private String employee;
+
     @Override
     public ItemCategory getEntity() {
         ItemCategory category = new ItemCategory(id);

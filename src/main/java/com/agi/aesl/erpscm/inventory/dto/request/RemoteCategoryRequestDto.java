@@ -38,4 +38,9 @@ public class RemoteCategoryRequestDto {
     private Long cpsCategoryId;
 
     private Long scmCategoryId;
+
+    private String createdBy;
+
+    private String categoryStatus;
+
 }

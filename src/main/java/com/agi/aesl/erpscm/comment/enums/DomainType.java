@@ -4,5 +4,5 @@ public enum DomainType {
     DEMAND,
     INDENT,
     CS, PRICE_QUOTATION,
-    PO, IR, PSIR 
+    PO, IR, ACCOUNT_LEDGER, PSIR
 }

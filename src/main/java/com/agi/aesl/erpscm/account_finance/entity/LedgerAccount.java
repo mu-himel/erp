@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.account_finance.entity;
 
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
+import com.agi.aesl.erpscm.demand.enums.DemandStatus;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -35,6 +36,16 @@ public class LedgerAccount {
 
     @Enumerated(EnumType.STRING)
     private AccountType accountStatus;
+
+    private String nextVerifierId;
+    private String nextApproverId;
+
+    @Enumerated(EnumType.STRING)
+    private DemandStatus reviewPrevStatus;
+
+    private String reviewerId;
+
+    private LocalDateTime reviewDate;
 
     @ManyToOne
     private Employee requestedBy;

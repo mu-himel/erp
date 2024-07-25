@@ -16,4 +16,6 @@ public class LedgerAccountRequestDto {
     private BigDecimal openingCreditAmount;
     private BigDecimal openingDebitAmount;
     private String openingDate;
+    private Long categoryId;
+    private Long subCategoryId;
 }

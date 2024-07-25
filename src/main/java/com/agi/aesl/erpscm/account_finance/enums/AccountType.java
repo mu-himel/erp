@@ -5,5 +5,5 @@ public enum AccountType {
     PENDING_VERIFICATION,
     PENDING_APPROVAL,
     REJECTED,
-    APPROVED
+    VERIFIED, APPROVED
 }
