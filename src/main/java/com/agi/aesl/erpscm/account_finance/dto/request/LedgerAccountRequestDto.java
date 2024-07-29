@@ -18,4 +18,5 @@ public class LedgerAccountRequestDto {
     private String openingDate;
     private Long categoryId;
     private Long subCategoryId;
+    private String store;
 }

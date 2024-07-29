@@ -31,6 +31,7 @@ public class LedgerAccount {
     private String masterAccount;
     private String groupAccount;
     private String subGroupAccount;
+    private String store;
     private BigDecimal openingCreditAmount;
     private BigDecimal openingDebitAmount;
 

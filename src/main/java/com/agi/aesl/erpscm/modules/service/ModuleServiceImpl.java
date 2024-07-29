@@ -50,7 +50,7 @@ public class ModuleServiceImpl implements ModuleService{
             Optional<BigDecimal> amount) {
                 HttpHeaders httpHeaders = networkService.setHttpHeaders(claimResolver.getToken());
                 httpHeaders.set("uri", uri);
-                String url = aclAPIEndpoint+"/approval-settings?categoryId="+categoryId.get();
+                String url = aclAPIEndpoint+"/approval-settings?categories="+categoryId.get();
                 HttpEntity<?> payload = new HttpEntity<>(httpHeaders);
                 ResponseEntity<String> response = (ResponseEntity<String>) networkService.get(url, payload, String.class);
                 ObjectMapper mapper = new ObjectMapper();

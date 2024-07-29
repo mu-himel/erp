@@ -4,9 +4,11 @@ import com.agi.aesl.erpscm.account_finance.dto.request.LedgerAccountRequestDto;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccountVerifyApprovalHistory;
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
+import com.agi.aesl.erpscm.account_finance.repository.AccountQuery;
 import com.agi.aesl.erpscm.account_finance.repository.AccountRepository;
 import com.agi.aesl.erpscm.account_finance.repository.AccountVerificationApprovalRepository;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
+import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.demand.dto.request.DemandRequestDto;
 import com.agi.aesl.erpscm.demand.entity.Demand;
 import com.agi.aesl.erpscm.demand.entity.DemandVerificationApprovalHistory;
@@ -33,9 +35,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,6 +59,9 @@ public class AccountServiceImpl implements AccountService{
 
     @Autowired
     private AccountVerificationApprovalRepository accountVerificationApprovalRepository;
+
+    @Autowired
+    private CommentService commentService;
 
     @Override
     public String getNextAccountNo() {
@@ -139,8 +142,33 @@ public class AccountServiceImpl implements AccountService{
 
     @Override
     public Optional<?> getLedgerDetailById(Long id) {
-        //TODO for Sourav
-        return accountRepository.findLedgerAccountById(id);
+        Optional<AccountQuery.PendingAccountDetail>  accountOp = accountRepository.findLedgerAccountById(id);
+        if(accountOp.isPresent()){
+
+            AccountQuery.PendingAccountDetail pendingAccount = accountOp.get();
+            List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
+            List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
+            verificationService
+                    .getVerificationsByDomainTypeAndDomainId(DomainType.ACCOUNT_LEDGER, pendingAccount.getId())
+                    .stream().forEach(verifier->{
+                        if(verifier.getIsApproval()==false){
+                            verifiers.add(verifier);
+                        }else{
+                            approvers.add(verifier);
+                        }
+                    });
+            Map<String,Object> resDto = new HashMap<>();
+            resDto.put("detail",pendingAccount);
+            resDto.put("verifiers",verifiers);
+            resDto.put("approvers",approvers);
+
+            List<?> comments = commentService.getCommentsByDomain(DomainType.ACCOUNT_LEDGER, pendingAccount.getId());
+            resDto.put("comments",comments);
+
+            return Optional.ofNullable(resDto);
+        }
+        return Optional.empty();
+
     }
 
     @Override
@@ -158,6 +186,7 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
+    @Transactional
     public void updateAccount(Jwt token, String uri, Long id, LedgerAccountRequestDto ledgerAccountRequestDto) {
         claimResolver.setToken(token);
         Optional<Employee> employeeOp = claimResolver.getEmployee();
@@ -170,6 +199,7 @@ public class AccountServiceImpl implements AccountService{
             ledgerAccount.setGroupAccount(ledgerAccountRequestDto.getGroupAccount());
             ledgerAccount.setMasterAccount(ledgerAccountRequestDto.getMasterAccount());
             ledgerAccount.setSubGroupAccount(ledgerAccountRequestDto.getSubGroupAccount());
+            ledgerAccount.setStore(ledgerAccountRequestDto.getStore());
             ledgerAccount.setOpeningDate(LocalDate.parse(ledgerAccountRequestDto.getOpeningDate()));
             ledgerAccount.setOpeningCreditAmount(ledgerAccountRequestDto.getOpeningCreditAmount());
             ledgerAccount.setOpeningDebitAmount(ledgerAccountRequestDto.getOpeningDebitAmount());
