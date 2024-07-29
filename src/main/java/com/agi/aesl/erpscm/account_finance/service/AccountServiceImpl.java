@@ -92,7 +92,7 @@ public class AccountServiceImpl implements AccountService{
             List<UserApplicationValidation> verifications = verifiers.stream().map(verifier -> {
                 UserApplicationValidation verification = new UserApplicationValidation();
                 verification.setDomainId(ledgerAccount.getId());
-                verification.setDomainType(DomainType.DEMAND);
+                verification.setDomainType(DomainType.ACCOUNT_LEDGER);
                 verification.setVerified(false);
                 verification.setIsApproval(false);
                 verification.setVerifier(new Employee(verifier.getId()));
@@ -239,7 +239,24 @@ public class AccountServiceImpl implements AccountService{
 
     @Override
     public void verifyComplete(Long id, Optional<UserApplicationValidationRepository.VerificationResponse> firstApprover) {
+        Optional<LedgerAccount> ledgerAccountOp = accountRepository.findById(id);
+        if(ledgerAccountOp.isPresent()){
+            LedgerAccount ledgerAccount = ledgerAccountOp.get();
 
+            LedgerAccountVerifyApprovalHistory ledgerAccountVAHistory = new LedgerAccountVerifyApprovalHistory();
+            ledgerAccountVAHistory.setAccountStatus(AccountType.VERIFIED);
+            ledgerAccountVAHistory.setLedgerAccount(ledgerAccount);
+            ledgerAccountVAHistory.setEmployee(new Employee(ledgerAccount.getNextVerifierId()));
+            accountVerificationApprovalRepository.save(ledgerAccountVAHistory);
+
+            if(firstApprover.isPresent()){
+
+            }else{
+
+            }
+
+
+        }
     }
 
     @Override

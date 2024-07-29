@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.inventory.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
+import com.agi.aesl.erpscm.inventory.dto.request.ItemApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.RemoteItemRequestDto;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
@@ -201,6 +202,12 @@ public class ItemController extends BaseController{
         @RequestPart("file") Optional<MultipartFile> file
     ){
         itemService.importItems(file);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/approve/{id}")
+    public ResponseEntity<?> approveItemFromCps(@PathVariable("id") Long id,
+                    @RequestBody ItemApproveRequestDto approveRequestDto){
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

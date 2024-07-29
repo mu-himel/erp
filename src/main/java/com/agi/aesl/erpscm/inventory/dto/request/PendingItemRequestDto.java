@@ -19,6 +19,9 @@ public class PendingItemRequestDto {
     private String warehouseName;
     private Long organizationId;
     private String warehouseLocation;
+    private String itemAttributeName;
     private String extendedAttributes;
+    private String itemUnit;
+    private String code;
     private List<ItemAttribute> attributes;
 }

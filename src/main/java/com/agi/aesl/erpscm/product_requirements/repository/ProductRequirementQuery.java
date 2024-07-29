@@ -12,16 +12,16 @@ public interface ProductRequirementQuery {
                 DATEDIFF(MIN(demand_deadline), CURRENT_DATE)       as daysRemain,
 
                 (SELECT COUNT(distinct ddsq1.item_category_id)
-                FROM demand_details ddsq1
+                FROM scm_demand_details ddsq1
                 where ddsq1.id = p.demand_detail_id 
                 AND ddsq1.item_parent_category_id = p.category_id
                 and ddsq1.item_category_id = p.sub_category_id) AS itemsQty
 
         FROM product_requirements AS p
-                LEFT JOIN item_categories c ON p.category_id = c.id
-                LEFT JOIN item_categories sc ON p.sub_category_id = sc.id
-                LEFT JOIN demands d ON p.demand_id = d.id
-                LEFT JOIN demand_details dd ON p.demand_detail_id = dd.id
+                LEFT JOIN scm_item_categories c ON p.category_id = c.id
+                LEFT JOIN scm_item_categories sc ON p.sub_category_id = sc.id
+                LEFT JOIN scm_demands d ON p.demand_id = d.id
+                LEFT JOIN scm_demand_details dd ON p.demand_detail_id = dd.id
 
         WHERE (:categoryId IS NULL OR c.id = :categoryId)
         AND (:subCategoryId IS NULL OR sc.id = :subCategoryId)

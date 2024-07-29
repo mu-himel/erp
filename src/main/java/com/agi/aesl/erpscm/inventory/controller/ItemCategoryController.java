@@ -4,6 +4,7 @@ package com.agi.aesl.erpscm.inventory.controller;
 import com.agi.aesl.erpscm.common.BaseController;
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 import com.agi.aesl.erpscm.inventory.dto.request.BulkCategoryRequestDto;
+import com.agi.aesl.erpscm.inventory.dto.request.CategoryApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.service.CategoryService;
 
@@ -256,5 +257,19 @@ public class ItemCategoryController extends BaseController{
                 response,
                 HttpStatus.OK
         );
+    }
+
+    @PutMapping("/approve/category/{id}")
+    public ResponseEntity<?> approveCategory(@PathVariable("id") Long id,
+        @RequestBody CategoryApproveRequestDto categoryApproveRequestDto){
+        categoryService.approveItemCategory(id, categoryApproveRequestDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/approve/subcategory/{id}")
+    public ResponseEntity<?> approveSubCategory(@PathVariable("id") Long id,
+        @RequestBody CategoryApproveRequestDto categoryApproveRequestDto){
+        categoryService.approveItemCategory(id, categoryApproveRequestDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

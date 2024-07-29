@@ -10,16 +10,13 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 import com.agi.aesl.erpscm.exception.AesException;
+import com.agi.aesl.erpscm.inventory.dto.request.CategoryApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDtoCustom;
 import com.agi.aesl.erpscm.inventory.dto.request.RemoteCategoryRequestDto;
-import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
-import com.agi.aesl.erpscm.inventory.entity.CategoryBrand;
-import com.agi.aesl.erpscm.inventory.entity.CategoryBudget;
-import com.agi.aesl.erpscm.inventory.entity.CategoryWarehouseStore;
-import com.agi.aesl.erpscm.inventory.entity.Item;
-import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.entity.*;
 import com.agi.aesl.erpscm.inventory.enums.BudgetType;
+import com.agi.aesl.erpscm.inventory.enums.CategoryStatus;
 import com.agi.aesl.erpscm.inventory.repository.CategoryAttributeRepository;
 import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
 import com.agi.aesl.erpscm.inventory.repository.CategoryBudgetRepository;
@@ -619,5 +616,30 @@ public class CategoryServiceImpl implements CategoryService {
     ) {
         return categoryRepository.findAllPendingCategories(warehouseId.orElse(null),warehouseStoreId.orElse(null),
                 name.orElse(null),code.orElse(null));
+    }
+
+    @Override
+    @Transactional
+    public void approveItemCategory(Long id, CategoryApproveRequestDto categoryApproveRequestDto) {
+        Optional<ItemCategory> catOp = categoryRepository.findById(id);
+        if(catOp.isPresent()){
+            ItemCategory category = catOp.get();
+            if(categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)){
+                category.setActive(true);
+                category.setCategoryStatus(CategoryStatus.APPROVED);
+            }else if(categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)){
+                category.setActive(false);
+                category.setCategoryStatus(CategoryStatus.REJECTED);
+            }
+
+        }
+        if(categoryApproveRequestDto.getCode()!=null && !categoryApproveRequestDto.getCode().isEmpty()){
+            Optional<ItemCategory> replacedCatOp = categoryRepository.findByCode(categoryApproveRequestDto.getCode());
+            if(replacedCatOp.isPresent()){
+                ItemCategory replacedCategory = replacedCatOp.get();
+                replacedCategory.setCategoryStatus(CategoryStatus.APPROVED);
+                replacedCategory.setActive(true);
+            }
+        }
     }
 }

@@ -22,7 +22,7 @@ public class SyncItemDetail implements EntityConvertable<Item>{
     private String name; 
     private Boolean isSyncronized;
     private String sku;
-    private ItemUnit itemUnit;
+    private String itemUnit;
     private String manufacturer;
     private BrandInfo brand;
     private StoreTypeInfo storeType;

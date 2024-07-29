@@ -60,8 +60,7 @@ public class Item {
     // @ApiModelProperty(hidden = true)
     private List<ItemStock> stocks;
 
-    @Enumerated(EnumType.STRING)
-    private ItemUnit itemUnit;
+    private String itemUnit;
 
     private Integer stockThresholdQty;
     private Integer reorderPercentage;

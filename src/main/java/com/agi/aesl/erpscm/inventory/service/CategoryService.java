@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.inventory.service;
 
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 
+import com.agi.aesl.erpscm.inventory.dto.request.CategoryApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDtoCustom;
 import com.agi.aesl.erpscm.inventory.entity.CategoryWarehouseStore;
@@ -87,4 +88,6 @@ public interface CategoryService {
     List<?> getPendingSubCategoriesForInventoryControl(Optional<Long> categoryId, Optional<Long> warehouseId,
                                                        Optional<Long> storeId, Optional<String> name,
                                                        Optional<String> code);
+
+    void approveItemCategory(Long id, CategoryApproveRequestDto categoryApproveRequestDto);
 }

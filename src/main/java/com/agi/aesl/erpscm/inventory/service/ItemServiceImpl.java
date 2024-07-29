@@ -438,24 +438,26 @@ public class ItemServiceImpl implements ItemService {
         }
         item.setActive(false);
         item.setItemInactiveStatus(ItemInactiveStatus.PENDING);
+        item.setItemAttributeName(itemAttributeName);
+        item.setCreatedBy(claimResolver.getUserId());
         itemRepository.save(item);
 
         if(item.getId()!=null){
 
             PendingItemRequestDto pendingItemRequestDto = new PendingItemRequestDto();
             Employee employee = claimResolver.getEmployee().orElse(null);
-
+            pendingItemRequestDto.setItemAttributeName(itemAttributeName);
             if(employee!=null) {
-                pendingItemRequestDto.setRequestedBy(employee.getId());
+                pendingItemRequestDto.setRequestedBy(itemRequestDto.getEmployee());
+                pendingItemRequestDto.setDesignation(employee.getDesignationName());
+                pendingItemRequestDto.setDepartment(employee.getDepartmentName());
+                pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
+                pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
+            }else{
+                throw new RuntimeException("Sorry! Employee Info missing");
             }
             Optional<ItemCategory> catOp = categoryService.getAnyItemCategory(item.getItemCategory().getId());
 
-
-            pendingItemRequestDto.setDesignation(employee.getDesignationName());
-            pendingItemRequestDto.setDepartment(employee.getDepartmentName());
-            pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
-
-            pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
             pendingItemRequestDto.setSubCategoryCode(catOp.get().getCode());
             if(item.getBrand()!=null) {
                 Optional<CategoryBrand> brandOp = categoryBrandRepository.findById(item.getBrand().getId());
@@ -464,8 +466,9 @@ public class ItemServiceImpl implements ItemService {
             pendingItemRequestDto.setReportingManager(employee.getReportingManager());
             pendingItemRequestDto.setEmployeeId(employee.getId());
             pendingItemRequestDto.setAttributes(itemRequestDto.getAttributes());
-            pendingItemRequestDto.setRequestedBy(item.getCreatedBy());
+            pendingItemRequestDto.setItemUnit(item.getItemUnit());
             pendingItemRequestDto.setScmItemId(item.getId());
+            pendingItemRequestDto.setCode(item.getCode());
 
             HttpHeaders headers =  new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
