@@ -29,6 +29,7 @@ public class IntegrationReaderServiceImpl implements IntegrationReaderService{
         headers.set("uri", uri);
         HttpEntity<?> payload = new HttpEntity<>(headers);
         String url = aclApiEndpoint+"/modules/filter-by-uri";
+        System.out.println(url);
         ResponseEntity<?> response = networkService.get(url,payload, Map.class);
         System.out.println(response.getStatusCode());
         System.out.println(response.getBody());

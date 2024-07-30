@@ -251,8 +251,8 @@ public class AccountServiceImpl implements AccountService{
             Map<String,Object> resDto = new HashMap<>();
 
             Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(pendingAccount.getInitiatorWarehouseId());
-            resDto.put("warehouseName:",warehouseOp.get().getName());
-            resDto.put("warehouseLocation:",warehouseOp.get().getLocation());
+            resDto.put("warehouseName:",warehouseOp.isPresent()? warehouseOp.get().getName():"");
+            resDto.put("warehouseLocation:",warehouseOp.isPresent()? warehouseOp.get().getLocation():"");
             resDto.put("detail",pendingAccount);
             resDto.put("verifiers",verifiers);
             resDto.put("approvers",approvers);
@@ -263,6 +263,8 @@ public class AccountServiceImpl implements AccountService{
 
             return Optional.ofNullable(resDto);
         }
+
+
         return Optional.empty();
 
     }
@@ -424,4 +426,16 @@ public class AccountServiceImpl implements AccountService{
             ledgerAccount.setReviewDate(LocalDateTime.now());
         }
     }
+
+    @Override
+    @Transactional
+    public void createItemLedger(Item item) {
+        LedgerAccount ledgerAccount = new LedgerAccount();
+        ledgerAccount.setItem(item);
+        ledgerAccount.setAccountNo(getNextAccountNo());
+        ledgerAccount.setAccountStatus(AccountType.PENDING);
+        accountRepository.save(ledgerAccount);
+    }
+
+
 }
