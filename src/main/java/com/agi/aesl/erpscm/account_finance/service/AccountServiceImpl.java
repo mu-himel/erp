@@ -9,11 +9,14 @@ import com.agi.aesl.erpscm.account_finance.repository.AccountRepository;
 import com.agi.aesl.erpscm.account_finance.repository.AccountVerificationApprovalRepository;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
+import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.demand.dto.request.DemandRequestDto;
 import com.agi.aesl.erpscm.demand.entity.Demand;
 import com.agi.aesl.erpscm.demand.entity.DemandVerificationApprovalHistory;
 import com.agi.aesl.erpscm.demand.enums.DemandStatus;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationWriterService;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
@@ -35,6 +38,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -63,6 +67,12 @@ public class AccountServiceImpl implements AccountService{
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private WarehouseService warehouseService;
+
+    @Autowired
+    private IntegrationReaderService integrationReaderService;
+
     @Override
     public String getNextAccountNo() {
         Optional<Long> accountNoOp = accountRepository.findMaxOrderById();
@@ -82,6 +92,87 @@ public class AccountServiceImpl implements AccountService{
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
         return accountRepository.getPendingLedgerAccounts(pageable);
+    }
+
+    @Override
+    public Page<?> getAllPendingVerifications(Jwt token, Optional<Integer> page,
+                                              Optional<Integer> size,
+                                              Optional<String> fromDateStr,
+                                              Optional<String> toDateStr) {
+        claimResolver.setToken(token);
+        String moduleUri = "/app/accounts/asset-management/asset-ledger/pending-verification";
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10));
+        Optional<Map<String,List<Long>>> modulePermission = integrationReaderService
+                .getModuleFilterByUri(token, moduleUri);
+
+        List<Long> categoryIds = new ArrayList<>();
+
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate = null;
+        if(fromDateStr.isPresent()){
+            fromDate = LocalDateTime.parse(fromDateStr.get()+"T00:00:00");
+        }
+        if(toDateStr.isPresent()){
+            toDate = LocalDateTime.parse(toDateStr.get()+"T23:59:59");
+        }
+        List<String> demandStatuses = new ArrayList<>();
+        demandStatuses.add(DemandStatus.PENDING_VERIFICATION.toString());
+        demandStatuses.add(DemandStatus.REVIEW.toString());
+
+        if(modulePermission.isPresent()){
+            categoryIds = modulePermission.get().get("category_id");
+            return accountRepository.findAllByCategoryAndAccountStatusAndNextVerifierId(categoryIds,
+                    claimResolver.getUserId(),
+                    demandStatuses,
+                    fromDate,toDate,
+                    pageable);
+        }
+
+        return accountRepository.findAllByAccountStatusAndNextVerifierId(
+                demandStatuses,
+                claimResolver.getUserId(),
+                fromDate,toDate,
+                pageable);
+    }
+
+    @Override
+    public Page<?> getAllPendingApprovals(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                          Optional<String> fromDateStr, Optional<String> toDateStr) {
+        claimResolver.setToken(token);
+        String moduleUri = "demand/pending-approval";
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10));
+        Optional<Map<String,List<Long>>> modulePermission = integrationReaderService
+                .getModuleFilterByUri(token, moduleUri);
+
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate = null;
+        if(fromDateStr.isPresent()){
+            fromDate = LocalDateTime.parse(fromDateStr.get()+"T00:00:00");
+        }
+        if(toDateStr.isPresent()){
+            toDate = LocalDateTime.parse(toDateStr.get()+"T23:59:59");
+        }
+
+        List<String> demandStatuses = new ArrayList<>();
+        demandStatuses.add(DemandStatus.PENDING_APPROVAL.toString());
+        demandStatuses.add(DemandStatus.REVIEW.toString());
+        List<Long> categoryIds = new ArrayList<>();
+
+        if(modulePermission.isPresent()){
+            categoryIds = modulePermission.get().get("category_id");
+            return accountRepository.findAllByCategoryAndAccountStatusAndNextApproverId(categoryIds,
+                    claimResolver.getUserId(),
+                    demandStatuses,
+                    fromDate,toDate,
+                    pageable);
+        }
+        return accountRepository.findAllByAccountStatusAndNextApproverId(
+                demandStatuses,
+                claimResolver.getUserId(),
+                fromDate,toDate,
+                pageable);
+
+
     }
 
     private void setVerifiers(LedgerAccount ledgerAccount, List<VerifierInfo> verifiers) {
@@ -158,9 +249,14 @@ public class AccountServiceImpl implements AccountService{
                         }
                     });
             Map<String,Object> resDto = new HashMap<>();
+
+            Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(pendingAccount.getInitiatorWarehouseId());
+            resDto.put("warehouseName:",warehouseOp.get().getName());
+            resDto.put("warehouseLocation:",warehouseOp.get().getLocation());
             resDto.put("detail",pendingAccount);
             resDto.put("verifiers",verifiers);
             resDto.put("approvers",approvers);
+
 
             List<?> comments = commentService.getCommentsByDomain(DomainType.ACCOUNT_LEDGER, pendingAccount.getId());
             resDto.put("comments",comments);
@@ -263,11 +359,25 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
+    @Transactional
     public void onApprove(Long id, UserApplicationValidation verification, UserApplicationValidationRepository.VerificationResponse nextApprover) {
+        Optional<LedgerAccount> ledgerAccountOp  = accountRepository.findById(id);
+        if(ledgerAccountOp.isPresent()){
+            LedgerAccount ledgerAccount = ledgerAccountOp.get();
+//            demandMailService.prepareMailContent(verificationResponse.getVerifier().getEmployeeName(),"Approval",demand);
+//            demandMailService.sentMail(verificationResponse.getVerifier().getEmailAddress(),"Pending Demand Approval Request");
 
+            LedgerAccountVerifyApprovalHistory ledgerAccountVAHistory = new LedgerAccountVerifyApprovalHistory();
+            ledgerAccountVAHistory.setLedgerAccount(ledgerAccount);
+            ledgerAccountVAHistory.setEmployee(verification.getVerifier());
+            ledgerAccountVAHistory.setAccountStatus(AccountType.APPROVED);
+            accountVerificationApprovalRepository.save(ledgerAccountVAHistory);
+            ledgerAccount.setNextApproverId(nextApprover.getVerifier().getId());
+        }
     }
 
     @Override
+    @Transactional
     public void verifyComplete(Long id, Optional<UserApplicationValidationRepository.VerificationResponse> firstApprover) {
         Optional<LedgerAccount> ledgerAccountOp = accountRepository.findById(id);
         if(ledgerAccountOp.isPresent()){
@@ -280,9 +390,12 @@ public class AccountServiceImpl implements AccountService{
             accountVerificationApprovalRepository.save(ledgerAccountVAHistory);
 
             if(firstApprover.isPresent()){
-
+//                demandMailService.prepareMailContent(firstApprover.get().getVerifier().getEmployeeName(),"Approval",demand);
+//                demandMailService.sentMail(firstApprover.get().getVerifier().getEmailAddress(),"Pending Demand Approval Request");
+                ledgerAccount.setNextApproverId(firstApprover.get().getVerifier().getId());
+                ledgerAccount.setAccountStatus(AccountType.PENDING_APPROVAL);
             }else{
-
+                ledgerAccount.setAccountStatus(AccountType.APPROVED);
             }
 
 
@@ -290,12 +403,25 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
+    @Transactional
     public void approveComplete(Long id) {
-
+        Optional<LedgerAccount> ledgerAccountOp  = accountRepository.findById(id);
+        if(ledgerAccountOp.isPresent()) {
+            LedgerAccount ledgerAccount = ledgerAccountOp.get();
+            ledgerAccount.setAccountStatus(AccountType.APPROVED);
+        }
     }
 
     @Override
-    public void sendForReview(Long domainId, RefDto reviewer, String comment) {
-
+    @Transactional
+    public void sendForReview(Long id, RefDto reviewer, String comment) {
+        Optional<LedgerAccount> ledgerAccountOp  = accountRepository.findById(id);
+        if(ledgerAccountOp.isPresent()){
+            LedgerAccount ledgerAccount = ledgerAccountOp.get();
+            ledgerAccount.setReviewPrevStatus(ledgerAccount.getAccountStatus());
+            ledgerAccount.setReviewerId(reviewer.getId());
+            ledgerAccount.setAccountStatus(AccountType.REVIEW);
+            ledgerAccount.setReviewDate(LocalDateTime.now());
+        }
     }
 }

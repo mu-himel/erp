@@ -42,7 +42,7 @@ public class LedgerAccount {
     private String nextApproverId;
 
     @Enumerated(EnumType.STRING)
-    private DemandStatus reviewPrevStatus;
+    private AccountType reviewPrevStatus;
 
     private String reviewerId;
 

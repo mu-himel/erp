@@ -13,6 +13,16 @@ public interface AccountService extends VerificationDomainService {
 
     Page<?> getAllPendingAccounts(Optional<Integer> page, Optional<Integer> size);
 
+    Page<?> getAllPendingVerifications(Jwt token,
+                                             Optional<Integer> page, Optional<Integer> size,
+                                             Optional<String> fromDate, Optional<String> toDate
+    );
+    Page<?> getAllPendingApprovals(Jwt token,
+                                         Optional<Integer> page, Optional<Integer> size,
+                                         Optional<String> fromDate, Optional<String> toDate
+
+    );
+
     Optional<?> getLedgerDetailById(Long id);
 
     Page<?> getAllApprovedAccounts(Optional<Integer> page, Optional<Integer> size);
