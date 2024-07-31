@@ -20,12 +20,7 @@ import com.agi.aesl.erpscm.inventory.dto.response.ItemDetail;
 import com.agi.aesl.erpscm.inventory.dto.response.ItemListWithAttributesDto;
 import com.agi.aesl.erpscm.inventory.dto.response.SyncItemDetail;
 import com.agi.aesl.erpscm.inventory.dto.response.SyncItemDto;
-import com.agi.aesl.erpscm.inventory.entity.CategoryBrand;
-import com.agi.aesl.erpscm.inventory.entity.CategoryWarehouseStore;
-import com.agi.aesl.erpscm.inventory.entity.Item;
-import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
-import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
-import com.agi.aesl.erpscm.inventory.entity.ItemStock;
+import com.agi.aesl.erpscm.inventory.entity.*;
 import com.agi.aesl.erpscm.inventory.enums.ItemHeader;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import com.agi.aesl.erpscm.inventory.enums.StockType;
@@ -833,6 +828,7 @@ public class ItemServiceImpl implements ItemService {
             item.setName(syncItemDetail.getName());
             item.setItemAttributeName(itemAttributeName);
             item.setActive(false);
+            item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
 
             item.setStocks(Arrays.asList(new ItemStock(
                 new BigDecimal(0l),
@@ -894,10 +890,15 @@ public class ItemServiceImpl implements ItemService {
         Optional<Item> itemOp = itemRepository.findById(id);
         if(itemOp.isPresent()){
             Item item = itemOp.get();
-            item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
 
-            // If approved from cps then send request to accounts approval
-            accountService.createItemLedger(item);
+            if(approveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+                if(approveRequestDto.getCode()==null) {
+                    item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+                    accountService.createItemLedger(item);
+                }
+            }else{
+                item.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
+            }
         }
     }
 }

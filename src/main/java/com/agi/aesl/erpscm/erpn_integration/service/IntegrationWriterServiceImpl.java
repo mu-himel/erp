@@ -3,6 +3,11 @@ package com.agi.aesl.erpscm.erpn_integration.service;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.agi.aesl.erpscm.account_finance.dto.request.RemoteLedgerAccountDto;
+import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
+import com.agi.aesl.erpscm.inventory.entity.Item;
+import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -27,6 +32,9 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
     @Value("${app.hr.delete.warehouse}")
     private String warehouseDeleteEndpoint;
+
+    @Value("${app.hr.ledger.item.create")
+    private String ledgerItemCreateEndpoint;
 
     @Override
     public void createWarehouse(Jwt token, Warehouse warehouse) {
@@ -63,7 +71,23 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         
     }
 
+    @Override
+    @Transactional
+    public void createLedgerItem(Jwt token, LedgerAccount ledgerAccount) {
+        HttpHeaders headers = networkService.setHttpHeadersForHr(token);
 
+        Item item = ledgerAccount.getItem();
+        ItemCategory category = item.getItemParentCategory();
+        ItemCategory subCategory = item.getItemCategory();
 
-    
+        RemoteLedgerAccountDto remoteLedgerAccountDto = new RemoteLedgerAccountDto();
+        remoteLedgerAccountDto.setItemCode(item.getCode());
+        remoteLedgerAccountDto.setItemName(item.getItemAttributeName());
+        remoteLedgerAccountDto.setItemGroup(category.getName());
+        remoteLedgerAccountDto.setItemSubGroup(subCategory.getName());
+        remoteLedgerAccountDto.setWarehouse(ledgerAccount.getStore());
+
+        HttpEntity<RemoteLedgerAccountDto> payload = new HttpEntity<>(remoteLedgerAccountDto,headers);
+        networkService.put(ledgerItemCreateEndpoint, payload, Void.class);
+    }
 }

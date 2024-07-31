@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.agi.aesl.erpscm.comment.enums.ActionType;
+import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -80,10 +81,10 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
   
 
     @Override
-    public void setVerifiers(T t, List<Verifier> verifiers, DomainType domainType) {
+    public void setVerifiers(T t, List<VerifierInfo> verifiers, DomainType domainType) {
         if (verifiers.size() > 0) {
-            Optional<Verifier> firstOp = verifiers.stream().findFirst();
-            Verifier _verifier = firstOp.get();
+            Optional<VerifierInfo> firstOp = verifiers.stream().findFirst();
+            VerifierInfo _verifier = firstOp.get();
             List<UserApplicationValidation> verifications = verifiers.stream().map(verifier -> {
                 UserApplicationValidation verification = new UserApplicationValidation();
                 verification.setDomainId(t.getId());

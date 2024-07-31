@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.user_application_validation.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties.AssertingParty.Verification;
 
@@ -20,7 +21,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 
 public interface UserApplicationValidatorService<T> {
     Optional<VerifierConfig> getVerifiers(ClaimResolver claimResolver, String uri,String criteriaGroup, String categories);
-    void setVerifiers(T t, List<Verifier> verifiers, DomainType domainType);
+    void setVerifiers(T t, List<VerifierInfo> verifiers, DomainType domainType);
     void setApprovers(T t, List<ApprovalPanel> approvalPanels, DomainType domainType);
 
     void addVerification(UserApplicationValidation verification);

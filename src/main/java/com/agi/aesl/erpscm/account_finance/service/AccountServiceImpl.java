@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.account_finance.service;
 
 import com.agi.aesl.erpscm.account_finance.dto.request.LedgerAccountRequestDto;
+import com.agi.aesl.erpscm.account_finance.dto.request.RemoteLedgerAccountDto;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccountVerifyApprovalHistory;
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
@@ -19,6 +20,7 @@ import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationWriterService;
 import com.agi.aesl.erpscm.inventory.entity.Item;
+import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
@@ -322,7 +324,7 @@ public class AccountServiceImpl implements AccountService{
             List<VerifierInfo> verifiers = getVerifiers(ledgerAccount, verifierOp);
             List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, String.join(",",ids));
 
-            setVerifiers(ledgerAccount,verifiers);
+            verificationService.setVerifiers(ledgerAccount,verifiers,DomainType.ACCOUNT_LEDGER);
             if(verifiers.size()==0 && panels.size()>0){
                 ledgerAccount.setAccountStatus(AccountType.PENDING_APPROVAL);
                 Optional<ApprovalPanel> firstPanel = panels.stream().findFirst();
@@ -333,12 +335,8 @@ public class AccountServiceImpl implements AccountService{
                     ledgerAccount.setNextApproverId(panel.getUserId());
                 }
             }
-            setApprovers(ledgerAccount, panels);
-//
-//            Item item = ledgerAccount.getItem();
-//            String itemAttributeName = item.getItemAttributeName();
-//            String brandName = item.getName();
-//            integrationWriterService.createLedgerAccount();
+            verificationService.setApprovers(ledgerAccount, panels,DomainType.ACCOUNT_LEDGER);
+
         }
     }
 
@@ -357,6 +355,7 @@ public class AccountServiceImpl implements AccountService{
 
 //            demandMailService.prepareMailContent(nextVerifier.getVerifier().getEmployeeName(),"Verification",demand);
 //            demandMailService.sentMail(nextVerifier.getVerifier().getEmailAddress(),"Pending Demand Verification Request");
+
 
             LedgerAccountVerifyApprovalHistory ledgerAccountVerifyApprovalHistory = new LedgerAccountVerifyApprovalHistory();
             ledgerAccountVerifyApprovalHistory.setLedgerAccount(ledgerAccount);
@@ -424,10 +423,13 @@ public class AccountServiceImpl implements AccountService{
     @Override
     @Transactional
     public void approveComplete(Long id) {
+
         Optional<LedgerAccount> ledgerAccountOp  = accountRepository.findById(id);
         if(ledgerAccountOp.isPresent()) {
             LedgerAccount ledgerAccount = ledgerAccountOp.get();
             ledgerAccount.setAccountStatus(AccountType.APPROVED);
+
+            integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
         }
     }
 
