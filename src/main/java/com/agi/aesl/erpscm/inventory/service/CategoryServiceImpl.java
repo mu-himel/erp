@@ -635,11 +635,42 @@ public class CategoryServiceImpl implements CategoryService {
         }
         if(categoryApproveRequestDto.getCode()!=null && !categoryApproveRequestDto.getCode().isEmpty()){
             Optional<ItemCategory> replacedCatOp = categoryRepository.findByCode(categoryApproveRequestDto.getCode());
-            if(replacedCatOp.isPresent()){
-                ItemCategory replacedCategory = replacedCatOp.get();
-                replacedCategory.setCategoryStatus(CategoryStatus.APPROVED);
-                replacedCategory.setActive(true);
+            if(categoryApproveRequestDto.getApproveStatus().equals(CategoryStatus.APPROVED)){
+                if(replacedCatOp.isPresent()){
+                    ItemCategory replacedCategory = replacedCatOp.get();
+                    replacedCategory.setCategoryStatus(CategoryStatus.APPROVED);
+                    replacedCategory.setActive(true);
+
+                    if(categoryApproveRequestDto.getMergePendingCategoryDto()!=null){
+                        if(categoryApproveRequestDto.getMergePendingCategoryDto()
+                                .getAttributes()!=null) {
+                            List<CategoryAttribute> attributes = new ArrayList<>();
+                            for (CategoryAttribute ca : categoryApproveRequestDto.getMergePendingCategoryDto()
+                                    .getAttributes()) {
+                                Optional<CategoryAttribute> caOp = categoryAttributeRepository
+                                        .findAllByAttributeTypeAndAttributeUnit(
+                                                ca.getAttributeType(),
+                                                ca.getAttributeType()
+                                        );
+                                if(caOp.isPresent()){
+                                    ca.setId(caOp.get().getId());
+                                }else{
+                                    ca.setId(null);
+                                }
+                                ca.setAttributeType(caOp.get().getAttributeType());
+                                ca.setAttributeUnit(caOp.get().getAttributeUnit());
+                                ca.setAttributeValue(ca.getAttributeValue());
+                                ca.setCategory(replacedCategory);
+                                attributes.add(ca);
+                            }
+                            replacedCategory.setAttributes(attributes);
+                        }
+                    }
+
+                }
             }
+
+
         }
     }
 }
