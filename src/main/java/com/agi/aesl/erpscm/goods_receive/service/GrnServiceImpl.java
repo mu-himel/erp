@@ -2,7 +2,9 @@ package com.agi.aesl.erpscm.goods_receive.service;
 
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
+import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
+import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualDto;
 import com.agi.aesl.erpscm.goods_receive.dto.response.GoodReceiveNoteItemDetailInfo;
 import com.agi.aesl.erpscm.goods_receive.dto.response.GrnDetailInfo;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
@@ -36,6 +38,9 @@ public class GrnServiceImpl implements GrnService{
 
     @Autowired
     private ClaimResolver claimResolver;
+
+    @Autowired
+    private IntegrationReaderService integrationReaderService;
 
     @Override
     public String getNextGrnNumber() {
@@ -135,5 +140,16 @@ public class GrnServiceImpl implements GrnService{
             }
             return  goodReceiveItemDetailOp;
         }
+    }
+
+    @Override
+    public List<?> getAvailableVendors(Jwt token, Optional<String> name) {
+        claimResolver.setToken(token);
+        return integrationReaderService.getAvailableVendors(name.orElse(null));
+    }
+
+    @Override
+    public void createGrn(GrnManualDto grnManualDto) {
+
     }
 }

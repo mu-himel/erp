@@ -16,4 +16,6 @@ public interface VerificationDomainService {
     void verifyComplete(Long id, Optional<VerificationResponse> firstApprover);
     void approveComplete(Long id);
     void sendForReview(Long domainId, RefDto reviewer, String comment);
+
+    void onRejected(Long id);
 }

@@ -1,6 +1,8 @@
 package com.agi.aesl.erpscm.inventory.service;
 
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
+import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
+import com.agi.aesl.erpscm.account_finance.service.AccountService;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
@@ -13,20 +15,12 @@ import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
 import com.agi.aesl.erpscm.fileupload.service.FileUploadService;
 // import com.agi.aesl.erpscm.indent.entity.Indent;
-import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
-import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
-import com.agi.aesl.erpscm.inventory.dto.request.PendingItemRequestDto;
-import com.agi.aesl.erpscm.inventory.dto.request.RemoteItemRequestDto;
+import com.agi.aesl.erpscm.inventory.dto.request.*;
 import com.agi.aesl.erpscm.inventory.dto.response.ItemDetail;
 import com.agi.aesl.erpscm.inventory.dto.response.ItemListWithAttributesDto;
 import com.agi.aesl.erpscm.inventory.dto.response.SyncItemDetail;
 import com.agi.aesl.erpscm.inventory.dto.response.SyncItemDto;
-import com.agi.aesl.erpscm.inventory.entity.CategoryBrand;
-import com.agi.aesl.erpscm.inventory.entity.CategoryWarehouseStore;
-import com.agi.aesl.erpscm.inventory.entity.Item;
-import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
-import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
-import com.agi.aesl.erpscm.inventory.entity.ItemStock;
+import com.agi.aesl.erpscm.inventory.entity.*;
 import com.agi.aesl.erpscm.inventory.enums.ItemHeader;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import com.agi.aesl.erpscm.inventory.enums.StockType;
@@ -96,6 +90,8 @@ public class ItemServiceImpl implements ItemService {
     @Autowired
     private NetworkService networkService;
 
+    @Autowired
+    private AccountService accountService;
     @Autowired
     private CategoryBrandRepository categoryBrandRepository;
 
@@ -832,6 +828,7 @@ public class ItemServiceImpl implements ItemService {
             item.setName(syncItemDetail.getName());
             item.setItemAttributeName(itemAttributeName);
             item.setActive(false);
+            item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
 
             item.setStocks(Arrays.asList(new ItemStock(
                 new BigDecimal(0l),
@@ -887,9 +884,25 @@ public class ItemServiceImpl implements ItemService {
         return Optional.empty();
     }
 
-    
+    @Override
+    @Transactional
+    public void approveItemFromCps(Long id, ItemApproveRequestDto approveRequestDto) {
+        Optional<Item> itemOp = itemRepository.findById(id);
+        if(itemOp.isPresent()){
+            Item item = itemOp.get();
 
-    
-    
-    
+            if(approveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+                if(approveRequestDto.getCode()==null) {
+                    item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+                    accountService.createItemLedger(item);
+                }
+                if(approveRequestDto.getCode()!=null){
+                    throw new RuntimeException("Not implemented yet," +
+                            " what will be item data flow for scm, if merged");
+                }
+            }else{
+                item.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
+            }
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.goods_receive.controller;
 
 import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
+import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualDto;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,25 @@ public class GrnController {
             ){
         grnService.addGrn(token,goodReceiveNoteDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @PostMapping("/manual")
+    public ResponseEntity<?> createManualGrn(
+            @AuthenticationPrincipal Jwt token,
+            @RequestBody @Valid GrnManualDto grnManualDto
+    ){
+        grnService.createGrn(grnManualDto);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @GetMapping("/available-vendors")
+    public ResponseEntity<?> getAvailableVendors(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("name") Optional<String> name){
+        return new ResponseEntity<>(
+                grnService.getAvailableVendors(token, name),
+                HttpStatus.OK
+        );
     }
 
     @GetMapping("/all")

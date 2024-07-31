@@ -727,6 +727,11 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
+    public void onRejected(Long id) {
+        // TODO need to optimize demand reject here
+    }
+
+    @Override
     @Transactional
     public void reviewDemand(Jwt token, Long id, ReviewDto reviewDto) {
         ClaimResolver claimResolver = new ClaimResolver();

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.agi.aesl.erpscm.comment.enums.ActionType;
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
@@ -34,6 +35,9 @@ public class Comment {
 
     @Enumerated(EnumType.STRING)
     private DomainType domainType;
+
+    @Enumerated(EnumType.STRING)
+    private ActionType actionType;
 
     @ManyToOne
     private Employee commentedBy;

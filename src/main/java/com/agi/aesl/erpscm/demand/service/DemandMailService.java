@@ -6,11 +6,13 @@ import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
+import com.agi.aesl.erpscm.user_application_validation.service.VerifierMailService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
-public interface DemandMailService {
+public interface DemandMailService extends VerifierMailService<Demand> {
 
     String demandDetailMsgTpl = """
             <h5>{mailFor},</h5>
@@ -23,10 +25,10 @@ public interface DemandMailService {
             <p style="color:#ff0000">N.B. This is a system generated email. Please do not reply!</p>
             """;
 
-    void prepareMailContent(String name, String actionType, Demand demand);
+//    void prepareMailContent(String name, String actionType, Demand demand);
     void prepareMailContentForInitiator(String name, String actionType, Demand demand);
 
-    void sentMail(String to, String subject);
+//    void sentMail(String to, String subject);
 
     void setClaimResolver(ClaimResolver claimResolver);
 
