@@ -95,6 +95,13 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
+    public Page<?> getClosedAccounts(Optional<Integer> page, Optional<Integer> size) {
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
+        return accountRepository.getClosedLedgerAccounts(pageable);
+    }
+
+    @Override
     public Page<?> getAllPendingVerifications(Jwt token, Optional<Integer> page,
                                               Optional<Integer> size,
                                               Optional<String> fromDateStr,
@@ -401,6 +408,16 @@ public class AccountServiceImpl implements AccountService{
             }
 
 
+        }
+    }
+
+    @Override
+    @Transactional
+    public void onRejected(Long id) {
+        Optional<LedgerAccount> ledgerAccountOp = accountRepository.findById(id);
+        if(ledgerAccountOp.isPresent()){
+            LedgerAccount ledgerAccount = ledgerAccountOp.get();
+            ledgerAccount.setAccountStatus(AccountType.REJECTED);
         }
     }
 

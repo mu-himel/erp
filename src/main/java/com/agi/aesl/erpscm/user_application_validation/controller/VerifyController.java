@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.user_application_validation.controller;
 
 import com.agi.aesl.erpscm.account_finance.service.AccountService;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.VerifyDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -72,6 +73,15 @@ public class VerifyController extends BaseController{
         if(verifyDto.getDomainType().equals(DomainType.ACCOUNT_LEDGER)){
             verificationService.setVerificationDomainService(accountService);
             verificationService.review(verifyDto);
+        }
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/reject")
+    public ResponseEntity<?> reject(@RequestBody RejectDto rejectDto){
+        if(rejectDto.getDomainType().equals(DomainType.ACCOUNT_LEDGER)){
+            verificationService.setVerificationDomainService(accountService);
+            verificationService.reject(rejectDto);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

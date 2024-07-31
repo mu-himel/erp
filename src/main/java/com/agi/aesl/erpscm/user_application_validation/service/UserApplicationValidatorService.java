@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.user_application_validation.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties.AssertingParty.Verification;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
@@ -33,4 +34,6 @@ public interface UserApplicationValidatorService<T> {
     void approve(Jwt token, ApproveDto approveDto);
     void verify(Jwt token, VerifyDto verifyDto);
     void review(VerifyDto verifyDto);
+
+    void reject(RejectDto rejectDto);
 }

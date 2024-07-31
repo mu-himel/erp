@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.agi.aesl.erpscm.comment.enums.ActionType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ public class CommendServiceImpl implements CommentService{
         comment.setMessage(commentDto.getMessage());
         comment.setDomainId(commentDto.getDomainId());
         comment.setDomainType(commentDto.getDomainType());
+        comment.setActionType(commentDto.getActionType());
         comment.setAttachments(commentDto.getAttachments().stream().map(attachment->{
             attachment.setComment(comment);
             return attachment;
@@ -68,6 +70,18 @@ public class CommendServiceImpl implements CommentService{
         comment.setCommentedBy(employee);
         comment.setMessage(msg);
         comment.setDomainType(domainType);
+        comment.setDomainId(domainId);
+        comment.setAttachments(attachments);
+        return comment;
+    }
+
+    @Override
+    public Comment prepareComment(Employee employee, DomainType domainType, ActionType actionType, Long domainId, String msg, List<CommentAttachment> attachments) {
+        Comment comment = new Comment();
+        comment.setCommentedBy(employee);
+        comment.setMessage(msg);
+        comment.setDomainType(domainType);
+        comment.setActionType(actionType);
         comment.setDomainId(domainId);
         comment.setAttachments(attachments);
         return comment;

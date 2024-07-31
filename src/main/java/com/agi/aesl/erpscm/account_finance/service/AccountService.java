@@ -13,6 +13,7 @@ public interface AccountService extends VerificationDomainService {
     String getNextAccountNo();
 
     Page<?> getAllPendingAccounts(Optional<Integer> page, Optional<Integer> size);
+    Page<?> getClosedAccounts(Optional<Integer> page, Optional<Integer> size);
 
     Page<?> getAllPendingVerifications(Jwt token,
                                              Optional<Integer> page, Optional<Integer> size,

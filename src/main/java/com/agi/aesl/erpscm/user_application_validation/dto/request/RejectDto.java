@@ -1,20 +1,19 @@
-package com.agi.aesl.erpscm.comment.dto;
-
-import java.util.List;
+package com.agi.aesl.erpscm.user_application_validation.dto.request;
 
 import com.agi.aesl.erpscm.comment.entity.CommentAttachment;
 import com.agi.aesl.erpscm.comment.enums.ActionType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import lombok.Data;
 
-@Data
-public class CommentDto {
+import java.util.List;
 
-    private Long id;
-    private Long domainId;
+@Data
+public class RejectDto {
+    RefDto verifier;
     private DomainType domainType;
+    private Long domainId;
+    private String comment;
     private ActionType actionType;
-    private CommentedByDto commentedBy;
-    private List<CommentAttachment> attachments;
-    private String message;
+    List<CommentAttachment> attachments;
+
 }

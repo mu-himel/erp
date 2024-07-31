@@ -60,4 +60,7 @@ public interface AccountRepository extends JpaRepository<LedgerAccount,Long> , A
                                                                  LocalDateTime fromDate,
                                                                  LocalDateTime toDate,
                                                                  Pageable pageable);
+
+    @Query(value = getClosedAccounts, countQuery = countClosedAccounts ,nativeQuery = true)
+    Page<PendingAccount> getClosedLedgerAccounts(Pageable pageable);
 }

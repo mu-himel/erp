@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.agi.aesl.erpscm.comment.enums.ActionType;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -226,7 +228,12 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
         
     }
 
-
+    private void comment(Employee verifier, DomainType domainType, ActionType actionType, Long domainId, String msg, List<CommentAttachment> attachments) {
+        if(msg !=null && !msg.isEmpty()){
+            Comment comment = commentService.prepareComment(verifier,domainType, actionType,domainId,msg, attachments);
+            commentService.addComment(comment);
+        }
+    }
 
     private void comment(Employee verifier, DomainType domainType, Long domainId, String msg, List<CommentAttachment> attachments) {
         if(msg !=null && !msg.isEmpty()){
@@ -235,7 +242,22 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
         }
     }
 
+    @Override
+    @Transactional
+    public void reject(RejectDto rejectDto) {
+        if(verificationDomainService!=null){
+            if((rejectDto.getComment()==null || rejectDto.getComment().isEmpty())){
+                throw new RuntimeException("Message Required");
+            }
 
+            verificationDomainService.onRejected(rejectDto.getDomainId());
+
+            comment(new Employee(rejectDto.getVerifier().getId()),
+                    rejectDto.getDomainType(),
+                    rejectDto.getActionType(),rejectDto.getDomainId(),
+                    rejectDto.getComment(),rejectDto.getAttachments());
+        }
+    }
 
     public void setVerificationDomainService(VerificationDomainService verificationDomainService){
         this.verificationDomainService = verificationDomainService;

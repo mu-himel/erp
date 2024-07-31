@@ -49,6 +49,14 @@ public class AccountFinanceController extends BaseController {
         return new ResponseEntity<>(accountService.getAllPendingAccounts(page,size), HttpStatus.OK);
     }
 
+    @GetMapping("/ledgers/closed")
+    public ResponseEntity<?> getClosedLedgerRequests(
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(accountService.getClosedAccounts(page,size),HttpStatus.OK);
+    }
+
     @GetMapping("/ledgers/pending-verifications")
     public ResponseEntity<?> getPendingVerifications(
             @AuthenticationPrincipal Jwt token,
