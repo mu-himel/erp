@@ -8,5 +8,6 @@ public class RemoteLedgerAccountDto {
     private String itemName;
     private String itemGroup;
     private String itemSubGroup;
+    private String uom;
     private String warehouse;
 }

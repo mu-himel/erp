@@ -324,7 +324,8 @@ public class AccountServiceImpl implements AccountService{
             List<VerifierInfo> verifiers = getVerifiers(ledgerAccount, verifierOp);
             List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, String.join(",",ids));
 
-            verificationService.setVerifiers(ledgerAccount,verifiers,DomainType.ACCOUNT_LEDGER);
+            verificationService.setVerifiers(ledgerAccount,verifiers,DomainType.ACCOUNT_LEDGER,
+                    null);
             if(verifiers.size()==0 && panels.size()>0){
                 ledgerAccount.setAccountStatus(AccountType.PENDING_APPROVAL);
                 Optional<ApprovalPanel> firstPanel = panels.stream().findFirst();

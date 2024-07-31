@@ -81,10 +81,16 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
   
 
     @Override
-    public void setVerifiers(T t, List<VerifierInfo> verifiers, DomainType domainType) {
+    public void setVerifiers(T t, List<VerifierInfo> verifiers, DomainType domainType, VerifierMailService verifierMailService) {
         if (verifiers.size() > 0) {
             Optional<VerifierInfo> firstOp = verifiers.stream().findFirst();
             VerifierInfo _verifier = firstOp.get();
+
+            if(verifierMailService!=null) {
+                verifierMailService.prepareMailContent(_verifier.getName(), "Verification", t);
+                verifierMailService.sentMail(_verifier.getEmail(),"Pending "+domainType.toString()+" Verification Request");
+            }
+
             List<UserApplicationValidation> verifications = verifiers.stream().map(verifier -> {
                 UserApplicationValidation verification = new UserApplicationValidation();
                 verification.setDomainId(t.getId());
@@ -169,7 +175,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
                 verificationDomainService.verifyComplete(domainId,firstApprover);
             }
 
-            comment(verifier, domainType, domainId, msg,verifyDto.getAttachments());
+            comment(verifier, domainType, ActionType.VERIFICATION, domainId, msg,verifyDto.getAttachments());
         }
         
     }

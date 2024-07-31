@@ -896,6 +896,10 @@ public class ItemServiceImpl implements ItemService {
                     item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
                     accountService.createItemLedger(item);
                 }
+                if(approveRequestDto.getCode()!=null){
+                    throw new RuntimeException("Not implemented yet," +
+                            " what will be item data flow for scm, if merged");
+                }
             }else{
                 item.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
             }

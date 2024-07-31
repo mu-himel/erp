@@ -8,10 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.common.BaseController;
@@ -20,6 +17,7 @@ import com.agi.aesl.erpscm.user_application_validation.dto.request.ApproveDto;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 
 
+@RestController
 @RequestMapping("/api/v1/verify")
 public class VerifyController extends BaseController{
 

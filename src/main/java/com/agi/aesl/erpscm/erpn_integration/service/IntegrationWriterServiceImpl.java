@@ -37,6 +37,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     private String ledgerItemCreateEndpoint;
 
     @Override
+    @Transactional
     public void createWarehouse(Jwt token, Warehouse warehouse) {
 
         HttpHeaders headers = networkService.setHttpHeadersForHr(token);
@@ -50,6 +51,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     }
 
     @Override
+    @Transactional
     public void deleteWarehouse(Jwt token, String warehouseName) {
         HttpHeaders headers = networkService.setHttpHeadersForHr(token);
         Map<String,Object> data = new HashMap<>();
@@ -60,6 +62,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     }
 
     @Override
+    @Transactional
     public void updateWarehouse(Jwt token, String oldName, Warehouse warehouse) {
         HttpHeaders headers = networkService.setHttpHeadersForHr(token);
         Map<String,Object> data = new HashMap<>();
@@ -82,6 +85,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
         RemoteLedgerAccountDto remoteLedgerAccountDto = new RemoteLedgerAccountDto();
         remoteLedgerAccountDto.setItemCode(item.getCode());
+        remoteLedgerAccountDto.setUom(item.getItemUnit());
         remoteLedgerAccountDto.setItemName(item.getItemAttributeName());
         remoteLedgerAccountDto.setItemGroup(category.getName());
         remoteLedgerAccountDto.setItemSubGroup(subCategory.getName());
