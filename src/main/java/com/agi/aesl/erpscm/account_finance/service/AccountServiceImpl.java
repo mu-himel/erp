@@ -413,12 +413,20 @@ public class AccountServiceImpl implements AccountService{
 
     @Override
     @Transactional
-    public void onRejected(Long id) {
+    public void onRejected(Employee verifier, Long id) {
+        Optional<UserApplicationValidation> verificationOp = verificationService
+                .getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType.ACCOUNT_LEDGER,id,verifier);
+        if(verificationOp.isPresent()){
+            UserApplicationValidation validation = verificationOp.get();
+            validation.setVerified(true);
+        }
+
         Optional<LedgerAccount> ledgerAccountOp = accountRepository.findById(id);
         if(ledgerAccountOp.isPresent()){
             LedgerAccount ledgerAccount = ledgerAccountOp.get();
             ledgerAccount.setAccountStatus(AccountType.REJECTED);
         }
+
     }
 
     @Override

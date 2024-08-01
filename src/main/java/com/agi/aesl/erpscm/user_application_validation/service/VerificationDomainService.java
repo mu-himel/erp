@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.user_application_validation.service;
 
 import java.util.Optional;
 
+import com.agi.aesl.erpscm.employee.entity.Employee;
 import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties.AssertingParty.Verification;
 
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
@@ -17,5 +18,5 @@ public interface VerificationDomainService {
     void approveComplete(Long id);
     void sendForReview(Long domainId, RefDto reviewer, String comment);
 
-    void onRejected(Long id);
+    void onRejected(Employee verifier, Long domainId);
 }

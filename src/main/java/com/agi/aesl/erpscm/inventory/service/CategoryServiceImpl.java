@@ -629,73 +629,87 @@ public class CategoryServiceImpl implements CategoryService {
                 category.setCategoryStatus(CategoryStatus.REJECTED);
             }
         }
+        MergePendingCategoryDto mergePendingCategoryDto = categoryApproveRequestDto.getMergePendingCategoryDto();
+        
         if(categoryApproveRequestDto.getCode()==null && categoryApproveRequestDto.getMergePendingCategoryDto()!=null){
-
-            MergePendingCategoryDto mergePendingCategoryDto = categoryApproveRequestDto.getMergePendingCategoryDto();
             Optional<ItemCategory> replacedCatOp = categoryRepository.findByCode(mergePendingCategoryDto.getCode());
             if(categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)){
                 if(replacedCatOp.isPresent()){
                     ItemCategory replacedCategory = replacedCatOp.get();
                     replacedCategory.setCategoryStatus(CategoryStatus.APPROVED);
                     replacedCategory.setActive(true);
-
-//                    if(categoryApproveRequestDto.getMergePendingCategoryDto()!=null){
-
-                        if(mergePendingCategoryDto.getName()!=null) {
-                            replacedCategory.setName(mergePendingCategoryDto.getName());
-                        }
-                        if(mergePendingCategoryDto.getParentCategory()!=null){
-                            replacedCategory.setParentCategory(mergePendingCategoryDto.getParentCategory());
-                        }
-                        if(mergePendingCategoryDto.getVat()!=null) {
-                            replacedCategory.setVat(mergePendingCategoryDto.getVat());
-                        }
-                        if(mergePendingCategoryDto.getAttributes()!=null) {
-                            List<CategoryAttribute> attributes = new ArrayList<>();
-                            for (CategoryAttribute ca : mergePendingCategoryDto.getAttributes()) {
-                                Optional<CategoryAttribute> caOp = categoryAttributeRepository
-                                        .findAllByAttributeTypeAndAttributeUnit(
-                                                ca.getAttributeType(),
-                                                ca.getAttributeType()
-                                        );
-                                if(caOp.isPresent()){
-                                    ca.setId(caOp.get().getId());
-                                }else{
-                                    ca.setId(null);
-                                }
-                                ca.setAttributeType(caOp.get().getAttributeType());
-                                ca.setAttributeUnit(caOp.get().getAttributeUnit());
-                                ca.setAttributeValue(ca.getAttributeValue());
-                                ca.setCategory(replacedCategory);
-                                attributes.add(ca);
-                            }
-                            replacedCategory.setAttributes(attributes);
-                        }
-                        if(mergePendingCategoryDto.getBrands()!=null && mergePendingCategoryDto.getBrands().size()>0){
-                            List<String> brands = mergePendingCategoryDto.getBrands();
-                            for(String brandName : brands) {
-                                Optional<CategoryBrand> catBrandOp = categoryBrandRepository
-                                                .findByCategoryIdAndName(replacedCategory.getId(), brandName);
-                                List<CategoryBrand> cbs = replacedCategory.getBrands();
-                                if(!catBrandOp.isPresent()){
-                                    CategoryBrand cb = new CategoryBrand();
-                                    cb.setCategory(replacedCategory);
-                                    cb.setName(brandName);
-                                    cbs.add(cb);
-                                }
-
-                            }
-                        }
-//                    }
+                    approveAndUpdateCategory(mergePendingCategoryDto, replacedCategory);
 
                 }
             }
-
-
         }
 
         if(categoryApproveRequestDto.getCode()!=null){
+            // merge category
+            Optional<ItemCategory> existCatOp = categoryRepository.findByCode(mergePendingCategoryDto.getCode());
+            if(existCatOp.isEmpty()){
+                ItemCategory newCat = new ItemCategory();
+                newCat.setCode(mergePendingCategoryDto.getCode());
+                approveAndUpdateCategory(mergePendingCategoryDto, newCat);
+                newCat.setCategoryStatus(CategoryStatus.APPROVED);
+                categoryRepository.save(newCat);
+            }
 
+        }
+    }
+
+    private void approveAndUpdateCategory(MergePendingCategoryDto mergePendingCategoryDto, ItemCategory replacedCategory) {
+
+
+//                    if(categoryApproveRequestDto.getMergePendingCategoryDto()!=null){
+
+        if(mergePendingCategoryDto.getName()!=null){
+            replacedCategory.setName(mergePendingCategoryDto.getName());
+        }
+        if(mergePendingCategoryDto.getParentCategory()!=null){
+            replacedCategory.setParentCategory(mergePendingCategoryDto.getParentCategory());
+        }
+        if(mergePendingCategoryDto.getVat()!=null){
+            replacedCategory.setVat(mergePendingCategoryDto.getVat());
+        }
+        if(mergePendingCategoryDto.getAttributes()!=null){
+            List<CategoryAttribute> attributes = new ArrayList<>();
+            for (CategoryAttribute ca : mergePendingCategoryDto.getAttributes()) {
+                Optional<CategoryAttribute> caOp = categoryAttributeRepository
+                        .findAllByAttributeTypeAndAttributeUnit(
+                                ca.getAttributeType(),
+                                ca.getAttributeType()
+                        );
+                if(caOp.isPresent()){
+                    ca.setId(caOp.get().getId());
+                    ca.setAttributeType(caOp.get().getAttributeType());
+                    ca.setAttributeUnit(caOp.get().getAttributeUnit());
+                }else{
+                    ca.setId(null);
+
+                }
+
+                ca.setAttributeValue(ca.getAttributeValue());
+                ca.setCategory(replacedCategory);
+                attributes.add(ca);
+            }
+            replacedCategory.setAttributes(attributes);
+        }
+        if(mergePendingCategoryDto.getBrands()!=null && mergePendingCategoryDto.getBrands().size()>0){
+            List<String> brands = mergePendingCategoryDto.getBrands();
+            List<CategoryBrand> cbs = new ArrayList<>();
+            for(String brandName : brands) {
+                Optional<CategoryBrand> catBrandOp = categoryBrandRepository
+                                .findByCategoryIdAndName(replacedCategory.getId(), brandName);
+                cbs= (replacedCategory.getBrands()!=null)? replacedCategory.getBrands(): new ArrayList<>();
+                if(!catBrandOp.isPresent()){
+                    CategoryBrand cb = new CategoryBrand();
+                    cb.setCategory(replacedCategory);
+                    cb.setName(brandName);
+                    cbs.add(cb);
+                }
+            }
+            replacedCategory.setBrands(cbs);
         }
     }
 }

@@ -727,7 +727,7 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
-    public void onRejected(Long id) {
+    public void onRejected(Employee verifier, Long id) {
         // TODO need to optimize demand reject here
     }
 

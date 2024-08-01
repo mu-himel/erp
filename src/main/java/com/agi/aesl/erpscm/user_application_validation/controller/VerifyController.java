@@ -31,7 +31,7 @@ public class VerifyController extends BaseController{
     private AccountService accountService;
 
 
-    @PostMapping("/approve")
+    @PutMapping("/approve")
     public ResponseEntity<?> approve(
             @AuthenticationPrincipal Jwt token,
             @RequestBody ApproveDto approveDto){
@@ -76,10 +76,13 @@ public class VerifyController extends BaseController{
     }
 
     @PutMapping("/reject")
-    public ResponseEntity<?> reject(@RequestBody RejectDto rejectDto){
+    public ResponseEntity<?> reject(
+            @AuthenticationPrincipal Jwt token,
+            @RequestBody RejectDto rejectDto){
+
         if(rejectDto.getDomainType().equals(DomainType.ACCOUNT_LEDGER)){
             verificationService.setVerificationDomainService(accountService);
-            verificationService.reject(rejectDto);
+            verificationService.reject(token, rejectDto);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
