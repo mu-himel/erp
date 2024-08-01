@@ -22,7 +22,8 @@ public interface AccountQuery {
             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
-            WHERE la.account_status IN ('PENDING','PENDING_VERIFICATION','PENDING_APPROVAL')
+            WHERE la.account_status IN ('PENDING','PENDING_VERIFICATION','PENDING_APPROVAL','REVIEW')
+            GROUP BY la.id
             """;
 
     String countPendingAccounts = "SELECT COUNT(*) FROM ("+getPendingAccounts+") total";
@@ -162,16 +163,22 @@ public interface AccountQuery {
                 ic.name as subCategory,
                 i.item_attribute_name as product,
                 la.group_account as groupAccount,
-                la.account_status as accountStatus
+                la.account_status as accountStatus,
+                (SELECT account_status FROM `ledger_accounts_verification_approval_histories` 
+                    where `employee_id` = :nextVerifierId AND `ledger_account_id`=la.id AND account_status='VERIFIED') as actionStatus
             FROM ledger_accounts la
             LEFT JOIN scm_items i ON i.id = la.item_id
             LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id
             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
+            LEFT JOIN ledger_accounts_verification_approval_histories lavah ON lavah.ledger_account_id = la.id 
             WHERE (ic.id IN (:categoryIds) OR pc.id IN (:categoryIds)) 
-            AND la.next_verifier_id = :nextVerifierId AND la.account_status IN (:accountStatuses)
+            AND ((la.next_verifier_id = :nextVerifierId AND la.account_status IN (:accountStatuses))
+            OR (lavah.employee_id=:nextVerifierId AND lavah.account_status='VERIFIED'))
             AND (:fromDate IS NULL OR (la.created_at BETWEEN :fromDate AND :toDate))
+            GROUP BY la.id
+            ORDER BY CASE WHEN la.account_status IN ('REVIEW','PENDING_VERIFICATION') THEN 1 ELSE 2 END ASC
             """;
 
     String countAllFilteredPendingVerifications = "SELECT COUNT(*) FROM ("+getAllFilteredPendingVerifications+") as total";
@@ -187,15 +194,21 @@ public interface AccountQuery {
                 ic.name as subCategory,
                 i.item_attribute_name as product,
                 la.group_account as groupAccount,
-                la.account_status as accountStatus
+                la.account_status as accountStatus,
+                (SELECT account_status FROM `ledger_accounts_verification_approval_histories` 
+                    where `employee_id` = :nextApproverId AND `ledger_account_id`=la.id AND account_status='APPROVED') as actionStatus
             FROM ledger_accounts la
             LEFT JOIN scm_items i ON i.id = la.item_id
             LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id
             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
-            WHERE la.next_approver_id = :nextApproverId AND la.account_status IN (:accountStatuses)
+            LEFT JOIN ledger_accounts_verification_approval_histories lavah ON lavah.ledger_account_id = la.id 
+            WHERE ((la.next_approver_id = :nextApproverId AND la.account_status IN (:accountStatuses))
+            OR (lavah.employee_id=:nextApproverId AND lavah.account_status='APPROVED'))
             AND (:fromDate IS NULL OR (la.created_at BETWEEN :fromDate AND :toDate))
+            GROUP BY la.id
+            ORDER BY CASE WHEN la.account_status IN ('REVIEW','PENDING_APPROVAL') THEN 1 ELSE 2 END ASC
             """;
     String getAllFilteredPendingApprovalsWithNextApprover = """
             SELECT 
@@ -206,16 +219,22 @@ public interface AccountQuery {
                 ic.name as subCategory,
                 i.item_attribute_name as product,
                 la.group_account as groupAccount,
-                la.account_status as accountStatus
+                la.account_status as accountStatus,
+                (SELECT account_status FROM `ledger_accounts_verification_approval_histories` 
+                    where `employee_id` = :nextApproverId AND `ledger_account_id`=la.id AND account_status='APPROVED') as actionStatus
             FROM ledger_accounts la
             LEFT JOIN scm_items i ON i.id = la.item_id
             LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id
             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
+            LEFT JOIN ledger_accounts_verification_approval_histories lavah ON lavah.ledger_account_id = la.id 
             WHERE (ic.id IN (:categoryIds) OR pc.id IN (:categoryIds)) 
-            AND la.next_approver_id = :nextApproverId AND la.account_status IN (:accountStatuses)
+            AND ((la.next_approver_id = :nextApproverId AND la.account_status IN (:accountStatuses))
+            OR (lavah.employee_id=:nextApproverId AND lavah.account_status='APPROVED'))
             AND (:fromDate IS NULL OR (la.created_at BETWEEN :fromDate AND :toDate))
+            GROUP BY la.id
+            ORDER BY CASE WHEN la.account_status IN ('REVIEW','PENDING_APPROVAL') THEN 1 ELSE 2 END ASC
             """;
 
     String countAllFilteredPendingApprovals = "SELECT COUNT(*) FROM ("+getAllFilteredPendingApprovals+") as total";

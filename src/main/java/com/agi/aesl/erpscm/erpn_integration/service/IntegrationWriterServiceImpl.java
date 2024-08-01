@@ -8,6 +8,7 @@ import com.agi.aesl.erpscm.account_finance.dto.request.RemoteLedgerAccountDto;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,8 +35,9 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     @Value("${app.hr.delete.warehouse}")
     private String warehouseDeleteEndpoint;
 
-    @Value("${app.hr.ledger.item.create")
+    @Value("${app.hr.ledger.item.create}")
     private String ledgerItemCreateEndpoint;
+
 
     @Value("${service.hr}")
     private String clientId;
@@ -99,6 +101,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         Item item = ledgerAccount.getItem();
         ItemCategory category = item.getItemParentCategory();
         ItemCategory subCategory = item.getItemCategory();
+        item.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
 
         RemoteLedgerAccountDto remoteLedgerAccountDto = new RemoteLedgerAccountDto();
         remoteLedgerAccountDto.setItemCode(item.getCode());
@@ -110,6 +113,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
         HttpEntity<RemoteLedgerAccountDto> payload = new HttpEntity<>(remoteLedgerAccountDto,headers);
         Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
+        System.out.println(ledgerItemCreateEndpoint);
         if(serviceExist.isPresent()) {
             networkService.put(ledgerItemCreateEndpoint, payload, Void.class);
         }else{

@@ -9,6 +9,7 @@ import com.agi.aesl.erpscm.comment.enums.ActionType;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -251,13 +252,14 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
 
     @Override
     @Transactional
-    public void reject(RejectDto rejectDto) {
+    public void reject(Jwt token, RejectDto rejectDto) {
+        claimResolver.setToken(token);
         if(verificationDomainService!=null){
             if((rejectDto.getComment()==null || rejectDto.getComment().isEmpty())){
                 throw new RuntimeException("Message Required");
             }
 
-            verificationDomainService.onRejected(rejectDto.getDomainId());
+            verificationDomainService.onRejected(claimResolver.getEmployee().get(),rejectDto.getDomainId());
 
             comment(new Employee(rejectDto.getVerifier().getId()),
                     rejectDto.getDomainType(),
@@ -271,10 +273,10 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     }
 
 
-    
-    
-    
-
-    
-    
+    @Override
+    public Optional<UserApplicationValidation> getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType accountLedger, Long domainId, Employee verifier) {
+       return verificationRepository.findByDomainTypeAndDomainIdAndVerifierAndIsApproval(
+            DomainType.ACCOUNT_LEDGER,domainId,verifier,false
+       );
+    }
 }
