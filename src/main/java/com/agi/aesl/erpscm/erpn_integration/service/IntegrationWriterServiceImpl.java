@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.erpn_integration.service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.agi.aesl.erpscm.account_finance.dto.request.RemoteLedgerAccountDto;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
@@ -36,6 +37,12 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     @Value("${app.hr.ledger.item.create")
     private String ledgerItemCreateEndpoint;
 
+    @Value("${service.hr}")
+    private String clientId;
+
+    @Autowired
+    private IntegrationReaderService integrationReaderService;
+
     @Override
     @Transactional
     public void createWarehouse(Jwt token, Warehouse warehouse) {
@@ -45,8 +52,12 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         data.put("warehouseName",warehouse.getName());
         data.put("warehouseLocation",warehouse.getLocation());
         HttpEntity<?> payload = new HttpEntity<>(data,headers);
-        ResponseEntity<Void> response = networkService.post(warehouseCreateEndpoint, payload, Void.class);
-        System.out.println(response.getStatusCode());
+        Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
+        if(serviceExist.isPresent()){
+            ResponseEntity<Void> response = networkService.post(warehouseCreateEndpoint, payload, Void.class);
+            System.out.println(response.getStatusCode());
+        }
+
         
     }
 
@@ -57,7 +68,10 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         Map<String,Object> data = new HashMap<>();
         data.put("warehouseName",warehouseName);
         HttpEntity<?> payload = new HttpEntity<>(data,headers);
-        networkService.delete(warehouseDeleteEndpoint, payload, Void.class);
+        Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
+        if(serviceExist.isPresent()) {
+            networkService.delete(warehouseDeleteEndpoint, payload, Void.class);
+        }
         
     }
 
@@ -70,7 +84,10 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         data.put("warehouseName",warehouse.getName());
         data.put("warehouseLocation",warehouse.getLocation());
         HttpEntity<?> payload = new HttpEntity<>(data,headers);
-        networkService.put(warehouseUpdateEndpoint, payload, Void.class);
+        Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
+        if(serviceExist.isPresent()) {
+            networkService.put(warehouseUpdateEndpoint, payload, Void.class);
+        }
         
     }
 
@@ -92,6 +109,11 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         remoteLedgerAccountDto.setWarehouse(ledgerAccount.getStore());
 
         HttpEntity<RemoteLedgerAccountDto> payload = new HttpEntity<>(remoteLedgerAccountDto,headers);
-        networkService.put(ledgerItemCreateEndpoint, payload, Void.class);
+        Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
+        if(serviceExist.isPresent()) {
+            networkService.put(ledgerItemCreateEndpoint, payload, Void.class);
+        }else{
+            throw new RuntimeException("Sorry! Hr Service not available to create item ledger");
+        }
     }
 }

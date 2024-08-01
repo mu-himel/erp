@@ -12,4 +12,6 @@ public interface IntegrationReaderService {
     Optional<Map<String,List<Long>>> getModuleFilterByUri(Jwt token, String uri);
 
     List<VendorListInfo> getAvailableVendors(String name);
+
+    Optional<?> getActiveServiceByClientId(Jwt token, String clientId);
 }
