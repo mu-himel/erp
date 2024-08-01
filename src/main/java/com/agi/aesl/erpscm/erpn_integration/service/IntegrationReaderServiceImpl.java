@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import aj.org.objectweb.asm.TypeReference;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
+import com.agi.aesl.erpscm.erpn_integration.dto.response.ServiceIntegrationDto;
 import com.agi.aesl.erpscm.erpn_integration.dto.response.VendorListInfo;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
@@ -72,5 +73,15 @@ public class IntegrationReaderServiceImpl implements IntegrationReaderService{
             return (List<VendorListInfo>) response.getBody();
         }
         return  new ArrayList<>();
+    }
+
+    @Override
+    public Optional<?> getActiveServiceByClientId(Jwt token, String clientId) {
+        HttpHeaders headers = networkService.setHttpHeaders(token);
+        HttpEntity<?> payload = new HttpEntity<>(headers);
+        String url = aclApiEndpoint+"/integrations/service/"+clientId;
+        System.out.println(url);
+        ResponseEntity<ServiceIntegrationDto> response = networkService.get(url,payload, ServiceIntegrationDto.class);
+        return Optional.ofNullable(response.getBody());
     }
 }

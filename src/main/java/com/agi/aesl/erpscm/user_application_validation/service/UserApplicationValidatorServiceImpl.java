@@ -212,7 +212,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
                 verificationDomainService.approveComplete(domainId);
             }
 
-            comment(verifier, domainType, domainId, msg, verifyDto.getAttachments());
+            comment(verifier, domainType, ActionType.APPROVAL, domainId, msg, verifyDto.getAttachments());
         }
         
     }
@@ -229,7 +229,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
             verificationDomainService.sendForReview(verifyDto.getDomainId(),verifyDto.getReviewer(),verifyDto.getComment());
 
             comment(new Employee(verifyDto.getVerifier().getId()),
-                    verifyDto.getDomainType(),verifyDto.getDomainId(),
+                    verifyDto.getDomainType(), verifyDto.getActionType(), verifyDto.getDomainId(),
                     verifyDto.getComment(),verifyDto.getAttachments());
         }
         

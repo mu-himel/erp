@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.goods_receive.controller;
 
+import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualDto;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
@@ -17,7 +18,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/goods-receive-note")
-public class GrnController {
+public class GrnController extends BaseController {
 
     @Autowired
     private GrnService grnService;
