@@ -13,6 +13,7 @@ import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.demand.dto.request.DemandRequestDto;
+import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.demand.entity.Demand;
 import com.agi.aesl.erpscm.demand.entity.DemandVerificationApprovalHistory;
 import com.agi.aesl.erpscm.demand.enums.DemandStatus;
@@ -465,5 +466,27 @@ public class AccountServiceImpl implements AccountService{
         accountRepository.save(ledgerAccount);
     }
 
+    @Override
+    @Transactional
+    public void review(Jwt token, Long id, ReviewDto reviewDto) {
+        claimResolver.setToken(token);
+        Optional<LedgerAccount> ledgerAccountOp = accountRepository.findById(id);
+        if(ledgerAccountOp.isEmpty()){
+            throw new RuntimeException("Ledger Account not found");
+        }
+        LedgerAccount ledgerAccount = ledgerAccountOp.get();
+        ledgerAccount.setReviewerId(null);
+        ledgerAccount.setAccountStatus(ledgerAccount.getReviewPrevStatus());
+        ledgerAccount.setReviewPrevStatus(null);
+        ledgerAccount.setReviewDate(LocalDateTime.now());
 
+        commentService.addComment(commentService.prepareComment(
+                claimResolver.getEmployee().get(),
+                reviewDto.getDomainType(),
+                reviewDto.getActionType(),
+                ledgerAccount.getId(),
+                reviewDto.getMessage(),
+                reviewDto.getAttachments()
+        ));
+    }
 }
