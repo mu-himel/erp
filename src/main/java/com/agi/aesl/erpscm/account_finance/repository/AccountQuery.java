@@ -67,6 +67,7 @@ public interface AccountQuery {
         i.item_attribute_name as product,
         la.group_account as groupAccount,
         la.account_status as accountStatus,
+        la.review_prev_status as prevStatus,
         la.store as storeInfo,
         au.id as initiatorId,
         au.employee_id as initiatorEmployeeId,
@@ -270,6 +271,7 @@ public interface AccountQuery {
         String getInitiatorId();
         String getInitiatorEmployeeId();
         String getInitiatorName();
+        String getPrevStatus();
         String getInitiatorDepartment();
         String getInitiatorDesignation();
         @JsonIgnore

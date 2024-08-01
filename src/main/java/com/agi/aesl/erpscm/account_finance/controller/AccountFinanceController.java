@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.account_finance.controller;
 import com.agi.aesl.erpscm.account_finance.dto.request.LedgerAccountRequestDto;
 import com.agi.aesl.erpscm.account_finance.service.AccountService;
 import com.agi.aesl.erpscm.common.BaseController;
+import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -37,6 +38,18 @@ public class AccountFinanceController extends BaseController {
             @PathVariable("id") Long id, @RequestBody LedgerAccountRequestDto ledgerAccountRequestDto){
         accountService.updateAccount(token, uri,  id, ledgerAccountRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/review/{id}")
+    public ResponseEntity<?> review(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id,
+            @RequestBody ReviewDto reviewDto
+    ){
+        accountService.review(token,id,reviewDto);
+        return new ResponseEntity<>(
+                HttpStatus.NO_CONTENT
+        );
     }
 
 

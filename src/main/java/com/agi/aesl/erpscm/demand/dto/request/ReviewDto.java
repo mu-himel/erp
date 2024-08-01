@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.demand.dto.request;
 import java.util.List;
 
 import com.agi.aesl.erpscm.comment.entity.CommentAttachment;
+import com.agi.aesl.erpscm.comment.enums.ActionType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 
 import lombok.AllArgsConstructor;
@@ -13,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewDto {
-   
+    ActionType actionType;
     DomainType domainType;
     String message;
     List<CommentAttachment> attachments; 
