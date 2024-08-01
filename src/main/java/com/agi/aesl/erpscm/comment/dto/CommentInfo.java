@@ -12,6 +12,9 @@ public interface CommentInfo {
     Long getId();
     Employee getCommentedBy();
     String getMessage();
+    String getDomainType();
+    Long getDomainId();
+    String getActionType();
     List<CommentAttachment> getAttachments();
     
 }

@@ -6,5 +6,7 @@ import lombok.Data;
 @Data
 public class CategoryApproveRequestDto {
     private String code;
+    private Long scmParentCategoryId;
+    private MergePendingCategoryDto mergePendingCategoryDto;
     private ApproveStatus approveStatus;
 }

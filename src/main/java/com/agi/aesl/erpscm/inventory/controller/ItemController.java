@@ -208,6 +208,7 @@ public class ItemController extends BaseController{
     @PutMapping("/approve/{id}")
     public ResponseEntity<?> approveItemFromCps(@PathVariable("id") Long id,
                     @RequestBody ItemApproveRequestDto approveRequestDto){
+        itemService.approveItemFromCps(id, approveRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

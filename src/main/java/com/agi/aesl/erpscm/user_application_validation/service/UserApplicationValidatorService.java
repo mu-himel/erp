@@ -3,6 +3,9 @@ package com.agi.aesl.erpscm.user_application_validation.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties.AssertingParty.Verification;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
@@ -19,7 +22,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 
 public interface UserApplicationValidatorService<T> {
     Optional<VerifierConfig> getVerifiers(ClaimResolver claimResolver, String uri,String criteriaGroup, String categories);
-    void setVerifiers(T t, List<Verifier> verifiers, DomainType domainType);
+    void setVerifiers(T t, List<VerifierInfo> verifiers, DomainType domainType,VerifierMailService verifierMailService);
     void setApprovers(T t, List<ApprovalPanel> approvalPanels, DomainType domainType);
 
     void addVerification(UserApplicationValidation verification);
@@ -33,4 +36,9 @@ public interface UserApplicationValidatorService<T> {
     void approve(Jwt token, ApproveDto approveDto);
     void verify(Jwt token, VerifyDto verifyDto);
     void review(VerifyDto verifyDto);
+
+    void reject(Jwt token, RejectDto rejectDto);
+
+    Optional<UserApplicationValidation> getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType accountLedger,
+                                                                                Long id, Employee verifier);
 }

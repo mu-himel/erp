@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.inventory.service;
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
+import com.agi.aesl.erpscm.inventory.dto.request.ItemApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.RemoteItemRequestDto;
 import com.agi.aesl.erpscm.inventory.entity.Item;
@@ -92,4 +93,6 @@ public interface ItemService {
     void syncItemsBySubCatCode(Jwt token, Long warehouseId,Long warehosueStoreId, String subCatCode);
 
     Optional<Item> getByBrandAndAttributeName(String string,Long subCatId, String string2);
+
+    void approveItemFromCps(Long id, ItemApproveRequestDto approveRequestDto);
 }

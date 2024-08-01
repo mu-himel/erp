@@ -5,6 +5,7 @@ import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.demand.enums.DemandStatus;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.entity.Item;
+import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -17,7 +18,7 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "ledger_accounts")
-public class LedgerAccount {
+public class LedgerAccount extends VerifyableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,6 +32,7 @@ public class LedgerAccount {
     private String masterAccount;
     private String groupAccount;
     private String subGroupAccount;
+    private String store;
     private BigDecimal openingCreditAmount;
     private BigDecimal openingDebitAmount;
 
@@ -41,7 +43,7 @@ public class LedgerAccount {
     private String nextApproverId;
 
     @Enumerated(EnumType.STRING)
-    private DemandStatus reviewPrevStatus;
+    private AccountType reviewPrevStatus;
 
     private String reviewerId;
 

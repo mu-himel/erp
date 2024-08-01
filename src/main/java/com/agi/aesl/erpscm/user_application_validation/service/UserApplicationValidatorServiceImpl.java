@@ -5,7 +5,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.agi.aesl.erpscm.comment.enums.ActionType;
+import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -78,10 +82,16 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
   
 
     @Override
-    public void setVerifiers(T t, List<Verifier> verifiers, DomainType domainType) {
+    public void setVerifiers(T t, List<VerifierInfo> verifiers, DomainType domainType, VerifierMailService verifierMailService) {
         if (verifiers.size() > 0) {
-            Optional<Verifier> firstOp = verifiers.stream().findFirst();
-            Verifier _verifier = firstOp.get();
+            Optional<VerifierInfo> firstOp = verifiers.stream().findFirst();
+            VerifierInfo _verifier = firstOp.get();
+
+            if(verifierMailService!=null) {
+                verifierMailService.prepareMailContent(_verifier.getName(), "Verification", t);
+                verifierMailService.sentMail(_verifier.getEmail(),"Pending "+domainType.toString()+" Verification Request");
+            }
+
             List<UserApplicationValidation> verifications = verifiers.stream().map(verifier -> {
                 UserApplicationValidation verification = new UserApplicationValidation();
                 verification.setDomainId(t.getId());
@@ -166,7 +176,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
                 verificationDomainService.verifyComplete(domainId,firstApprover);
             }
 
-            comment(verifier, domainType, domainId, msg,verifyDto.getAttachments());
+            comment(verifier, domainType, ActionType.VERIFICATION, domainId, msg,verifyDto.getAttachments());
         }
         
     }
@@ -203,7 +213,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
                 verificationDomainService.approveComplete(domainId);
             }
 
-            comment(verifier, domainType, domainId, msg, verifyDto.getAttachments());
+            comment(verifier, domainType, ActionType.APPROVAL, domainId, msg, verifyDto.getAttachments());
         }
         
     }
@@ -220,13 +230,18 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
             verificationDomainService.sendForReview(verifyDto.getDomainId(),verifyDto.getReviewer(),verifyDto.getComment());
 
             comment(new Employee(verifyDto.getVerifier().getId()),
-                    verifyDto.getDomainType(),verifyDto.getDomainId(),
+                    verifyDto.getDomainType(), verifyDto.getActionType(), verifyDto.getDomainId(),
                     verifyDto.getComment(),verifyDto.getAttachments());
         }
         
     }
 
-
+    private void comment(Employee verifier, DomainType domainType, ActionType actionType, Long domainId, String msg, List<CommentAttachment> attachments) {
+        if(msg !=null && !msg.isEmpty()){
+            Comment comment = commentService.prepareComment(verifier,domainType, actionType,domainId,msg, attachments);
+            commentService.addComment(comment);
+        }
+    }
 
     private void comment(Employee verifier, DomainType domainType, Long domainId, String msg, List<CommentAttachment> attachments) {
         if(msg !=null && !msg.isEmpty()){
@@ -235,17 +250,33 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
         }
     }
 
+    @Override
+    @Transactional
+    public void reject(Jwt token, RejectDto rejectDto) {
+        claimResolver.setToken(token);
+        if(verificationDomainService!=null){
+            if((rejectDto.getComment()==null || rejectDto.getComment().isEmpty())){
+                throw new RuntimeException("Message Required");
+            }
 
+            verificationDomainService.onRejected(claimResolver.getEmployee().get(),rejectDto.getDomainId());
+
+            comment(new Employee(rejectDto.getVerifier().getId()),
+                    rejectDto.getDomainType(),
+                    rejectDto.getActionType(),rejectDto.getDomainId(),
+                    rejectDto.getComment(),rejectDto.getAttachments());
+        }
+    }
 
     public void setVerificationDomainService(VerificationDomainService verificationDomainService){
         this.verificationDomainService = verificationDomainService;
     }
 
 
-    
-    
-    
-
-    
-    
+    @Override
+    public Optional<UserApplicationValidation> getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType accountLedger, Long domainId, Employee verifier) {
+       return verificationRepository.findByDomainTypeAndDomainIdAndVerifierAndIsApproval(
+            DomainType.ACCOUNT_LEDGER,domainId,verifier,false
+       );
+    }
 }

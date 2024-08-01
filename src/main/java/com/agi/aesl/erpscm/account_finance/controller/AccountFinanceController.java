@@ -49,6 +49,41 @@ public class AccountFinanceController extends BaseController {
         return new ResponseEntity<>(accountService.getAllPendingAccounts(page,size), HttpStatus.OK);
     }
 
+    @GetMapping("/ledgers/closed")
+    public ResponseEntity<?> getClosedLedgerRequests(
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(accountService.getClosedAccounts(page,size),HttpStatus.OK);
+    }
+
+    @GetMapping("/ledgers/pending-verifications")
+    public ResponseEntity<?> getPendingVerifications(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate
+    ){
+        return new ResponseEntity<>(
+                accountService.getAllPendingVerifications(token,page,size,fromDate,toDate),
+                HttpStatus.OK);
+    }
+
+    @GetMapping("/ledgers/pending-approvals")
+    public ResponseEntity<?> getPendingApprovals(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate
+    ){
+        return new ResponseEntity<>(
+                accountService.getAllPendingApprovals(token,page,size, fromDate,toDate),
+                HttpStatus.OK
+        );
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getLedgerDetail(@PathVariable("id") Long id){
         return new ResponseEntity<>(
