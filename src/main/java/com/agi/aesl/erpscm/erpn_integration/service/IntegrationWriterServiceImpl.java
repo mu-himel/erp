@@ -53,6 +53,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         Map<String,Object> data = new HashMap<>();
         data.put("warehouseName",warehouse.getName());
         data.put("warehouseLocation",warehouse.getLocation());
+        data.put("warehouseId",warehouse.getId());
         HttpEntity<?> payload = new HttpEntity<>(data,headers);
         Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
         if(serviceExist.isPresent()){
