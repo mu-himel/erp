@@ -3,17 +3,22 @@ package com.agi.aesl.erpscm.goods_receive.service;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
+import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveItemDetailDto;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
-import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualDto;
+
+import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
+
 import com.agi.aesl.erpscm.goods_receive.dto.response.GoodReceiveNoteItemDetailInfo;
 import com.agi.aesl.erpscm.goods_receive.dto.response.GrnDetailInfo;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
+import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
 import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository;
 import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository.*;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,6 +47,9 @@ public class GrnServiceImpl implements GrnService{
 
     @Autowired
     private IntegrationReaderService integrationReaderService;
+
+    @Autowired
+    private ItemService itemService;
 
     @Override
     public String getNextGrnNumber() {
@@ -89,6 +98,54 @@ public class GrnServiceImpl implements GrnService{
                 ).collect(Collectors.toList())
         );
         grnRepository.save(goodReceiveNote);
+    }
+
+    @Override
+    @Transactional
+    public void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto) {
+
+        GoodReceiveNote grn = new GoodReceiveNote();
+        grn.setGrnDate(LocalDate.now());
+        grn.setGrnNo(grnManualDto.getGrnNo());
+        grn.setGrnMode(GrnMode.MANUAL);
+        grn.setGrnStatus(GrnStatus.PENDING_QC);
+        if(token != null){
+            grn.setCreatedBy(claimResolver.getEmployee().get());
+        }
+
+
+        grn.setGoodReceiveItemDetails(grnManualDto.getGrnDetails().stream().map(detailDto->{
+            GoodReceiveItemDetail grid = new GoodReceiveItemDetail();
+
+                Optional<Item> itemOp = itemService.getItemDetail(detailDto.getItem().getId());
+                if(itemOp.isPresent()){
+                    Item item = itemOp.get();
+                    grid.setBrandName(item.getName());
+                    grid.setCategory(item.getItemParentCategory());
+                    grid.setSubCategory(item.getItemCategory());
+                    grid.setEstimatedDeliveryDays(detailDto.getEstDeliveryDays());
+                    grid.setDeclaredQty(detailDto.getOrderQty());
+                    grid.setPricePerUnit(detailDto.getPricePerUnit());
+                    grid.setGoodReceiveNote(grn);
+                }
+
+                return grid;
+            }).collect(Collectors.toList())
+        );
+
+        grn.setAitOption(grnManualDto.getAitOption());
+        grn.setVatOption(grnManualDto.getVatOption());
+        grn.setVat(grnManualDto.getVat());
+        grn.setDeliveryChargeAmount(grnManualDto.getDeliveryChargeAmount());
+        grn.setDeliveryCharge(grnManualDto.getDeliveryCharge());
+        grn.setDays(grnManualDto.getDays());
+        grn.setVatPctg(grnManualDto.getVatPctg());
+        grn.setSubTotal(grnManualDto.getSubTotal());
+        grn.setTotalPrice(grnManualDto.getTotalPrice());
+        grn.setVendorName(grnManualDto.getVendorName());
+        grn.setVendorId(grnManualDto.getVendorId());
+        grn.setMushak(grnManualDto.getMushak());
+        grnRepository.save(grn);
     }
 
     @Override
@@ -142,14 +199,13 @@ public class GrnServiceImpl implements GrnService{
         }
     }
 
+
     @Override
     public List<?> getAvailableVendors(Jwt token, Optional<String> name) {
         claimResolver.setToken(token);
         return integrationReaderService.getAvailableVendors(name.orElse(null));
     }
 
-    @Override
-    public void createGrn(GrnManualDto grnManualDto) {
 
-    }
+
 }

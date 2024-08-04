@@ -1,7 +1,9 @@
 package com.agi.aesl.erpscm.goods_receive.service;
 
 import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
-import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualDto;
+
+import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
+
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -18,7 +20,11 @@ public interface GrnService {
 
     Optional<?> getGrnById(Long id, Boolean returnTypeEntity);
 
+
     List<?> getAvailableVendors(Jwt token, Optional<String> name);
 
-    void createGrn(GrnManualDto grnManualDto);
+
+    void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto);
+
+
 }
