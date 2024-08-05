@@ -7,7 +7,7 @@ public interface GrnQuery {
                     grn.id as id,
                     grn.created_at as createdAt, 
                     grn.grn_status grnStatus,
-                    po.po_no as poNo,
+                    grn.indent_no as indentNo,
                     grn.grn_no as grnNo, ic.name as categoryName, 
                     count(grid.id) as items, sum(grid.receive_qty) as receivedQty,
                     CASE WHEN grid.qc_type IS NULL THEN
@@ -23,9 +23,8 @@ public interface GrnQuery {
                     	count(grid.qc_type)
                     END,0) qcHold
                 FROM good_receive_notes grn
-                LEFT JOIN purchase_orders po ON po.id = grn.purchase_order_id
                 LEFT JOIN good_receive_item_details grid ON grid.good_receive_note_id = grn.id
-                LEFT JOIN item_categories ic ON ic.id = grid.category_id
+                LEFT JOIN scm_item_categories ic ON ic.id = grid.category_id
                 WHERE (:fromDate IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
                 GROUP BY grn.id
             """;
