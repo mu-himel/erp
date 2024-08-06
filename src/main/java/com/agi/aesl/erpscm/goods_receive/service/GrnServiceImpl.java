@@ -103,12 +103,15 @@ public class GrnServiceImpl implements GrnService{
     @Override
     @Transactional
     public void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto) {
-
+        claimResolver.setToken(token);
         GoodReceiveNote grn = new GoodReceiveNote();
         grn.setGrnDate(LocalDate.now());
         grn.setGrnNo(grnManualDto.getGrnNo());
+        grn.setIndentNo(grnManualDto.getIndentNo() );
         grn.setGrnMode(GrnMode.MANUAL);
         grn.setGrnStatus(GrnStatus.PENDING_QC);
+
+        grn.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
         if(token != null){
             grn.setCreatedBy(claimResolver.getEmployee().get());
         }
@@ -140,11 +143,12 @@ public class GrnServiceImpl implements GrnService{
         grn.setDeliveryCharge(grnManualDto.getDeliveryCharge());
         grn.setDays(grnManualDto.getDays());
         grn.setVatPctg(grnManualDto.getVatPctg());
-        grn.setSubTotal(grnManualDto.getSubTotal());
+        grn.setSubTotal(grnManualDto.getInTotal());
         grn.setTotalPrice(grnManualDto.getTotalPrice());
-        grn.setVendorName(grnManualDto.getVendorName());
-        grn.setVendorId(grnManualDto.getVendorId());
+        grn.setVendorName(grnManualDto.getVendor().getName());
+        grn.setVendorId(grnManualDto.getVendor().getId());
         grn.setMushak(grnManualDto.getMushak());
+        grn.setPaymentType(grnManualDto.getPayment());
         grnRepository.save(grn);
     }
 

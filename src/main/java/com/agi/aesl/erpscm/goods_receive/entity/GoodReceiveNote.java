@@ -67,6 +67,7 @@ public class GoodReceiveNote {
     private BigDecimal vat;
     private BigDecimal vatPctg;
     private BigDecimal subTotal;
+    private String paymentType;
 
     @ManyToOne
     private Employee createdBy;

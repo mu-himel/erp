@@ -65,7 +65,7 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
         String getAitOption();
         BigDecimal getTotalPrice();
         BigDecimal getVat();
-        BigDecimal getVatPcTg();
+        BigDecimal getVatPctg();
         BigDecimal getSubTotal();
 
         BigDecimal getDeliveryChargeAmount();
@@ -98,7 +98,7 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
         GrnItemInfo getItem();
         LocalDate getManufactureDate();
         LocalDate getExpireDate();
-        String getItemAttribute();
+        String getItemAttributeName();
         Long getReceiveQty();
         WarehouseInfo getWarehouse();
     }
