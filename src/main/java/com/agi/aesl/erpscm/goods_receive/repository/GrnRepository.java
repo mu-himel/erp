@@ -40,6 +40,12 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
             """)
     Optional<GoodReceiveNoteDetailInfo> findGrnById(Long id);
 
+    @Query(value = getAllGrnByStatus,countQuery = countAllGrnByStatus, nativeQuery = true)
+    Page<GoodReceiveNoteInfo> findAllGrnByStatus(String status, LocalDateTime fromDate,
+                               LocalDateTime toDate,Pageable pageable);
+
+    Optional<GoodReceiveNote> findByGrnNo(String grnNo);
+
     interface GoodReceiveNoteDetailInfo{
         Long getId();
         String getGrnNo();
