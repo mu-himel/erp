@@ -213,7 +213,8 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Page<?> getPendingVerificationAllItems(Optional<Integer> page, Optional<Integer> size, Optional<String> name, Optional<String> code, Optional<Integer> reorderPercentage, Optional<Integer> stockThresholdQty, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<Long> warehouseId, Optional<Long> warehouseStoreId) {
+    public Page<?> getPendingVerificationAllItems(Optional<Integer> page, Optional<Integer> size, Optional<String> name, Optional<String> code, Optional<Integer> reorderPercentage, Optional<Integer> stockThresholdQty, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                                  Optional<Long> warehouseId, Optional<Long> warehouseStoreId) {
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
         Page<?> result  = itemRepository.findAllPendingVerificationItems(
@@ -223,8 +224,6 @@ public class ItemServiceImpl implements ItemService {
                 stockThresholdQty.orElse(null),
                 categoryId.orElse(null),
                 subCategoryId.orElse(null),
-                warehouseId.orElse(null),
-                warehouseStoreId.orElse(null),
                 pageable);
 
 
@@ -381,7 +380,7 @@ public class ItemServiceImpl implements ItemService {
            warehouseStore = new WarehouseStore(itemRequestDto.getWarehouseStore().getId());
 
         }
-
+        item.setCode(itemRequestDto.getCode());
         Long brandId = (itemRequestDto.getBrand()!=null)? itemRequestDto.getBrand().getId() : null;
        List<?> itemExistByAttr = this.getByAttributes(brandId,itemAttributeName,warehouse.getId());
        if(itemExistByAttr.size()>0){
@@ -897,6 +896,7 @@ public class ItemServiceImpl implements ItemService {
                     accountService.createItemLedger(item);
                 }
                 if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()!=null){
+                    item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
                     mergeItem(item, itemMergeRequestDto);
                     accountService.createItemLedger(item);
 
@@ -906,15 +906,15 @@ public class ItemServiceImpl implements ItemService {
                 if(itemOp.isEmpty()){
                     throw new RuntimeException("Sorry! Item not found using code ["+approveRequestDto.getCode()+"]");
                 }
-                item = itemOp.get();
+                Item existItem = itemOp.get();
                 item.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
-                mergeItem(item,itemMergeRequestDto);
+                mergeItem(existItem,itemMergeRequestDto);
             }
         }
     }
 
     private void mergeItem(Item item, ItemMergeRequestDto itemMergeRequestDto) {
-        item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+
         Optional<ItemCategory> categoryOp = categoryService.getAnyItemCategory(itemMergeRequestDto.getItemParentCategory().getId());
         Optional<ItemCategory> subCategoryOp = categoryService.getAnyItemCategory(itemMergeRequestDto.getItemCategory().getId());
         if(categoryOp.isPresent()){
