@@ -11,6 +11,9 @@ import com.agi.aesl.erpscm.quality_control.dto.request.QcDto;
 import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
 import com.agi.aesl.erpscm.quality_control.enums.QcStatus;
 import com.agi.aesl.erpscm.quality_control.repository.QcRepository;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
+import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
+import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -132,5 +135,35 @@ public class QcServiceImpl implements QcService{
             GoodReceiveNote grn = goodReceiveNoteOptional.get();
             grn.setGrnStatus(GrnStatus.REJECTED);
         }
+    }
+
+    @Override
+    public void onVerify(Long id, UserApplicationValidation verification, UserApplicationValidationRepository.VerificationResponse nextVerifier) {
+
+    }
+
+    @Override
+    public void onApprove(Long id, UserApplicationValidation verification, UserApplicationValidationRepository.VerificationResponse nextApprover) {
+
+    }
+
+    @Override
+    public void verifyComplete(Long id, Optional<UserApplicationValidationRepository.VerificationResponse> firstApprover) {
+
+    }
+
+    @Override
+    public void approveComplete(Long id) {
+
+    }
+
+    @Override
+    public void sendForReview(Long domainId, RefDto reviewer, String comment) {
+
+    }
+
+    @Override
+    public void onRejected(Employee verifier, Long domainId) {
+
     }
 }

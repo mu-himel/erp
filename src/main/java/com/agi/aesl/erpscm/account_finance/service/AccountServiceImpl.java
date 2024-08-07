@@ -322,6 +322,8 @@ public class AccountServiceImpl implements AccountService{
             Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver,uri,
                     "CATEGORY",String.join(",",ids));
 
+            verificationService.removeVerification(ledgerAccount.getId(),DomainType.ACCOUNT_LEDGER);
+
             List<VerifierInfo> verifiers = getVerifiers(ledgerAccount, verifierOp);
             List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, String.join(",",ids));
 
@@ -342,6 +344,7 @@ public class AccountServiceImpl implements AccountService{
         }
     }
 
+    @Transactional
     private List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories) {
         List<ApprovalPanel> approvalPanels = moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
                 Optional.ofNullable(categories),Optional.empty());

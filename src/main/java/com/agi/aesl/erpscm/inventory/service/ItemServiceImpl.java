@@ -24,10 +24,7 @@ import com.agi.aesl.erpscm.inventory.entity.*;
 import com.agi.aesl.erpscm.inventory.enums.ItemHeader;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import com.agi.aesl.erpscm.inventory.enums.StockType;
-import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
-import com.agi.aesl.erpscm.inventory.repository.CategoryWarehouseStoreRepository;
-import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
-import com.agi.aesl.erpscm.inventory.repository.ItemStockRepository;
+import com.agi.aesl.erpscm.inventory.repository.*;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
 // import com.agi.aesl.erpscm.scm.dto.request.OfferRequestDto;
@@ -97,6 +94,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private CategoryWarehouseStoreRepository categoryWarehouseStoreRepository;
+
+    @Autowired
+    private ItemAttributeRepository itemAttributeRepository;
 
     @Override
     public Optional<Item> getItemDetail(Long id) {
@@ -890,19 +890,65 @@ public class ItemServiceImpl implements ItemService {
         Optional<Item> itemOp = itemRepository.findById(id);
         if(itemOp.isPresent()){
             Item item = itemOp.get();
-
+            ItemMergeRequestDto itemMergeRequestDto = approveRequestDto.getItemMergeRequestDto();
             if(approveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-                if(approveRequestDto.getCode()==null) {
+                if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()==null) {
                     item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
                     accountService.createItemLedger(item);
                 }
-                if(approveRequestDto.getCode()!=null){
-                    throw new RuntimeException("Not implemented yet," +
-                            " what will be item data flow for scm, if merged");
+                if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()!=null){
+                    mergeItem(item, itemMergeRequestDto);
+                    accountService.createItemLedger(item);
+
                 }
-            }else{
+            }else if(approveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)){
+                itemOp = itemRepository.findByCode(approveRequestDto.getCode());
+                if(itemOp.isEmpty()){
+                    throw new RuntimeException("Sorry! Item not found using code ["+approveRequestDto.getCode()+"]");
+                }
+                item = itemOp.get();
                 item.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
+                mergeItem(item,itemMergeRequestDto);
             }
         }
+    }
+
+    private void mergeItem(Item item, ItemMergeRequestDto itemMergeRequestDto) {
+        item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+        Optional<ItemCategory> categoryOp = categoryService.getAnyItemCategory(itemMergeRequestDto.getItemParentCategory().getId());
+        Optional<ItemCategory> subCategoryOp = categoryService.getAnyItemCategory(itemMergeRequestDto.getItemCategory().getId());
+        if(categoryOp.isPresent()){
+            item.setItemCategory(categoryOp.get());
+        }
+        if(subCategoryOp.isPresent()){
+            item.setItemParentCategory(subCategoryOp.get());
+        }
+        item.setName(item.getName());
+        item.setItemAttributeName(itemMergeRequestDto.getItemAttributeName());
+        List<ItemAttribute> attributes = itemMergeRequestDto.getAttributes().stream().map(attr->{
+            ItemAttribute _attr = new ItemAttribute();
+            Optional<ItemAttribute> itemAttrOp = itemAttributeRepository.findAllByAttributeTypeAndAttributeUnitAndItemId(attr.getAttributeType(),
+                    attr.getAttributeUnit(), item.getId());
+            if(itemAttrOp.isPresent()){
+                _attr = itemAttrOp.get();
+                _attr.setAttributeValue(attr.getAttributeValue());
+            }else{
+                _attr.setItem(item);
+                _attr.setAttributeType(attr.getAttributeType());
+                _attr.setAttributeUnit(attr.getAttributeUnit());
+                _attr.setAttributeValue(attr.getAttributeValue());
+            }
+
+            return _attr;
+        }).collect(Collectors.toList());
+        item.setItemUnit(itemMergeRequestDto.getItemUnit());
+        item.setAttributes(attributes);
+        Optional<CategoryBrand> categoryBrandOp = categoryBrandRepository
+                .findByCategoryIdAndName(item.getItemCategory().getId(),
+                        itemMergeRequestDto.getBrand());
+        if(categoryBrandOp.isPresent()){
+           item.setBrand(categoryBrandOp.get());
+        }
+        item.setCode(itemMergeRequestDto.getCode());
     }
 }

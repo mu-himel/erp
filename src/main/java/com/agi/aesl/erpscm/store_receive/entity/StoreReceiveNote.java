@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.store_receive.entity;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
+import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -14,7 +15,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "store_receive_notes")
-public class StoreReceiveNote {
+public class StoreReceiveNote extends VerifyableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

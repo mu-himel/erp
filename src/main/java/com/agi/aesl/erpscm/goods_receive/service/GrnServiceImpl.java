@@ -131,12 +131,14 @@ public class GrnServiceImpl implements GrnService{
                 Optional<Item> itemOp = itemService.getItemDetail(detailDto.getItem().getId());
                 if(itemOp.isPresent()){
                     Item item = itemOp.get();
+                    grid.setItem(item);
                     grid.setBrandName(item.getName());
                     grid.setCategory(item.getItemParentCategory());
                     grid.setSubCategory(item.getItemCategory());
                     grid.setEstimatedDeliveryDays(detailDto.getEstDeliveryDays());
                     grid.setDeclaredQty(detailDto.getOrderQty());
                     grid.setPricePerUnit(detailDto.getPricePerUnit());
+                    grid.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
                     grid.setGoodReceiveNote(grn);
                 }
 

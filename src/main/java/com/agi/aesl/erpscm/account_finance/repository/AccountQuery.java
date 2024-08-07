@@ -68,6 +68,8 @@ public interface AccountQuery {
         la.group_account as groupAccount,
         la.account_status as accountStatus,
         la.review_prev_status as prevStatus,
+        la.reviewer_id as reviewerId,
+        la.review_date as reviewDate,
         la.store as storeInfo,
         au.id as initiatorId,
         au.employee_id as initiatorEmployeeId,
@@ -279,6 +281,9 @@ public interface AccountQuery {
 
         @JsonIgnore
         String getInitiatorWarehouseName();
+
+        String getReviewerId();
+        String getReviewDate();
 
         default String setInitiatorWarehouseName(String location){
             return this.getInitiatorWarehouseName() + " " + location;

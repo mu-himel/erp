@@ -24,6 +24,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -66,7 +67,7 @@ public class Item {
     private Integer reorderPercentage;
 
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
-    private List<ItemAttribute> attributes;
+    private List<ItemAttribute> attributes=new ArrayList<>();
 
     private Boolean active=true;
 

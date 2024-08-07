@@ -50,6 +50,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     private ClaimResolver claimResolver;
 
     @Override
+    @Transactional
     public Optional<VerifierConfig> getVerifiers(ClaimResolver claimResolver, String uri, String criteriaGroup, String categories) {
         
         // Map<String,Object> data = new HashMap<>();
@@ -62,6 +63,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     
 
     @Override
+    @Transactional
     public void setApprovers(T t, List<ApprovalPanel> approvalPanels, DomainType domainType) {
         if(approvalPanels.size()>0){
 
@@ -82,6 +84,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
   
 
     @Override
+    @Transactional
     public void setVerifiers(T t, List<VerifierInfo> verifiers, DomainType domainType, VerifierMailService verifierMailService) {
         if (verifiers.size() > 0) {
             Optional<VerifierInfo> firstOp = verifiers.stream().findFirst();
@@ -107,12 +110,14 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     }
 
     @Override
+    @Transactional
     public void addVerification(UserApplicationValidation verification) {
         verificationRepository.save(verification);
         
     }
 
     @Override
+    @Transactional
     public void addVerification(List<UserApplicationValidation> verifications) {
         verificationRepository.saveAll(verifications);
     }
