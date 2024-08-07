@@ -3,17 +3,24 @@ package com.agi.aesl.erpscm.goods_receive.service;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
+import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveItemDetailDto;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
-import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualDto;
+
+import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
+
 import com.agi.aesl.erpscm.goods_receive.dto.response.GoodReceiveNoteItemDetailInfo;
 import com.agi.aesl.erpscm.goods_receive.dto.response.GrnDetailInfo;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
+import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
+import com.agi.aesl.erpscm.goods_receive.repository.GrnDetailRepository;
 import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository;
 import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository.*;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.service.ItemService;
+import com.agi.aesl.erpscm.quality_control.service.QcService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,6 +49,15 @@ public class GrnServiceImpl implements GrnService{
 
     @Autowired
     private IntegrationReaderService integrationReaderService;
+
+    @Autowired
+    private ItemService itemService;
+
+    @Autowired
+    private QcService qcService;
+
+    @Autowired
+    private GrnDetailRepository grnDetailRepository;
 
     @Override
     public String getNextGrnNumber() {
@@ -89,6 +106,58 @@ public class GrnServiceImpl implements GrnService{
                 ).collect(Collectors.toList())
         );
         grnRepository.save(goodReceiveNote);
+    }
+
+    @Override
+    @Transactional
+    public void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto) {
+        claimResolver.setToken(token);
+        GoodReceiveNote grn = new GoodReceiveNote();
+        grn.setGrnDate(LocalDate.now());
+        grn.setGrnNo(grnManualDto.getGrnNo());
+        grn.setIndentNo(grnManualDto.getIndentNo() );
+        grn.setGrnMode(GrnMode.MANUAL);
+        grn.setGrnStatus(GrnStatus.PENDING_QC);
+
+        grn.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
+        if(token != null){
+            grn.setCreatedBy(claimResolver.getEmployee().get());
+        }
+
+
+        grn.setGoodReceiveItemDetails(grnManualDto.getGrnDetails().stream().map(detailDto->{
+            GoodReceiveItemDetail grid = new GoodReceiveItemDetail();
+
+                Optional<Item> itemOp = itemService.getItemDetail(detailDto.getItem().getId());
+                if(itemOp.isPresent()){
+                    Item item = itemOp.get();
+                    grid.setBrandName(item.getName());
+                    grid.setCategory(item.getItemParentCategory());
+                    grid.setSubCategory(item.getItemCategory());
+                    grid.setEstimatedDeliveryDays(detailDto.getEstDeliveryDays());
+                    grid.setDeclaredQty(detailDto.getOrderQty());
+                    grid.setPricePerUnit(detailDto.getPricePerUnit());
+                    grid.setGoodReceiveNote(grn);
+                }
+
+                return grid;
+            }).collect(Collectors.toList())
+        );
+
+        grn.setAitOption(grnManualDto.getAitOption());
+        grn.setVatOption(grnManualDto.getVatOption());
+        grn.setVat(grnManualDto.getVat());
+        grn.setDeliveryChargeAmount(grnManualDto.getDeliveryChargeAmount());
+        grn.setDeliveryCharge(grnManualDto.getDeliveryCharge());
+        grn.setDays(grnManualDto.getDays());
+        grn.setVatPctg(grnManualDto.getVatPctg());
+        grn.setSubTotal(grnManualDto.getInTotal());
+        grn.setTotalPrice(grnManualDto.getTotalPrice());
+        grn.setVendorName(grnManualDto.getVendor().getName());
+        grn.setVendorId(grnManualDto.getVendor().getId());
+        grn.setMushak(grnManualDto.getMushak());
+        grn.setPaymentType(grnManualDto.getPayment());
+        grnRepository.save(grn);
     }
 
     @Override
@@ -142,6 +211,7 @@ public class GrnServiceImpl implements GrnService{
         }
     }
 
+
     @Override
     public List<?> getAvailableVendors(Jwt token, Optional<String> name) {
         claimResolver.setToken(token);
@@ -149,7 +219,67 @@ public class GrnServiceImpl implements GrnService{
     }
 
     @Override
-    public void createGrn(GrnManualDto grnManualDto) {
+    public Page<?> getAllGrnPendingQC(Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate) {
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+        LocalDateTime fromDateObj = null;
+        LocalDateTime toDateObj = null;
 
+        if(fromDate.isPresent() && toDate.isPresent()) {
+            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
+            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+        }
+        return grnRepository.findAllGrnByStatus(GrnStatus.PENDING_QC.toString(),
+                fromDateObj,
+                toDateObj,pageable);
+    }
+
+    @Override
+    public void updateGrnItemDetail(GoodReceiveItemDetail goodReceiveItemDetail) {
+        grnDetailRepository.save(goodReceiveItemDetail);
+    }
+
+    @Override
+    public Optional<?> getGRNById(Long id, boolean returnTypeEntity) {
+        if(returnTypeEntity){
+            return grnRepository.findById(id);
+        }else{
+
+            Optional<GrnRepository.GoodReceiveNoteDetailInfo> goodReceiveItemDetailOp = grnRepository.findGrnById(id);
+            Map<String, Object> _detailInfo = new HashMap<>();
+            if(goodReceiveItemDetailOp.isPresent()) {
+                GrnRepository.GoodReceiveNoteDetailInfo detailInfo =  goodReceiveItemDetailOp.get();
+
+                GrnDetailInfo grnDetailInfo = new GrnDetailInfo();
+                grnDetailInfo.setId(detailInfo.getId());
+                grnDetailInfo.setGrnNo(detailInfo.getGrnNo());
+                grnDetailInfo.setGrnStatus(detailInfo.getGrnStatus());
+                grnDetailInfo.setWarehouse(detailInfo.getWarehouse());
+                grnDetailInfo.setIsReceivedByStore(detailInfo.getIsReceivedByStore());
+                grnDetailInfo.setCreatedBy(detailInfo.getCreatedBy());
+                List<GoodReceiveNoteItemDetailInfo> detailInfos = new ArrayList<>();
+                detailInfo.getGoodReceiveItemDetails().stream().forEach(goodReceiveNoteItemDetailInfo -> {
+                    GoodReceiveNoteItemDetailInfo grnidi = new GoodReceiveNoteItemDetailInfo();
+                    grnidi.setId(goodReceiveNoteItemDetailInfo.getId());
+                    grnidi.setReceiveQty(goodReceiveNoteItemDetailInfo.getReceiveQty());
+                    grnidi.setExpireDate(goodReceiveNoteItemDetailInfo.getExpireDate());
+                    grnidi.setManufactureDate(goodReceiveNoteItemDetailInfo.getManufactureDate());
+                    grnidi.setItem(itemService.getItemDetailWithWarehouse(goodReceiveNoteItemDetailInfo.getItem().getId()));
+                    detailInfos.add(grnidi);
+                });
+                grnDetailInfo.setGoodReceiveNoteItemDetailInfoList(detailInfos);
+
+                _detailInfo.put("detailInfo",grnDetailInfo);
+                _detailInfo.put("qcResult",qcService.getQcResultByGrn(detailInfo.getId()));
+
+
+            }
+            return Optional.ofNullable(_detailInfo);
+        }
+    }
+
+    @Override
+    public Optional<GoodReceiveNote> getByGrnNo(String grnNo) {
+        return grnRepository.findByGrnNo(grnNo);
     }
 }

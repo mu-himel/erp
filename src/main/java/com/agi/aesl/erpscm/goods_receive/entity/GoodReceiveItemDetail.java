@@ -47,6 +47,8 @@ public class GoodReceiveItemDetail {
 
     private LocalDate manufactureDate;
 
+    private Integer estimatedDeliveryDays;
+
     private LocalDate expireDate;
 
     private BigDecimal receiveQty;
@@ -60,6 +62,8 @@ public class GoodReceiveItemDetail {
     private BigDecimal totalApprovedQty;
 
     private BigDecimal totalDeclinedQty;
+
+    private BigDecimal pricePerUnit;
 
     @CreationTimestamp
     @Column(updatable = false)

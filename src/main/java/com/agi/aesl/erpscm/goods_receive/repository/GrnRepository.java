@@ -4,6 +4,7 @@ import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseStoreRepository;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
+import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import com.agi.aesl.erpscm.inventory.entity.ItemStock;
@@ -15,6 +16,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,6 +40,12 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
             """)
     Optional<GoodReceiveNoteDetailInfo> findGrnById(Long id);
 
+    @Query(value = getAllGrnByStatus,countQuery = countAllGrnByStatus, nativeQuery = true)
+    Page<GoodReceiveNoteInfo> findAllGrnByStatus(String status, LocalDateTime fromDate,
+                               LocalDateTime toDate,Pageable pageable);
+
+    Optional<GoodReceiveNote> findByGrnNo(String grnNo);
+
     interface GoodReceiveNoteDetailInfo{
         Long getId();
         String getGrnNo();
@@ -48,9 +56,26 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
         Boolean getIsReceivedByStore();
         String getIndentNo();
         Long getVendorId();
+        String getVendorName();
+        GrnMode getGrnMode();
 //        PurchaseOrder getPurchaseOrder();
         WarehouseInfo getWarehouse();
         Employee getCreatedBy();
+
+        String getDeliveryCharge();
+        String getMushak();
+
+        Integer getDays();
+        String getVatOption();
+
+        String getAitOption();
+        BigDecimal getTotalPrice();
+        BigDecimal getVat();
+        BigDecimal getVatPctg();
+        BigDecimal getSubTotal();
+
+        BigDecimal getDeliveryChargeAmount();
+
         List<GoodReceiveNoteItemDetailInfo> getGoodReceiveItemDetails();
     }
 
@@ -63,7 +88,7 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
         Long getId();
         LocalDate getCreatedAt();
         String getGrnNo();
-        String getPoNo();
+        String getIndentNo();
         GrnStatus getGrnStatus();
         String getCategoryName();
         Integer getItems();
@@ -79,7 +104,7 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
         GrnItemInfo getItem();
         LocalDate getManufactureDate();
         LocalDate getExpireDate();
-        String getItemAttribute();
+        String getItemAttributeName();
         Long getReceiveQty();
         WarehouseInfo getWarehouse();
     }

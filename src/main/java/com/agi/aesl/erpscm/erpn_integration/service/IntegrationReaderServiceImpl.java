@@ -64,6 +64,7 @@ public class IntegrationReaderServiceImpl implements IntegrationReaderService{
             headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
         }
         HttpEntity<?> payload = new HttpEntity<>(headers);
+        System.out.println(cpsServerConfig.getVendorListEndpoint(name));
         ResponseEntity<?> response = networkService.get(
                 cpsServerConfig.getVendorListEndpoint(name),
                 payload,

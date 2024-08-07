@@ -2,7 +2,9 @@ package com.agi.aesl.erpscm.goods_receive.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
-import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualDto;
+
+import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
+
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,12 +43,13 @@ public class GrnController extends BaseController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+
     @PostMapping("/manual")
     public ResponseEntity<?> createManualGrn(
             @AuthenticationPrincipal Jwt token,
-            @RequestBody @Valid GrnManualDto grnManualDto
+            @RequestBody @Valid GrnManualRequestDto grnManualDto
     ){
-        grnService.createGrn(grnManualDto);
+        grnService.createManualGrn(token, grnManualDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
