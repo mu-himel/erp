@@ -322,6 +322,8 @@ public class AccountServiceImpl implements AccountService{
             Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver,uri,
                     "CATEGORY",String.join(",",ids));
 
+            verificationService.removeVerification(ledgerAccount.getId(),DomainType.ACCOUNT_LEDGER);
+
             List<VerifierInfo> verifiers = getVerifiers(ledgerAccount, verifierOp);
             List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, String.join(",",ids));
 
@@ -342,6 +344,7 @@ public class AccountServiceImpl implements AccountService{
         }
     }
 
+    @Transactional
     private List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories) {
         List<ApprovalPanel> approvalPanels = moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
                 Optional.ofNullable(categories),Optional.empty());
@@ -376,7 +379,6 @@ public class AccountServiceImpl implements AccountService{
             LedgerAccount ledgerAccount = ledgerAccountOp.get();
 //            demandMailService.prepareMailContent(verificationResponse.getVerifier().getEmployeeName(),"Approval",demand);
 //            demandMailService.sentMail(verificationResponse.getVerifier().getEmailAddress(),"Pending Demand Approval Request");
-
             LedgerAccountVerifyApprovalHistory ledgerAccountVAHistory = new LedgerAccountVerifyApprovalHistory();
             ledgerAccountVAHistory.setLedgerAccount(ledgerAccount);
             ledgerAccountVAHistory.setEmployee(verification.getVerifier());
@@ -405,7 +407,7 @@ public class AccountServiceImpl implements AccountService{
                 ledgerAccount.setNextApproverId(firstApprover.get().getVerifier().getId());
                 ledgerAccount.setAccountStatus(AccountType.PENDING_APPROVAL);
             }else{
-                ledgerAccount.setAccountStatus(AccountType.APPROVED);
+                ledgerAccount.setAccountStatus(AccountType.VERIFIED);
             }
 
 

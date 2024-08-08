@@ -69,8 +69,6 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             @Param("stockThresholdQty") Integer stockThresholdQty,
             @Param("categoryId") Long categoryId,
             @Param("subCategoryId") Long subCategoryId,
-            @Param("warehouseId") Long warehouseId,
-            @Param("warehouseStoreId") Long warehouseStoreId,
             Pageable pageable
     );
 

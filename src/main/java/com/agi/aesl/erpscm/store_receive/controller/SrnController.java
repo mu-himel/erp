@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.store_receive.controller;
 
+import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.store_receive.dto.SrnDto;
 import com.agi.aesl.erpscm.store_receive.service.SrnService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +14,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/srn")
-public class SrnController {
+public class SrnController  extends BaseController {
 
     @Autowired
     private SrnService srnService;

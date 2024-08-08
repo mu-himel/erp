@@ -149,7 +149,7 @@ public class ItemCategoryController extends BaseController{
         // @ApiParam(value = "Category Id",example = "1", required = true) 
         @PathVariable("id") Long id){
         return new ResponseEntity<>(
-                categoryService.getItemCategory(id),
+                categoryService.getAnyItemCategory(id),
                 HttpStatus.OK
         );
     }

@@ -68,6 +68,8 @@ public interface AccountQuery {
         la.group_account as groupAccount,
         la.account_status as accountStatus,
         la.review_prev_status as prevStatus,
+        la.reviewer_id as reviewerId,
+        la.review_date as reviewDate,
         la.store as storeInfo,
         au.id as initiatorId,
         au.employee_id as initiatorEmployeeId,
@@ -140,7 +142,7 @@ public interface AccountQuery {
                 i.item_attribute_name as product,
                 la.group_account as groupAccount,
                 la.account_status as accountStatus,
-                (SELECT account_status FROM `ledger_accounts_verification_approval_histories` 
+                (SELECT MAX(account_status) FROM `ledger_accounts_verification_approval_histories` 
                     where `employee_id` = :nextVerifierId AND `ledger_account_id`=la.id AND account_status='VERIFIED') as actionStatus
             FROM ledger_accounts la
             LEFT JOIN scm_items i ON i.id = la.item_id
@@ -165,7 +167,7 @@ public interface AccountQuery {
                 i.item_attribute_name as product,
                 la.group_account as groupAccount,
                 la.account_status as accountStatus,
-                (SELECT account_status FROM `ledger_accounts_verification_approval_histories` 
+                (SELECT MAX(account_status) FROM `ledger_accounts_verification_approval_histories` 
                     where `employee_id` = :nextVerifierId AND `ledger_account_id`=la.id AND account_status='VERIFIED') as actionStatus
             FROM ledger_accounts la
             LEFT JOIN scm_items i ON i.id = la.item_id
@@ -196,7 +198,7 @@ public interface AccountQuery {
                 i.item_attribute_name as product,
                 la.group_account as groupAccount,
                 la.account_status as accountStatus,
-                (SELECT account_status FROM `ledger_accounts_verification_approval_histories` 
+                (SELECT MAX(account_status) FROM `ledger_accounts_verification_approval_histories` 
                     where `employee_id` = :nextApproverId AND `ledger_account_id`=la.id AND account_status='APPROVED') as actionStatus
             FROM ledger_accounts la
             LEFT JOIN scm_items i ON i.id = la.item_id
@@ -221,7 +223,7 @@ public interface AccountQuery {
                 i.item_attribute_name as product,
                 la.group_account as groupAccount,
                 la.account_status as accountStatus,
-                (SELECT account_status FROM `ledger_accounts_verification_approval_histories` 
+                (SELECT MAX(account_status) FROM `ledger_accounts_verification_approval_histories` 
                     where `employee_id` = :nextApproverId AND `ledger_account_id`=la.id AND account_status='APPROVED') as actionStatus
             FROM ledger_accounts la
             LEFT JOIN scm_items i ON i.id = la.item_id
@@ -279,6 +281,9 @@ public interface AccountQuery {
 
         @JsonIgnore
         String getInitiatorWarehouseName();
+
+        String getReviewerId();
+        String getReviewDate();
 
         default String setInitiatorWarehouseName(String location){
             return this.getInitiatorWarehouseName() + " " + location;

@@ -7,6 +7,7 @@ import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
+import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.entity.ItemStock;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.data.domain.Page;
@@ -99,24 +100,39 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
         Integer getQcHold();
     }
 
+    interface CategoryInfo{
+        Long getId();
+        String getName();
+        String getCode();
+    }
     interface GoodReceiveNoteItemDetailInfo{
         Long getId();
         GrnItemInfo getItem();
         LocalDate getManufactureDate();
         LocalDate getExpireDate();
-        String getItemAttributeName();
-        Long getReceiveQty();
+        BigDecimal getReceiveQty();
+        BigDecimal getTotalApprovedQty();
+        BigDecimal getTotalDeclinedQty();
+        BigDecimal getDeclaredQty();
+        BigDecimal getInspectedQty();
+        BigDecimal getPricePerUnit();
         WarehouseInfo getWarehouse();
+
+        CategoryInfo getCategory();
+        CategoryInfo getSubCategory();
     }
 
     interface GrnItemInfo{
         Long getId();
         String getCode();
         String getName();
-        List<ItemStock> getStocks();
-        List<ItemAttribute> getAttributes();
-        ReferenceObjectDto getItemCategory();
-         WarehouseStoreInfo getWarehouseStore();
+
+        String getItemAttributeName();
+
+//        List<ItemStock> getStocks();
+//        List<ItemAttribute> getAttributes();
+//
+//         WarehouseStoreInfo getWarehouseStore();
     }
 
     interface WarehouseStoreInfo{

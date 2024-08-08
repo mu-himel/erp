@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -46,6 +47,7 @@ public class ModuleServiceImpl implements ModuleService{
     }
 
     @Override
+    @Transactional
     public List<ApprovalPanel> getModuleWiseApprovalSetting(ClaimResolver claimResolver, String uri, Optional<String> categoryId,
             Optional<BigDecimal> amount) {
                 HttpHeaders httpHeaders = networkService.setHttpHeaders(claimResolver.getToken());
