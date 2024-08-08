@@ -12,7 +12,7 @@ import java.util.List;
 public class GrnManualRequestDto {
     private String indentNo;
     private ReferenceObjectDto category;
-    private ReferenceObjectDto vendor;
+    private VendorDto vendor;
     private String grnNo;
     private String deliveryCharge;
     private String mushak;
@@ -21,8 +21,8 @@ public class GrnManualRequestDto {
     private String vatOption;
     private String aitOption;
     private BigDecimal totalPrice;
-    private BigDecimal vat;
-    private BigDecimal vatPctg;
+    private BigDecimal totalVat;
+//    private BigDecimal vatPctg;
     private BigDecimal inTotal;
     private Long warehouseId;
     private String payment;

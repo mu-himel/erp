@@ -53,6 +53,8 @@ public class GoodReceiveNote {
     private String indentNo;
     private Long vendorId;
     private String vendorName;
+    private String vendorPhone;
+    private String vendorEmail;
 
     @ManyToOne
     private Warehouse warehouse;
@@ -68,6 +70,9 @@ public class GoodReceiveNote {
     private BigDecimal vatPctg;
     private BigDecimal subTotal;
     private String paymentType;
+
+    @Column(length = 1000)
+    private String invoicePath;
 
     @ManyToOne
     private Employee createdBy;

@@ -8,4 +8,6 @@ import java.nio.file.Path;
 public interface FileUploadService {
 
     FileUploadResponse uploadFile(Path path, MultipartFile multipartFile);
+
+    Boolean validFileSize(Long fileSize, Long limit);
 }

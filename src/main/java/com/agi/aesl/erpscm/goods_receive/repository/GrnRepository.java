@@ -58,6 +58,8 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
         String getIndentNo();
         Long getVendorId();
         String getVendorName();
+        String getVendorPhone();
+        String getVendorEmail();
         GrnMode getGrnMode();
 //        PurchaseOrder getPurchaseOrder();
         WarehouseInfo getWarehouse();
@@ -74,6 +76,10 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
         BigDecimal getVat();
         BigDecimal getVatPctg();
         BigDecimal getSubTotal();
+
+        String getPaymentType();
+
+        String getInvoicePath();
 
         BigDecimal getDeliveryChargeAmount();
 
@@ -117,6 +123,8 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
         BigDecimal getInspectedQty();
         BigDecimal getPricePerUnit();
         WarehouseInfo getWarehouse();
+
+        String getEstimatedDeliveryDays();
 
         CategoryInfo getCategory();
         CategoryInfo getSubCategory();
