@@ -12,7 +12,7 @@ public class GoodReceiveNoteItemDetailInfo {
     private Long id;
     private LocalDate manufactureDate;
     private LocalDate expireDate;
-    private Long receiveQty;
+    private BigDecimal receiveQty;
     private Optional<?> item;
     private Integer estimatedDays;
     private String itemAttribute;
