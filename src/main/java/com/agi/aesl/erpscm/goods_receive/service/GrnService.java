@@ -23,7 +23,7 @@ public interface GrnService {
     Optional<?> getGrnById(Long id, Boolean returnTypeEntity);
 
 
-    List<?> getAvailableVendors(Jwt token, Optional<String> name);
+
 
 
     void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto);

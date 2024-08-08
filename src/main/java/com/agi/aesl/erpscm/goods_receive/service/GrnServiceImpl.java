@@ -184,41 +184,36 @@ public class GrnServiceImpl implements GrnService{
             return grnRepository.findById(id);
         }else{
             Optional<GoodReceiveNoteDetailInfo> goodReceiveItemDetailOp = grnRepository.findGrnById(id);
-            Map<String,Object> _detailinfo = new HashMap<>();
-            if(goodReceiveItemDetailOp.isPresent()){
-                GoodReceiveNoteDetailInfo detailInfo = goodReceiveItemDetailOp.get();
-                GrnDetailInfo grnDetailInfo = new GrnDetailInfo();
-                grnDetailInfo.setIndentNo(detailInfo.getIndentNo());
-                grnDetailInfo.setCreatedAt(detailInfo.getCreatedAt());
-                grnDetailInfo.setId(detailInfo.getId());
-                grnDetailInfo.setGrnNo(detailInfo.getGrnNo());
-                grnDetailInfo.setGrnStatus(detailInfo.getGrnStatus());
-                grnDetailInfo.setWarehouse(detailInfo.getWarehouse());
-                grnDetailInfo.setIsReceivedByStore(detailInfo.getIsReceivedByStore());
-                grnDetailInfo.setCreatedBy(detailInfo.getCreatedBy());
-                Long vendorId = detailInfo.getVendorId();
-                List<GoodReceiveNoteItemDetailInfo> detailInfos = new ArrayList<>();
-                detailInfo.getGoodReceiveItemDetails().stream().forEach(goodReceiveNoteItemDetailInfo -> {
-                    GoodReceiveNoteItemDetailInfo grnidi = new GoodReceiveNoteItemDetailInfo();
+//            Map<String,Object> _detailinfo = new HashMap<>();
+//            if(goodReceiveItemDetailOp.isPresent()){
+//                GoodReceiveNoteDetailInfo detailInfo = goodReceiveItemDetailOp.get();
+//                GrnDetailInfo grnDetailInfo = new GrnDetailInfo();
+//                grnDetailInfo.setIndentNo(detailInfo.getIndentNo());
+//                grnDetailInfo.setCreatedAt(detailInfo.getCreatedAt());
+//                grnDetailInfo.setId(detailInfo.getId());
+//                grnDetailInfo.setGrnNo(detailInfo.getGrnNo());
+//                grnDetailInfo.setGrnStatus(detailInfo.getGrnStatus());
+//                grnDetailInfo.setWarehouse(detailInfo.getWarehouse());
+//                grnDetailInfo.setIsReceivedByStore(detailInfo.getIsReceivedByStore());
+//                grnDetailInfo.setCreatedBy(detailInfo.getCreatedBy());
+//                Long vendorId = detailInfo.getVendorId();
+//                List<GoodReceiveNoteItemDetailInfo> detailInfos = new ArrayList<>();
+//                detailInfo.getGoodReceiveItemDetails().stream().forEach(goodReceiveNoteItemDetailInfo -> {
+//                    GoodReceiveNoteItemDetailInfo grnidi = new GoodReceiveNoteItemDetailInfo();
 
 //                    Optional<PriceQuotationDetailInfo> pqDetailOp = priceQuotationDetailRepository.findByItemAttribute(
 //                            vendorId,
 //                            goodReceiveNoteItemDetailInfo.getWarehouse().getId(),
 //                            goodReceiveNoteItemDetailInfo.getItemAttribute()
 //                    );
-                });
-
-            }
+//                });
             return  goodReceiveItemDetailOp;
-        }
+            }
+
+
     }
 
 
-    @Override
-    public List<?> getAvailableVendors(Jwt token, Optional<String> name) {
-        claimResolver.setToken(token);
-        return integrationReaderService.getAvailableVendors(name.orElse(null));
-    }
 
     @Override
     public Page<?> getAllGrnPendingQC(Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate) {
@@ -253,25 +248,25 @@ public class GrnServiceImpl implements GrnService{
                 GrnRepository.GoodReceiveNoteDetailInfo detailInfo =  goodReceiveItemDetailOp.get();
 
                 GrnDetailInfo grnDetailInfo = new GrnDetailInfo();
-                grnDetailInfo.setId(detailInfo.getId());
-                grnDetailInfo.setGrnNo(detailInfo.getGrnNo());
-                grnDetailInfo.setGrnStatus(detailInfo.getGrnStatus());
-                grnDetailInfo.setWarehouse(detailInfo.getWarehouse());
-                grnDetailInfo.setIsReceivedByStore(detailInfo.getIsReceivedByStore());
-                grnDetailInfo.setCreatedBy(detailInfo.getCreatedBy());
-                List<GoodReceiveNoteItemDetailInfo> detailInfos = new ArrayList<>();
-                detailInfo.getGoodReceiveItemDetails().stream().forEach(goodReceiveNoteItemDetailInfo -> {
-                    GoodReceiveNoteItemDetailInfo grnidi = new GoodReceiveNoteItemDetailInfo();
-                    grnidi.setId(goodReceiveNoteItemDetailInfo.getId());
-                    grnidi.setReceiveQty(goodReceiveNoteItemDetailInfo.getReceiveQty());
-                    grnidi.setExpireDate(goodReceiveNoteItemDetailInfo.getExpireDate());
-                    grnidi.setManufactureDate(goodReceiveNoteItemDetailInfo.getManufactureDate());
-                    grnidi.setItem(itemService.getItemDetailWithWarehouse(goodReceiveNoteItemDetailInfo.getItem().getId()));
-                    detailInfos.add(grnidi);
-                });
-                grnDetailInfo.setGoodReceiveNoteItemDetailInfoList(detailInfos);
+//                grnDetailInfo.setId(detailInfo.getId());
+//                grnDetailInfo.setGrnNo(detailInfo.getGrnNo());
+//                grnDetailInfo.setGrnStatus(detailInfo.getGrnStatus());
+//                grnDetailInfo.setWarehouse(detailInfo.getWarehouse());
+//                grnDetailInfo.setIsReceivedByStore(detailInfo.getIsReceivedByStore());
+//                grnDetailInfo.setCreatedBy(detailInfo.getCreatedBy());
+//                List<GoodReceiveNoteItemDetailInfo> detailInfos = new ArrayList<>();
+//                detailInfo.getGoodReceiveItemDetails().stream().forEach(goodReceiveNoteItemDetailInfo -> {
+//                    GoodReceiveNoteItemDetailInfo grnidi = new GoodReceiveNoteItemDetailInfo();
+//                    grnidi.setId(goodReceiveNoteItemDetailInfo.getId());
+//                    grnidi.setReceiveQty(goodReceiveNoteItemDetailInfo.getReceiveQty());
+//                    grnidi.setExpireDate(goodReceiveNoteItemDetailInfo.getExpireDate());
+//                    grnidi.setManufactureDate(goodReceiveNoteItemDetailInfo.getManufactureDate());
+//                    grnidi.setItem(itemService.getItemDetailWithWarehouse(goodReceiveNoteItemDetailInfo.getItem().getId()));
+//                    detailInfos.add(grnidi);
+//                });
+//                grnDetailInfo.setGoodReceiveNoteItemDetailInfoList(detailInfos);
 
-                _detailInfo.put("detailInfo",grnDetailInfo);
+                _detailInfo.put("detailInfo",detailInfo);
                 _detailInfo.put("qcResult",qcService.getQcResultByGrn(detailInfo.getId()));
 
 

@@ -53,15 +53,7 @@ public class GrnController extends BaseController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @GetMapping("/available-vendors")
-    public ResponseEntity<?> getAvailableVendors(
-            @AuthenticationPrincipal Jwt token,
-            @RequestParam("name") Optional<String> name){
-        return new ResponseEntity<>(
-                grnService.getAvailableVendors(token, name),
-                HttpStatus.OK
-        );
-    }
+
 
     @GetMapping("/all")
     public ResponseEntity<?> getAllGrn(

@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.quality_control.entity;
 
+import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
@@ -9,6 +10,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -39,4 +41,16 @@ public class QualityControl extends VerifyableEntity {
 
     @ManyToOne
     private Employee createdBy;
+
+
+    private String nextVerifierId;
+    private String nextApproverId;
+
+    @Enumerated(EnumType.STRING)
+    private QcStatus reviewPrevStatus;
+
+    private String reviewerId;
+    private LocalDateTime reviewDate;
+
+
 }
