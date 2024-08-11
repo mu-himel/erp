@@ -1,10 +1,13 @@
 package com.agi.aesl.erpscm.user_application_validation.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
+import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.ActionType;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
@@ -283,5 +286,24 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
        return verificationRepository.findByDomainTypeAndDomainIdAndVerifierAndIsApproval(
             DomainType.ACCOUNT_LEDGER,domainId,verifier,false
        );
+    }
+
+    @Override
+    public <T extends VerifyableEntity> List<VerifierInfo> getVerifiers(T ledgerAccount, Optional<VerifierConfig> verifierOp, String status) {
+        List<VerifierInfo> verifiers = new ArrayList<>();
+        if(verifierOp.isPresent()){
+            VerifierConfig verification = verifierOp.get();
+            verifiers = verification.getVerifiers();
+            Boolean verificationRequired = verification.getVerificationRequired();
+            if(verificationRequired!=null && verificationRequired==true && verifiers!=null && verifiers.size()>0){
+                ledgerAccount.setStatus(AccountType.PENDING_VERIFICATION.toString());
+            }else{
+                ledgerAccount.setStatus(status);
+            }
+
+        }else{
+            ledgerAccount.setStatus(status);
+        }
+        return verifiers;
     }
 }

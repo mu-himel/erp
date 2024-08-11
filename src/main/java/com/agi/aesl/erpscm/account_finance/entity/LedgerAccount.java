@@ -59,5 +59,8 @@ public class LedgerAccount extends VerifyableEntity {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 
-
+    @Override
+    public void setStatus(String status) {
+        this.accountStatus = AccountType.valueOf(status);
+    }
 }

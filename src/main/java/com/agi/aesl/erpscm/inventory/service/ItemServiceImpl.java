@@ -817,7 +817,12 @@ public class ItemServiceImpl implements ItemService {
         if(itemExistByAttr.size()>0){
             List<Item> items = itemRepository.findByBrandIdAndItemCategoryIdAndItemAttributeName(catBrand.getId(), subCat.getId(), itemAttributeName);
             for(Item i : items){
-                i.setActive(true);
+                if(i.getItemInactiveStatus().equals(ItemInactiveStatus.APPROVED)){
+                    i.setActive(true);
+                }else{
+                    i.setActive(false);
+                }
+
             }
             // throw new AesException("Sorry! Item Already exist with same attributes for this brand");
         }else{
@@ -847,6 +852,10 @@ public class ItemServiceImpl implements ItemService {
                 }).collect(Collectors.toList()));
             }
             itemRepository.save(item);
+            if(item.getItemInactiveStatus().equals(ItemInactiveStatus.PENDING_VERIFICATION)){
+                accountService.createItemLedger(item);
+            }
+
         }
 
     }

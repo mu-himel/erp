@@ -35,6 +35,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -619,45 +620,49 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     public void approveItemCategory(Long id, CategoryApproveRequestDto categoryApproveRequestDto) {
         Optional<ItemCategory> catOp = categoryRepository.findById(id);
-        if(catOp.isPresent()){
+        if(catOp.isPresent()) {
             ItemCategory category = catOp.get();
-            if(categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)){
+            if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
                 category.setActive(true);
                 category.setCategoryStatus(CategoryStatus.APPROVED);
-            }else if(categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)){
+            } else if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)) {
                 category.setActive(false);
                 category.setCategoryStatus(CategoryStatus.REJECTED);
+                categoryRepository.save(category);
             }
-        }
-        MergePendingCategoryDto mergePendingCategoryDto = categoryApproveRequestDto.getMergePendingCategoryDto();
-        
-        if(categoryApproveRequestDto.getCode()==null && categoryApproveRequestDto.getMergePendingCategoryDto()!=null){
-            Optional<ItemCategory> replacedCatOp = categoryRepository.findByCode(mergePendingCategoryDto.getCode());
-            if(categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)){
-                if(replacedCatOp.isPresent()){
-                    ItemCategory replacedCategory = replacedCatOp.get();
-                    replacedCategory.setCategoryStatus(CategoryStatus.APPROVED);
-                    replacedCategory.setActive(true);
-                    approveAndUpdateCategory(mergePendingCategoryDto, replacedCategory);
 
+            MergePendingCategoryDto mergePendingCategoryDto = categoryApproveRequestDto.getMergePendingCategoryDto();
+
+            if (categoryApproveRequestDto.getCode() == null && categoryApproveRequestDto.getMergePendingCategoryDto() != null) {
+                Optional<ItemCategory> replacedCatOp = categoryRepository.findByCode(mergePendingCategoryDto.getCode());
+                if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+                    if (replacedCatOp.isPresent()) {
+                        ItemCategory replacedCategory = replacedCatOp.get();
+                        replacedCategory.setCategoryStatus(CategoryStatus.APPROVED);
+                        replacedCategory.setActive(true);
+                        approveAndUpdateCategory(mergePendingCategoryDto, replacedCategory);
+
+                    }
                 }
             }
-        }
 
-        if(categoryApproveRequestDto.getCode()!=null){
-            // merge category
-            Optional<ItemCategory> existCatOp = categoryRepository.findByCode(mergePendingCategoryDto.getCode());
-            if(existCatOp.isEmpty()){
-                ItemCategory newCat = new ItemCategory();
-                newCat.setCode(mergePendingCategoryDto.getCode());
-                approveAndUpdateCategory(mergePendingCategoryDto, newCat);
-                newCat.setCategoryStatus(CategoryStatus.APPROVED);
-                categoryRepository.save(newCat);
+            if (categoryApproveRequestDto.getCode() != null) {
+                // merge category
+                Optional<ItemCategory> existCatOp = categoryRepository.findByCode(mergePendingCategoryDto.getCode());
+                if (existCatOp.isEmpty()) {
+                    ItemCategory newCat = new ItemCategory();
+                    newCat.setCode(mergePendingCategoryDto.getCode());
+                    approveAndUpdateCategory(mergePendingCategoryDto, newCat);
+                    newCat.setCategoryStatus(CategoryStatus.APPROVED);
+                    categoryRepository.save(newCat);
+                }
+
             }
-
         }
     }
 
+
+    @Transactional
     private void approveAndUpdateCategory(MergePendingCategoryDto mergePendingCategoryDto, ItemCategory replacedCategory) {
 
 
@@ -674,6 +679,7 @@ public class CategoryServiceImpl implements CategoryService {
         }
         if(mergePendingCategoryDto.getAttributes()!=null){
             List<CategoryAttribute> attributes = new ArrayList<>();
+            categoryAttributeRepository.deleteByCategoryId(replacedCategory.getId());
             for (CategoryAttribute ca : mergePendingCategoryDto.getAttributes()) {
                 Optional<CategoryAttribute> caOp = categoryAttributeRepository
                         .findAllByAttributeTypeAndAttributeUnit(

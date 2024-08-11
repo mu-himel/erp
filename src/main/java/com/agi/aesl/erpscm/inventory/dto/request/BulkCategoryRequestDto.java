@@ -6,6 +6,6 @@ import lombok.Data;
 
 @Data
 public class BulkCategoryRequestDto {
-    private Long userId;
+    private String userId;
     private List<CategoryRequestDtoCustom> categories;
 }
