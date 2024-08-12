@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import com.agi.aesl.erpscm.inventory.enums.CategoryStatus;
 import org.springframework.beans.BeanUtils;
 
 import com.agi.aesl.erpscm.common.EntityConvertable;
@@ -56,6 +57,9 @@ public class CategoryRequestDto implements EntityConvertable<ItemCategory>{
     private Long requestedBy;
 
     private String employee;
+
+
+    private CategoryStatus categoryStatus;
 
     @Override
     public ItemCategory getEntity() {

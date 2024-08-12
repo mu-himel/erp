@@ -289,6 +289,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     }
 
     @Override
+    @Transactional
     public <T extends VerifyableEntity> List<VerifierInfo> getVerifiers(T ledgerAccount, Optional<VerifierConfig> verifierOp, String status) {
         List<VerifierInfo> verifiers = new ArrayList<>();
         if(verifierOp.isPresent()){
@@ -305,5 +306,13 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
             ledgerAccount.setStatus(status);
         }
         return verifiers;
+    }
+
+    @Override
+    @Transactional
+    public List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver, String uri, String categories) {
+        List<ApprovalPanel> approvalPanels = moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
+                Optional.ofNullable(categories),Optional.empty());
+        return approvalPanels;
     }
 }

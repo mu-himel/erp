@@ -87,6 +87,8 @@ public class Item {
     @Enumerated(EnumType.STRING)
     private ItemInactiveStatus itemInactiveStatus;
 
+    private Long cpsItemId;
+
 
     public Item(Long id) {
         this.id = id;

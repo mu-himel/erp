@@ -326,7 +326,8 @@ public class AccountServiceImpl implements AccountService{
 
             List<VerifierInfo> verifiers = verificationService.getVerifiers(ledgerAccount, verifierOp,
                                                             AccountType.PENDING.toString());
-            List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, String.join(",",ids));
+
+            List<ApprovalPanel> panels = verificationService.getApprovalPanels(claimResolver, uri, String.join(",",ids));
 
             verificationService.setVerifiers(ledgerAccount,verifiers,DomainType.ACCOUNT_LEDGER,
                     null);
@@ -480,7 +481,9 @@ public class AccountServiceImpl implements AccountService{
         }
         LedgerAccount ledgerAccount = ledgerAccountOp.get();
         ledgerAccount.setReviewerId(null);
-        ledgerAccount.setAccountStatus(ledgerAccount.getReviewPrevStatus());
+        if(ledgerAccount.getReviewPrevStatus()!=null){
+            ledgerAccount.setAccountStatus(ledgerAccount.getReviewPrevStatus());
+        }
         ledgerAccount.setReviewPrevStatus(null);
         ledgerAccount.setReviewDate(LocalDateTime.now());
 

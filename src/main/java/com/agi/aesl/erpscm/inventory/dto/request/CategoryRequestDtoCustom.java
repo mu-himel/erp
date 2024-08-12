@@ -5,6 +5,7 @@ import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 
+import com.agi.aesl.erpscm.inventory.enums.CategoryStatus;
 import jakarta.validation.constraints.NotBlank;
 // import io.swagger.annotations.ApiModel;
 // import io.swagger.annotations.ApiModelProperty;

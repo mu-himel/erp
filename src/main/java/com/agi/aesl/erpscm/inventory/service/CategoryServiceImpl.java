@@ -29,10 +29,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -88,10 +86,13 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public void addCategories(List<CategoryRequestDtoCustom> categoryRequestDtos) {
+    public void addCategories(Jwt token,List<CategoryRequestDtoCustom> categoryRequestDtos) {
         if(categoryRequestDtos!=null && categoryRequestDtos.size()>0){
+            List<ScmIdUpdateDto> dtos = new ArrayList<>();
             for(CategoryRequestDtoCustom categoryRequestDto : categoryRequestDtos){
+                    ScmIdUpdateDto scmIdUpdateDto = new ScmIdUpdateDto();
                     CategoryRequestDto cr = new CategoryRequestDto();
+                    cr.setCategoryStatus(CategoryStatus.APPROVED);
                     cr.setAttributes(categoryRequestDto.getAttributes());
                     cr.setCode(categoryRequestDto.getCode());
                     cr.setCpsCategoryId(categoryRequestDto.getCpsCategoryId());
@@ -108,7 +109,25 @@ public class CategoryServiceImpl implements CategoryService {
                 }
                 cr.setCurrentYearBudget(new BigDecimal(0));
                 cr.setIsForCps(categoryRequestDto.getIsForCps());
-                this.addCategory(null,cr);
+                scmIdUpdateDto.setCategoryIdCps(categoryRequestDto.getCpsCategoryId());
+                Optional<ItemCategory> catOp = this.addCategory(null,cr);
+
+                if(catOp.isPresent()){
+                    scmIdUpdateDto.setCategoryIdScm(catOp.get().getId());
+                }
+                dtos.add(scmIdUpdateDto);
+            }
+            if(dtos.size()>0){
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
+                if(orgOp.isPresent()){
+                    headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
+                }
+                HttpEntity<List<ScmIdUpdateDto>> payload = new HttpEntity<>(dtos,headers);
+                String url = cpsServerConfig.getItemCategoriesEndpoint().concat("/update-scm-id");
+                ResponseEntity<?> response = networkService.put(url,payload,Void.class);
+                System.out.println(response.getStatusCode().value());
             }
         }
     }
@@ -183,6 +202,12 @@ public class CategoryServiceImpl implements CategoryService {
             category.setActive(true);
         }else{
             category.setActive(false);
+        }
+
+        if(categoryRequestDto.getCategoryStatus()!=null){
+            category.setCategoryStatus(categoryRequestDto.getCategoryStatus());
+        }else{
+            category.setCategoryStatus(CategoryStatus.PENDING);
         }
 
         categoryRepository.save(category);
@@ -618,47 +643,75 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public void approveItemCategory(Long id, CategoryApproveRequestDto categoryApproveRequestDto) {
+    public void approveItemCategory(Jwt token, Long id, CategoryApproveRequestDto categoryApproveRequestDto) {
         Optional<ItemCategory> catOp = categoryRepository.findById(id);
+        MergePendingCategoryDto mergePendingCategoryDto = categoryApproveRequestDto.getMergePendingCategoryDto();
         if(catOp.isPresent()) {
             ItemCategory category = catOp.get();
             if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+                approvedWithBody(token, categoryApproveRequestDto,mergePendingCategoryDto);
                 category.setActive(true);
                 category.setCategoryStatus(CategoryStatus.APPROVED);
             } else if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)) {
+                mergeWithBody(token, category, mergePendingCategoryDto);
                 category.setActive(false);
                 category.setCategoryStatus(CategoryStatus.REJECTED);
-                categoryRepository.save(category);
-            }
-
-            MergePendingCategoryDto mergePendingCategoryDto = categoryApproveRequestDto.getMergePendingCategoryDto();
-
-            if (categoryApproveRequestDto.getCode() == null && categoryApproveRequestDto.getMergePendingCategoryDto() != null) {
-                Optional<ItemCategory> replacedCatOp = categoryRepository.findByCode(mergePendingCategoryDto.getCode());
-                if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-                    if (replacedCatOp.isPresent()) {
-                        ItemCategory replacedCategory = replacedCatOp.get();
-                        replacedCategory.setCategoryStatus(CategoryStatus.APPROVED);
-                        replacedCategory.setActive(true);
-                        approveAndUpdateCategory(mergePendingCategoryDto, replacedCategory);
-
-                    }
-                }
-            }
-
-            if (categoryApproveRequestDto.getCode() != null) {
-                // merge category
-                Optional<ItemCategory> existCatOp = categoryRepository.findByCode(mergePendingCategoryDto.getCode());
-                if (existCatOp.isEmpty()) {
-                    ItemCategory newCat = new ItemCategory();
-                    newCat.setCode(mergePendingCategoryDto.getCode());
-                    approveAndUpdateCategory(mergePendingCategoryDto, newCat);
-                    newCat.setCategoryStatus(CategoryStatus.APPROVED);
-                    categoryRepository.save(newCat);
-                }
-
             }
         }
+    }
+
+    @Transactional
+    private void approvedWithBody(Jwt token, CategoryApproveRequestDto categoryApproveRequestDto,
+                                  MergePendingCategoryDto mergePendingCategoryDto){
+        if (categoryApproveRequestDto.getCode() == null && mergePendingCategoryDto != null) {
+            Optional<ItemCategory> replacedCatOp = categoryRepository.findByCode(mergePendingCategoryDto.getCode());
+            if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
+                if (replacedCatOp.isPresent()) {
+                    ItemCategory replacedCategory = replacedCatOp.get();
+                    replacedCategory.setCategoryStatus(CategoryStatus.APPROVED);
+                    replacedCategory.setActive(true);
+                    approveAndUpdateCategory(mergePendingCategoryDto, replacedCategory);
+
+                }
+            }
+        }
+    }
+
+    @Transactional
+    private void mergeWithBody(Jwt token, ItemCategory category, MergePendingCategoryDto mergePendingCategoryDto){
+
+            // merge category
+            Optional<ItemCategory> existCatOp = categoryRepository.findByCode(mergePendingCategoryDto.getCode());
+            if(existCatOp.isPresent()){
+                // if exist then
+                List<CategoryWarehouseStore> cws = categoryWarehouseStoreRepository.findByCategoryId(category.getId());
+                for(CategoryWarehouseStore cw : cws){
+                    cw.setCategory(existCatOp.get());
+                }
+            } else if (existCatOp.isEmpty()) {
+                ItemCategory newCat = new ItemCategory();
+                newCat.setCode(mergePendingCategoryDto.getCode());
+                approveAndUpdateCategory(mergePendingCategoryDto, newCat);
+                newCat.setCategoryStatus(CategoryStatus.APPROVED);
+                newCat.setCpsCategoryId(mergePendingCategoryDto.getMergeCategoryId());
+                categoryRepository.save(newCat);
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
+                if(orgOp.isPresent()){
+                    headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
+                }
+                List<ScmIdUpdateDto> dtos  = new ArrayList<>();
+                ScmIdUpdateDto scmIdUpdateDto = new ScmIdUpdateDto();
+                scmIdUpdateDto.setCategoryIdScm(newCat.getId());
+                scmIdUpdateDto.setCategoryIdCps(mergePendingCategoryDto.getMergeCategoryId());
+                dtos.add(scmIdUpdateDto);
+                HttpEntity<List<ScmIdUpdateDto>> payload = new HttpEntity<>(dtos,headers);
+                String url = cpsServerConfig.getItemCategoriesEndpoint().concat("/update-scm-id");
+                ResponseEntity<?> response = networkService.put(url,payload,Void.class);
+                System.out.println(response.getStatusCode().value());
+            }
     }
 
 

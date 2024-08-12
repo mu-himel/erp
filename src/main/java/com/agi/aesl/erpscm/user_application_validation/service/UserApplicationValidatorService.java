@@ -47,4 +47,7 @@ public interface UserApplicationValidatorService<T> {
             Employee verifier);
 
     <T extends VerifyableEntity> List<VerifierInfo> getVerifiers(T ledgerAccount, Optional<VerifierConfig> verifierOp, String status);
+
+    List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories);
+
 }
