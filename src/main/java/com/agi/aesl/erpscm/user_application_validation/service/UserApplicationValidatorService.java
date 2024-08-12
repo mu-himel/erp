@@ -3,9 +3,11 @@ package com.agi.aesl.erpscm.user_application_validation.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties.AssertingParty.Verification;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
@@ -39,6 +41,13 @@ public interface UserApplicationValidatorService<T> {
 
     void reject(Jwt token, RejectDto rejectDto);
 
-    Optional<UserApplicationValidation> getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType accountLedger,
-                                                                                Long id, Employee verifier);
+    Optional<UserApplicationValidation> getVerificationsByDomainTypeAndDomainIdAndVerifierId(
+            DomainType accountLedger,
+            Long id,
+            Employee verifier);
+
+    <T extends VerifyableEntity> List<VerifierInfo> getVerifiers(T ledgerAccount, Optional<VerifierConfig> verifierOp, String status);
+
+    List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories);
+
 }

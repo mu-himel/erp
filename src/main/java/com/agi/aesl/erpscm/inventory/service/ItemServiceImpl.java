@@ -778,14 +778,30 @@ public class ItemServiceImpl implements ItemService {
     public void syncItemsBySubCatCode(Jwt token, Long warehouseId, Long warehouseStoreId, String subCatCode) {
         
         List<SyncItemDetail> items = this.fetchItemsBySubCat(token,subCatCode);
+        List<ScmItemUpdateDto> dtos = new ArrayList<>();
         items.stream().forEach(i->{
-           this.createItem(warehouseId,warehouseStoreId,i);
+            ScmItemUpdateDto scmItemUpdateDto = new ScmItemUpdateDto();
+           Item item = this.createItem(warehouseId,warehouseStoreId,i);
+           scmItemUpdateDto.setItemIdCps(i.getId());
+           scmItemUpdateDto.setItemIdScm(item.getId());
+           dtos.add(scmItemUpdateDto);
         });
-        
+        if(dtos!=null && dtos.size()>0){
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
+            if(orgOp.isPresent()){
+                headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
+            }
+            HttpEntity<List<ScmItemUpdateDto>> payload = new HttpEntity<>(dtos,headers);
+            String url = cpsConfig.getItemsEndpoint().concat("/update-scm-id");
+            ResponseEntity<?> response = networkService.put(url,payload,Void.class);
+            System.out.println(response.getStatusCode().value());
+        }
     }
 
     @Transactional
-    private void createItem(Long warehouseId, Long warehouseStoreId, SyncItemDetail syncItemDetail){
+    private Item createItem(Long warehouseId, Long warehouseStoreId, SyncItemDetail syncItemDetail){
         Item item = syncItemDetail.getEntity();
         String itemAttributeName = generateItemAttribute(syncItemDetail.getAttributes());
         // Get Subcategory By Code
@@ -811,16 +827,19 @@ public class ItemServiceImpl implements ItemService {
         item.setItemCategory(subCat);
         item.setItemParentCategory(subCat.getParentCategory());
         item.setBrand(catBrand);
-
+        item.setCpsItemId(syncItemDetail.getId());
 
         List<?> itemExistByAttr = this.getByAttributes(catBrand.getId(),itemAttributeName,warehouseId);
         if(itemExistByAttr.size()>0){
             List<Item> items = itemRepository.findByBrandIdAndItemCategoryIdAndItemAttributeName(catBrand.getId(), subCat.getId(), itemAttributeName);
             for(Item i : items){
-                i.setActive(true);
+                if(i.getItemInactiveStatus().equals(ItemInactiveStatus.APPROVED)){
+                    i.setActive(true);
+                }else{
+                    i.setActive(false);
+                }
             }
-            // throw new AesException("Sorry! Item Already exist with same attributes for this brand");
-        }else{
+        } else {
 
             item.setItemUnit(syncItemDetail.getItemUnit());
             item.setManufacturer(syncItemDetail.getManufacturer());
@@ -847,8 +866,12 @@ public class ItemServiceImpl implements ItemService {
                 }).collect(Collectors.toList()));
             }
             itemRepository.save(item);
-        }
+            if(item.getItemInactiveStatus().equals(ItemInactiveStatus.PENDING_VERIFICATION)){
+                accountService.createItemLedger(item);
+            }
 
+        }
+        return item;
     }
 
     @Transactional

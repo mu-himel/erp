@@ -223,23 +223,23 @@ public class AccountServiceImpl implements AccountService{
         }
     }
 
-    private List<VerifierInfo> getVerifiers(LedgerAccount ledgerAccount, Optional<VerifierConfig> verifierOp) {
-        List<VerifierInfo> verifiers = new ArrayList<>();
-        if(verifierOp.isPresent()){
-            VerifierConfig verification = verifierOp.get();
-            verifiers = verification.getVerifiers();
-            Boolean verificationRequired = verification.getVerificationRequired();
-            if(verificationRequired!=null && verificationRequired==true && verifiers!=null && verifiers.size()>0){
-                ledgerAccount.setAccountStatus(AccountType.PENDING_VERIFICATION);
-            }else{
-                ledgerAccount.setAccountStatus(AccountType.PENDING);
-            }
-
-        }else{
-            ledgerAccount.setAccountStatus(AccountType.PENDING);
-        }
-        return verifiers;
-    }
+//    private List<VerifierInfo> getVerifiers(LedgerAccount ledgerAccount, Optional<VerifierConfig> verifierOp) {
+//        List<VerifierInfo> verifiers = new ArrayList<>();
+//        if(verifierOp.isPresent()){
+//            VerifierConfig verification = verifierOp.get();
+//            verifiers = verification.getVerifiers();
+//            Boolean verificationRequired = verification.getVerificationRequired();
+//            if(verificationRequired!=null && verificationRequired==true && verifiers!=null && verifiers.size()>0){
+//                ledgerAccount.setAccountStatus(AccountType.PENDING_VERIFICATION);
+//            }else{
+//                ledgerAccount.setAccountStatus(AccountType.PENDING);
+//            }
+//
+//        }else{
+//            ledgerAccount.setAccountStatus(AccountType.PENDING);
+//        }
+//        return verifiers;
+//    }
 
     @Override
     public Optional<?> getLedgerDetailById(Long id) {
@@ -324,8 +324,10 @@ public class AccountServiceImpl implements AccountService{
 
             verificationService.removeVerification(ledgerAccount.getId(),DomainType.ACCOUNT_LEDGER);
 
-            List<VerifierInfo> verifiers = getVerifiers(ledgerAccount, verifierOp);
-            List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, String.join(",",ids));
+            List<VerifierInfo> verifiers = verificationService.getVerifiers(ledgerAccount, verifierOp,
+                                                            AccountType.PENDING.toString());
+
+            List<ApprovalPanel> panels = verificationService.getApprovalPanels(claimResolver, uri, String.join(",",ids));
 
             verificationService.setVerifiers(ledgerAccount,verifiers,DomainType.ACCOUNT_LEDGER,
                     null);
@@ -408,6 +410,7 @@ public class AccountServiceImpl implements AccountService{
                 ledgerAccount.setAccountStatus(AccountType.PENDING_APPROVAL);
             }else{
                 ledgerAccount.setAccountStatus(AccountType.VERIFIED);
+                integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
             }
 
 
@@ -478,7 +481,9 @@ public class AccountServiceImpl implements AccountService{
         }
         LedgerAccount ledgerAccount = ledgerAccountOp.get();
         ledgerAccount.setReviewerId(null);
-        ledgerAccount.setAccountStatus(ledgerAccount.getReviewPrevStatus());
+        if(ledgerAccount.getReviewPrevStatus()!=null){
+            ledgerAccount.setAccountStatus(ledgerAccount.getReviewPrevStatus());
+        }
         ledgerAccount.setReviewPrevStatus(null);
         ledgerAccount.setReviewDate(LocalDateTime.now());
 

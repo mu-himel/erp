@@ -97,6 +97,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             FROM scm_item_categories ic
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
             WHERE ic.parent_category_id IS NULL AND ic.active=true AND ic.cps_category_id IS NOT NULL
+            AND ic.category_status IN ('APPROVED')
             AND (:warehouseId IS NULL OR cws.warehouse_id = :warehouseId)
             AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
             AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
@@ -188,7 +189,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             ) as subcategoryCount
             FROM scm_item_categories ic
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
-            WHERE ic.parent_category_id IS NULL AND ic.active=false
+            WHERE ic.parent_category_id IS NULL AND ic.active=false AND ic.category_status IN ('PENDING')
             AND ic.cps_category_id IS NOT NULL
             AND (:warehouseId IS NULL OR cws.warehouse_id = :warehouseId)
             AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)

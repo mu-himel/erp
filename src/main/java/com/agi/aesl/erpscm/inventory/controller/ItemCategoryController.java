@@ -74,8 +74,8 @@ public class ItemCategoryController extends BaseController{
 
     @GetMapping("/inventory-control/main-categories")
     public ResponseEntity<?> getMainCategoryListForInventoryControl(
-            @RequestParam("warehouse") Optional<Long> warehouseId,
-            @RequestParam("warehouseStore") Optional<Long> warehouseStoreId,
+            @RequestParam("warehouseId") Optional<Long> warehouseId,
+            @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId,
             @RequestParam("name")  Optional<String> name,
             @RequestParam("code") Optional<String> code){
         return new ResponseEntity<>(
@@ -121,7 +121,7 @@ public class ItemCategoryController extends BaseController{
     public ResponseEntity<?> getSubCategoryListForInventoryControl(
             @RequestParam("categoryId")  Optional<Long> categoryId,
             @RequestParam("warehouseId")  Optional<Long> warehouseId,
-            @RequestParam("storeId")  Optional<Long> storeId,
+            @RequestParam("warehouseStoreId")  Optional<Long> storeId,
             @RequestParam("name")  Optional<String> name,
             @RequestParam("code") Optional<String> code){
         return new ResponseEntity<>(
@@ -134,7 +134,7 @@ public class ItemCategoryController extends BaseController{
     public ResponseEntity<?> getPendingSubCategoryListForInventoryControl(
             @RequestParam("categoryId")  Optional<Long> categoryId,
             @RequestParam("warehouseId")  Optional<Long> warehouseId,
-            @RequestParam("storeId")  Optional<Long> storeId,
+            @RequestParam("warehouseStoreId")  Optional<Long> storeId,
             @RequestParam("name")  Optional<String> name,
             @RequestParam("code") Optional<String> code){
         return new ResponseEntity<>(
@@ -179,8 +179,10 @@ public class ItemCategoryController extends BaseController{
 
     @PostMapping("/bulk-create")
     // @ApiOperation(value = "Create multiple categories")
-    public ResponseEntity<?> createCategories(@RequestBody BulkCategoryRequestDto categoryRequestDto){
-        categoryService.addCategories(categoryRequestDto.getCategories());
+    public ResponseEntity<?> createCategories(
+            @AuthenticationPrincipal Jwt token,
+            @RequestBody BulkCategoryRequestDto categoryRequestDto){
+        categoryService.addCategories(token,categoryRequestDto.getCategories());
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -260,16 +262,20 @@ public class ItemCategoryController extends BaseController{
     }
 
     @PutMapping("/approve/category/{id}")
-    public ResponseEntity<?> approveCategory(@PathVariable("id") Long id,
+    public ResponseEntity<?> approveCategory(
+        @AuthenticationPrincipal Jwt token,
+        @PathVariable("id") Long id,
         @RequestBody CategoryApproveRequestDto categoryApproveRequestDto){
-        categoryService.approveItemCategory(id, categoryApproveRequestDto);
+        categoryService.approveItemCategory(token, id, categoryApproveRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/approve/subcategory/{id}")
-    public ResponseEntity<?> approveSubCategory(@PathVariable("id") Long id,
+    public ResponseEntity<?> approveSubCategory(
+        @AuthenticationPrincipal Jwt token,
+        @PathVariable("id") Long id,
         @RequestBody CategoryApproveRequestDto categoryApproveRequestDto){
-        categoryService.approveItemCategory(id, categoryApproveRequestDto);
+        categoryService.approveItemCategory(token,  id, categoryApproveRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

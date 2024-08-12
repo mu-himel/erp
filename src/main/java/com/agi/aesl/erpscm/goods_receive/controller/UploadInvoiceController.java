@@ -19,7 +19,7 @@ public class UploadInvoiceController {
     @Autowired
     private GrnInvoiceService grnInvoiceService;
 
-    @PostMapping
+    @PostMapping("/{id}")
     public ResponseEntity<?> uploadInvoice(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,

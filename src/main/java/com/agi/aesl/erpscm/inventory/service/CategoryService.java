@@ -18,7 +18,7 @@ public interface CategoryService {
 
     Optional<ItemCategory> addCategory(Jwt loggedInUser, CategoryRequestDto categoryRequestDto);
 
-    void addCategories(List<CategoryRequestDtoCustom> categoryRequestDtos);
+    void addCategories(Jwt token,List<CategoryRequestDtoCustom> categoryRequestDtos);
 
     void updateCategory(Long id, CategoryRequestDto categoryRequestDto);
 
@@ -89,5 +89,5 @@ public interface CategoryService {
                                                        Optional<Long> storeId, Optional<String> name,
                                                        Optional<String> code);
 
-    void approveItemCategory(Long id, CategoryApproveRequestDto categoryApproveRequestDto);
+    void approveItemCategory(Jwt token, Long id, CategoryApproveRequestDto categoryApproveRequestDto);
 }
