@@ -98,6 +98,9 @@ public class ItemServiceImpl implements ItemService {
     @Autowired
     private ItemAttributeRepository itemAttributeRepository;
 
+    @Autowired
+    private ItemImportLogRepository itemImportLogRepository;
+
     @Override
     public Optional<Item> getItemDetail(Long id) {
         return itemRepository.findById(id);
@@ -224,6 +227,8 @@ public class ItemServiceImpl implements ItemService {
                 stockThresholdQty.orElse(null),
                 categoryId.orElse(null),
                 subCategoryId.orElse(null),
+                warehouseId.orElse(null),
+                warehouseStoreId.orElse(null),
                 pageable);
 
 
@@ -841,35 +846,57 @@ public class ItemServiceImpl implements ItemService {
             }
         } else {
 
-            item.setItemUnit(syncItemDetail.getItemUnit());
-            item.setManufacturer(syncItemDetail.getManufacturer());
-            item.setName(syncItemDetail.getName());
-            item.setItemAttributeName(itemAttributeName);
-            item.setActive(false);
-            item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+            Optional<Item> itemExistByCode = itemRepository.findByCode(syncItemDetail.getCode());
+            if(itemExistByCode.isPresent()){
+                item = itemExistByCode.get();
+                List<ItemStock> stocks = item.getStocks();
+                stocks.add(new ItemStock(
+                        new BigDecimal(0l),
+                        item,
+                        StockType.STOCK_IN,
+                        new Warehouse(warehouseId),
+                        new WarehouseStore(warehouseStoreId)
+                ));
+                item.setStocks(stocks);
+            }else{
+                item.setItemUnit(syncItemDetail.getItemUnit());
+                item.setManufacturer(syncItemDetail.getManufacturer());
+                item.setName(syncItemDetail.getName());
+                item.setItemAttributeName(itemAttributeName);
+                item.setActive(false);
+                item.setStocks(Arrays.asList(new ItemStock(
+                        new BigDecimal(0l),
+                        item,
+                        StockType.STOCK_IN,
+                        new Warehouse(warehouseId),
+                        new WarehouseStore(warehouseStoreId)
+                )));
+//                item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+            }
 
-            item.setStocks(Arrays.asList(new ItemStock(
-                new BigDecimal(0l),
-                item,
-                StockType.STOCK_IN,
-                new Warehouse(warehouseId),
-                new WarehouseStore(warehouseStoreId)
-            )));
+
     
-            if(syncItemDetail.getAttributes()!=null && syncItemDetail.getAttributes().size()>0) {
-                
+            if(itemExistByCode.isEmpty() && syncItemDetail.getAttributes()!=null && syncItemDetail.getAttributes().size()>0) {
+
+                Item finalItem = item;
                 item.setAttributes(syncItemDetail.getAttributes().stream().map(itemAttribute -> {
                     
                     itemAttribute.setId(null);
-                    itemAttribute.setItem(item);
+                    itemAttribute.setItem(finalItem);
                     return itemAttribute;
                 }).collect(Collectors.toList()));
             }
-            itemRepository.save(item);
-            if(item.getItemInactiveStatus().equals(ItemInactiveStatus.PENDING_VERIFICATION)){
-                accountService.createItemLedger(item);
-            }
 
+            ItemImportLog iil = new ItemImportLog();
+            iil.setItem(item);
+            iil.setWarehouse(new Warehouse(warehouseId));
+            iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+            List<ItemImportLog> iils = item.getItemImportLogs();
+            iils.add(iil);
+            item.setItemImportLogs(iils);
+            itemRepository.save(item);
+
+            accountService.createItemLedger(item,new Warehouse(warehouseId));
         }
         return item;
     }
@@ -916,12 +943,12 @@ public class ItemServiceImpl implements ItemService {
             if(approveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
                 if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()==null) {
                     item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
-                    accountService.createItemLedger(item);
+                    accountService.createItemLedger(item, new Warehouse(1L));
                 }
                 if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()!=null){
                     item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
                     mergeItem(item, itemMergeRequestDto);
-                    accountService.createItemLedger(item);
+                    accountService.createItemLedger(item, new Warehouse(1L));
 
                 }
             }else if(approveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)){

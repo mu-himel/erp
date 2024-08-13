@@ -710,7 +710,7 @@ public class CategoryServiceImpl implements CategoryService {
                 HttpEntity<List<ScmIdUpdateDto>> payload = new HttpEntity<>(dtos,headers);
                 String url = cpsServerConfig.getItemCategoriesEndpoint().concat("/update-scm-id");
                 ResponseEntity<?> response = networkService.put(url,payload,Void.class);
-                System.out.println(response.getStatusCode().value());
+//                System.out.println(response.getStatusCode().value());
             }
     }
 

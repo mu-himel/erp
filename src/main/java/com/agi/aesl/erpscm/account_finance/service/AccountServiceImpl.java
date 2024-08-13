@@ -464,11 +464,12 @@ public class AccountServiceImpl implements AccountService{
 
     @Override
     @Transactional
-    public void createItemLedger(Item item) {
+    public void createItemLedger(Item item, Warehouse warehouse) {
         LedgerAccount ledgerAccount = new LedgerAccount();
         ledgerAccount.setItem(item);
         ledgerAccount.setAccountNo(getNextAccountNo());
         ledgerAccount.setAccountStatus(AccountType.PENDING);
+        ledgerAccount.setWarehouse(warehouse);
         accountRepository.save(ledgerAccount);
     }
 

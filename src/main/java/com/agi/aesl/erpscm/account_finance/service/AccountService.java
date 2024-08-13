@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.account_finance.service;
 
 import com.agi.aesl.erpscm.account_finance.dto.request.LedgerAccountRequestDto;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomainService;
@@ -34,7 +35,7 @@ public interface AccountService extends VerificationDomainService {
 
     void updateAccount(Jwt token, String uri, Long id, LedgerAccountRequestDto ledgerAccountRequestDto);
 
-    void createItemLedger(Item item);
+    void createItemLedger(Item item, Warehouse warehouse);
 
     void review(Jwt token, Long id, ReviewDto reviewDto);
 }

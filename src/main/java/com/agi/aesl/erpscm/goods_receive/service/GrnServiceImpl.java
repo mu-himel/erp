@@ -171,7 +171,7 @@ public class GrnServiceImpl implements GrnService{
 
     @Override
     public Page<?> getAllGrn(Optional<Integer> page,
-                             Optional<Integer> size,
+                             Optional<Integer> size, Optional<String> grnNo,
                              Optional<String> fromDate, Optional<String> toDate) {
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
@@ -182,7 +182,7 @@ public class GrnServiceImpl implements GrnService{
             fromDateObj = LocalDateTime.parse(fromDate.get()+"T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get()+"T23:59:59");
         }
-        return grnRepository.findAllGrn(pageable,fromDateObj,toDateObj);
+        return grnRepository.findAllGrn(pageable,grnNo.orElse(null),fromDateObj,toDateObj);
     }
 
     @Override

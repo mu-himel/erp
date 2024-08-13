@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.account_finance.entity;
 
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.enums.DemandStatus;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.entity.Item;
@@ -48,6 +49,9 @@ public class LedgerAccount extends VerifyableEntity {
     private String reviewerId;
 
     private LocalDateTime reviewDate;
+
+    @ManyToOne
+    private Warehouse warehouse;
 
     @ManyToOne
     private Employee requestedBy;

@@ -18,7 +18,9 @@ public interface GrnService {
 
     void addGrn(Jwt token, GoodReceiveNoteDto goodReceiveNoteDto);
 
-    Page<?> getAllGrn(Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate);
+    Page<?> getAllGrn(Optional<Integer> page, Optional<Integer> size,
+                      Optional<String> grnNo,
+                      Optional<String> fromDate, Optional<String> toDate);
 
     Optional<?> getGrnById(Long id, Boolean returnTypeEntity);
 
