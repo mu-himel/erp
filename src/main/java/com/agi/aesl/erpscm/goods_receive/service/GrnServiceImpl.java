@@ -112,6 +112,9 @@ public class GrnServiceImpl implements GrnService{
     @Transactional
     public void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto) {
         claimResolver.setToken(token);
+        if(claimResolver.getEmployee()==null){
+            throw new RuntimeException("Sorry! Employee profile required");
+        }
         GoodReceiveNote grn = new GoodReceiveNote();
         grn.setGrnDate(LocalDate.now());
         grn.setGrnNo(grnManualDto.getGrnNo());
@@ -152,7 +155,7 @@ public class GrnServiceImpl implements GrnService{
         grn.setDeliveryChargeAmount(grnManualDto.getDeliveryChargeAmount());
         grn.setDeliveryCharge(grnManualDto.getDeliveryCharge());
         grn.setDays(grnManualDto.getDays());
-//        grn.setVatPctg(grnManualDto.getVatPctg());
+        grn.setInvoicePath(grnManualDto.getInvoicePath());
         grn.setSubTotal(grnManualDto.getInTotal());
         grn.setTotalPrice(grnManualDto.getTotalPrice());
 

@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.goods_receive.controller;
 
+import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.fileupload.service.FileUploadService;
 import com.agi.aesl.erpscm.goods_receive.service.GrnInvoiceService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/upload-invoice")
-public class UploadInvoiceController {
+public class UploadInvoiceController extends BaseController {
 
     @Autowired
     private GrnInvoiceService grnInvoiceService;
@@ -22,11 +23,10 @@ public class UploadInvoiceController {
     @PostMapping("/{id}")
     public ResponseEntity<?> uploadInvoice(
             @AuthenticationPrincipal Jwt token,
-            @PathVariable("id") Long id,
+            @PathVariable("id") String id,
             @RequestPart("file") Optional<MultipartFile> fileOp
     ){
-        grnInvoiceService.uploadInvoice(token,id, fileOp);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(grnInvoiceService.uploadInvoice(token,id, fileOp),HttpStatus.OK);
     }
 
 }
