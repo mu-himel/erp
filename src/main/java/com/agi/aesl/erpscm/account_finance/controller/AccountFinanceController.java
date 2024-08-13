@@ -56,10 +56,12 @@ public class AccountFinanceController extends BaseController {
 
     @GetMapping("/ledgers")
     public ResponseEntity<?> getLedgerRequests(
+            @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
-            @RequestParam("size") Optional<Integer> size
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("warehouseId") Optional<Long> warehouseId
             ){
-        return new ResponseEntity<>(accountService.getAllPendingAccounts(page,size), HttpStatus.OK);
+        return new ResponseEntity<>(accountService.getAllPendingAccounts(token,page,size,warehouseId), HttpStatus.OK);
     }
 
     @GetMapping("/ledgers/closed")
@@ -106,11 +108,14 @@ public class AccountFinanceController extends BaseController {
     }
 
     @GetMapping("/ledgers/approved")
-    public ResponseEntity<?> getApprovedLedgerRequests(@RequestParam("page") Optional<Integer> page, @RequestParam("size") Optional<Integer> size){
-        /**TODO for Sourav -> Please replace commented out code with actual result
-         * Set null with actual value
-        */
-        return new ResponseEntity<>(accountService.getAllApprovedAccounts(page, size), HttpStatus.OK);
+    public ResponseEntity<?> getApprovedLedgerRequests(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("warehouseId") Optional<Long> warehouseId
+            ){
+
+        return new ResponseEntity<>(accountService.getAllApprovedAccounts(token, page, size, warehouseId), HttpStatus.OK);
 
     }
 

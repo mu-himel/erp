@@ -10,6 +10,7 @@ import com.agi.aesl.erpscm.account_finance.repository.AccountRepository;
 import com.agi.aesl.erpscm.account_finance.repository.AccountVerificationApprovalRepository;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.demand.dto.request.DemandRequestDto;
@@ -90,11 +91,21 @@ public class AccountServiceImpl implements AccountService{
 
 
     @Override
-    public Page<?> getAllPendingAccounts(Optional<Integer> page, Optional<Integer> size) {
-
+    public Page<?> getAllPendingAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                         Optional<Long> warehouseId) {
+        claimResolver.setToken(token);
+        String uri = "/app/accounts/asset-management/asset-ledger/asset-ledger-request";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
-        return accountRepository.getPendingLedgerAccounts(pageable);
+        DataFilter dataFilter = new DataFilter(uri,claimResolver,pageable);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> ids = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            ids.add(warehouseId.get());
+        }else{
+            ids = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
+        return accountRepository.getPendingLedgerAccounts(ids,pageable);
     }
 
     @Override
@@ -280,10 +291,20 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public Page<?> getAllApprovedAccounts(Optional<Integer> page, Optional<Integer> size) {
-        //TODO for Sourav
+    public Page<?> getAllApprovedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                          Optional<Long> warehouseId) {
+        claimResolver.setToken(token);
+        String uri="/app/accounts/asset-management/asset-ledger/approved";
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return accountRepository.getApprovedLedgerAccounts(pageable);
+        DataFilter dataFilter = new DataFilter(uri,claimResolver,pageable);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> ids = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            ids.add(warehouseId.get());
+        }else{
+            ids = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
+        return accountRepository.getApprovedLedgerAccounts(ids, pageable);
     }
 
     @Override

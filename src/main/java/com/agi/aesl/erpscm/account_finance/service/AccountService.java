@@ -14,7 +14,8 @@ import java.util.Optional;
 public interface AccountService extends VerificationDomainService {
     String getNextAccountNo();
 
-    Page<?> getAllPendingAccounts(Optional<Integer> page, Optional<Integer> size);
+    Page<?> getAllPendingAccounts(Jwt token,Optional<Integer> page, Optional<Integer> size,
+                                  Optional<Long> warehouseId);
     Page<?> getClosedAccounts(Optional<Integer> page, Optional<Integer> size);
 
     Page<?> getAllPendingVerifications(Jwt token,
@@ -29,7 +30,8 @@ public interface AccountService extends VerificationDomainService {
 
     Optional<?> getLedgerDetailById(Long id);
 
-    Page<?> getAllApprovedAccounts(Optional<Integer> page, Optional<Integer> size);
+    Page<?> getAllApprovedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                   Optional<Long> warehouseId);
 
     Page<?> getAllRejectedAccounts(Optional<Integer> page, Optional<Integer> size);
 
