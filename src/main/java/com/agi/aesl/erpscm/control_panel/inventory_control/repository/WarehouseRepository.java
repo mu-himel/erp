@@ -24,4 +24,7 @@ public interface WarehouseRepository extends JpaRepository<Warehouse,Long>, Ware
 
     @Query(value = getWarehousesDetail)
     Optional<Warehouse> findWarehouseById(Long id);
+
+    @Query(value = getWarehousesWithFilter, countQuery = countWarehouseWithPaginationFilter, nativeQuery = true)
+    Page<WarehouseInfo> findAllByNameAndId(List<Long> warehouseIds, String name, Pageable pageable);
 }

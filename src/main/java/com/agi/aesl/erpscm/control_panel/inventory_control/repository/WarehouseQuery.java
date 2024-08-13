@@ -15,6 +15,21 @@ public interface WarehouseQuery {
             GROUP BY w.id 
             """;
 
+    String getWarehousesWithFilter="""
+            SELECT 
+            w.id as id, 
+            w.name as name, 
+            w.location as location,
+            count(ws.id) as storeQty 
+            FROM scm_warehouses w 
+            LEFT JOIN scm_warehouse_stores ws ON ws.warehouse_id = w.id
+                AND ws.active = true
+            WHERE w.active = true
+                AND (:name IS NULL OR w.name LIKE CONCAT(:name,'%'))
+                AND w.id IN (:warehouseIds)
+            GROUP BY w.id 
+            """;
+
     String getWarehousesDetail="""
             SELECT 
             w
@@ -38,6 +53,7 @@ public interface WarehouseQuery {
             GROUP BY w.id ) total
             """;
 
+    String countWarehouseWithPaginationFilter="SELECT count(*) FROM ("+getWarehousesWithFilter+") as total";
 
     interface WarehouseInfo{
         Long getId();

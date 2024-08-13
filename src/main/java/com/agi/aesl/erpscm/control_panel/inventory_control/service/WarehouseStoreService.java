@@ -4,6 +4,7 @@ package com.agi.aesl.erpscm.control_panel.inventory_control.service;
 import com.agi.aesl.erpscm.control_panel.inventory_control.dto.StoreDto;
 
 import org.springframework.data.domain.Page;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,7 +15,7 @@ public interface WarehouseStoreService {
 
     Page<?> getStores(Long warehouseId, Optional<Integer> page, Optional<Integer> size);
 
-    List<?> getStoresByWarehouse(Optional<Long> warehouseId);
+    List<?> getStoresByWarehouse(Jwt token, Optional<Long> warehouseId);
 
     Optional<?> getStore(Long warehouseId);
 

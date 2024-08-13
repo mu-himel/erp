@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.control_panel.inventory_control.service;
 
+import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 // import com.agi.aesl.erpscm.control_panel.inventory_control.dto.CopyToStoreDto;
 import com.agi.aesl.erpscm.control_panel.inventory_control.dto.StoreDto;
@@ -7,16 +8,20 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseRepository;
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseStoreRepository;
+import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.entity.CategoryWarehouseStore;
 import com.agi.aesl.erpscm.inventory.service.CategoryService;
+import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +38,12 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
     @Autowired
     private WarehouseRepository warehouseRepository;
 
+    @Autowired
+    private IntegrationReaderService integrationReaderService;
+
+    @Autowired
+    private ClaimResolver claimResolver;
+
     @Override
     @Transactional
     public void deleteWarehouseStore(Long id) {
@@ -47,8 +58,18 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
     }
 
     @Override
-    public List<?> getStoresByWarehouse(Optional<Long> warehouseId) {
-        return warehouseStoreRepository.findAllByWarehouseId(warehouseId.orElse(null));
+    public List<?> getStoresByWarehouse(Jwt token, Optional<Long> warehouseId) {
+        claimResolver.setToken(token);
+        String uri = "inventory-control/store";
+        List<Long> ids = new ArrayList<>();
+        if(warehouseId.isPresent()) {
+            ids.add(warehouseId.get());
+        }else {
+            DataFilter dataFilter = new DataFilter(uri, claimResolver);
+            dataFilter.setReaderService(integrationReaderService);
+            ids = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
+        return warehouseStoreRepository.findAllByWarehouseId(ids);
     }
 
     @Override

@@ -1,8 +1,8 @@
-package com.agi.aesl.erpscm.control_panel.inventory_control.service;
+package com.agi.aesl.erpscm.control_panel.inventory_control.service.filter;
 
-import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.common.DataFilterService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseRepository;
+import com.agi.aesl.erpscm.control_panel.inventory_control.service.filter.WarehouseFilterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

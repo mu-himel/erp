@@ -1,4 +1,4 @@
-package com.agi.aesl.erpscm.control_panel.inventory_control.service;
+package com.agi.aesl.erpscm.control_panel.inventory_control.service.filter;
 
 
 import com.agi.aesl.erpscm.common.DataFilterService;

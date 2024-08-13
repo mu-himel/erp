@@ -12,7 +12,7 @@ public interface WarehouseService {
     void createWarehouse(Jwt token, Warehouse warehouse);
     void updateWarehouse(Jwt token,  Warehouse warehouse);
 
-    Page<?> getWarehouses(Optional<String> name, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getWarehouses(Jwt token, Optional<String> name, Optional<Integer> page, Optional<Integer> size);
 
     List<?> getWarehouses(Optional<String> name);
 
