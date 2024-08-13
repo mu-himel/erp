@@ -323,6 +323,7 @@ public class AccountServiceImpl implements AccountService{
                     "CATEGORY",String.join(",",ids));
 
             verificationService.removeVerification(ledgerAccount.getId(),DomainType.ACCOUNT_LEDGER);
+            accountVerificationApprovalRepository.deleteAllByLedgerAccountId(ledgerAccount.getId());
 
             List<VerifierInfo> verifiers = verificationService.getVerifiers(ledgerAccount, verifierOp,
                                                             AccountType.PENDING.toString());
