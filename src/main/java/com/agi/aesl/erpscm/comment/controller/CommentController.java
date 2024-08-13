@@ -75,17 +75,12 @@ public class CommentController extends BaseController{
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-
-
-    
         @PostMapping
         public ResponseEntity<?> addComment(@RequestBody CommentDto commentDto){
             commentService.addComment(commentDto);
             return new ResponseEntity<>(HttpStatus.CREATED);
         }
 
-        
-    
         @PostMapping("/{domainType}/{domainId}")
         public ResponseEntity<?> uploadAttachment(
             @PathVariable("domainType") String domainType,
