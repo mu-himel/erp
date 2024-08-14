@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.inventory.service;
 
+import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
@@ -9,6 +10,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore
 
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
+import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.dto.request.*;
 import com.agi.aesl.erpscm.inventory.entity.*;
@@ -24,6 +26,7 @@ import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
+import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -72,6 +75,11 @@ public class CategoryServiceImpl implements CategoryService {
     @Autowired
     private OrgService orgService;
 
+    @Autowired
+    private ClaimResolver claimResolver;
+
+    @Autowired
+    private IntegrationReaderService integrationReaderService;
 //    @Autowired
 //    private DemandDetailRepository demandDetailRepository;
 //
@@ -383,28 +391,41 @@ public class CategoryServiceImpl implements CategoryService {
 //    }
 
     @Override
-    public Page<?> getItemCategories(Optional<Integer> page, Optional<Integer> size,
+    public Page<?> getItemCategories(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                         Optional<String> name, Optional<String> code,
                                      Optional<BigDecimal> currentYearBudget,
                                      Optional<Long> productCount,
                                      Optional<Long> warehouseId,
                                      Optional<Long> warehouseStoreId
                                      ) {
+
+        claimResolver.setToken(token);
+        String uri = "inventory-management/main-category";
+
         Integer year  = LocalDate.now().getYear();
 //        Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(10));
 
+        List<Long> warehouseIds = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else{
+            DataFilter dataFilter = new DataFilter(uri,claimResolver);
+            dataFilter.setReaderService(integrationReaderService);
+            warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
+
             return categoryRepository.findAllByYear(name.orElse(null),
                     code.orElse(null), currentYearBudget.orElse(null),
                     productCount.orElse(null),year,
-                    warehouseId.orElse(null),warehouseStoreId.orElse(null)
+                    warehouseIds,warehouseStoreId.orElse(null)
                     ,pageable);
 
 
     }
 
     @Override
-    public Page<?> getItemCategories( Optional<Integer> page, Optional<Integer> size,
+    public Page<?> getItemCategories(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                       Optional<String> name, Optional<String> code,
                                       Optional<BigDecimal> currentYearBudget, Optional<Long> productCount,
                                       Optional<Long> categoryId,
@@ -412,7 +433,8 @@ public class CategoryServiceImpl implements CategoryService {
                                       Optional<Long> warehouseStoreId
                                       ) {
 
-
+        claimResolver.setToken(token);
+        String uri = "inventory-management/sub-category";
 
         Integer year  = LocalDate.now().getYear();
 //        Sort sort = Sort.by(Sort.Direction.DESC,"id");
@@ -420,7 +442,15 @@ public class CategoryServiceImpl implements CategoryService {
         Page<?> result = null;
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(10));
 
-                                        
+        List<Long> warehouseIds = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else{
+            DataFilter dataFilter = new DataFilter(uri,claimResolver);
+            dataFilter.setReaderService(integrationReaderService);
+            warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
+
         result = categoryRepository.findAllSubCategories(
                             name.orElse(null),
                             code.orElse(null),
@@ -428,7 +458,7 @@ public class CategoryServiceImpl implements CategoryService {
                             productCount.orElse(null),
                             categoryId.orElse(null),
                             year,
-                            warehouseId.orElse(null),
+                            warehouseIds,
                             warehouseStoreId.orElse(null)
                             ,pageable);
 
@@ -446,12 +476,25 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public List<?> getCategoriesForInventoryControl(Optional<Long> warehouseId,
+    public List<?> getCategoriesForInventoryControl(
+                                                    Jwt token,
+                                                    Optional<Long> warehouseId,
                                                     Optional<Long> warehouseStoreId,
                                                     Optional<String> name,
                                                     Optional<String> code) {
+        claimResolver.setToken(token);
+        String uri="inventory-control/categories";
+        List<Long> warehouseIds = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else{
+            DataFilter dataFilter = new DataFilter(uri,claimResolver);
+            dataFilter.setReaderService(integrationReaderService);
+            warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
+
         return categoryRepository.findAllMainCategoriesForInventoryControl(
-                warehouseId.orElse(null),warehouseStoreId.orElse(null),
+                warehouseIds,warehouseStoreId.orElse(null),
                 name.orElse(null),code.orElse(null));
     }
 
@@ -474,27 +517,63 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<?> getSubCategoriesForInventoryControl(
+            Jwt token,
             Optional<Long> categoryId,
             Optional<Long> warehouseId,
             Optional<Long> storeId,
             Optional<String> name, Optional<String> code) {
+
+        claimResolver.setToken(token);
+        String uri="inventory-control/sub-categories";
+        List<Long> warehouseIds = new ArrayList<>();
+        List<Long> categoryIds = new ArrayList<>();
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> filterBy = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else{
+            warehouseIds = filterBy;
+        }
+
+        if(categoryId.isPresent()){
+            categoryIds.add(categoryId.get());
+        }else{
+            categoryIds = dataFilter.getCategoryIds();
+        }
+
         return categoryRepository.findAllSubCategoriesForInventoryControl(
-                categoryId.orElse(null),
-                warehouseId.orElse(null),
+                categoryIds,
+                warehouseIds,
                 storeId.orElse(null),
                 name.orElse(null),
                 code.orElse(null));
     }
 
     @Override
-    public List<?> getPendingSubCategoriesForInventoryControl(Optional<Long> categoryId,
+    public List<?> getPendingSubCategoriesForInventoryControl(
+            Jwt token,
+            Optional<Long> categoryId,
                                                               Optional<Long> warehouseId,
                                                               Optional<Long> storeId,
                                                               Optional<String> name,
                                                               Optional<String> code) {
+
+        claimResolver.setToken(token);
+        String uri = "inventory-control/sub-categories";
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else{
+            warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
+
         return categoryRepository.findAllPendingSubCategoriesForInventoryControl(
                 categoryId.orElse(null),
-                warehouseId.orElse(null),
+                warehouseIds,
                 storeId.orElse(null),
                 name.orElse(null),
                 code.orElse(null));
@@ -632,12 +711,24 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<?> getPendingCategories(
+            Jwt token,
             Optional<Long> warehouseId,
             Optional<Long> warehouseStoreId,
             Optional<String> name,
             Optional<String> code
     ) {
-        return categoryRepository.findAllPendingCategories(warehouseId.orElse(null),warehouseStoreId.orElse(null),
+
+        claimResolver.setToken(token);
+        String uri="inventory-control/categories";
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else {
+            warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
+        return categoryRepository.findAllPendingCategories(warehouseIds,warehouseStoreId.orElse(null),
                 name.orElse(null),code.orElse(null));
     }
 

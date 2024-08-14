@@ -30,7 +30,8 @@ public interface CategoryService {
     Optional<ItemCategory> getPendingItemCategory(Long id);
 
 
-    Page<?> getItemCategories(Optional<Integer> page, Optional<Integer> size,
+    Page<?> getItemCategories(Jwt token,
+                              Optional<Integer> page, Optional<Integer> size,
                               Optional<String> name, Optional<String> code,
                               Optional<BigDecimal> currentYearBudget,
                               Optional<Long> productCount,
@@ -38,7 +39,7 @@ public interface CategoryService {
                               Optional<Long> warehouseStoreId
     );
 
-    Page<?> getItemCategories(Optional<Integer> page, Optional<Integer> size,
+    Page<?> getItemCategories(Jwt token, Optional<Integer> page, Optional<Integer> size,
                               Optional<String> name, Optional<String> code,
                               Optional<BigDecimal> currentYearBudget, Optional<Long> productCount,
                               Optional<Long> categoryId,
@@ -52,7 +53,7 @@ public interface CategoryService {
 
     List<?> getCategories(Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name, Optional<String> code);
 
-    List<?> getCategoriesForInventoryControl(Optional<Long> warehouse, Optional<Long> warehouseStore, Optional<String> name, Optional<String> code);
+    List<?> getCategoriesForInventoryControl(Jwt token,Optional<Long> warehouse, Optional<Long> warehouseStore, Optional<String> name, Optional<String> code);
 
 
     List<?> getSubCategories(Optional<Long> storeId, Optional<Long> categoryId, Optional<String> name, Optional<String> code);
@@ -60,6 +61,7 @@ public interface CategoryService {
     List<?> getSubCategoriesAll(Optional<Long> categoryId, Optional<String> name, Optional<String> code);
 
     List<?> getSubCategoriesForInventoryControl(
+            Jwt token,
             Optional<Long> categoryId,
             Optional<Long> warehouseId,
             Optional<Long> storeId,
@@ -80,12 +82,14 @@ public interface CategoryService {
 
     Optional<ItemCategory> getCategoryByCode(String subCategoryCode);
 
-    List<?> getPendingCategories(Optional<Long> warehouseId,
+    List<?> getPendingCategories(Jwt token, Optional<Long> warehouseId,
                                  Optional<Long> warehouseStoreId,
                                  Optional<String> name,
                                  Optional<String> code);
 
-    List<?> getPendingSubCategoriesForInventoryControl(Optional<Long> categoryId, Optional<Long> warehouseId,
+    List<?> getPendingSubCategoriesForInventoryControl(
+            Jwt token,
+            Optional<Long> categoryId, Optional<Long> warehouseId,
                                                        Optional<Long> storeId, Optional<String> name,
                                                        Optional<String> code);
 

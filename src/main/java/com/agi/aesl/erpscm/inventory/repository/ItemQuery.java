@@ -18,38 +18,16 @@ public interface ItemQuery {
             "LEFT JOIN scm_warehouses w ON w.id = s.warehouse_id " +
             "WHERE i.active=1 AND (:name IS NULL OR i.name LIKE concat(:name,'%')) " +
             "   AND (:code IS NULL OR i.code LIKE concat(:code,'%')) " +
-            "   AND (:subCategoryId IS NULL OR ic.id = :subCategoryId) " +
-            "   AND (:categoryId IS NULL OR ipc.id = :categoryId) " +
+            "   AND ((:subCategoryId IS NULL OR ic.id = :subCategoryId)  " +
+            "       OR (COALESCE(:categoryId) IS NULL OR ic.id IN (:categoryId)))" +
+            "   AND (COALESCE(:categoryId) IS NULL OR ipc.id IN (:categoryId)) " +
             "   AND (:reorderPercentage IS NULL OR i.reorder_percentage = :reorderPercentage) " +
             "   AND (:stockThresholdQty IS NULL OR i.stock_threshold_qty = :stockThresholdQty) " +
-            "   AND (:warehouseId IS NULL OR w.id = :warehouseId) " +
+            "   AND (COALESCE(:warehouseId) IS NULL OR w.id IN (:warehouseId)) " +
             "   AND (:warehouseStoreId IS NULL OR ws.id = :warehouseStoreId) " +
             "GROUP BY i.id";
 
-    String countItemsWithSearch = "SELECT count(*) FROM (" +
-            "SELECT i.id as id, i.name as name, i.code as code, " +
-            "ic.id as subCategoryId, ic.name as subCategoryName, ic.code as subCategoryCode, " +
-            "ipc.id as categoryId, ipc.name as categoryName, ipc.code as categoryCode," +
-            "w.id as warehouseId, w.name as warehouseName, " +
-            "ws.id as warehouseStoreId, ws.store_name as warehouseStoreName, " +
-            "SUM(s.stock_qty) as qty," +
-            " i.stock_threshold_qty as stockThresholdQty," +
-            " i.reorder_percentage as reorderPercentage " +
-            "FROM scm_items i " +
-            "LEFT JOIN scm_item_stocks s ON s.item_id = i.id " +
-            "LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id " +
-            "LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id " +
-            "LEFT JOIN scm_warehouse_stores ws ON ws.id = s.warehouse_store_id " +
-            "LEFT JOIN scm_warehouses w ON w.id = s.warehouse_id " +
-            "WHERE i.active=1 AND (:name IS NULL OR i.name LIKE concat(:name,'%')) " +
-            "   AND (:code IS NULL OR i.code LIKE concat(:code,'%')) " +
-            "   AND (:subCategoryId IS NULL OR ic.id = :subCategoryId) " +
-            "   AND (:categoryId IS NULL OR ipc.id = :categoryId) " +
-            "   AND (:reorderPercentage IS NULL OR i.reorder_percentage = :reorderPercentage) " +
-            "   AND (:stockThresholdQty IS NULL OR i.stock_threshold_qty = :stockThresholdQty) " +
-            "   AND (:warehouseId IS NULL OR w.id = :warehouseId) " +
-            "   AND (:warehouseStoreId IS NULL OR ws.id = :warehouseStoreId) " +
-            "GROUP BY i.id) p";
+    String countItemsWithSearch = "SELECT count(*) FROM ("+getItemsWithSearch+") as p";
 
 
     String getPendingItemsWithSearch = "SELECT i.id as id, i.name as name, i.code as code, " +
@@ -71,8 +49,9 @@ public interface ItemQuery {
             "   AND siil.item_inactive_status IN ('PENDING') " +
             "   AND (:name IS NULL OR i.name LIKE concat(:name,'%')) " +
             "   AND (:code IS NULL OR i.code LIKE concat(:code,'%')) " +
-            "   AND (:subCategoryId IS NULL OR ic.id = :subCategoryId) " +
-            "   AND (:categoryId IS NULL OR ipc.id = :categoryId) " +
+            "   AND ((:subCategoryId IS NULL OR ic.id = :subCategoryId)" +
+            "           OR (COALESCE(:categoryId) IS NULL OR ic.id IN (:categoryId))) " +
+            "   AND (COALESCE(:categoryId) IS NULL OR ipc.id IN (:categoryId)) " +
             "   AND (:reorderPercentage IS NULL OR i.reorder_percentage = :reorderPercentage) " +
             "   AND (:stockThresholdQty IS NULL OR i.stock_threshold_qty = :stockThresholdQty) " +
             "   AND (:warehouseId IS NULL OR w.id = :warehouseId) " +
@@ -101,8 +80,9 @@ public interface ItemQuery {
 //            "   AND i.item_inactive_status IN ('PENDING_VERIFICATION') " +
             "   AND (:name IS NULL OR i.name LIKE concat(:name,'%')) " +
             "   AND (:code IS NULL OR i.code LIKE concat(:code,'%')) " +
-            "   AND (:subCategoryId IS NULL OR ic.id = :subCategoryId) " +
-            "   AND (:categoryId IS NULL OR ipc.id = :categoryId) " +
+            "   AND ((:subCategoryId IS NULL OR ic.id = :subCategoryId) " +
+            "           OR (COALESCE(:categoryId) IS NULL OR ic.id IN (:categoryId)))" +
+            "   AND (COALESCE(:categoryId) IS NULL OR ipc.id IN (:categoryId)) " +
             "   AND (:reorderPercentage IS NULL OR i.reorder_percentage = :reorderPercentage) " +
             "   AND (:stockThresholdQty IS NULL OR i.stock_threshold_qty = :stockThresholdQty) " +
             "GROUP BY i.id";

@@ -25,9 +25,11 @@ public class DataFilter {
 
 
      public static String FILTER_BY_WAREHOUSE = "warehouse_id";
+     public static String FILTER_BY_CATEGORY = "category_id";
 
 
      List<Long> ids=new ArrayList<>();
+     List<Long> categoryIds=new ArrayList<>();
 
     public DataFilter(String moduleUri, ClaimResolver claimResolver,Pageable pageable) {
         this.uri = moduleUri;
@@ -41,19 +43,24 @@ public class DataFilter {
     }
 
     public List<Long> getFilterConfig(String key){
+
         Optional<Map<String, List<Long>>> modulePermission = readerService
                 .getModuleFilterByUri(claimResolver.getToken(), uri);
 
 
         if(modulePermission.isPresent()){
-            ids =  modulePermission.get().get(key);
-            if(ids.size()==0){
-                ids.add(claimResolver.getEmployee().get().getWarehouseId());
-            }
-            return ids;
+            ids =  modulePermission.get().get(DataFilter.FILTER_BY_WAREHOUSE);
+            categoryIds = modulePermission.get().get(DataFilter.FILTER_BY_CATEGORY);
         }
+        if(ids.size()==0){
+            ids.add(claimResolver.getEmployee().get().getWarehouseId());
 
+        }
         return ids;
+    }
+
+    public List<Long> getCategoryIds(){
+        return this.categoryIds;
     }
 
     public Page<?> fetchData(){

@@ -33,7 +33,8 @@ public interface ItemService {
     List<?> getByAttributes(Long brandId,String attribute,Long warehouseId);
     Optional<?> getItemDetailWithWarehouse(Long id);
 
-    Page<?> getAllItems(Optional<Integer> page, Optional<Integer> size,
+    Page<?> getAllItems(
+            Jwt token, String uri,Optional<Integer> page, Optional<Integer> size,
                                    Optional<String> name,
                                    Optional<String> code,
                                    Optional<Integer> reorderPercentage,
@@ -45,7 +46,9 @@ public interface ItemService {
 
     );
 
-    Page<?> getPendingAllItems(Optional<Integer> page, Optional<Integer> size,
+    Page<?> getPendingAllItems(
+            Jwt token,
+            Optional<Integer> page, Optional<Integer> size,
                         Optional<String> name,
                         Optional<String> code,
                         Optional<Integer> reorderPercentage,
@@ -57,7 +60,9 @@ public interface ItemService {
 
     );
 
-    Page<?> getPendingVerificationAllItems(Optional<Integer> page, Optional<Integer> size,
+    Page<?> getPendingVerificationAllItems(
+            Jwt token,
+            Optional<Integer> page, Optional<Integer> size,
                         Optional<String> name,
                         Optional<String> code,
                         Optional<Integer> reorderPercentage,

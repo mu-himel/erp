@@ -35,7 +35,9 @@ public class ItemCategoryController extends BaseController{
 
     @GetMapping
     // @ApiOperation(value = "Get Parent Categories With Pagination")
-    public ResponseEntity<?> getParentItemCategories(@RequestParam("page") Optional<Integer> page,
+    public ResponseEntity<?> getParentItemCategories(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
                                                @RequestParam("size") Optional<Integer> size,
                                                @RequestParam("name")  Optional<String> name,
                                                @RequestParam("code") Optional<String> code,
@@ -45,7 +47,9 @@ public class ItemCategoryController extends BaseController{
                                                @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId
     ){
         return new ResponseEntity<>(
-                categoryService.getItemCategories(page,size, name, code,currentYearBudget,productCount,
+                categoryService.getItemCategories(
+                        token,
+                        page,size, name, code,currentYearBudget,productCount,
                         warehouseId,warehouseStoreId),
                 HttpStatus.OK
         );
@@ -54,6 +58,7 @@ public class ItemCategoryController extends BaseController{
     @GetMapping("/sub-categories")
     // @ApiOperation(value = "Get Sub Categories With Pagination")
     public ResponseEntity<?> getSubItemCategories(
+            @AuthenticationPrincipal Jwt token,
                      @RequestParam("page") Optional<Integer> page,
                      @RequestParam("size") Optional<Integer> size,
                      @RequestParam("name")  Optional<String> name,
@@ -66,7 +71,7 @@ public class ItemCategoryController extends BaseController{
 
     ){
         return new ResponseEntity<>(
-                categoryService.getItemCategories(page,size, name, code,currentYearBudget,productCount,categoryId,
+                categoryService.getItemCategories(token,page,size, name, code,currentYearBudget,productCount,categoryId,
                         warehouseId,warehouseStoreId),
                 HttpStatus.OK
         );
@@ -74,12 +79,13 @@ public class ItemCategoryController extends BaseController{
 
     @GetMapping("/inventory-control/main-categories")
     public ResponseEntity<?> getMainCategoryListForInventoryControl(
+            @AuthenticationPrincipal Jwt token,
             @RequestParam("warehouseId") Optional<Long> warehouseId,
             @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId,
             @RequestParam("name")  Optional<String> name,
             @RequestParam("code") Optional<String> code){
         return new ResponseEntity<>(
-                categoryService.getCategoriesForInventoryControl(warehouseId,warehouseStoreId,name,code),
+                categoryService.getCategoriesForInventoryControl(token,warehouseId,warehouseStoreId,name,code),
                 HttpStatus.OK
         );
     }
@@ -119,26 +125,32 @@ public class ItemCategoryController extends BaseController{
 
     @GetMapping("/inventory-control/list")
     public ResponseEntity<?> getSubCategoryListForInventoryControl(
+            @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId")  Optional<Long> categoryId,
             @RequestParam("warehouseId")  Optional<Long> warehouseId,
             @RequestParam("warehouseStoreId")  Optional<Long> storeId,
             @RequestParam("name")  Optional<String> name,
             @RequestParam("code") Optional<String> code){
         return new ResponseEntity<>(
-                categoryService.getSubCategoriesForInventoryControl(categoryId,warehouseId,storeId, name,code),
+                categoryService.getSubCategoriesForInventoryControl(
+                        token,
+                        categoryId,warehouseId,storeId, name,code),
                 HttpStatus.OK
         );
     }
 
     @GetMapping("/inventory-control/list/pending")
     public ResponseEntity<?> getPendingSubCategoryListForInventoryControl(
+            @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId")  Optional<Long> categoryId,
             @RequestParam("warehouseId")  Optional<Long> warehouseId,
             @RequestParam("warehouseStoreId")  Optional<Long> storeId,
             @RequestParam("name")  Optional<String> name,
             @RequestParam("code") Optional<String> code){
         return new ResponseEntity<>(
-                categoryService.getPendingSubCategoriesForInventoryControl(categoryId,warehouseId,storeId, name,code),
+                categoryService.getPendingSubCategoriesForInventoryControl(
+                        token,
+                        categoryId,warehouseId,storeId, name,code),
                 HttpStatus.OK
         );
     }
@@ -225,13 +237,14 @@ public class ItemCategoryController extends BaseController{
 
     @GetMapping("/inventory-control/main-categories/pending")
     public ResponseEntity<?> getPendingCategories(
+            @AuthenticationPrincipal Jwt token,
             Optional<Long> warehouseId,
             Optional<Long> warehouseStoreId,
             Optional<String> name,
             Optional<String> code
     ){
         return new ResponseEntity<>(
-                categoryService.getPendingCategories(warehouseId,warehouseStoreId,name,code),
+                categoryService.getPendingCategories(token,warehouseId,warehouseStoreId,name,code),
                 HttpStatus.OK
         );
     }

@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.inventory.service;
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
 import com.agi.aesl.erpscm.account_finance.service.AccountService;
+import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
@@ -12,6 +13,7 @@ import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 //import com.agi.aesl.erpscm.demand.repository.DemandRepository;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
 import com.agi.aesl.erpscm.fileupload.service.FileUploadService;
@@ -105,6 +107,9 @@ public class ItemServiceImpl implements ItemService {
     @Autowired
     private ItemImportLogRepository itemImportLogRepository;
 
+    @Autowired
+    private IntegrationReaderService integrationReaderService;
+
     @Override
     public Optional<Item> getItemDetail(Long id) {
         return itemRepository.findById(id);
@@ -171,7 +176,10 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Page<?> getAllItems(Optional<Integer> page, Optional<Integer> size,
+    public Page<?> getAllItems(
+            Jwt token,
+            String uri,
+            Optional<Integer> page, Optional<Integer> size,
                                Optional<String> name,
                                Optional<String> code,
                                Optional<Integer> reorderPercentage,
@@ -182,17 +190,38 @@ public class ItemServiceImpl implements ItemService {
                                Optional<Long> warehouseStoreId
 
     ) {
+        claimResolver.setToken(token);
+
 
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> filterBy = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> warehouseIds = new ArrayList<>();
+        List<Long> categoryIds = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else{
+            warehouseIds = filterBy;
+        }
+
+        if(categoryId.isPresent()){
+            categoryIds.add(categoryId.get());
+        }else{
+            categoryIds = dataFilter.getCategoryIds();
+        }
+
+
         Page<?> result  = itemRepository.findAllItems(
                 name.orElse(null),
                 code.orElse(null),
                 reorderPercentage.orElse(null),
                 stockThresholdQty.orElse(null),
-                categoryId.orElse(null),
+                categoryIds,
                 subCategoryId.orElse(null),
-                warehouseId.orElse(null),
+                warehouseIds,
                 warehouseStoreId.orElse(null),
                 pageable);
 
@@ -201,17 +230,38 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Page<?> getPendingAllItems(Optional<Integer> page, Optional<Integer> size, Optional<String> name, Optional<String> code, Optional<Integer> reorderPercentage, Optional<Integer> stockThresholdQty, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<Long> warehouseId, Optional<Long> warehouseStoreId) {
+    public Page<?> getPendingAllItems(Jwt token,Optional<Integer> page, Optional<Integer> size, Optional<String> name, Optional<String> code, Optional<Integer> reorderPercentage, Optional<Integer> stockThresholdQty, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<Long> warehouseId, Optional<Long> warehouseStoreId) {
+        claimResolver.setToken(token);
+        String uri = "inventory-control/product";
+
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> filterBy = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> warehouseIds = new ArrayList<>();
+        List<Long> categoryIds = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else{
+            warehouseIds = filterBy;
+        }
+
+        if(categoryId.isPresent()){
+            categoryIds.add(categoryId.get());
+        }else{
+            categoryIds = dataFilter.getCategoryIds();
+        }
+
         Page<?> result  = itemRepository.findAllPendingItems(
                 name.orElse(null),
                 code.orElse(null),
                 reorderPercentage.orElse(null),
                 stockThresholdQty.orElse(null),
-                categoryId.orElse(null),
+                categoryIds,
                 subCategoryId.orElse(null),
-                warehouseId.orElse(null),
+                warehouseIds,
                 warehouseStoreId.orElse(null),
                 pageable);
 
@@ -220,18 +270,41 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Page<?> getPendingVerificationAllItems(Optional<Integer> page, Optional<Integer> size, Optional<String> name, Optional<String> code, Optional<Integer> reorderPercentage, Optional<Integer> stockThresholdQty, Optional<Long> categoryId, Optional<Long> subCategoryId,
+    public Page<?> getPendingVerificationAllItems(
+            Jwt token,
+            Optional<Integer> page, Optional<Integer> size, Optional<String> name, Optional<String> code, Optional<Integer> reorderPercentage, Optional<Integer> stockThresholdQty, Optional<Long> categoryId, Optional<Long> subCategoryId,
                                                   Optional<Long> warehouseId, Optional<Long> warehouseStoreId) {
+        claimResolver.setToken(token);
+        String uri = "inventory-control/product";
+
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> filterBy = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> warehouseIds = new ArrayList<>();
+        List<Long> categoryIds = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else{
+            warehouseIds = filterBy;
+        }
+
+        if(categoryId.isPresent()){
+            categoryIds.add(categoryId.get());
+        }else{
+            categoryIds = dataFilter.getCategoryIds();
+        }
+
         Page<?> result  = itemRepository.findAllPendingVerificationItems(
                 name.orElse(null),
                 code.orElse(null),
                 reorderPercentage.orElse(null),
                 stockThresholdQty.orElse(null),
-                categoryId.orElse(null),
+                categoryIds,
                 subCategoryId.orElse(null),
-                warehouseId.orElse(null),
+                warehouseIds,
                 warehouseStoreId.orElse(null),
                 pageable);
 
