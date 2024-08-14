@@ -351,6 +351,11 @@ public class DemandServiceImpl implements DemandService{
     @Override
     public Page<?> getAllDemands(Jwt loggedInUser, Optional<Integer> page, Optional<Integer> size,
             Optional<String> fromDateStr, Optional<String> toDateStr, Optional<Integer> daysRemain) {
+                claimResolver.setToken(loggedInUser);
+                if(claimResolver.getEmployee().isEmpty()){
+                    throw new RuntimeException("Sorry! Only Store Personnel can access this");
+                }
+                Long warehouseId = claimResolver.getEmployee().get().getWarehouseId();
                 String moduleUri = "demand/pending";
                 // get filter options according to module permission
                 Sort sort = Sort.by(Sort.Direction.ASC,"id");
@@ -380,13 +385,13 @@ public class DemandServiceImpl implements DemandService{
                     categoryIds = modulePermission.get().get("category_id");
                     warehouseIds = modulePermission.get().get("warehouse_id");
                     return demandRepository.findAllDemandsByCategory(categoryIds,
-                            (warehouseIds !=null && warehouseIds.size()>0)? warehouseIds : List.of(1L),
+                            (warehouseIds !=null && warehouseIds.size()>0)? warehouseIds : List.of(warehouseId),
                             fromDate,toDate,daysRemain.orElse(null),
                             pageable);
                 }
         
-        
-                return demandRepository.findAllDemands(1L,fromDate,toDate, daysRemain.orElse(null),pageable);
+
+                return demandRepository.findAllDemands(warehouseId,fromDate,toDate, daysRemain.orElse(null),pageable);
     }
 
     @Override

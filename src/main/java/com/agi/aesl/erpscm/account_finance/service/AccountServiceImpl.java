@@ -23,6 +23,9 @@ import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationWriterService;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.entity.ItemImportLog;
+import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
+import com.agi.aesl.erpscm.inventory.repository.ItemImportLogRepository;
 import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
@@ -76,6 +79,9 @@ public class AccountServiceImpl implements AccountService{
 
     @Autowired
     private IntegrationReaderService integrationReaderService;
+
+    @Autowired
+    private ItemImportLogRepository itemImportLogRepository;
 
     @Override
     public String getNextAccountNo() {
@@ -365,9 +371,22 @@ public class AccountServiceImpl implements AccountService{
 //                    demandMailService.sentMail(panel.getEmail(),"Pending Demand Approval Request");
                     ledgerAccount.setNextApproverId(panel.getUserId());
                 }
+                verificationService.setApprovers(ledgerAccount, panels,DomainType.ACCOUNT_LEDGER);
             }
-            verificationService.setApprovers(ledgerAccount, panels,DomainType.ACCOUNT_LEDGER);
 
+            if(verifiers.size()==0 && panels.size()==0){
+                integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
+
+                Warehouse warehouse = ledgerAccount.getWarehouse();
+                ledgerAccount.setAccountStatus(AccountType.COMPLETED);
+                Item item = ledgerAccount.getItem();
+                item.setActive(true);
+                Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouse.getId());
+                if(iilOp.isPresent()){
+                    ItemImportLog iil = iilOp.get();
+                    iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+                }
+            }
         }
     }
 
@@ -428,7 +447,17 @@ public class AccountServiceImpl implements AccountService{
                 ledgerAccount.setAccountStatus(AccountType.PENDING_APPROVAL);
             }else{
                 ledgerAccount.setAccountStatus(AccountType.VERIFIED);
+
                 integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
+
+                Warehouse warehouse = ledgerAccount.getWarehouse();
+                Item item = ledgerAccount.getItem();
+                item.setActive(true);
+                Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouse.getId());
+                if(iilOp.isPresent()){
+                    ItemImportLog iil = iilOp.get();
+                    iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+                }
             }
 
 
@@ -463,6 +492,15 @@ public class AccountServiceImpl implements AccountService{
             ledgerAccount.setAccountStatus(AccountType.APPROVED);
 
             integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
+
+            Warehouse warehouse = ledgerAccount.getWarehouse();
+            Item item = ledgerAccount.getItem();
+            item.setActive(true);
+            Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouse.getId());
+            if(iilOp.isPresent()){
+                ItemImportLog iil = iilOp.get();
+                iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+            }
         }
     }
 

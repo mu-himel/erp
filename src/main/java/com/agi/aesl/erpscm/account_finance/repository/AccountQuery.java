@@ -50,7 +50,7 @@ public interface AccountQuery {
             WHERE 
             (COALESCE(:warehouseId) IS NULL OR ws.warehouse_id IN (:warehouseId)) AND 
             (COALESCE(:warehouseId) IS NULL OR la.warehouse_id IN (:warehouseId)) AND
-            la.account_status IN ('APPROVED','REJECTED')
+            la.account_status IN ('APPROVED','REJECTED','VERIFIED','COMPLETED')
             GROUP BY la.id
             """;
 
@@ -72,6 +72,7 @@ public interface AccountQuery {
         ic.id as subCategoryId,
         ic.name as subCategory,
         i.item_attribute_name as product,
+        cb.name as brand,
         la.group_account as groupAccount,
         la.account_status as accountStatus,
         la.review_prev_status as prevStatus,
@@ -87,6 +88,7 @@ public interface AccountQuery {
         au.warehouse_name as initiatorWarehouseName
         FROM ledger_accounts la
         LEFT JOIN scm_items i ON i.id = la.item_id
+        LEFT JOIN scm_category_brands cb ON cb.id = i.brand_id
         LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id
         LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
         LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
@@ -117,7 +119,7 @@ public interface AccountQuery {
             WHERE 
             (COALESCE(:warehouseId) IS NULL OR ws.warehouse_id IN (:warehouseId)) AND 
             (COALESCE(:warehouseId) IS NULL OR la.warehouse_id IN (:warehouseId)) AND 
-            la.account_status IN ('APPROVED')
+            la.account_status IN ('APPROVED','COMPLETED')
             GROUP BY la.id
             """;
     String countApprovedAccounts = "SELECT COUNT(*) FROM ("+getApprovedAccountsList+") total";
@@ -297,6 +299,8 @@ public interface AccountQuery {
 
         @JsonIgnore
         String getInitiatorWarehouseName();
+
+        String getBrand();
 
         String getReviewerId();
         String getReviewDate();
