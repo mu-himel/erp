@@ -653,7 +653,9 @@ public class CategoryServiceImpl implements CategoryService {
                 category.setActive(true);
                 category.setCategoryStatus(CategoryStatus.APPROVED);
             } else if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)) {
-                mergeWithBody(token, category, mergePendingCategoryDto);
+                if(categoryApproveRequestDto.getMergePendingCategoryDto()!=null) {
+                    mergeWithBody(token, category, mergePendingCategoryDto);
+                }
                 category.setActive(false);
                 category.setCategoryStatus(CategoryStatus.REJECTED);
             }

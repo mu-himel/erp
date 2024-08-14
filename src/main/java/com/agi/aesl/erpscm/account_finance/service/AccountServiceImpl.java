@@ -109,10 +109,22 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public Page<?> getClosedAccounts(Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getClosedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                     Optional<Long> warehouseId) {
+
+        String uri = "/app/accounts/asset-management/asset-ledger/asset-ledger-request";
+
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
-        return accountRepository.getClosedLedgerAccounts(pageable);
+        DataFilter dataFilter = new DataFilter(uri,claimResolver,pageable);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> ids = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            ids.add(warehouseId.get());
+        }else{
+            ids = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
+        return accountRepository.getClosedLedgerAccounts(ids,pageable);
     }
 
     @Override
@@ -234,24 +246,6 @@ public class AccountServiceImpl implements AccountService{
         }
     }
 
-//    private List<VerifierInfo> getVerifiers(LedgerAccount ledgerAccount, Optional<VerifierConfig> verifierOp) {
-//        List<VerifierInfo> verifiers = new ArrayList<>();
-//        if(verifierOp.isPresent()){
-//            VerifierConfig verification = verifierOp.get();
-//            verifiers = verification.getVerifiers();
-//            Boolean verificationRequired = verification.getVerificationRequired();
-//            if(verificationRequired!=null && verificationRequired==true && verifiers!=null && verifiers.size()>0){
-//                ledgerAccount.setAccountStatus(AccountType.PENDING_VERIFICATION);
-//            }else{
-//                ledgerAccount.setAccountStatus(AccountType.PENDING);
-//            }
-//
-//        }else{
-//            ledgerAccount.setAccountStatus(AccountType.PENDING);
-//        }
-//        return verifiers;
-//    }
-
     @Override
     public Optional<?> getLedgerDetailById(Long id) {
         Optional<AccountQuery.PendingAccountDetail>  accountOp = accountRepository.findLedgerAccountById(id);
@@ -308,10 +302,19 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public Page<?> getAllRejectedAccounts(Optional<Integer> page, Optional<Integer> size) {
-        //TODO for Sourav
+    public Page<?> getAllRejectedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                          Optional<Long> warehouseId) {
+        String uri="/app/accounts/asset-management/asset-ledger/reject";
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return accountRepository.getRejectedLedgerAccounts(pageable);
+        DataFilter dataFilter = new DataFilter(uri,claimResolver,pageable);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> ids = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            ids.add(warehouseId.get());
+        }else{
+            ids = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
+        return accountRepository.getRejectedLedgerAccounts(ids,pageable);
     }
 
     @Override
@@ -366,13 +369,6 @@ public class AccountServiceImpl implements AccountService{
             verificationService.setApprovers(ledgerAccount, panels,DomainType.ACCOUNT_LEDGER);
 
         }
-    }
-
-    @Transactional
-    private List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories) {
-        List<ApprovalPanel> approvalPanels = moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
-                Optional.ofNullable(categories),Optional.empty());
-        return approvalPanels;
     }
 
     @Override

@@ -66,10 +66,17 @@ public class AccountFinanceController extends BaseController {
 
     @GetMapping("/ledgers/closed")
     public ResponseEntity<?> getClosedLedgerRequests(
+            @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
-            @RequestParam("size") Optional<Integer> size
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("warehouseId") Optional<Long> warehouseId
+
     ){
-        return new ResponseEntity<>(accountService.getClosedAccounts(page,size),HttpStatus.OK);
+        return new ResponseEntity<>(
+                accountService.getClosedAccounts(token,
+                    page,size,
+                    warehouseId),
+                HttpStatus.OK);
     }
 
     @GetMapping("/ledgers/pending-verifications")
@@ -120,7 +127,13 @@ public class AccountFinanceController extends BaseController {
     }
 
     @GetMapping("/ledgers/rejected")
-    public ResponseEntity<?> getRejectedLedgerRequests(@RequestParam("page") Optional<Integer> page, @RequestParam("size") Optional<Integer> size){
-        return new ResponseEntity<>(accountService.getAllRejectedAccounts(page, size), HttpStatus.OK);
+    public ResponseEntity<?> getRejectedLedgerRequests(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("warehouseId") Optional<Long> warehouseId){
+        return new ResponseEntity<>(
+                accountService.getAllRejectedAccounts(token, page, size, warehouseId),
+                HttpStatus.OK);
     }
 }

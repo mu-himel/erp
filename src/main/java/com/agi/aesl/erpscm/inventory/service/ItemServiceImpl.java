@@ -6,6 +6,7 @@ import com.agi.aesl.erpscm.account_finance.service.AccountService;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
+import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
@@ -89,6 +90,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private AccountService accountService;
+
+    @Autowired
+    private WarehouseService warehouseService;
     @Autowired
     private CategoryBrandRepository categoryBrandRepository;
 
@@ -378,7 +382,7 @@ public class ItemServiceImpl implements ItemService {
         if(itemRequestDto.getWarehouse().getId()!=null) {
            warehouse = new Warehouse(itemRequestDto.getWarehouse().getId()) ;
         }else{
-           warehouse = new Warehouse();//loggedInUser.getEmployee().getWarehouseId()
+           warehouse = new Warehouse(claimResolver.getEmployee().get().getWarehouseId());
         }
 
         if(itemRequestDto.getWarehouseStore() !=null && itemRequestDto.getWarehouseStore().getId() != null){
@@ -395,16 +399,20 @@ public class ItemServiceImpl implements ItemService {
         Optional<Item> itemOp = itemRepository.findByCode(item.getCode());
         if(itemOp.isPresent()){
             Item itemExist = itemOp.get();
-            List<ItemStock> itemStocks = itemExist.getStocks();
-            itemStocks.add(new ItemStock(
-                    itemRequestDto.getCurrentStockQty(),
-                    itemExist,
-                    StockType.STOCK_IN,
-                    warehouse,
-                    warehouseStore
-            ));
-            itemExist.setStocks(itemStocks);
-            return;
+            Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(itemExist.getId(),warehouse.getId());
+            if(iilOp.isPresent()){
+                throw new RuntimeException("Item already exist with code("+itemExist.getCode()+") and status is "+iilOp.get().getItemInactiveStatus());
+            }
+//            List<ItemStock> itemStocks = itemExist.getStocks();
+//            itemStocks.add(new ItemStock(
+//                    new BigDecimal(0L),
+//                    itemExist,
+//                    StockType.STOCK_IN,
+//                    warehouse,
+//                    warehouseStore
+//            ));
+//            itemExist.setStocks(itemStocks);
+//            return;
         }
 
        if(item.getItemParentCategory()==null && item.getItemCategory()==null){
@@ -437,10 +445,16 @@ public class ItemServiceImpl implements ItemService {
             }).collect(Collectors.toList()));
         }
         item.setActive(false);
-        item.setItemInactiveStatus(ItemInactiveStatus.PENDING);
+        ItemImportLog iil = new ItemImportLog();
+        iil.setItemInactiveStatus(ItemInactiveStatus.PENDING);
+        iil.setWarehouse(warehouse);
+        iil.setItem(item);
+        item.setItemImportLogs(Arrays.asList(iil));
         item.setItemAttributeName(itemAttributeName);
         item.setCreatedBy(claimResolver.getUserId());
         itemRepository.save(item);
+
+
 
         if(item.getId()!=null){
 
@@ -457,6 +471,7 @@ public class ItemServiceImpl implements ItemService {
                 throw new RuntimeException("Sorry! Employee Info missing");
             }
             Optional<ItemCategory> catOp = categoryService.getAnyItemCategory(item.getItemCategory().getId());
+
 
             pendingItemRequestDto.setSubCategoryCode(catOp.get().getCode());
             if(item.getBrand()!=null) {
@@ -805,6 +820,13 @@ public class ItemServiceImpl implements ItemService {
         }
     }
 
+    /**
+     * @Description import from cps
+     * @param warehouseId
+     * @param warehouseStoreId
+     * @param syncItemDetail
+     * @return
+     */
     @Transactional
     private Item createItem(Long warehouseId, Long warehouseStoreId, SyncItemDetail syncItemDetail){
         Item item = syncItemDetail.getEntity();
@@ -936,29 +958,51 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public void approveItemFromCps(Long id, ItemApproveRequestDto approveRequestDto) {
+        Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(approveRequestDto.getWarehouseId());
+        if(warehouseOp.isEmpty()){
+            throw new RuntimeException("Warehouse Missing");
+        }
         Optional<Item> itemOp = itemRepository.findById(id);
         if(itemOp.isPresent()){
             Item item = itemOp.get();
             ItemMergeRequestDto itemMergeRequestDto = approveRequestDto.getItemMergeRequestDto();
             if(approveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
                 if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()==null) {
-                    item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
-                    accountService.createItemLedger(item, new Warehouse(1L));
+                    Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseOp.get().getId());
+                    if(iilOp.isPresent()){
+                        ItemImportLog iil = iilOp.get();
+                        iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+                    }
+                    accountService.createItemLedger(item, warehouseOp.get());
                 }
                 if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()!=null){
-                    item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+                    item.setItemInactiveStatus(null);
+                    Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseOp.get().getId());
+                    if(iilOp.isPresent()){
+                        ItemImportLog iil = iilOp.get();
+                        iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+
+                    }
                     mergeItem(item, itemMergeRequestDto);
-                    accountService.createItemLedger(item, new Warehouse(1L));
+                    accountService.createItemLedger(item, warehouseOp.get());
 
                 }
             }else if(approveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)){
-                itemOp = itemRepository.findByCode(approveRequestDto.getCode());
-                if(itemOp.isEmpty()){
-                    throw new RuntimeException("Sorry! Item not found using code ["+approveRequestDto.getCode()+"]");
+
+//                item.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
+                Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseOp.get().getId());
+                if(iilOp.isPresent()){
+                    ItemImportLog iil = iilOp.get();
+                    iil.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
                 }
-                Item existItem = itemOp.get();
-                item.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
-                mergeItem(existItem,itemMergeRequestDto);
+                if(approveRequestDto.getItemMergeRequestDto()!=null) {
+                    itemOp = itemRepository.findByCode(approveRequestDto.getCode());
+                    if(itemOp.isEmpty()){
+                        throw new RuntimeException("Sorry! Item not found using code ["+approveRequestDto.getCode()+"]");
+                    }
+                    Item existItem = itemOp.get();
+                    mergeItem(existItem, itemMergeRequestDto);
+                }
             }
         }
     }

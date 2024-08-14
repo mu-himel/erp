@@ -27,7 +27,7 @@ public interface AccountRepository extends JpaRepository<LedgerAccount,Long> , A
     Page<PendingAccount> getApprovedLedgerAccounts(List<Long> warehouseId,Pageable pageable);
 
     @Query(value = getRejectedAccountsList,countQuery = countRejectedAccounts, nativeQuery = true)
-    Page<PendingAccount> getRejectedLedgerAccounts(Pageable pageable);
+    Page<PendingAccount> getRejectedLedgerAccounts(List<Long> warehouseId,Pageable pageable);
 
     @Query(value = getAllFilteredPendingVerificationsWithNextVerifier,
             countQuery = countAllFilteredPendingVerificationsWithNextVerifier,nativeQuery = true)
@@ -62,5 +62,5 @@ public interface AccountRepository extends JpaRepository<LedgerAccount,Long> , A
                                                                  Pageable pageable);
 
     @Query(value = getClosedAccounts, countQuery = countClosedAccounts ,nativeQuery = true)
-    Page<PendingAccount> getClosedLedgerAccounts(Pageable pageable);
+    Page<PendingAccount> getClosedLedgerAccounts(List<Long> warehouseId, Pageable pageable);
 }

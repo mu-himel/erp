@@ -61,13 +61,14 @@ public interface ItemQuery {
             " i.stock_threshold_qty as stockThresholdQty," +
             " i.reorder_percentage as reorderPercentage " +
             "FROM scm_items i " +
+            "LEFT JOIN scm_item_import_logs siil ON siil.item_id=i.id AND siil.warehouse_id=:warehouseId "+
             "LEFT JOIN scm_item_stocks s ON s.item_id = i.id " +
             "LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id " +
             "LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id " +
             "LEFT JOIN scm_warehouse_stores ws ON ws.id = s.warehouse_store_id " +
             "LEFT JOIN scm_warehouses w ON w.id = s.warehouse_id " +
             "WHERE i.active=0 " +
-            "   AND i.item_inactive_status IN ('PENDING') " +
+            "   AND siil.item_inactive_status IN ('PENDING') " +
             "   AND (:name IS NULL OR i.name LIKE concat(:name,'%')) " +
             "   AND (:code IS NULL OR i.code LIKE concat(:code,'%')) " +
             "   AND (:subCategoryId IS NULL OR ic.id = :subCategoryId) " +

@@ -47,6 +47,9 @@ public class DataFilter {
 
         if(modulePermission.isPresent()){
             ids =  modulePermission.get().get(key);
+            if(ids.size()==0){
+                ids.add(claimResolver.getEmployee().get().getWarehouseId());
+            }
             return ids;
         }
 

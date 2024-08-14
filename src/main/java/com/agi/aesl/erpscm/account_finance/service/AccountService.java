@@ -16,7 +16,7 @@ public interface AccountService extends VerificationDomainService {
 
     Page<?> getAllPendingAccounts(Jwt token,Optional<Integer> page, Optional<Integer> size,
                                   Optional<Long> warehouseId);
-    Page<?> getClosedAccounts(Optional<Integer> page, Optional<Integer> size);
+    Page<?> getClosedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> warehouseId);
 
     Page<?> getAllPendingVerifications(Jwt token,
                                              Optional<Integer> page, Optional<Integer> size,
@@ -33,7 +33,8 @@ public interface AccountService extends VerificationDomainService {
     Page<?> getAllApprovedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                    Optional<Long> warehouseId);
 
-    Page<?> getAllRejectedAccounts(Optional<Integer> page, Optional<Integer> size);
+    Page<?> getAllRejectedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                   Optional<Long> warehouseId);
 
     void updateAccount(Jwt token, String uri, Long id, LedgerAccountRequestDto ledgerAccountRequestDto);
 
