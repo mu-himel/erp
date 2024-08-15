@@ -23,14 +23,14 @@ public class GrnInvoiceServiceImpl implements GrnInvoiceService{
 
     @Override
     @Transactional
-    public void uploadInvoice(Jwt token, Long id, Optional<MultipartFile> fileOp) {
+    public FileUploadResponse uploadInvoice(Jwt token, String id, Optional<MultipartFile> fileOp) {
 
-        Optional<GoodReceiveNote> goodReceiveNoteOp = (Optional<GoodReceiveNote>) grnService.getGRNById(id,true);
-        if(goodReceiveNoteOp.isEmpty()){
-            throw new RuntimeException("Sorry! Grn not found");
-        }
-
-        GoodReceiveNote goodReceiveNote = goodReceiveNoteOp.get();
+//        Optional<GoodReceiveNote> goodReceiveNoteOp = (Optional<GoodReceiveNote>) grnService.getGRNById(id,true);
+//        if(goodReceiveNoteOp.isEmpty()){
+//            throw new RuntimeException("Sorry! Grn not found");
+//        }
+//
+//        GoodReceiveNote goodReceiveNote = goodReceiveNoteOp.get();
 
         if(fileOp.isPresent()){
             MultipartFile file = fileOp.get();
@@ -40,13 +40,15 @@ public class GrnInvoiceServiceImpl implements GrnInvoiceService{
             }
 
 
-            Path path = Path.of("./uploads/grn/"+goodReceiveNote.getId()+"/po/invoice");
+            Path path = Path.of("./uploads/grn/"+id+"/po/invoice");
 
             FileUploadResponse fileUploadResponse = fileUploadService.uploadFile(path, file);
             if(fileUploadResponse!=null){
-                goodReceiveNote.setInvoicePath(path.resolve(fileUploadResponse.getFilename()).toString());
+                return fileUploadResponse;
+//                goodReceiveNote.setInvoicePath(path.resolve(fileUploadResponse.getFilename()).toString());
             }
         }
 
+        return null;
     }
 }

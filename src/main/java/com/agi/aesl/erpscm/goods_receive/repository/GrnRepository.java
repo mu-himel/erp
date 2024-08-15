@@ -32,6 +32,7 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
     @Query(value = getAllGrn,
             countQuery = countAllGrn, nativeQuery = true)
     Page<GoodReceiveNoteInfo> findAllGrn(Pageable pageable,
+                                         @Param("grnNo") String grnNo,
                                          @Param("fromDate") LocalDateTime fromDate,
                                          @Param("toDate") LocalDateTime toDate
     );

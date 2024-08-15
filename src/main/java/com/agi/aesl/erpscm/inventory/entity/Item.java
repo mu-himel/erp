@@ -89,6 +89,9 @@ public class Item {
 
     private Long cpsItemId;
 
+    @OneToMany(mappedBy = "item",cascade = CascadeType.ALL)
+    private List<ItemImportLog> itemImportLogs = new ArrayList<>();
+
 
     public Item(Long id) {
         this.id = id;

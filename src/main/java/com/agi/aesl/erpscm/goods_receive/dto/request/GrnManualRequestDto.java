@@ -26,6 +26,7 @@ public class GrnManualRequestDto {
     private BigDecimal inTotal;
     private Long warehouseId;
     private String payment;
+    private String invoicePath;
     List<GrnManualItemDetailDto> grnDetails;
 
 

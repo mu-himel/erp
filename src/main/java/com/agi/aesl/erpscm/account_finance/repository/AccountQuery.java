@@ -22,7 +22,10 @@ public interface AccountQuery {
             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
-            WHERE la.account_status IN ('PENDING','PENDING_VERIFICATION','PENDING_APPROVAL','REVIEW')
+            WHERE 
+            (COALESCE(:warehouseId) IS NULL OR ws.warehouse_id IN (:warehouseId)) AND 
+            (COALESCE(:warehouseId) IS NULL OR la.warehouse_id IN (:warehouseId)) AND
+            la.account_status IN ('PENDING','PENDING_VERIFICATION','PENDING_APPROVAL','REVIEW')
             GROUP BY la.id
             """;
 
@@ -44,7 +47,11 @@ public interface AccountQuery {
             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
-            WHERE la.account_status IN ('APPROVED','REJECTED')
+            WHERE 
+            (COALESCE(:warehouseId) IS NULL OR ws.warehouse_id IN (:warehouseId)) AND 
+            (COALESCE(:warehouseId) IS NULL OR la.warehouse_id IN (:warehouseId)) AND
+            la.account_status IN ('APPROVED','REJECTED','VERIFIED','COMPLETED')
+            GROUP BY la.id
             """;
 
     String countClosedAccounts = "SELECT COUNT(*) FROM ("+getClosedAccounts+") as total";
@@ -65,6 +72,7 @@ public interface AccountQuery {
         ic.id as subCategoryId,
         ic.name as subCategory,
         i.item_attribute_name as product,
+        cb.name as brand,
         la.group_account as groupAccount,
         la.account_status as accountStatus,
         la.review_prev_status as prevStatus,
@@ -80,10 +88,13 @@ public interface AccountQuery {
         au.warehouse_name as initiatorWarehouseName
         FROM ledger_accounts la
         LEFT JOIN scm_items i ON i.id = la.item_id
+        LEFT JOIN scm_category_brands cb ON cb.id = i.brand_id
         LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id
         LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
         LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
+                    AND cws.warehouse_id = la.warehouse_id
         LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
+                    AND ws.warehouse_id = la.warehouse_id
         LEFT JOIN acl_users au ON au.id = la.requested_by_id
         WHERE la.id=:id
             """;
@@ -105,7 +116,11 @@ public interface AccountQuery {
             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
-            WHERE la.account_status IN ('APPROVED')
+            WHERE 
+            (COALESCE(:warehouseId) IS NULL OR ws.warehouse_id IN (:warehouseId)) AND 
+            (COALESCE(:warehouseId) IS NULL OR la.warehouse_id IN (:warehouseId)) AND 
+            la.account_status IN ('APPROVED','COMPLETED')
+            GROUP BY la.id
             """;
     String countApprovedAccounts = "SELECT COUNT(*) FROM ("+getApprovedAccountsList+") total";
     String getRejectedAccountsList = """
@@ -128,7 +143,10 @@ public interface AccountQuery {
             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
-            WHERE la.account_status IN ('REJECTED')
+            WHERE 
+            (COALESCE(:warehouseId) IS NULL OR ws.warehouse_id IN (:warehouseId)) AND 
+            (COALESCE(:warehouseId) IS NULL OR la.warehouse_id IN (:warehouseId)) AND
+            la.account_status IN ('REJECTED')
             """;
     String countRejectedAccounts = "SELECT COUNT(*) FROM ("+getRejectedAccountsList+") total";
 
@@ -281,6 +299,8 @@ public interface AccountQuery {
 
         @JsonIgnore
         String getInitiatorWarehouseName();
+
+        String getBrand();
 
         String getReviewerId();
         String getReviewDate();

@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.account_finance.service;
 
 import com.agi.aesl.erpscm.account_finance.dto.request.LedgerAccountRequestDto;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomainService;
@@ -13,8 +14,9 @@ import java.util.Optional;
 public interface AccountService extends VerificationDomainService {
     String getNextAccountNo();
 
-    Page<?> getAllPendingAccounts(Optional<Integer> page, Optional<Integer> size);
-    Page<?> getClosedAccounts(Optional<Integer> page, Optional<Integer> size);
+    Page<?> getAllPendingAccounts(Jwt token,Optional<Integer> page, Optional<Integer> size,
+                                  Optional<Long> warehouseId);
+    Page<?> getClosedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> warehouseId);
 
     Page<?> getAllPendingVerifications(Jwt token,
                                              Optional<Integer> page, Optional<Integer> size,
@@ -28,13 +30,15 @@ public interface AccountService extends VerificationDomainService {
 
     Optional<?> getLedgerDetailById(Long id);
 
-    Page<?> getAllApprovedAccounts(Optional<Integer> page, Optional<Integer> size);
+    Page<?> getAllApprovedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                   Optional<Long> warehouseId);
 
-    Page<?> getAllRejectedAccounts(Optional<Integer> page, Optional<Integer> size);
+    Page<?> getAllRejectedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                   Optional<Long> warehouseId);
 
     void updateAccount(Jwt token, String uri, Long id, LedgerAccountRequestDto ledgerAccountRequestDto);
 
-    void createItemLedger(Item item);
+    void createItemLedger(Item item, Warehouse warehouse);
 
     void review(Jwt token, Long id, ReviewDto reviewDto);
 }

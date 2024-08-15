@@ -39,9 +39,9 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             @Param("code") String code,
             @Param("reorderPercentage") Integer reorderPercentage,
             @Param("stockThresholdQty") Integer stockThresholdQty,
-            @Param("categoryId") Long categoryId,
+            @Param("categoryId") List<Long> categoryId,
             @Param("subCategoryId") Long subCategoryId,
-            @Param("warehouseId") Long warehouseId,
+            @Param("warehouseId") List<Long> warehouseId,
             @Param("warehouseStoreId") Long warehouseStoreId,
             Pageable pageable
     );
@@ -53,9 +53,9 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             @Param("code") String code,
             @Param("reorderPercentage") Integer reorderPercentage,
             @Param("stockThresholdQty") Integer stockThresholdQty,
-            @Param("categoryId") Long categoryId,
+            @Param("categoryId") List<Long> categoryId,
             @Param("subCategoryId") Long subCategoryId,
-            @Param("warehouseId") Long warehouseId,
+            @Param("warehouseId") List<Long> warehouseId,
             @Param("warehouseStoreId") Long warehouseStoreId,
             Pageable pageable
     );
@@ -67,8 +67,10 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             @Param("code") String code,
             @Param("reorderPercentage") Integer reorderPercentage,
             @Param("stockThresholdQty") Integer stockThresholdQty,
-            @Param("categoryId") Long categoryId,
+            @Param("categoryId") List<Long> categoryId,
             @Param("subCategoryId") Long subCategoryId,
+            @Param("warehouseId") List<Long> warehouseId,
+            @Param("warehouseStoreId") Long warehouseStoreId,
             Pageable pageable
     );
 

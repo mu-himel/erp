@@ -19,13 +19,13 @@ public interface CategoryQuery {
                                         AND is2.warehouse_store_id = cws1.warehouse_store_id
                                         AND i.item_parent_category_id = cws1.category_id
                               WHERE i.active = 1 AND  cws1.category_id=ic.id 
-                              AND (:warehouseId IS NULL OR is2.warehouse_id = :warehouseId)
+                              AND (COALESCE(:warehouseId) IS NULL OR is2.warehouse_id IN (:warehouseId))
                               AND (:warehouseStoreId IS NULL OR is2.warehouse_store_id = :warehouseStoreId)
                        ) as productCount
                             FROM scm_item_categories ic
                             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
                             WHERE ic.active=1 AND ic.parent_category_id IS NULL 
-                            AND (:warehouseId IS NULL OR cws.warehouse_id = :warehouseId)
+                            AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
                             AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
                             GROUP BY ic.id) cat 
                        WHERE (:name IS NULL OR cat.name LIKE concat(:name,'%'))
@@ -75,7 +75,7 @@ public interface CategoryQuery {
                                         AND is2.warehouse_store_id = cws1.warehouse_store_id
                                         AND i.item_category_id = cws1.category_id
                               WHERE i.active = 1 AND cws1.category_id=ic.id 
-                              AND (:warehouseId IS NULL OR is2.warehouse_id = :warehouseId)
+                              AND (COALESCE(:warehouseId) IS NULL OR is2.warehouse_id IN (:warehouseId))
                               AND (:warehouseStoreId IS NULL OR is2.warehouse_store_id = :warehouseStoreId)
                     ) as productCount
                 FROM scm_item_categories ic 
@@ -84,7 +84,7 @@ public interface CategoryQuery {
                  LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
                 WHERE ic.active=1 AND ic.parent_category_id IS NOT NULL 
                 AND (:year IS NULL OR cb.current_year = :year)
-                 AND (:warehouseId IS NULL OR cws.warehouse_id = :warehouseId)
+                 AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
                  AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
                  GROUP BY ic.id) cat 
             WHERE (:name IS NULL OR cat.name LIKE concat(:name,'%')) 

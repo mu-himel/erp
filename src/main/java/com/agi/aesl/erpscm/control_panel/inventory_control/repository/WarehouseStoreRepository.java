@@ -32,9 +32,9 @@ public interface WarehouseStoreRepository extends JpaRepository<WarehouseStore,L
                              AND cws.warehouse_store_id = ws.id) as categoriesCount
                 FROM scm_warehouse_stores ws
                 LEFT JOIN scm_warehouses w ON w.id = ws.warehouse_id
-                WHERE ws.active =1 AND (:warehouseId IS NULL OR ws.warehouse_id=:warehouseId)
+                WHERE ws.active =1 AND ( COALESCE(:warehouseId) IS NULL OR ws.warehouse_id IN (:warehouseId))
             """,nativeQuery = true)
-    List<WarehouseStoreInfo> findAllByWarehouseId(Long warehouseId);
+    List<WarehouseStoreInfo> findAllByWarehouseId(List<Long> warehouseId);
 
 
     @Query(value = "SELECT ws FROM WarehouseStore ws WHERE ws.id=:id")

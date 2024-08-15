@@ -10,6 +10,8 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseStor
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -49,10 +51,12 @@ public class WarehouseStoreController extends BaseController{
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllStoresByWarehouse(@RequestParam("warehouseId") Optional<Long> warehouseId
+    public ResponseEntity<?> getAllStoresByWarehouse(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("warehouseId") Optional<Long> warehouseId
     ){
         return new ResponseEntity<>(
-                warehouseStoreService.getStoresByWarehouse(warehouseId),
+                warehouseStoreService.getStoresByWarehouse(token,warehouseId),
                 HttpStatus.OK
         );
     }

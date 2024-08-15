@@ -25,7 +25,7 @@ public interface GrnQuery {
                 FROM good_receive_notes grn
                 LEFT JOIN good_receive_item_details grid ON grid.good_receive_note_id = grn.id
                 LEFT JOIN scm_item_categories ic ON ic.id = grid.category_id
-                WHERE (:fromDate IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
+                WHERE (:grnNo IS NULL OR grn.grn_no = :grnNo) AND (:fromDate IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
                 GROUP BY grn.id
             """;
     String countAllGrn = "SELECT count(*) FROM ("+getAllGrn+") as total";

@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AccountVerificationApprovalRepository extends JpaRepository<LedgerAccountVerifyApprovalHistory,Long> {
+    void deleteAllByLedgerAccountId(Long id);
 }

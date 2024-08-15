@@ -62,7 +62,10 @@ public class ItemController extends BaseController{
     }
 
     @GetMapping
-    public ResponseEntity<?> getItems(@RequestParam("page") Optional<Integer> page,
+    public ResponseEntity<?> getItems(
+                                      @AuthenticationPrincipal Jwt token,
+                                      @RequestHeader("uri") String uri,
+                                      @RequestParam("page") Optional<Integer> page,
                                       @RequestParam("size") Optional<Integer> size,
                                       @RequestParam("name") Optional<String> name,
                                       @RequestParam("code") Optional<String> code,
@@ -75,14 +78,17 @@ public class ItemController extends BaseController{
     ){
 
         return new ResponseEntity<>(
-                itemService.getAllItems(page,size, name,code,reorderPercentage,stockThresholdQty,
+                itemService.getAllItems(token,uri,
+                        page,size, name,code,reorderPercentage,stockThresholdQty,
                         categoryId,subCategoryId, warehouseId,warehouseStoreId),
                 HttpStatus.OK
         );
     }
 
     @GetMapping("/pending")
-    public ResponseEntity<?> getPendingItems(@RequestParam("page") Optional<Integer> page,
+    public ResponseEntity<?> getPendingItems(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
                                       @RequestParam("size") Optional<Integer> size,
                                       @RequestParam("name") Optional<String> name,
                                       @RequestParam("code") Optional<String> code,
@@ -95,14 +101,18 @@ public class ItemController extends BaseController{
     ){
 
         return new ResponseEntity<>(
-                itemService.getPendingAllItems(page,size, name,code,reorderPercentage,stockThresholdQty,
+                itemService.getPendingAllItems(
+                        token,
+                        page,size, name,code,reorderPercentage,stockThresholdQty,
                         categoryId,subCategoryId, warehouseId,warehouseStoreId),
                 HttpStatus.OK
         );
     }
 
     @GetMapping("/pending-verifications")
-    public ResponseEntity<?> getPendingVerificationItems(@RequestParam("page") Optional<Integer> page,
+    public ResponseEntity<?> getPendingVerificationItems(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
                                              @RequestParam("size") Optional<Integer> size,
                                              @RequestParam("name") Optional<String> name,
                                              @RequestParam("code") Optional<String> code,
@@ -115,7 +125,9 @@ public class ItemController extends BaseController{
     ){
 
         return new ResponseEntity<>(
-                itemService.getPendingVerificationAllItems(page,size, name,code,reorderPercentage,stockThresholdQty,
+                itemService.getPendingVerificationAllItems(
+                        token,
+                        page,size, name,code,reorderPercentage,stockThresholdQty,
                         categoryId,subCategoryId, warehouseId,warehouseStoreId),
                 HttpStatus.OK
         );

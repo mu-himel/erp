@@ -112,6 +112,9 @@ public class GrnServiceImpl implements GrnService{
     @Transactional
     public void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto) {
         claimResolver.setToken(token);
+        if(claimResolver.getEmployee()==null){
+            throw new RuntimeException("Sorry! Employee profile required");
+        }
         GoodReceiveNote grn = new GoodReceiveNote();
         grn.setGrnDate(LocalDate.now());
         grn.setGrnNo(grnManualDto.getGrnNo());
@@ -152,7 +155,7 @@ public class GrnServiceImpl implements GrnService{
         grn.setDeliveryChargeAmount(grnManualDto.getDeliveryChargeAmount());
         grn.setDeliveryCharge(grnManualDto.getDeliveryCharge());
         grn.setDays(grnManualDto.getDays());
-//        grn.setVatPctg(grnManualDto.getVatPctg());
+        grn.setInvoicePath(grnManualDto.getInvoicePath());
         grn.setSubTotal(grnManualDto.getInTotal());
         grn.setTotalPrice(grnManualDto.getTotalPrice());
 
@@ -168,7 +171,7 @@ public class GrnServiceImpl implements GrnService{
 
     @Override
     public Page<?> getAllGrn(Optional<Integer> page,
-                             Optional<Integer> size,
+                             Optional<Integer> size, Optional<String> grnNo,
                              Optional<String> fromDate, Optional<String> toDate) {
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
@@ -179,7 +182,7 @@ public class GrnServiceImpl implements GrnService{
             fromDateObj = LocalDateTime.parse(fromDate.get()+"T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get()+"T23:59:59");
         }
-        return grnRepository.findAllGrn(pageable,fromDateObj,toDateObj);
+        return grnRepository.findAllGrn(pageable,grnNo.orElse(null),fromDateObj,toDateObj);
     }
 
     @Override
