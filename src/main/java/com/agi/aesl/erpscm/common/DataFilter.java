@@ -53,7 +53,9 @@ public class DataFilter {
             categoryIds = modulePermission.get().get(DataFilter.FILTER_BY_CATEGORY);
         }
         if(ids.size()==0){
-            ids.add(claimResolver.getEmployee().get().getWarehouseId());
+            if(claimResolver.getEmployee().isPresent()) {
+                ids.add(claimResolver.getEmployee().get().getWarehouseId());
+            }
 
         }
         return ids;
