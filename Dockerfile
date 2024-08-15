@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-COPY ./src/main/resources/application.properties ./src/main/resources/application.properties
+COPY ./src/main/resources/application-prod.properties ./src/main/resources/application.properties
 
 RUN mvn clean install -DskipTests
 
