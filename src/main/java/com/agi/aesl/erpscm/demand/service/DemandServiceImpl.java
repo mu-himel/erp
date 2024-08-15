@@ -357,14 +357,11 @@ public class DemandServiceImpl implements DemandService{
                 }
                 Long warehouseId = claimResolver.getEmployee().get().getWarehouseId();
                 String moduleUri = "demand/pending";
+
                 // get filter options according to module permission
                 Sort sort = Sort.by(Sort.Direction.ASC,"id");
                 Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
         
-                // TODO Old commented code should be deleted if works new code
-                // Optional<Map<String,List<Long>>> modulePermission = moduleAccessPermissionService
-                //             .getModulePermissionFilterByUri(loggedInUser,moduleUri);
-
                 Optional<Map<String,List<Long>>> modulePermission = integrationReaderService
                                         .getModuleFilterByUri(loggedInUser, moduleUri);
 
