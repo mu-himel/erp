@@ -97,6 +97,7 @@ public interface AccountQuery {
                     AND ws.warehouse_id = la.warehouse_id
         LEFT JOIN acl_users au ON au.id = la.requested_by_id
         WHERE la.id=:id
+        GROUP BY la.id
             """;
 
     String getApprovedAccountsList = """
