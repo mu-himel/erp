@@ -111,9 +111,7 @@ public class CategoryServiceImpl implements CategoryService {
                     cr.setWarehouse(categoryRequestDto.getWarehouse());
                     cr.setWarehouseStore(categoryRequestDto.getWarehouseStore());
                 if(categoryRequestDto.getBrands()!=null && categoryRequestDto.getBrands().size()>0){
-//                    cr.setBrands(categoryRequestDto.getBrands().stream().map(b->{
-//                       return new CategoryBrand(null, b, null);
-//                    }).collect(Collectors.toList()));
+                    cr.setBrands(categoryRequestDto.getBrands());
                 }
                 cr.setCurrentYearBudget(new BigDecimal(0));
                 cr.setIsForCps(categoryRequestDto.getIsForCps());
