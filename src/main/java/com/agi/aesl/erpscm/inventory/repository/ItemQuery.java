@@ -126,7 +126,7 @@ public interface ItemQuery {
                 AND (:name IS NULL OR i.name LIKE :name||'%')
                 AND (:code IS NULL OR i.code LIKE :code||'%')
                 AND (:subCategoryId IS NULL OR ic.id = :subCategoryId)
-            GROUP BY i.id) p
+            GROUP BY w.id,i.id) p
             WHERE p.active = 1
             AND (:warehouseId IS NULL OR p.warehouseId = :warehouseId)
             AND (:attributeType IS NULL OR p.attribute_types LIKE CONCAT('%',:attributeType,'%'))
