@@ -124,7 +124,7 @@ public class DemandMailServiceImpl implements DemandMailService{
         if(template!=null){
                 emailSenderService.refreshRecipient();
                 emailSenderService.addRecipient(to);
-                emailSenderService.sendEmail(subject,template);
+//                emailSenderService.sendEmail(subject,template);
         }else{
             if(this.users.size()>0 && to==null){
                 for(UserAssignInfo uai :users){
@@ -132,7 +132,7 @@ public class DemandMailServiceImpl implements DemandMailService{
                     template = setMailFor(uai.getUser().getEmployeeName());
                     emailSenderService.addRecipient(uai.getUser().getEmail());
                     processTemplate(null,demand);
-                    emailSenderService.sendEmail(subject,template);
+//                    emailSenderService.sendEmail(subject,template);
                 }
             }
         }
