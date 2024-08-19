@@ -30,6 +30,7 @@ import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
@@ -214,44 +215,6 @@ public class AccountServiceImpl implements AccountService{
 
     }
 
-    private void setVerifiers(LedgerAccount ledgerAccount, List<VerifierInfo> verifiers) {
-        if(verifiers.size()>0){
-            Optional<VerifierInfo> firstOp = verifiers.stream().findFirst();
-            VerifierInfo _verifier = firstOp.get();
-
-//            demandMailService.prepareMailContent(_verifier.getName(), "Verification", demand);
-//            demandMailService.sentMail(_verifier.getEmail(),"Pending Demand Verification Request");
-
-            List<UserApplicationValidation> verifications = verifiers.stream().map(verifier -> {
-                UserApplicationValidation verification = new UserApplicationValidation();
-                verification.setDomainId(ledgerAccount.getId());
-                verification.setDomainType(DomainType.ACCOUNT_LEDGER);
-                verification.setVerified(false);
-                verification.setIsApproval(false);
-                verification.setVerifier(new Employee(verifier.getId()));
-                return verification;
-            }).collect(Collectors.toList());
-            ledgerAccount.setNextVerifierId(_verifier.getId());
-            verificationService.addVerification(verifications);
-        }
-    }
-
-    private void setApprovers(LedgerAccount ledgerAccount, List<ApprovalPanel> approvalPanels) {
-        if(approvalPanels.size()>0){
-            List<UserApplicationValidation> verifications = approvalPanels.stream().map(approvalPanel -> {
-                UserApplicationValidation verification = new UserApplicationValidation();
-                verification.setDomainId(ledgerAccount.getId());
-                verification.setDomainType(DomainType.ACCOUNT_LEDGER);
-                verification.setVerified(false);
-                verification.setIsApproval(true);
-                verification.setVerifier(new Employee(approvalPanel.getUserId()));
-                return verification;
-            }).collect(Collectors.toList());
-
-            verificationService.addVerification(verifications);
-        }
-    }
-
     @Override
     public Optional<?> getLedgerDetailById(Long id) {
         Optional<AccountQuery.PendingAccountDetail>  accountOp = accountRepository.findLedgerAccountById(id);
@@ -349,32 +312,33 @@ public class AccountServiceImpl implements AccountService{
             ids.add(ledgerAccountRequestDto.getCategoryId().toString());
             ids.add(ledgerAccountRequestDto.getSubCategoryId().toString());
 
-            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver,uri,
-                    "CATEGORY",String.join(",",ids));
-
             verificationService.removeVerification(ledgerAccount.getId(),DomainType.ACCOUNT_LEDGER);
             accountVerificationApprovalRepository.deleteAllByLedgerAccountId(ledgerAccount.getId());
 
-            List<VerifierInfo> verifiers = verificationService.getVerifiers(ledgerAccount, verifierOp,
-                                                            AccountType.PENDING.toString());
+            AppliedVADto appliedVADto = verificationService.applyVerifyApprovalProcess(ledgerAccount,DomainType.ACCOUNT_LEDGER,uri,"CATEGORY",ids);
+//            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver,uri,
+//                    "CATEGORY",String.join(",",ids));
+//
+//
+//
+//            List<VerifierInfo> verifiers = verificationService.getVerifiers(ledgerAccount, verifierOp,
+//                                                            AccountType.PENDING.toString());
+//
+//            List<ApprovalPanel> panels = verificationService.getApprovalPanels(claimResolver, uri, String.join(",",ids));
+//
+//            verificationService.setVerifiers(
+//                            ledgerAccount,
+//                            verifiers,
+//                            DomainType.ACCOUNT_LEDGER,
+//                            null)
+//                        .setApprovers(
+//                                ledgerAccount,
+//                                verifiers,
+//                                panels,
+//                                DomainType.ACCOUNT_LEDGER,
+//                null);
 
-            List<ApprovalPanel> panels = verificationService.getApprovalPanels(claimResolver, uri, String.join(",",ids));
-
-            verificationService.setVerifiers(ledgerAccount,verifiers,DomainType.ACCOUNT_LEDGER,
-                    null);
-            if(verifiers.size()==0 && panels.size()>0){
-                ledgerAccount.setAccountStatus(AccountType.PENDING_APPROVAL);
-                Optional<ApprovalPanel> firstPanel = panels.stream().findFirst();
-                if(firstPanel.isPresent()){
-                    ApprovalPanel panel = firstPanel.get();
-//                    demandMailService.prepareMailContent(panel.getName(), "Approval", demand);
-//                    demandMailService.sentMail(panel.getEmail(),"Pending Demand Approval Request");
-                    ledgerAccount.setNextApproverId(panel.getUserId());
-                }
-                verificationService.setApprovers(ledgerAccount, panels,DomainType.ACCOUNT_LEDGER);
-            }
-
-            if(verifiers.size()==0 && panels.size()==0){
+            if(appliedVADto.getVerifiers().size()==0 && appliedVADto.getPanels().size()==0){
                 integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
 
                 Warehouse warehouse = ledgerAccount.getWarehouse();

@@ -92,7 +92,7 @@ public class QcServiceImpl implements QcService{
         }
 
         GoodReceiveNote grn = goodReceiveNoteOptional.get();
-
+        List<String> ids = new ArrayList<>();
         controlDto.getQcItemDetails().stream().forEach(qcItemDetail -> {
             Optional<GoodReceiveItemDetail> grnItemDetail = grn.getGoodReceiveItemDetails().stream().filter(
                     goodReceiveItemDetail -> goodReceiveItemDetail.getItem().getId().equals(qcItemDetail.getId())
@@ -100,6 +100,8 @@ public class QcServiceImpl implements QcService{
 
             if(grnItemDetail.isPresent()){
                 GoodReceiveItemDetail goodReceiveItemDetail = grnItemDetail.get();
+                ids.add(goodReceiveItemDetail.getItem().getItemCategory().getId().toString());
+                ids.add(goodReceiveItemDetail.getItem().getItemParentCategory().getId().toString());
                 goodReceiveItemDetail.setDeclaredQty(qcItemDetail.getDeclaredQty());
                 goodReceiveItemDetail.setInspectedQty(qcItemDetail.getInspectedQty());
                 grnService.updateGrnItemDetail(goodReceiveItemDetail);
@@ -148,54 +150,12 @@ public class QcServiceImpl implements QcService{
             grn.setGrnStatus(GrnStatus.QC_HOLD);
         }
 
-        List<String> ids = new ArrayList<>();
+
         String uri="";
         if(ids.size()>0 && !uri.isBlank()) {
-            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver, uri,
-                    "CATEGORY", String.join(",", ids));
+            verificationService.applyVerifyApprovalProcess(qualityControl,DomainType.QC,uri,"CATEGORY",ids);
 
-            List<VerifierInfo> verifiers = getVerifiers(qualityControl, verifierOp);
-            List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, String.join(",", ids));
-            verificationService.setVerifiers(qualityControl, verifiers, DomainType.QC,
-                    null);
-            if (verifiers.size() == 0 && panels.size() > 0) {
-                qualityControl.setQcStatus(QcStatus.PENDING_APPROVAL);
-                Optional<ApprovalPanel> firstPanel = panels.stream().findFirst();
-                if (firstPanel.isPresent()) {
-                    ApprovalPanel panel = firstPanel.get();
-//                    demandMailService.prepareMailContent(panel.getName(), "Approval", demand);
-//                    demandMailService.sentMail(panel.getEmail(),"Pending Demand Approval Request");
-                    qualityControl.setNextApproverId(panel.getUserId());
-                }
-            }
-            verificationService.setApprovers(qualityControl, panels, DomainType.QC);
         }
-    }
-
-    @Transactional
-    private List<VerifierInfo> getVerifiers(QualityControl qualityControl, Optional<VerifierConfig> verifierOp) {
-        List<VerifierInfo> verifiers = new ArrayList<>();
-        if(verifierOp.isPresent()){
-            VerifierConfig verification = verifierOp.get();
-            verifiers = verification.getVerifiers();
-            Boolean verificationRequired = verification.getVerificationRequired();
-            if(verificationRequired!=null && verificationRequired==true && verifiers!=null && verifiers.size()>0){
-                qualityControl.setQcStatus(QcStatus.PENDING_VERIFICATION);
-            }else{
-                qualityControl.setQcStatus(QcStatus.VERIFIED);
-            }
-
-        }else{
-            qualityControl.setQcStatus(QcStatus.VERIFIED);
-        }
-        return verifiers;
-    }
-
-    @Transactional
-    private List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories) {
-        List<ApprovalPanel> approvalPanels = moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
-                Optional.ofNullable(categories),Optional.empty());
-        return approvalPanels;
     }
 
     @Override
