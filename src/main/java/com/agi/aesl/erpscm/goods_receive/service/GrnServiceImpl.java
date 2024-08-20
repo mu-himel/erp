@@ -191,30 +191,73 @@ public class GrnServiceImpl implements GrnService{
             return grnRepository.findById(id);
         }else{
             Optional<GoodReceiveNoteDetailInfo> goodReceiveItemDetailOp = grnRepository.findGrnById(id);
-//            Map<String,Object> _detailinfo = new HashMap<>();
-//            if(goodReceiveItemDetailOp.isPresent()){
-//                GoodReceiveNoteDetailInfo detailInfo = goodReceiveItemDetailOp.get();
-//                GrnDetailInfo grnDetailInfo = new GrnDetailInfo();
-//                grnDetailInfo.setIndentNo(detailInfo.getIndentNo());
-//                grnDetailInfo.setCreatedAt(detailInfo.getCreatedAt());
-//                grnDetailInfo.setId(detailInfo.getId());
-//                grnDetailInfo.setGrnNo(detailInfo.getGrnNo());
-//                grnDetailInfo.setGrnStatus(detailInfo.getGrnStatus());
-//                grnDetailInfo.setWarehouse(detailInfo.getWarehouse());
-//                grnDetailInfo.setIsReceivedByStore(detailInfo.getIsReceivedByStore());
-//                grnDetailInfo.setCreatedBy(detailInfo.getCreatedBy());
-//                Long vendorId = detailInfo.getVendorId();
-//                List<GoodReceiveNoteItemDetailInfo> detailInfos = new ArrayList<>();
-//                detailInfo.getGoodReceiveItemDetails().stream().forEach(goodReceiveNoteItemDetailInfo -> {
-//                    GoodReceiveNoteItemDetailInfo grnidi = new GoodReceiveNoteItemDetailInfo();
+            Map<String, Object> _detailInfo = new HashMap<>();
+            if(goodReceiveItemDetailOp.isPresent()) {
+                GoodReceiveNoteDetailInfo detailInfo = goodReceiveItemDetailOp.get();
+                GrnDetailInfo grnDetailInfo = new GrnDetailInfo();
+                grnDetailInfo.setIndentNo(detailInfo.getIndentNo());
+                grnDetailInfo.setCreatedAt(detailInfo.getCreatedAt());
+                grnDetailInfo.setId(detailInfo.getId());
+                grnDetailInfo.setGrnNo(detailInfo.getGrnNo());
+                grnDetailInfo.setGrnStatus(detailInfo.getGrnStatus());
+                grnDetailInfo.setWarehouse(detailInfo.getWarehouse());
+                grnDetailInfo.setIsReceivedByStore(detailInfo.getIsReceivedByStore());
+                grnDetailInfo.setCreatedBy(detailInfo.getCreatedBy());
 
-//                    Optional<PriceQuotationDetailInfo> pqDetailOp = priceQuotationDetailRepository.findByItemAttribute(
-//                            vendorId,
-//                            goodReceiveNoteItemDetailInfo.getWarehouse().getId(),
-//                            goodReceiveNoteItemDetailInfo.getItemAttribute()
-//                    );
-//                });
-            return  goodReceiveItemDetailOp;
+                Long vendorId = detailInfo.getVendorId();
+
+                List<GoodReceiveNoteItemDetailInfo> detailInfos = new ArrayList<>();
+                detailInfo.getGoodReceiveItemDetails().stream().forEach(goodReceiveNoteItemDetailInfo -> {
+                    GoodReceiveNoteItemDetailInfo grnidi = new GoodReceiveNoteItemDetailInfo();
+                    if(detailInfo.getGrnMode().equals(GrnMode.AUTO)) {
+
+//                        Optional<PriceQuotationDetailInfo> pqDetailOp = priceQuotationDetailRepository.findByItemAttribute(
+//                                vendorId,
+//                                goodReceiveNoteItemDetailInfo.getWarehouse().getId(),
+//                                goodReceiveNoteItemDetailInfo.getItemAttribute()
+//                        );
+//                    if (pqDetailOp.isPresent()) {
+//                        PriceQuotationDetailInfo pqd = pqDetailOp.get();
+//                        String itemAttribute = pqd.getItemAttribute() + " - " + pqd.getExtendedAttributes();
+//
+//                        grnidi.setEsitmatedDays(pqd.getEstDeliveryDays());
+//                        grnidi.setTotalPrice(pqd.getTotalPrice());
+//                        grnidi.setUnitPrice(pqd.getUnitPrice());
+//                        grnidi.setItemAttribute(itemAttribute);
+//                        grnidi.setVatPercent(pqd.getVatPercent());
+//                        grnidi.setVatAmount(pqd.getVatAmount());
+//
+//                        grnidi.setDeliveryCharge(pqd.getDeliveryCharge().equals("Included") ? DeliveryCharge.Included :
+//                                DeliveryCharge.Excluded);
+//                        grnidi.setDeliveryChargeAmount(pqd.getDeliveryChargeAmount());
+//                        if (pqd.getDeliveryOrderQty() != null) {
+//                            grnidi.setOrderQty(pqd.getDeliveryOrderQty());
+//                        } else {
+//                            grnidi.setOrderQty(pqd.getRfqQty());
+//                        }
+//                        grnDetailInfo.setMushakIncluded(pqd.getMushakIncluded());
+//                        grnDetailInfo.setIndentId(pqd.getIndentId());
+//                        grnDetailInfo.setVendorName(pqd.getVendorName());
+//                        grnDetailInfo.setVendorEmail(pqd.getVendorEmail());
+//                        grnDetailInfo.setVendorPhoneNo(pqd.getVendorPhoneNo());
+//                        grnDetailInfo.setCreditPaymentDuration(pqd.getCreditPaymentDuration());
+//                    }
+
+                    }
+
+                    grnidi.setId(goodReceiveNoteItemDetailInfo.getId());
+                    grnidi.setReceiveQty(goodReceiveNoteItemDetailInfo.getReceiveQty());
+                    grnidi.setExpireDate(goodReceiveNoteItemDetailInfo.getExpireDate());
+                    grnidi.setManufactureDate(goodReceiveNoteItemDetailInfo.getManufactureDate());
+                    grnidi.setItem(itemService.getItemDetailWithWarehouse(goodReceiveNoteItemDetailInfo.getItem().getId()));
+                    detailInfos.add(grnidi);
+                });
+                grnDetailInfo.setGoodReceiveItemDetails(detailInfos);
+
+                _detailInfo.put("detailInfo", grnDetailInfo);
+                _detailInfo.put("qcResult", qcService.getQcResultByGrn(detailInfo.getId()));
+            }
+            return Optional.ofNullable(_detailInfo);
             }
 
 

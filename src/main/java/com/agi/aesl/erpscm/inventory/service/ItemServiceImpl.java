@@ -127,6 +127,7 @@ public class ItemServiceImpl implements ItemService {
         itemDetail.setName(detail.getName());
         itemDetail.setCode(detail.getCode());
         itemDetail.setActive(detail.getActive());
+        itemDetail.setItemAttributeName(detail.getItemAttributeName());
         itemDetail.setAttributes(detail.getAttributes());
         itemDetail.setItemCategory(detail.getItemCategory());
         itemDetail.setItemParentCategory(detail.getItemParentCategory());

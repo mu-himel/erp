@@ -73,6 +73,6 @@ public class GrnController extends BaseController {
     public ResponseEntity<?> getGrnById(
             @PathVariable("id") Long id
     ){
-        return new ResponseEntity<>(grnService.getGrnById(id,false),HttpStatus.OK);
+        return new ResponseEntity<>(grnService.getGrnById(id,true),HttpStatus.OK);
     }
 }
