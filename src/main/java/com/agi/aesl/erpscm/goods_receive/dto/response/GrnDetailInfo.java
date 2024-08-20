@@ -18,7 +18,7 @@ public class GrnDetailInfo {
     private Boolean isReceivedByStore;
     private WarehouseInfo warehouse;
     private Employee createdBy;
-    private List<GoodReceiveNoteItemDetailInfo> goodReceiveNoteItemDetailInfoList;
+    private List<GoodReceiveNoteItemDetailInfo> goodReceiveItemDetails;
     private Integer creditPaymentDuration;
     private String vendorName;
     private String vendorEmail;

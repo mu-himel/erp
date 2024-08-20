@@ -10,7 +10,9 @@ import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -18,12 +20,11 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
+@EqualsAndHashCode(callSuper = true)
 @Table(name = "ledger_accounts")
 public class LedgerAccount extends VerifyableEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+
 
     private String accountNo;
 
@@ -40,8 +41,8 @@ public class LedgerAccount extends VerifyableEntity {
     @Enumerated(EnumType.STRING)
     private AccountType accountStatus;
 
-    private String nextVerifierId;
-    private String nextApproverId;
+//    private String nextVerifierId;
+//    private String nextApproverId;
 
     @Enumerated(EnumType.STRING)
     private AccountType reviewPrevStatus;
@@ -67,4 +68,8 @@ public class LedgerAccount extends VerifyableEntity {
     public void setStatus(String status) {
         this.accountStatus = AccountType.valueOf(status);
     }
+
+
+
+
 }

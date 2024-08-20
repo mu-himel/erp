@@ -38,6 +38,7 @@ public interface GrnQuery {
                     ic.name as categoryName, 
                     count(grid.id) as items, sum(grid.receive_qty) as receivedQty,
                     grn.grn_mode as grnMode,
+                    null as po,
                     CASE WHEN grid.qc_type IS NULL THEN
                     	coalesce(count(grid.qc_type),0)
                     END qcPending,

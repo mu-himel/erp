@@ -51,6 +51,8 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
     interface GoodReceiveNoteDetailInfo{
         Long getId();
         String getGrnNo();
+
+
         String getGrnStatus();
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime getCreatedAt();
@@ -95,7 +97,9 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
     interface GoodReceiveNoteInfo{
         Long getId();
         LocalDate getCreatedAt();
+        String getPo();
         String getGrnNo();
+        String getGrnMode();
         String getIndentNo();
         GrnStatus getGrnStatus();
         String getCategoryName();

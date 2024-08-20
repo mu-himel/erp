@@ -1,3 +1,4 @@
+
 #!/bin/bash
 image=devopsaes/scmbe:0.0.16
 docker build -t $image --no-cache .
