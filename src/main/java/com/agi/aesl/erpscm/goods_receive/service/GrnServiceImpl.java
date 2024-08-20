@@ -93,7 +93,7 @@ public class GrnServiceImpl implements GrnService{
                             if(goodReceiveItemDetailDto.getWarehouseStore()!=null){
                                 goodReceiveItemDetail.setWarehouseStore(new WarehouseStore(goodReceiveItemDetailDto.getWarehouseStore().getId()));
                             }
-                            goodReceiveItemDetail.setReceiveQty(BigDecimal.valueOf(goodReceiveItemDetailDto.getReceiveQty()));
+                            goodReceiveItemDetail.setReceiveQty(BigDecimal.valueOf(goodReceiveItemDetailDto.getOrderQty()));
                             if(goodReceiveItemDetailDto.getManufactureDate()!=null){
                                 goodReceiveItemDetail.setManufactureDate(goodReceiveItemDetailDto.getManufactureDate());
                             }
@@ -139,7 +139,7 @@ public class GrnServiceImpl implements GrnService{
                     grid.setCategory(item.getItemParentCategory());
                     grid.setSubCategory(item.getItemCategory());
                     grid.setEstimatedDeliveryDays(detailDto.getEstDeliveryDays());
-                    grid.setDeclaredQty(detailDto.getOrderQty());
+                    grid.setReceiveQty(detailDto.getOrderQty());
                     grid.setPricePerUnit(detailDto.getPricePerUnit());
                     grid.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
                     grid.setGoodReceiveNote(grn);

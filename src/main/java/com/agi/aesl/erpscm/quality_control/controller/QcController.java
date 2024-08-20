@@ -38,8 +38,9 @@ public class QcController extends BaseController {
     @PostMapping
     public ResponseEntity<?> addQc(
             @AuthenticationPrincipal Jwt token,
+            @RequestHeader("uri") String uri,
             @RequestBody QcDto qualityControlDto) throws IllegalAccessException {
-        qcService.addQc(token,qualityControlDto);
+        qcService.addQc(token, uri, qualityControlDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

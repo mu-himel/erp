@@ -19,7 +19,7 @@ public class GoodReceiveItemDetailDto {
     private ReferenceObjectDto warehouseStore;
     private LocalDate manufactureDate;
     private LocalDate expireDate;
-    private Long receiveQty;
+    private Long orderQty;
 
     public void setManufactureDate(String manufactureDate){
         this.manufactureDate = (manufactureDate!=null)?

@@ -44,6 +44,8 @@ import java.util.stream.Collectors;
 @Service
 public class QcServiceImpl implements QcService{
 
+    private final Integer MAX_NO_OF_KPI=3;
+
     @Autowired
     private QcRepository qcRepository;
 
@@ -68,7 +70,7 @@ public class QcServiceImpl implements QcService{
 
     @Override
     @Transactional
-    public void addQc(Jwt token, QcDto controlDto) throws IllegalAccessException {
+    public void addQc(Jwt token, String uri, QcDto controlDto) throws IllegalAccessException {
 
         claimResolver.setToken(token);
         AtomicReference<Boolean> error = new AtomicReference<>(false);
@@ -92,6 +94,7 @@ public class QcServiceImpl implements QcService{
         }
 
         GoodReceiveNote grn = goodReceiveNoteOptional.get();
+
         List<String> ids = new ArrayList<>();
         controlDto.getQcItemDetails().stream().forEach(qcItemDetail -> {
             Optional<GoodReceiveItemDetail> grnItemDetail = grn.getGoodReceiveItemDetails().stream().filter(
@@ -106,7 +109,6 @@ public class QcServiceImpl implements QcService{
                 goodReceiveItemDetail.setInspectedQty(qcItemDetail.getInspectedQty());
                 grnService.updateGrnItemDetail(goodReceiveItemDetail);
             }
-
         });
 
 
@@ -119,7 +121,7 @@ public class QcServiceImpl implements QcService{
 
         AtomicReference<Integer> qcPassCount = new AtomicReference<>(0);
         AtomicReference<Integer> qcFailCount = new AtomicReference<>(0);
-        if(controlDto.getKpis().size()==3 && controlDto.getQcStatus()== QcStatus.APPROVED) {
+        if(controlDto.getKpis().size()==MAX_NO_OF_KPI && controlDto.getQcStatus()== QcStatus.APPROVED) {
 
             qualityControl.setQcStatus(QcStatus.APPROVED);
 
@@ -140,7 +142,7 @@ public class QcServiceImpl implements QcService{
 
         qcRepository.save(qualityControl);
 
-        if(qcPassCount.get().equals(3)){
+        if(qcPassCount.get().equals(MAX_NO_OF_KPI)){
             grn.setGrnStatus(GrnStatus.READY_FOR_STORE);
         }
         if(qualityControl.getQcStatus().equals(QcStatus.REJECTED) ||  qcFailCount.get()>0){
@@ -150,17 +152,15 @@ public class QcServiceImpl implements QcService{
             grn.setGrnStatus(GrnStatus.QC_HOLD);
         }
 
-
-        String uri="";
         if(ids.size()>0 && !uri.isBlank()) {
-            verificationService.applyVerifyApprovalProcess(qualityControl,DomainType.QC,uri,"CATEGORY",ids);
+            verificationService.applyVerifyApprovalProcess(qualityControl,DomainType.QC,uri,"CATEGORY",ids,
+                    null);
 
         }
     }
 
     @Override
     public List<?> getQcResultByGrn(Long id) {
-
         return qcRepository.getQcResultByGrn(id);
     }
 

@@ -336,7 +336,9 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     }
 
     @Override
-    public AppliedVADto applyVerifyApprovalProcess(T t, DomainType domainType, String uri, String criteriaGroup, List<String> ids) {
+    public AppliedVADto applyVerifyApprovalProcess(T t, DomainType domainType, String uri, String criteriaGroup,
+                                                   List<String> ids,
+                                                   VerifierMailService<T> mailService) {
         Optional<VerifierConfig> verifierOp = this.getVerifiers(claimResolver, uri,
                 criteriaGroup, String.join(",", ids));
 
