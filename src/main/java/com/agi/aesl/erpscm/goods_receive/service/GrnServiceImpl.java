@@ -172,6 +172,7 @@ public class GrnServiceImpl implements GrnService{
     @Override
     public Page<?> getAllGrn(Optional<Integer> page,
                              Optional<Integer> size, Optional<String> grnNo,
+                             Optional<Integer> qty,Optional<Integer> receivedQty,
                              Optional<String> fromDate, Optional<String> toDate) {
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
@@ -182,7 +183,9 @@ public class GrnServiceImpl implements GrnService{
             fromDateObj = LocalDateTime.parse(fromDate.get()+"T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get()+"T23:59:59");
         }
-        return grnRepository.findAllGrn(pageable,grnNo.orElse(null),fromDateObj,toDateObj);
+        return grnRepository.findAllGrn(pageable,grnNo.orElse(null),
+                qty.orElse(null), receivedQty.orElse(null),
+                fromDateObj,toDateObj);
     }
 
     @Override
@@ -244,7 +247,7 @@ public class GrnServiceImpl implements GrnService{
 //                    }
 
                     }
-
+                    grnidi.setCreatedAt(goodReceiveNoteItemDetailInfo.getCreatedAt());
                     grnidi.setId(goodReceiveNoteItemDetailInfo.getId());
                     grnidi.setReceiveQty(goodReceiveNoteItemDetailInfo.getReceiveQty());
                     grnidi.setExpireDate(goodReceiveNoteItemDetailInfo.getExpireDate());
@@ -266,7 +269,9 @@ public class GrnServiceImpl implements GrnService{
 
 
     @Override
-    public Page<?> getAllGrnPendingQC(Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate) {
+    public Page<?> getAllGrnPendingQC(Optional<Integer> page, Optional<Integer> size,
+                                      Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty,
+                                      Optional<String> fromDate, Optional<String> toDate) {
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
         LocalDateTime fromDateObj = null;
@@ -276,7 +281,9 @@ public class GrnServiceImpl implements GrnService{
             fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
         }
-        return grnRepository.findAllGrnByStatus(GrnStatus.PENDING_QC.toString(),
+        return grnRepository.findAllGrnByStatus(
+                grnNo.orElse(null), qty.orElse(null), receivedQty.orElse(null),
+                GrnStatus.PENDING_QC.toString(),
                 fromDateObj,
                 toDateObj,pageable);
     }

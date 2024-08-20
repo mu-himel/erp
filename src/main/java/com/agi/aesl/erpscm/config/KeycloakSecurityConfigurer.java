@@ -51,7 +51,7 @@ public class KeycloakSecurityConfigurer {
 
         httpSecurity
                 .csrf(csrf -> csrf.disable()).authorizeHttpRequests((authorize) -> {
-            authorize.anyRequest().authenticated();
+            authorize.requestMatchers("/api/v1/**").authenticated();
         }).addFilterBefore(createServletPolicyFilter(), BearerTokenAuthenticationFilter.class)
         
                 .sessionManagement(management -> management

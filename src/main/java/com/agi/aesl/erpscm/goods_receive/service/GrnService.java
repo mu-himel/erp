@@ -19,7 +19,8 @@ public interface GrnService {
     void addGrn(Jwt token, GoodReceiveNoteDto goodReceiveNoteDto);
 
     Page<?> getAllGrn(Optional<Integer> page, Optional<Integer> size,
-                      Optional<String> grnNo,
+                      Optional<String> grnNo, Optional<Integer> qty,
+                      Optional<Integer> receivedQty,
                       Optional<String> fromDate, Optional<String> toDate);
 
     Optional<?> getGrnById(Long id, Boolean returnTypeEntity);
@@ -31,7 +32,9 @@ public interface GrnService {
     void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto);
 
 
-    Page<?> getAllGrnPendingQC(Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate);
+    Page<?> getAllGrnPendingQC(Optional<Integer> page, Optional<Integer> size,
+                               Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty,
+                               Optional<String> fromDate, Optional<String> toDate);
 
     void updateGrnItemDetail(GoodReceiveItemDetail goodReceiveItemDetail);
 

@@ -58,13 +58,15 @@ public class GrnController extends BaseController {
     @GetMapping("/all")
     public ResponseEntity<?> getAllGrn(
             @RequestParam("grnNo") Optional<String> grnNo,
+            @RequestParam("itemQty") Optional<Integer> qty,
+            @RequestParam("receivedQty") Optional<Integer> receivedQty,
             @RequestParam("fromDate") Optional<String> fromDate,
             @RequestParam("toDate") Optional<String> toDate,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
             ){
         return new ResponseEntity<>(
-                grnService.getAllGrn(page,size,grnNo,fromDate,toDate),
+                grnService.getAllGrn(page,size,grnNo,qty, receivedQty,fromDate,toDate),
                 HttpStatus.OK
         );
     }

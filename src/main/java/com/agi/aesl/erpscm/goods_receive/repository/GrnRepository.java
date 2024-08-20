@@ -33,6 +33,8 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
             countQuery = countAllGrn, nativeQuery = true)
     Page<GoodReceiveNoteInfo> findAllGrn(Pageable pageable,
                                          @Param("grnNo") String grnNo,
+                                         @Param("qty") Integer qty,
+                                         @Param("receivedQty") Integer receivedQty,
                                          @Param("fromDate") LocalDateTime fromDate,
                                          @Param("toDate") LocalDateTime toDate
     );
@@ -43,7 +45,9 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
     Optional<GoodReceiveNoteDetailInfo> findGrnById(Long id);
 
     @Query(value = getAllGrnByStatus,countQuery = countAllGrnByStatus, nativeQuery = true)
-    Page<GoodReceiveNoteInfo> findAllGrnByStatus(String status, LocalDateTime fromDate,
+    Page<GoodReceiveNoteInfo> findAllGrnByStatus(@Param("grnNo") String grnNo,
+                                                 @Param("qty") Integer qty,
+                                                 @Param("receivedQty") Integer receivedQty,String status, LocalDateTime fromDate,
                                LocalDateTime toDate,Pageable pageable);
 
     Optional<GoodReceiveNote> findByGrnNo(String grnNo);
@@ -121,6 +125,7 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
         GrnItemInfo getItem();
         LocalDate getManufactureDate();
         LocalDate getExpireDate();
+        LocalDate getCreatedAt();
         BigDecimal getReceiveQty();
         BigDecimal getTotalApprovedQty();
         BigDecimal getTotalDeclinedQty();

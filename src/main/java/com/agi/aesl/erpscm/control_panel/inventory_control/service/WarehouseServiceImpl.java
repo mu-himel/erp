@@ -51,7 +51,7 @@ public class WarehouseServiceImpl implements WarehouseService{
     @Override
     @Transactional
     public void createWarehouse(Jwt token, Warehouse warehouse) {
-        Optional<Warehouse> warehouseOptional = warehouseRepository.findByName(warehouse.getName());
+        Optional<Warehouse> warehouseOptional = warehouseRepository.findByNameAndActive(warehouse.getName(),true);
 
         if(warehouseOptional.isPresent()){
             throw new AesException("Name already exist");
