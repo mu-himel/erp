@@ -6,9 +6,12 @@ import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomai
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface QcService extends VerificationDomainService {
     void addQc(Jwt token,String uri, QcDto qcDto) throws IllegalAccessException;
+
+    Optional<?> getDetailByGrnId(Long id);
 
     List<?> getQcResultByGrn(Long id);
 

@@ -160,6 +160,11 @@ public class QcServiceImpl implements QcService{
     }
 
     @Override
+    public Optional<?> getDetailByGrnId(Long id) {
+        return grnService.getGrnById(id,false);
+    }
+
+    @Override
     public List<?> getQcResultByGrn(Long id) {
         return qcRepository.getQcResultByGrn(id);
     }

@@ -51,4 +51,10 @@ public class QcController extends BaseController {
         qcService.rejectQc(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getQcDetail(@PathVariable("id") Long id){
+        return new ResponseEntity<>(qcService.getDetailByGrnId(id),
+                HttpStatus.OK);
+    }
 }
