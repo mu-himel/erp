@@ -25,7 +25,7 @@ public class PrIndentController {
             @AuthenticationPrincipal Jwt token,
             @RequestBody @Valid PrIndentRequestDto prIndentRequestDto
             ){
-        prIndentService.createPrIndent(prIndentRequestDto);
+        prIndentService.createPrIndent(token, prIndentRequestDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

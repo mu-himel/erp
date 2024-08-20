@@ -14,6 +14,7 @@ public interface ProductRequirementService {
     void createProductRequirement(Jwt token, ProductRequirementRequestDto productRequirementRequestDto);
 
     Page<?> getAllProductRequirements(
+        Jwt token,
         Optional<Integer> page, 
         Optional<Integer> size, 
         Optional<Long> categoryId,

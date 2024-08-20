@@ -67,8 +67,12 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
     }
 
     @Override
-    public Page<?> getAllProductRequirements(Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
+    public Page<?> getAllProductRequirements(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
             Optional<Long> subCategoryId, Optional<LocalDateTime> startDate, Optional<LocalDateTime> endDate) {
+
+        claimResolver.setToken(token);
+        String uri="";
+
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Page<?> result = null;
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);

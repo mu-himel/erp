@@ -52,7 +52,7 @@ public class ProductRequirementController extends BaseController{
         @RequestParam("endDate") Optional<LocalDateTime> endDate
     ){
         return new ResponseEntity<>(
-            productRequirementService.getAllProductRequirements(page,size,categoryId,subCategoryId,startDate,endDate),
+            productRequirementService.getAllProductRequirements(token, page,size,categoryId,subCategoryId,startDate,endDate),
             HttpStatus.OK
         );
     }

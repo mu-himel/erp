@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,7 +44,7 @@ public class PrIndentServiceImpl implements PrIndentService {
     private PrIndentPartialDeliveryRepository prIndentPartialDeliveryRepository;
 
     @Override
-    public void createPrIndent(PrIndentRequestDto prIndentRequestDto) {
+    public void createPrIndent(Jwt token, PrIndentRequestDto prIndentRequestDto) {
         PrIndent prIndent = prIndentRequestDto.getEntity();
         prIndent.setStatus(PrIndentStatus.OPEN);
 
