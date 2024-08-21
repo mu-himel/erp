@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.product_requirements.dto.request;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.BeanUtils;
@@ -35,9 +36,9 @@ public class ProductRequirementRequestDto implements EntityConvertable<ProductRe
     private Demand demand;
 
     @NotNull(message = "Demand date missing")
-    private LocalDateTime demandDate;
+    private LocalDate demandDate;
 
-    @NotNull(message = "Demand priority missing")
+
     private DemandPriority demandPriority;
 
     @NotNull(message = "Demand details missing")

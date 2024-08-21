@@ -36,4 +36,5 @@ public interface ProductRequirementService {
     void reOpen(String productRequirementsIds);
 
 
+    List<?> getDemandByProductRequirementIds(String prIds);
 }

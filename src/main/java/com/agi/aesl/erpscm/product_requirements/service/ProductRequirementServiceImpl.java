@@ -1,11 +1,13 @@
 package com.agi.aesl.erpscm.product_requirements.service;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import com.agi.aesl.erpscm.demand.service.DemandService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,6 +36,7 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
     @Autowired
     private ProductRequirementRepository productRequirementRepository;
 
+
     @Override
     @Transactional
     public void createProductRequirement(Jwt token, ProductRequirementRequestDto productRequirementRequestDto) {
@@ -42,12 +45,13 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
         if(empOp.isEmpty()){
             throw new RuntimeException("sorry! employee not found");
         }
-        
-        ProductRequirement productRequirement = productRequirementRequestDto.getEntity();
-        productRequirement.setDemandDeadline(getPRDeadline(
-            productRequirementRequestDto.getDemandDate(), 
-            productRequirementRequestDto.getDemandPriority()));
 
+        ProductRequirement productRequirement = productRequirementRequestDto.getEntity();
+//        productRequirement.setDemandDeadline(getPRDeadline(
+//            productRequirementRequestDto.getDemandDate(),
+//            productRequirementRequestDto.getDemandPriority()));
+        productRequirement.setDemandDeadline(
+                productRequirementRequestDto.getDemandDate().atTime(LocalDateTime.now().toLocalTime()));
         productRequirement.setRequestedBy(empOp.get());
         productRequirement.setWarehouse(new Warehouse(productRequirementRequestDto.getWarehouse().getId()));
         productRequirement.setStatus(ProductRequirementStatus.OPEN);
@@ -116,7 +120,12 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
         return result;
     }
 
-    
+    @Override
+    public List<?> getDemandByProductRequirementIds(String prIds) {
+        List<Long> ids = Arrays.stream(prIds.split(",")).map(s -> Long.parseLong(s)).collect(Collectors.toList());
 
-    
+        Optional<List<Long>> indentIds = Optional.of(ids);
+        return productRequirementRepository.getDemandByProductRequirementIds(
+                indentIds.orElseThrow(() -> new RuntimeException("ids is missing")));
+    }
 }

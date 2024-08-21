@@ -78,4 +78,14 @@ public class ProductRequirementController extends BaseController{
         );
     }
 
+    @GetMapping("/demand-by-ids")
+    public ResponseEntity<?> getDemandInfoByIds(
+            @RequestParam("prIds") String prIds
+    ) {
+        return new ResponseEntity<>(
+                productRequirementService.getDemandByProductRequirementIds(prIds),
+                HttpStatus.OK
+        );
+    }
+
 }

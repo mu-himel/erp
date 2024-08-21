@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.product_requirements.repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -8,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.agi.aesl.erpscm.product_requirements.entity.ProductRequirement;
@@ -36,7 +38,24 @@ public interface ProductRequirementRepository extends JpaRepository<ProductRequi
     @Query(value = "UPDATE product_requirements pr SET pr.status='OPEN' WHERE pr.id IN :ids",nativeQuery = true)
     void updateStatusByIds(List<Long> ids);
 
+    @Query(value = getDemandWithSearch,
+            nativeQuery = true
+    )
+    List<PrDemandView> getDemandByProductRequirementIds(
+            @Param("prIds") List<Long> prIds
+    );
 
+    interface PrDemandView{
+        Long getId();
+        String getDemandNo();
+        String getWarehouseName();
+        LocalDateTime getDemandDate();
+        BigDecimal getItemQty();
+        BigDecimal getApprovedQty();
+        String getEmployeeName();
+        String getDepartmentName();
+
+    }
     interface ProductRequirementInfo {
         String getProductRequirementIds();
         Long getCategoryId();
@@ -73,11 +92,12 @@ public interface ProductRequirementRepository extends JpaRepository<ProductRequi
 
         String getItemDescription();
 
-        Long getPrQty();
+        BigDecimal getPrQty();
+        BigDecimal getApprovedQty();
 
-        Long getItemsQty();
+        BigDecimal getItemsQty();
 
-        Long getCurrentStock();
+        BigDecimal getCurrentStock();
 
         Long getSafetytStock();
 
