@@ -7,6 +7,7 @@ import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
+import com.agi.aesl.erpscm.demand.service.DemandMailService;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
@@ -64,6 +65,9 @@ public class QcServiceImpl implements QcService{
 
     @Autowired
     private ClaimResolver claimResolver;
+
+    @Autowired
+    private QcMailService qcMailService;
 
     @Autowired
     private QcVerifyApprovalHistoryRepository qcVerifyApprovalHistoryRepository;

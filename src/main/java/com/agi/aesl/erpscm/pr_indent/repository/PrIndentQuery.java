@@ -59,9 +59,9 @@ public interface PrIndentQuery {
                            pri.priority                                       as priority,
                            pri.priority_date                                  as priorityDate,
                            DATEDIFF(pri.priority_date,CURRENT_DATE)           as daysRemain,
-                           (select name from warehouses WHERE id = piw.warehouse_id)    as warehouseName,
+                           (select name from scm_warehouses WHERE id = piw.warehouse_id)    as warehouseName,
                            prid.brand_id                                      as brandId,
-                           (select name from category_brands cb WHERE cb.id = prid.brand_id) as brandName
+                           (select name from scm_category_brands cb WHERE cb.id = prid.brand_id) as brandName
 
                     FROM pr_indents pri
                              LEFT JOIN pr_indent_details prid on pri.id = prid.pr_indent_id
@@ -69,11 +69,9 @@ public interface PrIndentQuery {
                              LEFT JOIN pr_indent_partial_delivery_times pipdt ON pipdt.pr_indent_warehouse_detail_id = piw.id
                              LEFT JOIN scm_item_categories c on pri.category_id = c.id
                              LEFT JOIN scm_item_categories sc on pri.sub_category_id = sc.id
-
-
                     WHERE pri.status = 'OPEN'
                       AND (:id IS NOT NULL AND pri.id = :id)
-                    group by pipdt.id,piw.id
+                    group by piw.id,pipdt.id
                 """;
 
     String getPrIndentByIdsWithSearch =
