@@ -71,6 +71,8 @@ public class GoodReceiveNote {
     private BigDecimal subTotal;
     private String paymentType;
 
+    private String declineNote;
+
     @Column(length = 1000)
     private String invoicePath;
 

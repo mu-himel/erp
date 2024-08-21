@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.pr_indent.controller;
 
+import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.pr_indent.dto.reqeust.PrIndentRequestDto;
 import com.agi.aesl.erpscm.pr_indent.dto.reqeust.UpdatePrIndentDetailRequestDto;
 import com.agi.aesl.erpscm.pr_indent.service.PrIndentService;
@@ -16,20 +17,21 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/pr-indents")
-public class PrIndentController {
+public class PrIndentController extends BaseController {
 
     @Autowired
     private PrIndentService prIndentService;
 
+    @PostMapping
     public ResponseEntity<?> addIndent(
             @AuthenticationPrincipal Jwt token,
-            @RequestBody @Valid PrIndentRequestDto prIndentRequestDto
+            @RequestBody PrIndentRequestDto prIndentRequestDto
             ){
         prIndentService.createPrIndent(token, prIndentRequestDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @GetMapping(value = "Get PR Indent with Pagination")
+    @GetMapping
     public ResponseEntity<?> getIndents(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page")Optional<Integer> page,

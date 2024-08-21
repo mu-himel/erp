@@ -216,7 +216,7 @@ public class GrnServiceImpl implements GrnService{
                 grnDetailInfo.setWarehouse(detailInfo.getWarehouse());
                 grnDetailInfo.setIsReceivedByStore(detailInfo.getIsReceivedByStore());
                 grnDetailInfo.setCreatedBy(detailInfo.getCreatedBy());
-
+                grnDetailInfo.setDeclineNote(detailInfo.getDeclineNote());
                 Long vendorId = detailInfo.getVendorId();
 
                 List<GoodReceiveNoteItemDetailInfo> detailInfos = new ArrayList<>();
@@ -260,6 +260,10 @@ public class GrnServiceImpl implements GrnService{
                     grnidi.setCreatedAt(goodReceiveNoteItemDetailInfo.getCreatedAt());
                     grnidi.setId(goodReceiveNoteItemDetailInfo.getId());
                     grnidi.setReceiveQty(goodReceiveNoteItemDetailInfo.getReceiveQty());
+                    grnidi.setDeclaredQty(goodReceiveNoteItemDetailInfo.getDeclaredQty());
+                    grnidi.setInspectedQty(goodReceiveNoteItemDetailInfo.getInspectedQty());
+                    grnidi.setTotalApprovedQty(goodReceiveNoteItemDetailInfo.getTotalApprovedQty());
+                    grnidi.setTotalDeclinedQty(goodReceiveNoteItemDetailInfo.getTotalDeclinedQty());
                     grnidi.setExpireDate(goodReceiveNoteItemDetailInfo.getExpireDate());
                     grnidi.setManufactureDate(goodReceiveNoteItemDetailInfo.getManufactureDate());
                     grnidi.setItem(itemService.getItemDetailWithWarehouse(goodReceiveNoteItemDetailInfo.getItem().getId()));

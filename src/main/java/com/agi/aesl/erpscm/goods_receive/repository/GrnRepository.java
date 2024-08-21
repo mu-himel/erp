@@ -95,6 +95,8 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
 
         BigDecimal getDeliveryChargeAmount();
 
+        String getDeclineNote();
+
         List<GoodReceiveNoteItemDetailInfo> getGoodReceiveItemDetails();
     }
 

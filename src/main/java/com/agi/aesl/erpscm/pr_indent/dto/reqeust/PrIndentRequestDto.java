@@ -11,6 +11,7 @@ import com.agi.aesl.erpscm.pr_indent.entity.PrIndentPartialDelivery;
 import com.agi.aesl.erpscm.pr_indent.entity.PrIndentWarehouseDetail;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.BeanUtils;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Data
+@NoArgsConstructor
 public class PrIndentRequestDto implements EntityConvertable<PrIndent> {
 
     private Long id;
@@ -27,9 +29,6 @@ public class PrIndentRequestDto implements EntityConvertable<PrIndent> {
 
     @NotNull(message = "Item Sub Category Missing")
     private ReferenceObjectDto subCategory;
-
-    @NotNull(message = "PR Indent Priority Missing")
-    private IndentPriority priority;
     @NotNull(message = "PR Indent Priority Missing")
     private LocalDateTime priorityDate;
 
