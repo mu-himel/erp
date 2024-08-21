@@ -1,9 +1,9 @@
 package com.agi.aesl.erpscm.goods_receive.service;
 
+import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
-import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveItemDetailDto;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
 
 import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
@@ -27,6 +27,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -170,20 +171,29 @@ public class GrnServiceImpl implements GrnService{
     }
 
     @Override
-    public Page<?> getAllGrn(Optional<Integer> page,
+    public Page<?> getAllGrn(Jwt token, Optional<Integer> page,
                              Optional<Integer> size, Optional<String> grnNo,
                              Optional<Integer> qty,Optional<Integer> receivedQty,
                              Optional<String> fromDate, Optional<String> toDate) {
+        claimResolver.setToken(token);
+        String uri = "inventory-management/good-receive/good-receive-note";
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
         LocalDateTime fromDateObj = null;
         LocalDateTime toDateObj = null;
 
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+
         if(fromDate.isPresent() && toDate.isPresent()){
             fromDateObj = LocalDateTime.parse(fromDate.get()+"T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get()+"T23:59:59");
         }
-        return grnRepository.findAllGrn(pageable,grnNo.orElse(null),
+        return grnRepository.findAllGrn(pageable,
+                warehouseIds,categoryIds,
+                grnNo.orElse(null),
                 qty.orElse(null), receivedQty.orElse(null),
                 fromDateObj,toDateObj);
     }
@@ -269,11 +279,18 @@ public class GrnServiceImpl implements GrnService{
 
 
     @Override
-    public Page<?> getAllGrnPendingQC(Optional<Integer> page, Optional<Integer> size,
+    public Page<?> getAllGrnPendingQC(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                       Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty,
                                       Optional<String> fromDate, Optional<String> toDate) {
+        claimResolver.setToken(token);
+        String uri="inventory-management/good-receive/quality-check";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds= dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+
         LocalDateTime fromDateObj = null;
         LocalDateTime toDateObj = null;
 
@@ -282,6 +299,7 @@ public class GrnServiceImpl implements GrnService{
             toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
         }
         return grnRepository.findAllGrnByStatus(
+                null,null,
                 grnNo.orElse(null), qty.orElse(null), receivedQty.orElse(null),
                 GrnStatus.PENDING_QC.toString(),
                 fromDateObj,

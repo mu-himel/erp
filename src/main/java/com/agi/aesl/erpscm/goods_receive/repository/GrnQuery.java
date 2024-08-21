@@ -15,7 +15,8 @@ public interface GrnQuery {
                     p.qcPending as qcPending,
                     p.qcPass as qcPass,
                     p.qcFail as qcFail,
-                    p.qcHold as qcHold
+                    p.qcHold as qcHold,
+                    p.warehouseId as warehouseId
                 FROM (
                     SELECT 
                         grn.id as id,
@@ -35,11 +36,18 @@ public interface GrnQuery {
                         END,0) qcFail,
                         COALESCE(CASE WHEN grid.qc_type = 'HOLD' THEN
                             count(grid.qc_type)
-                        END,0) qcHold
+                        END,0) qcHold,
+                        grn.warehouse_id as warehouseId
                     FROM good_receive_notes grn
                     LEFT JOIN good_receive_item_details grid ON grid.good_receive_note_id = grn.id
                     LEFT JOIN scm_item_categories ic ON ic.id = grid.category_id
                     WHERE (:grnNo IS NULL OR grn.grn_no = :grnNo) 
+                    AND (COALESCE(:warehouseIds) IS NULL OR grn.warehouse_id IN (:warehouseIds))
+                    AND (
+                            ( COALESCE(:categoryIds) IS NULL OR grid.category_id IN (:categoryIds)) 
+                            OR 
+                            ( COALESCE(:categoryIds) IS NULL OR grid.sub_category_id IN (:categoryIds))
+                        )
                         AND (:fromDate IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
                     GROUP BY grn.id
                 ) p
@@ -61,7 +69,8 @@ public interface GrnQuery {
                     p.qcPending as qcPending,
                     p.qcPass as qcPass,
                     p.qcFail as qcFail,
-                    p.qcHold as qcHold
+                    p.qcHold as qcHold,
+                    p.warehouseId as warehouseId
                 FROM (
                 SELECT 
                         grn.id as id,
@@ -84,12 +93,20 @@ public interface GrnQuery {
                         END,0) qcFail,
                         COALESCE(CASE WHEN grid.qc_type = 'HOLD' THEN
                             count(grid.qc_type)
-                        END,0) qcHold
+                        END,0) qcHold,
+                        grn.warehouse_id as warehouseId
                     FROM good_receive_notes grn
                     LEFT JOIN good_receive_item_details grid ON grid.good_receive_note_id = grn.id
-                    LEFT JOIN scm_item_categories ic ON ic.id = grid.category_id
+                    LEFT JOIN scm_item_categories ipc ON ipc.id = grid.category_id
+                    LEFT JOIN scm_item_categories ic ON ic.id = grid.sub_category_id
                     WHERE grn.grn_status IN (:status) 
                     AND (:grnNo IS NULL OR grn.grn_no = :grnNo) 
+                    AND (COALESCE(:warehouseIds) IS NULL OR grn.warehouse_id IN (:warehouseIds))
+                    AND (
+                            ( COALESCE(:categoryIds) IS NULL OR grid.category_id IN (:categoryIds)) 
+                            OR 
+                            ( COALESCE(:categoryIds) IS NULL OR grid.sub_category_id IN (:categoryIds))
+                        )
                     AND (:fromDate IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
                     GROUP BY grn.id
                 ) p

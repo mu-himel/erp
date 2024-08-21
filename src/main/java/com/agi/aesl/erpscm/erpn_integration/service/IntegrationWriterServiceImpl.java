@@ -111,6 +111,8 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         remoteLedgerAccountDto.setItemGroup(category.getName());
         remoteLedgerAccountDto.setItemSubGroup(subCategory.getName());
         remoteLedgerAccountDto.setWarehouse(ledgerAccount.getStore());
+        remoteLedgerAccountDto.setOpeningCredit(ledgerAccount.getOpeningCreditAmount());
+        remoteLedgerAccountDto.setOpeningDebit(ledgerAccount.getOpeningDebitAmount());
 
         HttpEntity<RemoteLedgerAccountDto> payload = new HttpEntity<>(remoteLedgerAccountDto,headers);
         Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);

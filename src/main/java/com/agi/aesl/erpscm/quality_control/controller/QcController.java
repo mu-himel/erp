@@ -25,6 +25,7 @@ public class QcController extends BaseController {
 
     @GetMapping
     public ResponseEntity<?> getAllForQc(
+            @AuthenticationPrincipal Jwt token,
             @RequestParam("grnNo") Optional<String> grnNo,
             @RequestParam("items") Optional<Integer> qty,
             @RequestParam("receivedQty") Optional<Integer> receivedQty,
@@ -33,9 +34,9 @@ public class QcController extends BaseController {
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size){
         return new ResponseEntity<>(
-                grnService.getAllGrnPendingQC(page,size,
-                        grnNo, qty, receivedQty,
-                        fromDate, toDate),
+                grnService.getAllGrnPendingQC(token, page,
+                        size, grnNo, qty,
+                        receivedQty, fromDate, toDate),
                 HttpStatus.OK
         );
     }
