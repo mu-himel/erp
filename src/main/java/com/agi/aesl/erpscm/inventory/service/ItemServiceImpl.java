@@ -983,15 +983,16 @@ public class ItemServiceImpl implements ItemService {
                 }).collect(Collectors.toList()));
             }
 
-            ItemImportLog iil = new ItemImportLog();
-            iil.setItem(item);
-            iil.setWarehouse(new Warehouse(warehouseId));
-            iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
-            List<ItemImportLog> iils = item.getItemImportLogs();
-            iils.add(iil);
-            item.setItemImportLogs(iils);
             itemRepository.save(item);
 
+            Optional<ItemImportLog> importLogExist = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseId);
+            if(importLogExist.isEmpty()) {
+                ItemImportLog iil = new ItemImportLog();
+                iil.setItem(item);
+                iil.setWarehouse(new Warehouse(warehouseId));
+                iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+                itemImportLogRepository.save(iil);
+            }
             accountService.createItemLedger(item,new Warehouse(warehouseId));
         }
         return item;

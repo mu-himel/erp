@@ -102,6 +102,19 @@ public class CategoryServiceImpl implements CategoryService {
                     CategoryRequestDto cr = new CategoryRequestDto();
                     cr.setCategoryStatus(CategoryStatus.APPROVED);
                     cr.setAttributes(categoryRequestDto.getAttributes());
+                    Optional<ItemCategory> codeExist = categoryRepository.findByCode(categoryRequestDto.getCode());
+                    if(codeExist.isPresent()){
+                        Optional<CategoryWarehouseStore> cwsOp =  categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseId(codeExist.get().getId() ,categoryRequestDto.getWarehouse().getId());
+
+                        if(cwsOp.isEmpty()){
+                            CategoryWarehouseStore categoryWarehouseStore = new CategoryWarehouseStore();
+                            categoryWarehouseStore.setCategory(codeExist.get());
+                            categoryWarehouseStore.setWarehouse(new Warehouse(categoryRequestDto.getWarehouse().getId()));
+                            categoryWarehouseStore.setWarehouseStore(new WarehouseStore(categoryRequestDto.getWarehouseStore().getId()));
+                            categoryWarehouseStoreRepository.save(categoryWarehouseStore);
+                        }
+                        continue;
+                    }
                     cr.setCode(categoryRequestDto.getCode());
                     cr.setCpsCategoryId(categoryRequestDto.getCpsCategoryId());
                     cr.setName(categoryRequestDto.getName());
