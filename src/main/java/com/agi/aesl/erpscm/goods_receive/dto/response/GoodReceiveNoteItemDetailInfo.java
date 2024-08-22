@@ -28,4 +28,6 @@ public class GoodReceiveNoteItemDetailInfo {
     private BigDecimal deliveryChargeAmount;
     private BigDecimal vatPercent;
     private BigDecimal vatAmount;
+    private String approveComment;
+    private String declineComment;
 }

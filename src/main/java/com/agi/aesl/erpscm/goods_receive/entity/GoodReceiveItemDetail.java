@@ -65,6 +65,12 @@ public class GoodReceiveItemDetail {
 
     private BigDecimal pricePerUnit;
 
+    @Column(length = 500)
+    private String approveComment;
+
+    @Column(length = 500)
+    private String declineComment;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDate createdAt;

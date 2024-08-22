@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.quality_control.service;
 
 import com.agi.aesl.erpscm.email.service.EmailSenderService;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
+import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
@@ -23,7 +24,7 @@ public class QcMailServiceImpl implements QcMailService{
 
     private  String name;
 
-    private QualityControl qualityControl;
+    private GoodReceiveNote qualityControl;
 
     private ClaimResolver claimResolver;
 
@@ -37,7 +38,7 @@ public class QcMailServiceImpl implements QcMailService{
 
     @Override
     @Transactional
-    public void prepareMailContentForInitiator(String name, String actionType, QualityControl qualityControl) {
+    public void prepareMailContentForInitiator(String name, String actionType, GoodReceiveNote qualityControl) {
         template = setMailFor(name);
         template.replaceAll("pending demand","pending qc");
         processTemplate(actionType,qualityControl);
@@ -45,7 +46,7 @@ public class QcMailServiceImpl implements QcMailService{
 
     @Override
     @Transactional
-    public void prepareMailContent(String name, String actionType, QualityControl domain) {
+    public void prepareMailContent(String name, String actionType, GoodReceiveNote domain) {
         template = setMailFor(name);
         processTemplate(actionType,domain);
     }
@@ -59,13 +60,13 @@ public class QcMailServiceImpl implements QcMailService{
     }
 
     @Transactional
-    private void processTemplate(String actionType, QualityControl domain){
+    private void processTemplate(String actionType, GoodReceiveNote domain){
         template = setInitiatorName(
-                setActionType(template,actionType),domain.getGoodReceiveNote().getVendorName()
+                setActionType(template,actionType),domain.getCreatedBy().getEmployeeName()
         );
         String productDetail = "";
         int i=0;
-        for(GoodReceiveItemDetail detail : domain.getGoodReceiveNote().getGoodReceiveItemDetails()){
+        for(GoodReceiveItemDetail detail : domain.getGoodReceiveItemDetails()){
             ++i;
             String productName = "<div><h4>Item "+i+"</h4><p style='font-size:15px;font-weight:bold;color:#333;'><span style='color:#cacaca;'>Product</span> ";
             if(detail.getItem().getBrand()!=null) {
@@ -76,7 +77,7 @@ public class QcMailServiceImpl implements QcMailService{
         }
 
         template = setProductDetail(template,productDetail);
-        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy");
+//        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy");
 //        template = setQcDate(template,domain.getDemandDate().format(dateFormat));
 //        template = setDemandViewLink(template,demandDetailLink+demand.getId());
     }
@@ -112,7 +113,7 @@ public class QcMailServiceImpl implements QcMailService{
     }
 
     @Override
-    public void setQualityControl(QualityControl qualityControl) {
+    public void setQualityControl(GoodReceiveNote qualityControl) {
         this.qualityControl = qualityControl;
     }
 

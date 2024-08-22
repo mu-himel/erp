@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.quality_control.service;
 
 import com.agi.aesl.erpscm.demand.entity.Demand;
+import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
 import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
 import com.agi.aesl.erpscm.user_application_validation.service.VerifierMailService;
@@ -8,7 +9,7 @@ import com.agi.aesl.erpscm.utils.ClaimResolver;
 
 import java.util.List;
 
-public interface QcMailService extends VerifierMailService<QualityControl> {
+public interface QcMailService extends VerifierMailService<GoodReceiveNote> {
 
     String removed= """
             <p>Demand Initiate Date: {demandDate}</p>
@@ -24,11 +25,11 @@ public interface QcMailService extends VerifierMailService<QualityControl> {
             <p style="color:#ff0000">N.B. This is a system generated email. Please do not reply!</p>
             """;
 
-    void prepareMailContentForInitiator(String name, String actionType, QualityControl qualityControl);
+    void prepareMailContentForInitiator(String name, String actionType, GoodReceiveNote qualityControl);
 
     void setClaimResolver(ClaimResolver claimResolver);
 
-    void setQualityControl(QualityControl qualityControl);
+    void setQualityControl(GoodReceiveNote qualityControl);
 
     List<UserAssignInfo> getAuthorizedUsers(String uri);
 

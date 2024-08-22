@@ -5,21 +5,28 @@ import com.agi.aesl.erpscm.account_finance.entity.LedgerAccountVerifyApprovalHis
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.demand.service.DemandMailService;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
+import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
 import com.agi.aesl.erpscm.goods_receive.enums.QcType;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
+import com.agi.aesl.erpscm.network.NetworkService;
+import com.agi.aesl.erpscm.organization.entity.Organization;
+import com.agi.aesl.erpscm.organization.service.OrgService;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.quality_control.dto.request.QcDto;
 import com.agi.aesl.erpscm.quality_control.entity.QcVerifyApprovalHistory;
 import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
+import com.agi.aesl.erpscm.quality_control.entity.QualityControlKpi;
 import com.agi.aesl.erpscm.quality_control.enums.QcStatus;
 import com.agi.aesl.erpscm.quality_control.repository.QcRepository;
 import com.agi.aesl.erpscm.quality_control.repository.QcVerifyApprovalHistoryRepository;
@@ -29,16 +36,21 @@ import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationVal
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -68,6 +80,15 @@ public class QcServiceImpl implements QcService{
 
     @Autowired
     private QcMailService qcMailService;
+
+    @Autowired
+    private OrgService orgService;
+
+    @Autowired
+    private NetworkService networkService;
+
+    @Autowired
+    private CpsServerConfig cpsServerConfig;
 
     @Autowired
     private QcVerifyApprovalHistoryRepository qcVerifyApprovalHistoryRepository;
@@ -157,7 +178,7 @@ public class QcServiceImpl implements QcService{
         }
 
         if(ids.size()>0 && !uri.isBlank()) {
-            verificationService.applyVerifyApprovalProcess(qualityControl,DomainType.QC,uri,"CATEGORY",ids,
+            verificationService.applyVerifyApprovalProcess(qualityControl,DomainType.QC,QcStatus.APPROVED.toString(),uri,"CATEGORY",ids,
                     null);
 
         }
@@ -169,18 +190,87 @@ public class QcServiceImpl implements QcService{
     }
 
     @Override
+    public Optional<?> getByGrnId(Long id) {
+        return grnService.getGRNById(id, true);
+    }
+
+    @Override
     public List<?> getQcResultByGrn(Long id) {
         return qcRepository.getQcResultByGrn(id);
     }
 
     @Override
     @Transactional
-    public void rejectQc(Long id) {
+    public void rejectQc(Jwt token, Long id, NoteDto noteDto) {
+        claimResolver.setToken(token);
         Optional<GoodReceiveNote> goodReceiveNoteOptional = (Optional<GoodReceiveNote>)grnService.getGRNById(id, true);
         if(goodReceiveNoteOptional.isPresent()){
             GoodReceiveNote grn = goodReceiveNoteOptional.get();
             grn.setGrnStatus(GrnStatus.REJECTED);
+
+            List<QualityControlKpi> kpis =  new ArrayList<>();
+
+            QualityControl qc = new QualityControl();
+            qc.setComment(noteDto.getNote());
+            Optional<Employee> empOp = claimResolver.getEmployee();
+            if(empOp.isPresent()) {
+                Employee employee = empOp.get();
+                qc.setCreatedBy(new Employee(employee.getId()));
+                qc.setWarehouse(new Warehouse(employee.getWarehouseId()));
+            }
+            qc.setGoodReceiveNote(grn);
+            qc.setQcDate(LocalDate.now());
+            qc.setQcStatus(QcStatus.REJECTED);
+
+            kpis.add(getKpi("Description Goods",qc));
+            kpis.add(getKpi("Quantity",qc));
+            kpis.add(getKpi("Quality",qc));
+            kpis.add(getKpi("Packing & Labeling",qc));
+            qc.setQualityControlKpis(kpis);
+            qcRepository.save(qc);
+            ObjectMapper mapper = new ObjectMapper();
+            String kpi = null;
+            try {
+                kpi = mapper.writeValueAsString(kpis);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            if(grn.getGrnMode().equals(GrnMode.AUTO)) {
+                sentQcStatus(token.getTokenValue(), grn.getRemotePoId(), GrnStatus.QC_FAILED, new ArrayList<>(), noteDto, kpi);
+            }
         }
+    }
+
+    @Transactional
+    private void sentQcStatus(String token, Long id,GrnStatus status, List<?> qcDetails, NoteDto noteDto, String qcResult){
+        HttpHeaders headers = new HttpHeaders();
+        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token);
+        if(orgOp.isPresent()){
+            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
+        }
+
+        Map<String,Object> map = new HashMap<>();
+        map.put("note",noteDto.getNote());
+        map.put("status",status);
+        map.put("qcDetails",qcDetails);
+        map.put("qcResult",qcResult);
+        HttpEntity<Map<String,Object>> payload = new HttpEntity<>(map,headers);
+        String url = (status.equals(GrnStatus.QC_PASS))? cpsServerConfig.getPoQcPassEndpoint(id):
+                cpsServerConfig.getPoQcFailEndpoint(id);
+        ResponseEntity<?> response = networkService.put(url, payload, Void.class);
+        if(response.getStatusCode()!= HttpStatus.NO_CONTENT){
+            throw new RuntimeException("Sorry! Something wrong");
+        }
+
+    }
+
+    private QualityControlKpi getKpi(String name, QualityControl qc){
+        QualityControlKpi qck  = new QualityControlKpi();
+        qck.setName(name);
+        qck.setQcType(QcType.FAIL);
+        qck.setRemark("REJECTED");
+        qck.setQualityControl(qc);
+        return qck;
     }
 
     @Override

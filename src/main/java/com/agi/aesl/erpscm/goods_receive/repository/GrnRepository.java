@@ -146,6 +146,9 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
 
         CategoryInfo getCategory();
         CategoryInfo getSubCategory();
+
+        String getApproveComment();
+        String getDeclineComment();
     }
 
     interface GrnItemInfo{

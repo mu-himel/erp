@@ -20,6 +20,8 @@ import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository.*;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
+import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
+import com.agi.aesl.erpscm.quality_control.service.QcMailService;
 import com.agi.aesl.erpscm.quality_control.service.QcService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +61,9 @@ public class GrnServiceImpl implements GrnService{
 
     @Autowired
     private GrnDetailRepository grnDetailRepository;
+
+    @Autowired
+    private QcMailService qcMailService;
 
     @Override
     public String getNextGrnNumber() {
@@ -113,6 +118,7 @@ public class GrnServiceImpl implements GrnService{
     @Transactional
     public void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto) {
         claimResolver.setToken(token);
+        String uri = "";
         if(claimResolver.getEmployee()==null){
             throw new RuntimeException("Sorry! Employee profile required");
         }
@@ -168,6 +174,14 @@ public class GrnServiceImpl implements GrnService{
         grn.setMushak(grnManualDto.getMushak());
         grn.setPaymentType(grnManualDto.getPayment());
         grnRepository.save(grn);
+
+//        Optional<GoodReceiveNote> qcOp = (Optional<GoodReceiveNote>) qcService.getByGrnId(grn.getId());
+
+        qcMailService.setClaimResolver(claimResolver);
+        qcMailService.setQualityControl(grn);
+        qcMailService.getAuthorizedUsers(uri);
+        qcMailService.sentMail(null,"Pending Demand");
+
     }
 
     @Override
@@ -257,6 +271,8 @@ public class GrnServiceImpl implements GrnService{
 //                    }
 
                     }
+                    grnidi.setApproveComment(goodReceiveNoteItemDetailInfo.getApproveComment());
+                    grnidi.setDeclineComment(goodReceiveNoteItemDetailInfo.getDeclineComment());
                     grnidi.setCreatedAt(goodReceiveNoteItemDetailInfo.getCreatedAt());
                     grnidi.setId(goodReceiveNoteItemDetailInfo.getId());
                     grnidi.setReceiveQty(goodReceiveNoteItemDetailInfo.getReceiveQty());
