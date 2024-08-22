@@ -21,7 +21,7 @@ public interface GrnService {
     Page<?> getAllGrn(Jwt token, Optional<Integer> page, Optional<Integer> size,
                       Optional<String> grnNo, Optional<Integer> qty,
                       Optional<Integer> receivedQty,
-                      Optional<String> fromDate, Optional<String> toDate);
+                      Optional<String> fromDate, Optional<String> toDate, Optional<String> grnStatus);
 
     Optional<?> getGrnById(Long id, Boolean returnTypeEntity);
 

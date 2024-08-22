@@ -188,7 +188,7 @@ public class GrnServiceImpl implements GrnService{
     public Page<?> getAllGrn(Jwt token, Optional<Integer> page,
                              Optional<Integer> size, Optional<String> grnNo,
                              Optional<Integer> qty,Optional<Integer> receivedQty,
-                             Optional<String> fromDate, Optional<String> toDate) {
+                             Optional<String> fromDate, Optional<String> toDate, Optional<String> grnStatus) {
         claimResolver.setToken(token);
         String uri = "inventory-management/good-receive/good-receive-note";
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
@@ -209,7 +209,7 @@ public class GrnServiceImpl implements GrnService{
                 warehouseIds,categoryIds,
                 grnNo.orElse(null),
                 qty.orElse(null), receivedQty.orElse(null),
-                fromDateObj,toDateObj);
+                fromDateObj,toDateObj,grnStatus.orElse(null));
     }
 
     @Override
@@ -374,4 +374,5 @@ public class GrnServiceImpl implements GrnService{
     public Optional<GoodReceiveNote> getByGrnNo(String grnNo) {
         return grnRepository.findByGrnNo(grnNo);
     }
+
 }

@@ -43,6 +43,76 @@ public class QcController extends BaseController {
         );
     }
 
+    @GetMapping("/pending-verifications")
+    public ResponseEntity<?> getAllPendingVerifications(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("grnNo") Optional<String> grnNo,
+            @RequestParam("items") Optional<Integer> qty,
+            @RequestParam("receivedQty") Optional<Integer> receivedQty,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                qcService.getAllPendingVerificationQC(token, page,
+                        size, grnNo, qty,
+                        receivedQty, fromDate, toDate),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/pending-approvals")
+    public ResponseEntity<?> getAllPendingApprovals(@AuthenticationPrincipal Jwt token,
+                                                    @RequestParam("grnNo") Optional<String> grnNo,
+                                                    @RequestParam("items") Optional<Integer> qty,
+                                                    @RequestParam("receivedQty") Optional<Integer> receivedQty,
+                                                    @RequestParam("fromDate") Optional<String> fromDate,
+                                                    @RequestParam("toDate") Optional<String> toDate,
+                                                    @RequestParam("page") Optional<Integer> page,
+                                                    @RequestParam("size") Optional<Integer> size){
+        return new ResponseEntity<>(
+                qcService.getAllPendingApprovalQC(token, page,
+                        size, grnNo, qty,
+                        receivedQty, fromDate, toDate),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/closed")
+    public ResponseEntity<?> getAllClosed(@AuthenticationPrincipal Jwt token,
+                                                    @RequestParam("grnNo") Optional<String> grnNo,
+                                                    @RequestParam("items") Optional<Integer> qty,
+                                                    @RequestParam("receivedQty") Optional<Integer> receivedQty,
+                                                    @RequestParam("fromDate") Optional<String> fromDate,
+                                                    @RequestParam("toDate") Optional<String> toDate,
+                                                    @RequestParam("page") Optional<Integer> page,
+                                                    @RequestParam("size") Optional<Integer> size){
+        return new ResponseEntity<>(
+                qcService.getAllClosed(token, page,
+                        size, grnNo, qty,
+                        receivedQty, fromDate, toDate),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/rejected")
+    public ResponseEntity<?> getAllRejected(@AuthenticationPrincipal Jwt token,
+                                          @RequestParam("grnNo") Optional<String> grnNo,
+                                          @RequestParam("items") Optional<Integer> qty,
+                                          @RequestParam("receivedQty") Optional<Integer> receivedQty,
+                                          @RequestParam("fromDate") Optional<String> fromDate,
+                                          @RequestParam("toDate") Optional<String> toDate,
+                                          @RequestParam("page") Optional<Integer> page,
+                                          @RequestParam("size") Optional<Integer> size){
+        return new ResponseEntity<>(
+                qcService.getAllRejected(token, page,
+                        size, grnNo, qty,
+                        receivedQty, fromDate, toDate),
+                HttpStatus.OK
+        );
+    }
+
     @PostMapping
     public ResponseEntity<?> addQc(
             @AuthenticationPrincipal Jwt token,

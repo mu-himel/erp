@@ -9,6 +9,7 @@ import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -46,6 +47,7 @@ public class QualityControl extends VerifyableEntity {
     @Enumerated(EnumType.STRING)
     private QcStatus reviewPrevStatus;
 
-
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 
 }

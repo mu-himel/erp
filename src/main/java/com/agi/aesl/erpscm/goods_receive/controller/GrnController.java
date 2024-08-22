@@ -64,11 +64,12 @@ public class GrnController extends BaseController {
             @RequestParam("receivedQty") Optional<Integer> receivedQty,
             @RequestParam("fromDate") Optional<String> fromDate,
             @RequestParam("toDate") Optional<String> toDate,
+            @RequestParam("grnStatus") Optional<String> grnStatus,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                grnService.getAllGrn(token,page,size,grnNo,qty, receivedQty,fromDate,toDate),
+                grnService.getAllGrn(token,page,size,grnNo,qty, receivedQty,fromDate,toDate, grnStatus),
                 HttpStatus.OK
         );
     }

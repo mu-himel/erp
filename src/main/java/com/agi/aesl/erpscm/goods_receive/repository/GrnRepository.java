@@ -38,7 +38,8 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
                                          @Param("qty") Integer qty,
                                          @Param("receivedQty") Integer receivedQty,
                                          @Param("fromDate") LocalDateTime fromDate,
-                                         @Param("toDate") LocalDateTime toDate
+                                         @Param("toDate") LocalDateTime toDate,
+                                         @Param("status") String status
     );
 
     @Query(value = """

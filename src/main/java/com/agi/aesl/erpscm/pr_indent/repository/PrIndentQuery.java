@@ -94,9 +94,9 @@ public interface PrIndentQuery {
                                 pri.priority                                       as priority,
                                 pri.priority_date                                  as priorityDate,
                                 DATEDIFF(pri.priority_date,CURRENT_DATE)           as daysRemain,
-                                (select name from warehouses WHERE id = piw.warehouse_id)    as warehouseName,
+                                (select name from scm_warehouses WHERE id = piw.warehouse_id)    as warehouseName,
                                 prid.brand_id                                      as brandId,
-                                (select name from category_brands cb WHERE cb.id = prid.brand_id) as brandName
+                                (select name from scm_category_brands cb WHERE cb.id = prid.brand_id) as brandName
                         FROM pr_indents pri
                                 LEFT JOIN pr_indent_details prid on pri.id = prid.pr_indent_id
                                 LEFT JOIN pr_indent_warehouses piw ON piw.pr_indent_detail_id = prid.id

@@ -5,11 +5,13 @@ import com.agi.aesl.erpscm.account_finance.entity.LedgerAccountVerifyApprovalHis
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.demand.service.DemandMailService;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
@@ -40,6 +42,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -92,6 +98,9 @@ public class QcServiceImpl implements QcService{
 
     @Autowired
     private QcVerifyApprovalHistoryRepository qcVerifyApprovalHistoryRepository;
+
+    @Autowired
+    private IntegrationReaderService readerService;
 
     @Override
     @Transactional
@@ -392,5 +401,143 @@ public class QcServiceImpl implements QcService{
                 reviewDto.getMessage(),
                 reviewDto.getAttachments()
         ));
+    }
+
+    @Override
+    public Page<?> getAllPendingVerificationQC(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                               Optional<String> grnNo, Optional<Integer> qty,
+                                               Optional<Integer> receivedQty, Optional<String> fromDate,
+                                               Optional<String> toDate) {
+        claimResolver.setToken(token);
+
+        String uri="inventory-management/good-receive/quality-check-pending-verification";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+
+        LocalDateTime fromDateObj = null;
+        LocalDateTime toDateObj = null;
+
+        if(fromDate.isPresent() && toDate.isPresent()) {
+            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
+            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+        }
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(readerService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+        List<String> status = new ArrayList<>();
+        status.add(QcStatus.PENDING_VERIFICATION.toString());
+        status.add(QcStatus.VERIFIED.toString());
+
+        return qcRepository.findAllPendingVerification(
+                    warehouseIds,categoryIds, claimResolver.getUserId(),status,
+                    grnNo.orElse(null),
+                    qty.orElse(null),
+                    receivedQty.orElse(null),
+                    fromDateObj,
+                    toDateObj,
+                    pageable
+                );
+    }
+
+    @Override
+    public Page<?> getAllPendingApprovalQC(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty, Optional<String> fromDate, Optional<String> toDate) {
+        claimResolver.setToken(token);
+
+        String uri="inventory-management/good-receive/quality-check-pending-approval";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+
+        LocalDateTime fromDateObj = null;
+        LocalDateTime toDateObj = null;
+
+        if(fromDate.isPresent() && toDate.isPresent()) {
+            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
+            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+        }
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(readerService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+
+        return qcRepository.findAllPendingApproval(
+                warehouseIds,categoryIds, claimResolver.getUserId(),
+                grnNo.orElse(null),
+                qty.orElse(null),
+                receivedQty.orElse(null),
+                fromDateObj,
+                toDateObj,
+                pageable
+        );
+    }
+
+    @Override
+    public Page<?> getAllClosed(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty,
+                                Optional<String> fromDate, Optional<String> toDate) {
+        claimResolver.setToken(token);
+
+        String uri="inventory-management/good-receive/quality-check-closed";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+
+        LocalDateTime fromDateObj = null;
+        LocalDateTime toDateObj = null;
+
+        if(fromDate.isPresent() && toDate.isPresent()) {
+            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
+            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+        }
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(readerService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+
+        return qcRepository.findAllClosed(
+                warehouseIds,categoryIds,
+                grnNo.orElse(null),
+                qty.orElse(null),
+                receivedQty.orElse(null),
+                fromDateObj,
+                toDateObj,
+                pageable
+        );
+    }
+
+    @Override
+    public Page<?> getAllRejected(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> grnNo,
+                                  Optional<Integer> qty, Optional<Integer> receivedQty, Optional<String> fromDate,
+                                  Optional<String> toDate) {
+
+        claimResolver.setToken(token);
+        String uri="inventory-management/good-receive/quality-check-rejected";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+
+        LocalDateTime fromDateObj = null;
+        LocalDateTime toDateObj = null;
+
+        if(fromDate.isPresent() && toDate.isPresent()) {
+            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
+            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+        }
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(readerService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+
+        return qcRepository.findAllRejected(
+                warehouseIds,categoryIds,
+                grnNo.orElse(null),
+                qty.orElse(null),
+                receivedQty.orElse(null),
+                fromDateObj,
+                toDateObj,
+                pageable
+        );
     }
 }
