@@ -309,20 +309,20 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
 
     @Override
     @Transactional
-    public <T extends VerifyableEntity> List<VerifierInfo> getVerifiers(T ledgerAccount, Optional<VerifierConfig> verifierOp, String status) {
+    public <T extends VerifyableEntity> List<VerifierInfo> getVerifiers(T t, Optional<VerifierConfig> verifierOp, String status) {
         List<VerifierInfo> verifiers = new ArrayList<>();
         if(verifierOp.isPresent()){
             VerifierConfig verification = verifierOp.get();
             verifiers = verification.getVerifiers();
             Boolean verificationRequired = verification.getVerificationRequired();
             if(verificationRequired!=null && verificationRequired==true && verifiers!=null && verifiers.size()>0){
-                ledgerAccount.setStatus(AccountType.PENDING_VERIFICATION.toString());
+                t.setStatus(AccountType.PENDING_VERIFICATION.toString());
             }else{
-                ledgerAccount.setStatus(status);
+                t.setStatus(status);
             }
 
         }else{
-            ledgerAccount.setStatus(status);
+            t.setStatus(status);
         }
         return verifiers;
     }
@@ -336,13 +336,13 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     }
 
     @Override
-    public AppliedVADto applyVerifyApprovalProcess(T t, DomainType domainType, String uri, String criteriaGroup,
+    public AppliedVADto applyVerifyApprovalProcess(T t, DomainType domainType, String status, String uri, String criteriaGroup,
                                                    List<String> ids,
                                                    VerifierMailService<T> mailService) {
         Optional<VerifierConfig> verifierOp = this.getVerifiers(claimResolver, uri,
                 criteriaGroup, String.join(",", ids));
 
-        List<VerifierInfo> verifiers = this.getVerifiers(t, verifierOp,domainType.toString());
+        List<VerifierInfo> verifiers = this.getVerifiers(t, verifierOp,status);
         List<ApprovalPanel> panels = this.getApprovalPanels(claimResolver, uri, String.join(",", ids));
         this.setVerifiers(t, verifiers, domainType,
                         null)

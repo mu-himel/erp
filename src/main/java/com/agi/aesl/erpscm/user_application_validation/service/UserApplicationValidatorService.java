@@ -54,7 +54,7 @@ public interface UserApplicationValidatorService<T> {
 
     List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories);
 
-    AppliedVADto applyVerifyApprovalProcess(T t, DomainType domainType, String uri, String criteriaGroup, List<String> ids,
+    AppliedVADto applyVerifyApprovalProcess(T t, DomainType domainType, String status, String uri, String criteriaGroup, List<String> ids,
                                             VerifierMailService<T> mailService);
 
 }

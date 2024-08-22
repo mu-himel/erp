@@ -119,7 +119,8 @@ public class SrnServiceImpl implements SrnService{
         String uri="";
         if(ids.size()>0 && !uri.isBlank()) {
 
-            verificationService.applyVerifyApprovalProcess(storeReceiveNote,DomainType.SRN,uri,
+            verificationService.applyVerifyApprovalProcess(storeReceiveNote,DomainType.SRN,
+                    SrnStatus.APPROVED.toString(),uri,
                     "CATEGORY",ids,null);
 //            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver, uri,
 //                    "CATEGORY", String.join(",", ids));
