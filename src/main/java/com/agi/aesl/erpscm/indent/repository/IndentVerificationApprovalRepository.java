@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface IndentVerificationApprovalRepository extends JpaRepository<IndentVerificationApprovalHistory,Long> {
+    void deleteAllByIndentId(Long id);
 }

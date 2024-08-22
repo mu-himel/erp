@@ -11,6 +11,8 @@ import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.indent.entity.IndentDeliveryDetail;
 import com.agi.aesl.erpscm.indent.entity.IndentDetail;
 import com.agi.aesl.erpscm.indent.entity.IndentPartialDelivery;
+import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
+import com.agi.aesl.erpscm.indent.enums.RfqStatus;
 import com.agi.aesl.erpscm.indent.repository.IndentRepository;
 import com.agi.aesl.erpscm.indent.repository.IndentVerificationApprovalRepository;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
@@ -18,6 +20,7 @@ import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.pr_indent.repository.PrIndentRepository;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
@@ -63,8 +66,8 @@ public class IndentServiceImpl implements IndentService{
     public void createIndent(Jwt token, String uri, IndentRequestDto indentRequestDto) {
         claimResolver.setToken(token);
         List<String> ids = new ArrayList<>();
-        Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver,uri,
-                "CATEGORY",String.join(",",ids));
+        ids.add(indentRequestDto.getCategoryId().toString());
+
         Indent indent = indentRequestDto.getEntity();
 
         if(claimResolver.getEmployee().isPresent()) {
@@ -93,6 +96,8 @@ public class IndentServiceImpl implements IndentService{
             indentDetail.setItemAttribute(item.getAttribute());
             indentDetail.setBrandId(item.getBrandId());
             indentDetail.setSubCategory(new ItemCategory(item.getSubCategoryId()));
+            ids.add(item.getSubCategoryId().toString());
+
 
             indentDetail.setWarehouses(item.getWarehouses().stream().map(w->{
                 IndentDeliveryDetail idd = new IndentDeliveryDetail();
@@ -115,12 +120,22 @@ public class IndentServiceImpl implements IndentService{
             return indentDetail;
         }).collect(Collectors.toList()));
 
-        List<VerifierInfo> verifiers = verificationService.getVerifiers(indent, verifierOp,
-                AccountType.PENDING.toString());
-        List<ApprovalPanel> panels = verificationService.getApprovalPanels(claimResolver, uri, String.join(",",ids));
+        AppliedVADto appliedVa = verificationService.applyVerifyApprovalProcess(indent, DomainType.INDENT, IndentVerificationStatus.APPROVED.toString(),
+                uri, "CATEGORY", ids, null);
 
-        verificationService.setVerifiers(indent,verifiers, DomainType.ACCOUNT_LEDGER,
-                null);
+        if(appliedVa.getVerifiers().isEmpty() && appliedVa.getPanels().isEmpty()){
+            indent.setRfqStatus(RfqStatus.INIT);
+            indent.setIndentStatus(IndentVerificationStatus.APPROVED);
+        }
+
+        indent.setReviewerId(null);
+        indent.setReviewDate(null);
+
+        indentRepository.save(indent);
+
+        verificationService.removeVerification(indent.getId(), DomainType.INDENT);
+        indentVARepository.deleteAllByIndentId(indent.getId());
+
     }
 
     @Override
