@@ -54,4 +54,5 @@ public interface IndentService extends VerificationDomainService {
     int moveIndentByIds(MoveIndentRequestDto moveIndent);
 
 
+    Page<?> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<String> priority);
 }

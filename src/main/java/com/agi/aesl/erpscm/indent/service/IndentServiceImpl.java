@@ -9,10 +9,7 @@ import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.indent.dto.request.IndentRequestDto;
 import com.agi.aesl.erpscm.indent.dto.request.MoveIndentRequestDto;
-import com.agi.aesl.erpscm.indent.entity.Indent;
-import com.agi.aesl.erpscm.indent.entity.IndentDeliveryDetail;
-import com.agi.aesl.erpscm.indent.entity.IndentDetail;
-import com.agi.aesl.erpscm.indent.entity.IndentPartialDelivery;
+import com.agi.aesl.erpscm.indent.entity.*;
 import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
 import com.agi.aesl.erpscm.indent.enums.RfqStatus;
 import com.agi.aesl.erpscm.indent.repository.IndentRepository;
@@ -35,6 +32,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -238,23 +236,73 @@ public class IndentServiceImpl implements IndentService{
     }
 
     @Override
+    @Transactional
     public void onVerify(Long id, UserApplicationValidation verification, UserApplicationValidationRepository.VerificationResponse nextVerifier) {
-
+        Optional<Indent> indentOp  = indentRepository.findById(id);
+        if(indentOp.isPresent()){
+            Indent indent = indentOp.get();
+            IndentVerificationApprovalHistory indentVAHistory = new IndentVerificationApprovalHistory();
+            indentVAHistory.setIndent(indent);
+            indentVAHistory.setEmployee(verification.getVerifier());
+            indentVAHistory.setIndentStatus(IndentVerificationStatus.VERIFIED);
+            indentVARepository.save(indentVAHistory);
+            indent.setNextVerifierId(nextVerifier.getVerifier().getId());
+        }
     }
 
     @Override
+    @Transactional
     public void onApprove(Long id, UserApplicationValidation verification, UserApplicationValidationRepository.VerificationResponse nextApprover) {
-
+        Optional<Indent> indentOp  = indentRepository.findById(id);
+        if(indentOp.isPresent()){
+            Indent indent = indentOp.get();
+            IndentVerificationApprovalHistory indentVAHistory = new IndentVerificationApprovalHistory();
+            indentVAHistory.setIndent(indent);
+            indentVAHistory.setEmployee(verification.getVerifier());
+            indentVAHistory.setIndentStatus(IndentVerificationStatus.APPROVED);
+            indentVARepository.save(indentVAHistory);
+            indent.setNextApproverId(nextApprover.getVerifier().getId());
+        }
     }
 
     @Override
+    @Transactional
     public void verifyComplete(Long id, Optional<UserApplicationValidationRepository.VerificationResponse> firstApprover) {
+        Optional<Indent> indentOp  = indentRepository.findById(id);
+        if(indentOp.isPresent()){
+            Indent indent = indentOp.get();
+            if(firstApprover.isPresent()){
+                indent.setNextApproverId(firstApprover.get().getVerifier().getId());
+                indent.setStatus(String.valueOf(IndentVerificationStatus.PENDING_APPROVAL));
 
+            }else {
+
+                indent.setStatus(String.valueOf(IndentVerificationStatus.VERIFIED));
+                IndentVerificationApprovalHistory indentVAHistory = new IndentVerificationApprovalHistory();
+                indentVAHistory.setIndent(indent);
+                indentVAHistory.setEmployee(new Employee(indent.getNextVerifierId()));
+                indentVAHistory.setIndentStatus(IndentVerificationStatus.VERIFIED);
+                indentVARepository.save(indentVAHistory);
+            }
+
+        }
     }
 
     @Override
+    @Transactional
     public void approveComplete(Long id) {
+        Optional<Indent> indentOp  = indentRepository.findById(id);
+        if(indentOp.isPresent()){
+            Indent indent = indentOp.get();
+            indent.setRfqStatus(RfqStatus.INIT);
+            indent.setStatus(String.valueOf(IndentVerificationStatus.APPROVED));
 
+            IndentVerificationApprovalHistory indentVAHistory = new IndentVerificationApprovalHistory();
+            indentVAHistory.setIndent(indent);
+            indentVAHistory.setEmployee(new Employee(indent.getNextApproverId()));
+            indentVAHistory.setIndentStatus(IndentVerificationStatus.APPROVED);
+            indentVARepository.save(indentVAHistory);
+        }
     }
 
     @Override
