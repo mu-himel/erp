@@ -934,7 +934,7 @@ public class ItemServiceImpl implements ItemService {
         if(itemExistByAttr.size()>0){
             List<Item> items = itemRepository.findByBrandIdAndItemCategoryIdAndItemAttributeName(catBrand.getId(), subCat.getId(), itemAttributeName);
             for(Item i : items){
-                if(i.getItemInactiveStatus().equals(ItemInactiveStatus.APPROVED)){
+                if(i.getItemInactiveStatus()!=null && i.getItemInactiveStatus().equals(ItemInactiveStatus.APPROVED)){
                     i.setActive(true);
                 }else{
                     i.setActive(false);
