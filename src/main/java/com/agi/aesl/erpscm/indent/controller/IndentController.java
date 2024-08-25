@@ -45,5 +45,20 @@ public class IndentController extends BaseController {
         );
     }
 
+    @GetMapping("/closed")
+    public ResponseEntity<?> closedIndents(
+        @AuthenticationPrincipal Jwt token,
+        @RequestParam("page") Optional<Integer> page,
+        @RequestParam("size") Optional<Integer> size,
+        @RequestParam("categoryId") Optional<Long> categoryId,
+        @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+        @RequestParam("startDate") Optional<String> priority
+    ){
+        return new ResponseEntity<>(
+                indentService.getAllClosedIndents(token,page,size,categoryId,subCategoryId,priority),
+                HttpStatus.OK
+        );
+    }
+
     
 }
