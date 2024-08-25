@@ -55,6 +55,7 @@ public interface ProductRequirementQuery {
                                 p.demand_id as demandId,
                                 w.name                                                   as warehouses,
                                 w.id                                                     as warehouseIds,
+                                dd.approved_quantity                                     as approvedQty,
                                 (SELECT 
                                 CASE 
                                 WHEN dda.id IS NOT NULL THEN CONCAT(
@@ -72,7 +73,7 @@ public interface ProductRequirementQuery {
                                 LEFT JOIN scm_demand_details dd ON dd.id = pr.demand_detail_id
                                 LEFT JOIN scm_category_brands cb ON cb.id = dd.brand_id
                                 LEFT JOIN scm_demand_detail_attributes dda ON dda.demand_detail_id  = dd.id
-                                WHERE dd.status IN ('PENDING') AND pr.id = p.id
+                                WHERE dd.status IN ('PENDING','PENDING_QC') AND pr.id = p.id
                                 GROUP BY dd.id)                                                        as itemName,
                                 COALESCE((SELECT sum(prtbl.request_quantity) as prQty
                                 
@@ -97,7 +98,7 @@ public interface ProductRequirementQuery {
                                     LEFT JOIN scm_demands d ON d.id = dd.demand_id 
                                     LEFT JOIN scm_category_brands cb ON cb.id=dd.brand_id 
                                     LEFT JOIN scm_demand_detail_attributes dda ON dda.demand_detail_id  = dd.id
-                                    WHERE dd.status IN ('PENDING')
+                                    WHERE dd.status IN ('PENDING','PENDING_QC')
                                     GROUP BY dd.id
                                 ) prtbl
                                 WHERE prtbl.demand_attributes LIKE CONCAT('%',
@@ -118,7 +119,7 @@ public interface ProductRequirementQuery {
                                 LEFT JOIN scm_demand_details dd ON dd.id = pr.demand_detail_id
                                 LEFT JOIN scm_category_brands cb ON cb.id = dd.brand_id
                                 LEFT JOIN scm_demand_detail_attributes dda ON dda.demand_detail_id  = dd.id
-                                WHERE dd.status IN ('PENDING') AND pr.id = p.id
+                                WHERE dd.status IN ('PENDING','PENDING_QC') AND pr.id = p.id
                                 GROUP BY dd.id)
             ,'%') ),0)                                              as prQty,
                         
@@ -140,7 +141,7 @@ public interface ProductRequirementQuery {
                                 DATEDIFF((select MIN(demand_deadline) from product_requirements pr3 WHERE pr3.status='OPEN'
                                 AND pr3.category_id=:categoryId AND pr3.sub_category_id=:subCategoryId), CURRENT_DATE)  as daysRemain,
                         dd.brand_id as brandId,
-                        (select name from category_brands cb where cb.id = dd.brand_id) as brandName
+                        (select name from scm_category_brands cb where cb.id = dd.brand_id) as brandName
                         FROM product_requirements as p
                                 LEFT JOIN scm_item_categories c on p.category_id = c.id
                                 LEFT JOIN scm_item_categories sc on p.sub_category_id = sc.id
@@ -175,10 +176,10 @@ public interface ProductRequirementQuery {
                                 LEFT JOIN scm_demands d ON d.id = dd.demand_id 
                                 LEFT JOIN scm_category_brands cb ON cb.id=dd.brand_id 
                                 LEFT JOIN scm_demand_detail_attributes dda ON dda.demand_detail_id  = dd.id
-                                WHERE pr.status = 'OPEN' AND dd.status IN ('PENDING')
+                                WHERE pr.status = 'OPEN' AND dd.status IN ('PENDING','PENDING_QC')
                                 GROUP BY dd.id
                         ) prtbl
-                        WHERE prtbl.warehouse_id = warehouse_id
+                        WHERE prtbl.warehouse_id = i2.warehouse_id
                         AND prtbl.demand_attributes LIKE CONCAT('%',:attribute,'%')
                 ) as prQty,
                 0 as inTransit 
@@ -204,5 +205,27 @@ public interface ProductRequirementQuery {
         ) i2 ON i1.id = i2.id
         WHERE iattrs LIKE CONCAT('%',:attribute,'%')
         GROUP BY warehouse_id
+            """;
+
+    String getDemandWithSearch = """
+            SELECT d.id as id,
+                   d.demand_no as demandNo,
+                   d.demand_date as demandDate,
+                   sum(dd.request_quantity) itemQty,
+                   sum(dd.approved_quantity) approvedQty,
+                   e.employee_name as employeeName,
+                   e.department_name as departmentName,
+                   w.name as warehouseName
+            FROM scm_demand_details dd 
+            LEFT JOIN scm_demands d on d.id = dd.demand_id
+            LEFT JOIN scm_warehouses w on w.id = d.warehouse_id
+            LEFT JOIN acl_users e on e.id = d.requested_by_id
+                        
+            WHERE  dd.id IN (
+                SELECT demand_detail_id
+                    FROM product_requirements pr
+                    WHERE  pr.id IN (:prIds)
+            )
+            GROUP BY d.id
             """;
 }

@@ -52,7 +52,7 @@ public class ProductRequirementController extends BaseController{
         @RequestParam("endDate") Optional<LocalDateTime> endDate
     ){
         return new ResponseEntity<>(
-            productRequirementService.getAllProductRequirements(page,size,categoryId,subCategoryId,startDate,endDate),
+            productRequirementService.getAllProductRequirements(token, page,size,categoryId,subCategoryId,startDate,endDate),
             HttpStatus.OK
         );
     }
@@ -75,6 +75,16 @@ public class ProductRequirementController extends BaseController{
         return new ResponseEntity<>(
             productRequirementService.getWarehouseRequirements(dto.getAttribute()),
             HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/demand-by-ids")
+    public ResponseEntity<?> getDemandInfoByIds(
+            @RequestParam("prIds") String prIds
+    ) {
+        return new ResponseEntity<>(
+                productRequirementService.getDemandByProductRequirementIds(prIds),
+                HttpStatus.OK
         );
     }
 

@@ -49,7 +49,8 @@ public class DataFilter {
 
 
         if(modulePermission.isPresent()){
-            ids =  modulePermission.get().get(DataFilter.FILTER_BY_WAREHOUSE);
+            String warehouseKey = (!key.isEmpty()? key:DataFilter.FILTER_BY_WAREHOUSE);
+            ids =  modulePermission.get().get(warehouseKey);
             categoryIds = modulePermission.get().get(DataFilter.FILTER_BY_CATEGORY);
         }
         if(ids.size()==0){

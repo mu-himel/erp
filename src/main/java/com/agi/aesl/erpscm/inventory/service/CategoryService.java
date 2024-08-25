@@ -94,4 +94,6 @@ public interface CategoryService {
                                                        Optional<String> code);
 
     void approveItemCategory(Jwt token, Long id, CategoryApproveRequestDto categoryApproveRequestDto);
+
+    void validateCategorySubCategoryRelation(ItemCategory category, ItemCategory subCategory);
 }

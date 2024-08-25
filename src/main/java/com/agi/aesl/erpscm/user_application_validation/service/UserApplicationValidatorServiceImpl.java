@@ -2,15 +2,18 @@ package com.agi.aesl.erpscm.user_application_validation.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
+import com.agi.aesl.erpscm.account_finance.repository.UpdateLedgerVerifier;
 import com.agi.aesl.erpscm.comment.enums.ActionType;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -67,7 +70,21 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
 
     @Override
     @Transactional
-    public void setApprovers(T t, List<ApprovalPanel> approvalPanels, DomainType domainType) {
+    public void setApprovers(T t, List<VerifierInfo> verifiers,List<ApprovalPanel> approvalPanels, DomainType domainType,
+                             VerifierMailService verifierMailService) {
+        if(verifiers.size()==0 && approvalPanels.size()>0){
+            Optional<ApprovalPanel> firstPanel = approvalPanels.stream().findFirst();
+            if(firstPanel.isPresent()){
+                ApprovalPanel panel = firstPanel.get();
+                if(verifierMailService!=null) {
+                    verifierMailService.prepareMailContent(panel.getName(), "Approval", t);
+                    verifierMailService.sentMail(panel.getEmail(),"Pending "+domainType.toString()+" Approval Request");
+                }
+                t.setStatus("PENDING_APPROVAL");
+                t.setNextApproverId(panel.getUserId());
+            }
+        }
+
         if(approvalPanels.size()>0){
 
             List<UserApplicationValidation> verifications = approvalPanels.stream().map(approvalPanel -> {
@@ -88,7 +105,8 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
 
     @Override
     @Transactional
-    public void setVerifiers(T t, List<VerifierInfo> verifiers, DomainType domainType, VerifierMailService verifierMailService) {
+    public UserApplicationValidatorService<T> setVerifiers(T t, List<VerifierInfo> verifiers,
+                                       DomainType domainType, VerifierMailService verifierMailService) {
         if (verifiers.size() > 0) {
             Optional<VerifierInfo> firstOp = verifiers.stream().findFirst();
             VerifierInfo _verifier = firstOp.get();
@@ -110,6 +128,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
             t.setNextVerifierId(_verifier.getId());
             addVerification(verifications);
         }
+        return this;
     }
 
     @Override
@@ -290,20 +309,20 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
 
     @Override
     @Transactional
-    public <T extends VerifyableEntity> List<VerifierInfo> getVerifiers(T ledgerAccount, Optional<VerifierConfig> verifierOp, String status) {
+    public <T extends VerifyableEntity> List<VerifierInfo> getVerifiers(T t, Optional<VerifierConfig> verifierOp, String status) {
         List<VerifierInfo> verifiers = new ArrayList<>();
         if(verifierOp.isPresent()){
             VerifierConfig verification = verifierOp.get();
             verifiers = verification.getVerifiers();
             Boolean verificationRequired = verification.getVerificationRequired();
             if(verificationRequired!=null && verificationRequired==true && verifiers!=null && verifiers.size()>0){
-                ledgerAccount.setStatus(AccountType.PENDING_VERIFICATION.toString());
+                t.setStatus(AccountType.PENDING_VERIFICATION.toString());
             }else{
-                ledgerAccount.setStatus(status);
+                t.setStatus(status);
             }
 
         }else{
-            ledgerAccount.setStatus(status);
+            t.setStatus(status);
         }
         return verifiers;
     }
@@ -314,5 +333,21 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
         List<ApprovalPanel> approvalPanels = moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
                 Optional.ofNullable(categories),Optional.empty());
         return approvalPanels;
+    }
+
+    @Override
+    public AppliedVADto applyVerifyApprovalProcess(T t, DomainType domainType, String status, String uri, String criteriaGroup,
+                                                   List<String> ids,
+                                                   VerifierMailService<T> mailService) {
+        Optional<VerifierConfig> verifierOp = this.getVerifiers(claimResolver, uri,
+                criteriaGroup, String.join(",", ids));
+
+        List<VerifierInfo> verifiers = this.getVerifiers(t, verifierOp,status);
+        List<ApprovalPanel> panels = this.getApprovalPanels(claimResolver, uri, String.join(",", ids));
+        this.setVerifiers(t, verifiers, domainType,
+                        null)
+                .setApprovers(t,verifiers,panels,domainType,null);
+
+        return new AppliedVADto(verifiers,panels);
     }
 }

@@ -51,7 +51,7 @@ public class WarehouseServiceImpl implements WarehouseService{
     @Override
     @Transactional
     public void createWarehouse(Jwt token, Warehouse warehouse) {
-        Optional<Warehouse> warehouseOptional = warehouseRepository.findByName(warehouse.getName());
+        Optional<Warehouse> warehouseOptional = warehouseRepository.findByNameAndActive(warehouse.getName(),true);
 
         if(warehouseOptional.isPresent()){
             throw new AesException("Name already exist");
@@ -99,12 +99,17 @@ public class WarehouseServiceImpl implements WarehouseService{
         dataFilter.setReaderService(integrationReaderService);
         dataFilter.setDataFilterService(warehouseFilterService);
         warehouseFilterService.setName(name.orElse(null));
+
         Page<?> filteredData = dataFilter.fetchData();
         if(!filteredData.isEmpty()) {
             return filteredData;
         }
 
-        return warehouseRepository.findAllByName(name,pageable);
+        if(claimResolver.isAdmin()) {
+            return warehouseRepository.findAllByName(name, pageable);
+        }
+
+        return Page.empty();
     }
 
     @Override

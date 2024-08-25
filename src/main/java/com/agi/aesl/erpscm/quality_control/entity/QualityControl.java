@@ -8,6 +8,8 @@ import com.agi.aesl.erpscm.quality_control.enums.QcStatus;
 import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,12 +17,11 @@ import java.util.List;
 
 @Data
 @Entity
+@EqualsAndHashCode(callSuper = true)
 @Table(name = "quality_controls")
 public class QualityControl extends VerifyableEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+
 
     @ManyToOne
     private GoodReceiveNote goodReceiveNote;
@@ -43,14 +44,10 @@ public class QualityControl extends VerifyableEntity {
     private Employee createdBy;
 
 
-    private String nextVerifierId;
-    private String nextApproverId;
-
     @Enumerated(EnumType.STRING)
     private QcStatus reviewPrevStatus;
 
-    private String reviewerId;
-    private LocalDateTime reviewDate;
-
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 
 }

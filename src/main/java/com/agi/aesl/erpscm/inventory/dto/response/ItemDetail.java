@@ -16,6 +16,7 @@ import java.util.Map;
 public class ItemDetail {
     Long id;
     String name;
+    String itemAttributeName;
     String code;
     Boolean active;
     ItemUnit itemUnit;

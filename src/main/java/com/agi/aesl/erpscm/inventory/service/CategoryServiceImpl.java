@@ -102,6 +102,19 @@ public class CategoryServiceImpl implements CategoryService {
                     CategoryRequestDto cr = new CategoryRequestDto();
                     cr.setCategoryStatus(CategoryStatus.APPROVED);
                     cr.setAttributes(categoryRequestDto.getAttributes());
+                    Optional<ItemCategory> codeExist = categoryRepository.findByCode(categoryRequestDto.getCode());
+                    if(codeExist.isPresent()){
+                        Optional<CategoryWarehouseStore> cwsOp =  categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseId(codeExist.get().getId() ,categoryRequestDto.getWarehouse().getId());
+
+                        if(cwsOp.isEmpty()){
+                            CategoryWarehouseStore categoryWarehouseStore = new CategoryWarehouseStore();
+                            categoryWarehouseStore.setCategory(codeExist.get());
+                            categoryWarehouseStore.setWarehouse(new Warehouse(categoryRequestDto.getWarehouse().getId()));
+                            categoryWarehouseStore.setWarehouseStore(new WarehouseStore(categoryRequestDto.getWarehouseStore().getId()));
+                            categoryWarehouseStoreRepository.save(categoryWarehouseStore);
+                        }
+                        continue;
+                    }
                     cr.setCode(categoryRequestDto.getCode());
                     cr.setCpsCategoryId(categoryRequestDto.getCpsCategoryId());
                     cr.setName(categoryRequestDto.getName());
@@ -860,6 +873,25 @@ public class CategoryServiceImpl implements CategoryService {
                 }
             }
             replacedCategory.setBrands(cbs);
+        }
+    }
+
+    @Override
+    public void validateCategorySubCategoryRelation(ItemCategory _category, ItemCategory _subCategory) {
+        Optional<ItemCategory> itemCatOp = getItemCategory(_category.getId());
+        if(itemCatOp.isEmpty()){
+            throw new AesException("Sorry! Category not found");
+        }
+
+        Optional<ItemCategory> itemSubCatOp = getItemCategory(_subCategory.getId());
+        if(itemSubCatOp.isEmpty()){
+            throw new AesException("Sorry! SubCategory not found");
+        }
+
+        ItemCategory category = itemCatOp.get();
+        ItemCategory subCategory = itemSubCatOp.get();
+        if(!subCategory.getParentCategory().getId().equals(category.getId())){
+            throw new AesException("Sorry! " + subCategory.getName()+ " is not under category "+category.getName());
         }
     }
 }

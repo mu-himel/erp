@@ -4,6 +4,12 @@ public interface CategoryQuery {
     String getCategoriesWithSearch="""
             SELECT cat.id, cat.code, cat.name, cat.currentYearBudget, cat.productCount,
             cat.warehouse_id as warehouseId,
+            (select count(*) from scm_item_categories ic3 
+            LEFT JOIN scm_category_warehouse_stores cws2 ON cws2.category_id =ic3.id
+            where ic3.parent_category_id = cat.id AND ic3.active=true
+             AND ic3.category_status = 'APPROVED'
+              AND (COALESCE(:warehouseId) IS NULL OR cws2.warehouse_id IN (:warehouseId))
+             ) as subCategoryCount,
             cat.warehouse_store_id as warehouseStoreId
              FROM (
                        SELECT ic.id, ic.code, ic.name, cws.warehouse_id, cws.warehouse_store_id, 

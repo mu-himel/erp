@@ -156,7 +156,7 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
         WarehouseStoreInfo getWarehouseStore();
         RefInfo getBrand();
         List<ItemStock> getStocks();
-
+        String getItemAttributeName();
         CatInfo getItemCategory();
         CatInfo getItemParentCategory();
         String getSku();

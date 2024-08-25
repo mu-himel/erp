@@ -1,17 +1,25 @@
 package com.agi.aesl.erpscm.user_application_validation.entity;
 
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
-
+@MappedSuperclass
 public abstract class VerifyableEntity {
-    protected Long id;
-    protected String nextVerifierId;
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    protected Long id;
+    public String nextVerifierId;
+    public String reviewerId;
+    public String nextApproverId;
+    public LocalDateTime reviewDate;
     private String status;
 
     public void setStatus(String status){
         this.status = status;
     }
+
 }

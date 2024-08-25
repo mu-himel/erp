@@ -212,7 +212,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
         String getParentCategoryCode();
         String getParentCategoryName();
         String getWarehouses();
-        Long getSubcategoryCount();
+        Long getSubCategoryCount();
         Boolean getActive();
         Long getCpsCategoryId();
     }
@@ -236,7 +236,6 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
         Long getProductCount();
         Long getWarehouseId();
         Long getWarehouseStoreId();
-
 
     }
 

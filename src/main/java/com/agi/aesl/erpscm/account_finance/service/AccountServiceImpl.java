@@ -316,7 +316,7 @@ public class AccountServiceImpl implements AccountService{
             accountVerificationApprovalRepository.deleteAllByLedgerAccountId(ledgerAccount.getId());
 
             AppliedVADto appliedVADto = verificationService.applyVerifyApprovalProcess(
-                    ledgerAccount,DomainType.ACCOUNT_LEDGER,uri,"CATEGORY",ids,
+                    ledgerAccount,DomainType.ACCOUNT_LEDGER,AccountType.COMPLETED.toString(), uri,"CATEGORY",ids,
                     null);
 //            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver,uri,
 //                    "CATEGORY",String.join(",",ids));

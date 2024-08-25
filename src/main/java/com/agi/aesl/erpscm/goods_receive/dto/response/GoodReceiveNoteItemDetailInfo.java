@@ -12,7 +12,12 @@ public class GoodReceiveNoteItemDetailInfo {
     private Long id;
     private LocalDate manufactureDate;
     private LocalDate expireDate;
+    private LocalDate createdAt;
     private BigDecimal receiveQty;
+    private BigDecimal declaredQty;
+    private BigDecimal inspectedQty;
+    private BigDecimal totalApprovedQty;
+    private BigDecimal totalDeclinedQty;
     private Optional<?> item;
     private Integer estimatedDays;
     private String itemAttribute;
@@ -23,4 +28,6 @@ public class GoodReceiveNoteItemDetailInfo {
     private BigDecimal deliveryChargeAmount;
     private BigDecimal vatPercent;
     private BigDecimal vatAmount;
+    private String approveComment;
+    private String declineComment;
 }

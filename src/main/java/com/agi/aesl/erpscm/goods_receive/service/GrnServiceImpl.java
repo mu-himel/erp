@@ -1,9 +1,9 @@
 package com.agi.aesl.erpscm.goods_receive.service;
 
+import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
-import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveItemDetailDto;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
 
 import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
@@ -20,6 +20,8 @@ import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository.*;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
+import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
+import com.agi.aesl.erpscm.quality_control.service.QcMailService;
 import com.agi.aesl.erpscm.quality_control.service.QcService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,6 +61,9 @@ public class GrnServiceImpl implements GrnService{
 
     @Autowired
     private GrnDetailRepository grnDetailRepository;
+
+    @Autowired
+    private QcMailService qcMailService;
 
     @Override
     public String getNextGrnNumber() {
@@ -112,6 +118,7 @@ public class GrnServiceImpl implements GrnService{
     @Transactional
     public void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto) {
         claimResolver.setToken(token);
+        String uri = "";
         if(claimResolver.getEmployee()==null){
             throw new RuntimeException("Sorry! Employee profile required");
         }
@@ -167,22 +174,42 @@ public class GrnServiceImpl implements GrnService{
         grn.setMushak(grnManualDto.getMushak());
         grn.setPaymentType(grnManualDto.getPayment());
         grnRepository.save(grn);
+
+//        Optional<GoodReceiveNote> qcOp = (Optional<GoodReceiveNote>) qcService.getByGrnId(grn.getId());
+
+        qcMailService.setClaimResolver(claimResolver);
+        qcMailService.setQualityControl(grn);
+        qcMailService.getAuthorizedUsers(uri);
+        qcMailService.sentMail(null,"Pending Demand");
+
     }
 
     @Override
-    public Page<?> getAllGrn(Optional<Integer> page,
+    public Page<?> getAllGrn(Jwt token, Optional<Integer> page,
                              Optional<Integer> size, Optional<String> grnNo,
-                             Optional<String> fromDate, Optional<String> toDate) {
+                             Optional<Integer> qty,Optional<Integer> receivedQty,
+                             Optional<String> fromDate, Optional<String> toDate, Optional<String> grnStatus) {
+        claimResolver.setToken(token);
+        String uri = "inventory-management/good-receive/good-receive-note";
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
         LocalDateTime fromDateObj = null;
         LocalDateTime toDateObj = null;
 
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+
         if(fromDate.isPresent() && toDate.isPresent()){
             fromDateObj = LocalDateTime.parse(fromDate.get()+"T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get()+"T23:59:59");
         }
-        return grnRepository.findAllGrn(pageable,grnNo.orElse(null),fromDateObj,toDateObj);
+        return grnRepository.findAllGrn(pageable,
+                warehouseIds,categoryIds,
+                grnNo.orElse(null),
+                qty.orElse(null), receivedQty.orElse(null),
+                fromDateObj,toDateObj,grnStatus.orElse(null));
     }
 
     @Override
@@ -203,7 +230,7 @@ public class GrnServiceImpl implements GrnService{
                 grnDetailInfo.setWarehouse(detailInfo.getWarehouse());
                 grnDetailInfo.setIsReceivedByStore(detailInfo.getIsReceivedByStore());
                 grnDetailInfo.setCreatedBy(detailInfo.getCreatedBy());
-
+                grnDetailInfo.setDeclineNote(detailInfo.getDeclineNote());
                 Long vendorId = detailInfo.getVendorId();
 
                 List<GoodReceiveNoteItemDetailInfo> detailInfos = new ArrayList<>();
@@ -244,9 +271,15 @@ public class GrnServiceImpl implements GrnService{
 //                    }
 
                     }
-
+                    grnidi.setApproveComment(goodReceiveNoteItemDetailInfo.getApproveComment());
+                    grnidi.setDeclineComment(goodReceiveNoteItemDetailInfo.getDeclineComment());
+                    grnidi.setCreatedAt(goodReceiveNoteItemDetailInfo.getCreatedAt());
                     grnidi.setId(goodReceiveNoteItemDetailInfo.getId());
                     grnidi.setReceiveQty(goodReceiveNoteItemDetailInfo.getReceiveQty());
+                    grnidi.setDeclaredQty(goodReceiveNoteItemDetailInfo.getDeclaredQty());
+                    grnidi.setInspectedQty(goodReceiveNoteItemDetailInfo.getInspectedQty());
+                    grnidi.setTotalApprovedQty(goodReceiveNoteItemDetailInfo.getTotalApprovedQty());
+                    grnidi.setTotalDeclinedQty(goodReceiveNoteItemDetailInfo.getTotalDeclinedQty());
                     grnidi.setExpireDate(goodReceiveNoteItemDetailInfo.getExpireDate());
                     grnidi.setManufactureDate(goodReceiveNoteItemDetailInfo.getManufactureDate());
                     grnidi.setItem(itemService.getItemDetailWithWarehouse(goodReceiveNoteItemDetailInfo.getItem().getId()));
@@ -266,9 +299,18 @@ public class GrnServiceImpl implements GrnService{
 
 
     @Override
-    public Page<?> getAllGrnPendingQC(Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate) {
+    public Page<?> getAllGrnPendingQC(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                      Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty,
+                                      Optional<String> fromDate, Optional<String> toDate) {
+        claimResolver.setToken(token);
+        String uri="inventory-management/good-receive/quality-check";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds= dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+
         LocalDateTime fromDateObj = null;
         LocalDateTime toDateObj = null;
 
@@ -276,7 +318,10 @@ public class GrnServiceImpl implements GrnService{
             fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
         }
-        return grnRepository.findAllGrnByStatus(GrnStatus.PENDING_QC.toString(),
+        return grnRepository.findAllGrnByStatus(
+                null,null,
+                grnNo.orElse(null), qty.orElse(null), receivedQty.orElse(null),
+                GrnStatus.PENDING_QC.toString(),
                 fromDateObj,
                 toDateObj,pageable);
     }
@@ -329,4 +374,5 @@ public class GrnServiceImpl implements GrnService{
     public Optional<GoodReceiveNote> getByGrnNo(String grnNo) {
         return grnRepository.findByGrnNo(grnNo);
     }
+
 }

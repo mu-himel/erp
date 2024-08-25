@@ -5,20 +5,30 @@ import com.agi.aesl.erpscm.account_finance.entity.LedgerAccountVerifyApprovalHis
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.common.DataFilter;
+import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
+import com.agi.aesl.erpscm.demand.service.DemandMailService;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
+import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
 import com.agi.aesl.erpscm.goods_receive.enums.QcType;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
+import com.agi.aesl.erpscm.network.NetworkService;
+import com.agi.aesl.erpscm.organization.entity.Organization;
+import com.agi.aesl.erpscm.organization.service.OrgService;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.quality_control.dto.request.QcDto;
 import com.agi.aesl.erpscm.quality_control.entity.QcVerifyApprovalHistory;
 import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
+import com.agi.aesl.erpscm.quality_control.entity.QualityControlKpi;
 import com.agi.aesl.erpscm.quality_control.enums.QcStatus;
 import com.agi.aesl.erpscm.quality_control.repository.QcRepository;
 import com.agi.aesl.erpscm.quality_control.repository.QcVerifyApprovalHistoryRepository;
@@ -28,21 +38,32 @@ import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationVal
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
 public class QcServiceImpl implements QcService{
+
+    private final Integer MAX_NO_OF_KPI=3;
 
     @Autowired
     private QcRepository qcRepository;
@@ -64,11 +85,26 @@ public class QcServiceImpl implements QcService{
     private ClaimResolver claimResolver;
 
     @Autowired
+    private QcMailService qcMailService;
+
+    @Autowired
+    private OrgService orgService;
+
+    @Autowired
+    private NetworkService networkService;
+
+    @Autowired
+    private CpsServerConfig cpsServerConfig;
+
+    @Autowired
     private QcVerifyApprovalHistoryRepository qcVerifyApprovalHistoryRepository;
+
+    @Autowired
+    private IntegrationReaderService readerService;
 
     @Override
     @Transactional
-    public void addQc(Jwt token, QcDto controlDto) throws IllegalAccessException {
+    public void addQc(Jwt token, String uri, QcDto controlDto) throws IllegalAccessException {
 
         claimResolver.setToken(token);
         AtomicReference<Boolean> error = new AtomicReference<>(false);
@@ -93,6 +129,7 @@ public class QcServiceImpl implements QcService{
 
         GoodReceiveNote grn = goodReceiveNoteOptional.get();
 
+        List<String> ids = new ArrayList<>();
         controlDto.getQcItemDetails().stream().forEach(qcItemDetail -> {
             Optional<GoodReceiveItemDetail> grnItemDetail = grn.getGoodReceiveItemDetails().stream().filter(
                     goodReceiveItemDetail -> goodReceiveItemDetail.getItem().getId().equals(qcItemDetail.getId())
@@ -100,11 +137,12 @@ public class QcServiceImpl implements QcService{
 
             if(grnItemDetail.isPresent()){
                 GoodReceiveItemDetail goodReceiveItemDetail = grnItemDetail.get();
+                ids.add(goodReceiveItemDetail.getItem().getItemCategory().getId().toString());
+                ids.add(goodReceiveItemDetail.getItem().getItemParentCategory().getId().toString());
                 goodReceiveItemDetail.setDeclaredQty(qcItemDetail.getDeclaredQty());
                 goodReceiveItemDetail.setInspectedQty(qcItemDetail.getInspectedQty());
                 grnService.updateGrnItemDetail(goodReceiveItemDetail);
             }
-
         });
 
 
@@ -117,7 +155,7 @@ public class QcServiceImpl implements QcService{
 
         AtomicReference<Integer> qcPassCount = new AtomicReference<>(0);
         AtomicReference<Integer> qcFailCount = new AtomicReference<>(0);
-        if(controlDto.getKpis().size()==3 && controlDto.getQcStatus()== QcStatus.APPROVED) {
+        if(controlDto.getKpis().size()==MAX_NO_OF_KPI && controlDto.getQcStatus()== QcStatus.APPROVED) {
 
             qualityControl.setQcStatus(QcStatus.APPROVED);
 
@@ -138,7 +176,7 @@ public class QcServiceImpl implements QcService{
 
         qcRepository.save(qualityControl);
 
-        if(qcPassCount.get().equals(3)){
+        if(qcPassCount.get().equals(MAX_NO_OF_KPI)){
             grn.setGrnStatus(GrnStatus.READY_FOR_STORE);
         }
         if(qualityControl.getQcStatus().equals(QcStatus.REJECTED) ||  qcFailCount.get()>0){
@@ -148,70 +186,100 @@ public class QcServiceImpl implements QcService{
             grn.setGrnStatus(GrnStatus.QC_HOLD);
         }
 
-        List<String> ids = new ArrayList<>();
-        String uri="";
         if(ids.size()>0 && !uri.isBlank()) {
-            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver, uri,
-                    "CATEGORY", String.join(",", ids));
-
-            List<VerifierInfo> verifiers = getVerifiers(qualityControl, verifierOp);
-            List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, String.join(",", ids));
-            verificationService.setVerifiers(qualityControl, verifiers, DomainType.QC,
+            verificationService.applyVerifyApprovalProcess(qualityControl,DomainType.QC,QcStatus.APPROVED.toString(),uri,"CATEGORY",ids,
                     null);
-            if (verifiers.size() == 0 && panels.size() > 0) {
-                qualityControl.setQcStatus(QcStatus.PENDING_APPROVAL);
-                Optional<ApprovalPanel> firstPanel = panels.stream().findFirst();
-                if (firstPanel.isPresent()) {
-                    ApprovalPanel panel = firstPanel.get();
-//                    demandMailService.prepareMailContent(panel.getName(), "Approval", demand);
-//                    demandMailService.sentMail(panel.getEmail(),"Pending Demand Approval Request");
-                    qualityControl.setNextApproverId(panel.getUserId());
-                }
-            }
-            verificationService.setApprovers(qualityControl, panels, DomainType.QC);
+
         }
     }
 
-    @Transactional
-    private List<VerifierInfo> getVerifiers(QualityControl qualityControl, Optional<VerifierConfig> verifierOp) {
-        List<VerifierInfo> verifiers = new ArrayList<>();
-        if(verifierOp.isPresent()){
-            VerifierConfig verification = verifierOp.get();
-            verifiers = verification.getVerifiers();
-            Boolean verificationRequired = verification.getVerificationRequired();
-            if(verificationRequired!=null && verificationRequired==true && verifiers!=null && verifiers.size()>0){
-                qualityControl.setQcStatus(QcStatus.PENDING_VERIFICATION);
-            }else{
-                qualityControl.setQcStatus(QcStatus.VERIFIED);
-            }
-
-        }else{
-            qualityControl.setQcStatus(QcStatus.VERIFIED);
-        }
-        return verifiers;
+    @Override
+    public Optional<?> getDetailByGrnId(Long id) {
+        return grnService.getGrnById(id,false);
     }
 
-    @Transactional
-    private List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories) {
-        List<ApprovalPanel> approvalPanels = moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
-                Optional.ofNullable(categories),Optional.empty());
-        return approvalPanels;
+    @Override
+    public Optional<?> getByGrnId(Long id) {
+        return grnService.getGRNById(id, true);
     }
 
     @Override
     public List<?> getQcResultByGrn(Long id) {
-
         return qcRepository.getQcResultByGrn(id);
     }
 
     @Override
     @Transactional
-    public void rejectQc(Long id) {
+    public void rejectQc(Jwt token, Long id, NoteDto noteDto) {
+        claimResolver.setToken(token);
         Optional<GoodReceiveNote> goodReceiveNoteOptional = (Optional<GoodReceiveNote>)grnService.getGRNById(id, true);
         if(goodReceiveNoteOptional.isPresent()){
             GoodReceiveNote grn = goodReceiveNoteOptional.get();
             grn.setGrnStatus(GrnStatus.REJECTED);
+
+            List<QualityControlKpi> kpis =  new ArrayList<>();
+
+            QualityControl qc = new QualityControl();
+            qc.setComment(noteDto.getNote());
+            Optional<Employee> empOp = claimResolver.getEmployee();
+            if(empOp.isPresent()) {
+                Employee employee = empOp.get();
+                qc.setCreatedBy(new Employee(employee.getId()));
+                qc.setWarehouse(new Warehouse(employee.getWarehouseId()));
+            }
+            qc.setGoodReceiveNote(grn);
+            qc.setQcDate(LocalDate.now());
+            qc.setQcStatus(QcStatus.REJECTED);
+
+            kpis.add(getKpi("Description Goods",qc));
+            kpis.add(getKpi("Quantity",qc));
+            kpis.add(getKpi("Quality",qc));
+            kpis.add(getKpi("Packing & Labeling",qc));
+            qc.setQualityControlKpis(kpis);
+            qcRepository.save(qc);
+            ObjectMapper mapper = new ObjectMapper();
+            String kpi = null;
+            try {
+                kpi = mapper.writeValueAsString(kpis);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            if(grn.getGrnMode().equals(GrnMode.AUTO)) {
+                sentQcStatus(token.getTokenValue(), grn.getRemotePoId(), GrnStatus.QC_FAILED, new ArrayList<>(), noteDto, kpi);
+            }
         }
+    }
+
+    @Transactional
+    private void sentQcStatus(String token, Long id,GrnStatus status, List<?> qcDetails, NoteDto noteDto, String qcResult){
+        HttpHeaders headers = new HttpHeaders();
+        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token);
+        if(orgOp.isPresent()){
+            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
+        }
+
+        Map<String,Object> map = new HashMap<>();
+        map.put("note",noteDto.getNote());
+        map.put("status",status);
+        map.put("qcDetails",qcDetails);
+        map.put("qcResult",qcResult);
+        HttpEntity<Map<String,Object>> payload = new HttpEntity<>(map,headers);
+        String url = (status.equals(GrnStatus.QC_PASS))? cpsServerConfig.getPoQcPassEndpoint(id):
+                cpsServerConfig.getPoQcFailEndpoint(id);
+        ResponseEntity<?> response = networkService.put(url, payload, Void.class);
+        if(response.getStatusCode()!= HttpStatus.NO_CONTENT){
+            throw new RuntimeException("Sorry! Something wrong");
+        }
+
+    }
+
+    private QualityControlKpi getKpi(String name, QualityControl qc){
+        QualityControlKpi qck  = new QualityControlKpi();
+        qck.setName(name);
+        qck.setQcType(QcType.FAIL);
+        qck.setRemark("REJECTED");
+        qck.setQualityControl(qc);
+        return qck;
     }
 
     @Override
@@ -333,5 +401,143 @@ public class QcServiceImpl implements QcService{
                 reviewDto.getMessage(),
                 reviewDto.getAttachments()
         ));
+    }
+
+    @Override
+    public Page<?> getAllPendingVerificationQC(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                               Optional<String> grnNo, Optional<Integer> qty,
+                                               Optional<Integer> receivedQty, Optional<String> fromDate,
+                                               Optional<String> toDate) {
+        claimResolver.setToken(token);
+
+        String uri="inventory-management/good-receive/quality-check-pending-verification";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+
+        LocalDateTime fromDateObj = null;
+        LocalDateTime toDateObj = null;
+
+        if(fromDate.isPresent() && toDate.isPresent()) {
+            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
+            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+        }
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(readerService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+        List<String> status = new ArrayList<>();
+        status.add(QcStatus.PENDING_VERIFICATION.toString());
+        status.add(QcStatus.VERIFIED.toString());
+
+        return qcRepository.findAllPendingVerification(
+                    warehouseIds,categoryIds, claimResolver.getUserId(),status,
+                    grnNo.orElse(null),
+                    qty.orElse(null),
+                    receivedQty.orElse(null),
+                    fromDateObj,
+                    toDateObj,
+                    pageable
+                );
+    }
+
+    @Override
+    public Page<?> getAllPendingApprovalQC(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty, Optional<String> fromDate, Optional<String> toDate) {
+        claimResolver.setToken(token);
+
+        String uri="inventory-management/good-receive/quality-check-pending-approval";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+
+        LocalDateTime fromDateObj = null;
+        LocalDateTime toDateObj = null;
+
+        if(fromDate.isPresent() && toDate.isPresent()) {
+            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
+            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+        }
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(readerService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+
+        return qcRepository.findAllPendingApproval(
+                warehouseIds,categoryIds, claimResolver.getUserId(),
+                grnNo.orElse(null),
+                qty.orElse(null),
+                receivedQty.orElse(null),
+                fromDateObj,
+                toDateObj,
+                pageable
+        );
+    }
+
+    @Override
+    public Page<?> getAllClosed(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty,
+                                Optional<String> fromDate, Optional<String> toDate) {
+        claimResolver.setToken(token);
+
+        String uri="inventory-management/good-receive/quality-check-closed";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+
+        LocalDateTime fromDateObj = null;
+        LocalDateTime toDateObj = null;
+
+        if(fromDate.isPresent() && toDate.isPresent()) {
+            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
+            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+        }
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(readerService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+
+        return qcRepository.findAllClosed(
+                warehouseIds,categoryIds,
+                grnNo.orElse(null),
+                qty.orElse(null),
+                receivedQty.orElse(null),
+                fromDateObj,
+                toDateObj,
+                pageable
+        );
+    }
+
+    @Override
+    public Page<?> getAllRejected(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> grnNo,
+                                  Optional<Integer> qty, Optional<Integer> receivedQty, Optional<String> fromDate,
+                                  Optional<String> toDate) {
+
+        claimResolver.setToken(token);
+        String uri="inventory-management/good-receive/quality-check-rejected";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+
+        LocalDateTime fromDateObj = null;
+        LocalDateTime toDateObj = null;
+
+        if(fromDate.isPresent() && toDate.isPresent()) {
+            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
+            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+        }
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(readerService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+
+        return qcRepository.findAllRejected(
+                warehouseIds,categoryIds,
+                grnNo.orElse(null),
+                qty.orElse(null),
+                receivedQty.orElse(null),
+                fromDateObj,
+                toDateObj,
+                pageable
+        );
     }
 }

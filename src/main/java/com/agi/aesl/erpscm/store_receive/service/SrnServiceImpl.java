@@ -118,24 +118,28 @@ public class SrnServiceImpl implements SrnService{
         List<String> ids = new ArrayList<>();
         String uri="";
         if(ids.size()>0 && !uri.isBlank()) {
-            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver, uri,
-                    "CATEGORY", String.join(",", ids));
 
-            List<VerifierInfo> verifiers = getVerifiers(storeReceiveNote, verifierOp);
-            List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, String.join(",", ids));
-            verificationService.setVerifiers(storeReceiveNote, verifiers, DomainType.SRN,
-                    null);
-            if (verifiers.size() == 0 && panels.size() > 0) {
-                storeReceiveNote.setSrnStatus(SrnStatus.PENDING_APPROVAL);
-                Optional<ApprovalPanel> firstPanel = panels.stream().findFirst();
-                if (firstPanel.isPresent()) {
-                    ApprovalPanel panel = firstPanel.get();
-//                    demandMailService.prepareMailContent(panel.getName(), "Approval", demand);
-//                    demandMailService.sentMail(panel.getEmail(),"Pending Demand Approval Request");
-                    storeReceiveNote.setNextApproverId(panel.getUserId());
-                }
-            }
-            verificationService.setApprovers(storeReceiveNote, panels, DomainType.SRN);
+            verificationService.applyVerifyApprovalProcess(storeReceiveNote,DomainType.SRN,
+                    SrnStatus.APPROVED.toString(),uri,
+                    "CATEGORY",ids,null);
+//            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver, uri,
+//                    "CATEGORY", String.join(",", ids));
+//
+//            List<VerifierInfo> verifiers = getVerifiers(storeReceiveNote, verifierOp);
+//            List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, String.join(",", ids));
+//            verificationService.setVerifiers(storeReceiveNote, verifiers, DomainType.SRN,
+//                    null);
+//            if (verifiers.size() == 0 && panels.size() > 0) {
+//                storeReceiveNote.setSrnStatus(SrnStatus.PENDING_APPROVAL);
+//                Optional<ApprovalPanel> firstPanel = panels.stream().findFirst();
+//                if (firstPanel.isPresent()) {
+//                    ApprovalPanel panel = firstPanel.get();
+////                    demandMailService.prepareMailContent(panel.getName(), "Approval", demand);
+////                    demandMailService.sentMail(panel.getEmail(),"Pending Demand Approval Request");
+//                    storeReceiveNote.setNextApproverId(panel.getUserId());
+//                }
+//            }
+//            verificationService.setApprovers(storeReceiveNote, verifiers,panels, DomainType.SRN,null);
         }
 
     }

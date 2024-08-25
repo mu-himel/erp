@@ -22,6 +22,9 @@ public class QualityControlKpi {
     @Column(length = 500)
     private String remark;
 
+    @Column(length = 500)
+    private String comment;
+
     @ManyToOne
     @JsonIgnore
     private QualityControl qualityControl;

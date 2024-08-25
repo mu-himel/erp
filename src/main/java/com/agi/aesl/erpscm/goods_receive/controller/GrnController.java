@@ -8,6 +8,7 @@ import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -57,14 +58,18 @@ public class GrnController extends BaseController {
 
     @GetMapping("/all")
     public ResponseEntity<?> getAllGrn(
+            @AuthenticationPrincipal Jwt token,
             @RequestParam("grnNo") Optional<String> grnNo,
+            @RequestParam("itemQty") Optional<Integer> qty,
+            @RequestParam("receivedQty") Optional<Integer> receivedQty,
             @RequestParam("fromDate") Optional<String> fromDate,
             @RequestParam("toDate") Optional<String> toDate,
+            @RequestParam("grnStatus") Optional<String> grnStatus,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
-            ){
+    ){
         return new ResponseEntity<>(
-                grnService.getAllGrn(page,size,grnNo,fromDate,toDate),
+                grnService.getAllGrn(token,page,size,grnNo,qty, receivedQty,fromDate,toDate, grnStatus),
                 HttpStatus.OK
         );
     }

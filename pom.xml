@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.agi.aesl</groupId>
-	<artifactId>erp-scm</artifactId>
+	<artifactId>scmbe</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>ERP SCM</name>
 	<description>ERP Supply Chain Management</description>
@@ -102,6 +102,7 @@
 			</plugin>
 
 		</plugins>
+		<finalName>scmbe</finalName>
 	</build>
 	<profiles>
 		<profile>

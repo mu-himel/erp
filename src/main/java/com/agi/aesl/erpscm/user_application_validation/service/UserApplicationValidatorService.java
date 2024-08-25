@@ -4,9 +4,11 @@ import java.util.List;
 import java.util.Optional;
 
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
+import com.agi.aesl.erpscm.account_finance.repository.UpdateLedgerVerifier;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties.AssertingParty.Verification;
 
@@ -24,8 +26,10 @@ import org.springframework.security.oauth2.jwt.Jwt;
 
 public interface UserApplicationValidatorService<T> {
     Optional<VerifierConfig> getVerifiers(ClaimResolver claimResolver, String uri,String criteriaGroup, String categories);
-    void setVerifiers(T t, List<VerifierInfo> verifiers, DomainType domainType,VerifierMailService verifierMailService);
-    void setApprovers(T t, List<ApprovalPanel> approvalPanels, DomainType domainType);
+    UserApplicationValidatorService<T> setVerifiers(T t, List<VerifierInfo> verifiers, DomainType domainType,
+                                                    VerifierMailService verifierMailService);
+    void setApprovers(T t, List<VerifierInfo> verifiers,List<ApprovalPanel> approvalPanels, DomainType domainType,
+                      VerifierMailService verifierMailService);
 
     void addVerification(UserApplicationValidation verification);
     void addVerification(List<UserApplicationValidation> verifications);
@@ -49,5 +53,8 @@ public interface UserApplicationValidatorService<T> {
     <T extends VerifyableEntity> List<VerifierInfo> getVerifiers(T ledgerAccount, Optional<VerifierConfig> verifierOp, String status);
 
     List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories);
+
+    AppliedVADto applyVerifyApprovalProcess(T t, DomainType domainType, String status, String uri, String criteriaGroup, List<String> ids,
+                                            VerifierMailService<T> mailService);
 
 }
