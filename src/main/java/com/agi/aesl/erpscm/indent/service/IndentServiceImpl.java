@@ -2,9 +2,11 @@ package com.agi.aesl.erpscm.indent.service;
 
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
+import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.common.enums.IndentPriority;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.indent.dto.request.IndentRequestDto;
 import com.agi.aesl.erpscm.indent.dto.request.MoveIndentRequestDto;
 import com.agi.aesl.erpscm.indent.entity.Indent;
@@ -28,6 +30,9 @@ import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationVa
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +56,9 @@ public class IndentServiceImpl implements IndentService{
 
     @Autowired
     private UserApplicationValidatorService<Indent> verificationService;
+
+    @Autowired
+    private IntegrationReaderService integrationReaderService;
 
     @Autowired
     private ClaimResolver claimResolver;
@@ -139,18 +147,54 @@ public class IndentServiceImpl implements IndentService{
     }
 
     @Override
-    public Page<?> getAllIndents(Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<String> priority) {
-        return null;
+    public Page<?> getAllIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
+                                 Optional<Long> subCategoryId, Optional<String> priority) {
+        claimResolver.setToken(token);
+        String uri="";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig();
+
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+        categoryId.ifPresent(categoryIds::add);
+        subCategoryId.ifPresent(categoryIds::add);
+        return indentRepository.getAllIndents(categoryIds,warehouseIds,pageable);
     }
 
     @Override
-    public Page<?> getAllPendingVerificationIndents(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<String> priority, Optional<Integer> page, Optional<Integer> size) {
-        return null;
+    public Page<?> getAllPendingVerificationIndents(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                 Optional<String> priority, Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+        String uri="";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig();
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+        categoryId.ifPresent(categoryIds::add);
+        subCategoryId.ifPresent(categoryIds::add);
+        return indentRepository.getAllPendingVerifications(
+                claimResolver.getUserId(),
+                categoryIds,warehouseIds,pageable);
     }
 
     @Override
     public Page<?> getAllPendingApprovalIndents(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<String> priority, Optional<Integer> page, Optional<Integer> size) {
-        return null;
+        claimResolver.setToken(token);
+        String uri = "";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig();
+        List<Long> categoryIds = dataFilter.getCategoryIds();
+        categoryId.ifPresent(categoryIds::add);
+        subCategoryId.ifPresent(categoryIds::add);
+        return indentRepository.getAllPendingApprovals(claimResolver.getUserId(),
+                categoryIds,warehouseIds,pageable);
     }
 
     @Override

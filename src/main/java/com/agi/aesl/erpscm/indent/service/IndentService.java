@@ -15,7 +15,9 @@ import java.util.Optional;
 public interface IndentService extends VerificationDomainService {
     String getNextIndentNo();
     void createIndent(Jwt token, String uri, IndentRequestDto productRequirementRequestDto);
+    
     Page<?> getAllIndents(
+            Jwt token,
             Optional<Integer> page,
             Optional<Integer> size,
             Optional<Long> categoryId,
