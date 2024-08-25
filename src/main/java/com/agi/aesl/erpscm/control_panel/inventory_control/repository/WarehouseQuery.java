@@ -11,7 +11,7 @@ public interface WarehouseQuery {
             LEFT JOIN scm_warehouse_stores ws ON ws.warehouse_id = w.id
                 AND ws.active = true
             WHERE w.active = true
-                AND (:name IS NULL OR w.name LIKE CONCAT(:name,'%'))
+                AND (:name IS NULL OR LOWER(w.name) LIKE CONCAT('%',LOWER(:name),'%'))
             GROUP BY w.id 
             """;
 
@@ -25,7 +25,7 @@ public interface WarehouseQuery {
             LEFT JOIN scm_warehouse_stores ws ON ws.warehouse_id = w.id
                 AND ws.active = true
             WHERE w.active = true
-                AND (:name IS NULL OR w.name LIKE CONCAT(:name,'%'))
+                AND (:name IS NULL OR LOWER(w.name) LIKE CONCAT('%',LOWER(:name),'%'))
                 AND w.id IN (:warehouseIds)
             GROUP BY w.id 
             """;

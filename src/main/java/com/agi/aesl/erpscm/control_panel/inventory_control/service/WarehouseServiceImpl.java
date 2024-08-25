@@ -99,12 +99,17 @@ public class WarehouseServiceImpl implements WarehouseService{
         dataFilter.setReaderService(integrationReaderService);
         dataFilter.setDataFilterService(warehouseFilterService);
         warehouseFilterService.setName(name.orElse(null));
+
         Page<?> filteredData = dataFilter.fetchData();
         if(!filteredData.isEmpty()) {
             return filteredData;
         }
 
-        return warehouseRepository.findAllByName(name,pageable);
+        if(claimResolver.isAdmin()) {
+            return warehouseRepository.findAllByName(name, pageable);
+        }
+
+        return Page.empty();
     }
 
     @Override
