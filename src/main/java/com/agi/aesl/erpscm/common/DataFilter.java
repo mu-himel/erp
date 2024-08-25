@@ -42,6 +42,24 @@ public class DataFilter {
         this.claimResolver = claimResolver;
     }
 
+    public List<Long> getFilterConfig(){
+
+        Optional<Map<String, List<Long>>> modulePermission = readerService
+                .getModuleFilterByUri(claimResolver.getToken(), uri);
+
+        if(modulePermission.isPresent()){
+            ids =  modulePermission.get().get(DataFilter.FILTER_BY_WAREHOUSE);
+            categoryIds = modulePermission.get().get(DataFilter.FILTER_BY_CATEGORY);
+        }
+        if(ids.isEmpty()){
+            if(claimResolver.getEmployee().isPresent()) {
+                ids.add(claimResolver.getEmployee().get().getWarehouseId());
+            }
+
+        }
+        return ids;
+    }
+
     public List<Long> getFilterConfig(String key){
 
         Optional<Map<String, List<Long>>> modulePermission = readerService
