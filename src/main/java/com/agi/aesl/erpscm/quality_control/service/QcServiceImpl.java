@@ -107,6 +107,9 @@ public class QcServiceImpl implements QcService{
     public void addQc(Jwt token, String uri, QcDto controlDto) throws IllegalAccessException {
 
         claimResolver.setToken(token);
+        if(claimResolver.getEmployee().isEmpty()){
+            throw new RuntimeException("Store Manager/Executive profile required to perform this");
+        }
         AtomicReference<Boolean> error = new AtomicReference<>(false);
 
         controlDto.getKpis().stream().forEach(qualityControlKpi -> {
@@ -132,7 +135,7 @@ public class QcServiceImpl implements QcService{
         List<String> ids = new ArrayList<>();
         controlDto.getQcItemDetails().stream().forEach(qcItemDetail -> {
             Optional<GoodReceiveItemDetail> grnItemDetail = grn.getGoodReceiveItemDetails().stream().filter(
-                    goodReceiveItemDetail -> goodReceiveItemDetail.getItem().getId().equals(qcItemDetail.getId())
+                    goodReceiveItemDetail -> goodReceiveItemDetail.getId().equals(qcItemDetail.getId())
             ).findFirst();
 
             if(grnItemDetail.isPresent()){
@@ -141,6 +144,10 @@ public class QcServiceImpl implements QcService{
                 ids.add(goodReceiveItemDetail.getItem().getItemParentCategory().getId().toString());
                 goodReceiveItemDetail.setDeclaredQty(qcItemDetail.getDeclaredQty());
                 goodReceiveItemDetail.setInspectedQty(qcItemDetail.getInspectedQty());
+                goodReceiveItemDetail.setTotalApprovedQty(qcItemDetail.getTotalApproveQty());
+                goodReceiveItemDetail.setTotalDeclinedQty(qcItemDetail.getTotalDeclineQty());
+                goodReceiveItemDetail.setApproveComment(qcItemDetail.getApproveComment());
+                goodReceiveItemDetail.setDeclineComment(qcItemDetail.getDeclineComment());
                 grnService.updateGrnItemDetail(goodReceiveItemDetail);
             }
         });
@@ -155,7 +162,7 @@ public class QcServiceImpl implements QcService{
 
         AtomicReference<Integer> qcPassCount = new AtomicReference<>(0);
         AtomicReference<Integer> qcFailCount = new AtomicReference<>(0);
-        if(controlDto.getKpis().size()==MAX_NO_OF_KPI && controlDto.getQcStatus()== QcStatus.APPROVED) {
+        if(controlDto.getKpis().size()==MAX_NO_OF_KPI && (controlDto.getQcStatus()== QcStatus.PARTIALLY_APPROVED || controlDto.getQcStatus()== QcStatus.APPROVED)) {
 
             qualityControl.setQcStatus(QcStatus.APPROVED);
 
@@ -178,6 +185,9 @@ public class QcServiceImpl implements QcService{
 
         if(qcPassCount.get().equals(MAX_NO_OF_KPI)){
             grn.setGrnStatus(GrnStatus.READY_FOR_STORE);
+        }
+        if(qualityControl.getQcStatus().equals(QcStatus.PARTIALLY_APPROVED)){
+            grn.setGrnStatus(GrnStatus.QC_PARTIAL);
         }
         if(qualityControl.getQcStatus().equals(QcStatus.REJECTED) ||  qcFailCount.get()>0){
             grn.setGrnStatus(GrnStatus.QC_FAILED);
