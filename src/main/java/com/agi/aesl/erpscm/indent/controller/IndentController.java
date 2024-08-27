@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.indent.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
+import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.indent.dto.request.IndentRequestDto;
 import com.agi.aesl.erpscm.indent.service.IndentService;
 import jakarta.validation.Valid;
@@ -45,6 +46,39 @@ public class IndentController extends BaseController {
         );
     }
 
+    @GetMapping("/pending-verification")
+    public ResponseEntity<?> getPendingVerificationIndents(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+            @RequestParam("startDate") Optional<String> priority
+    ){
+        return new ResponseEntity<>(
+                indentService.getAllPendingVerificationIndents(token,categoryId,subCategoryId, priority,page, size),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/pending-approval")
+    public ResponseEntity<?> getPendingApprovalIndents(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+            @RequestParam("startDate") Optional<String> priority
+    ){
+        return new ResponseEntity<>(
+                indentService.getAllPendingApprovalIndents(
+                        token,
+                        categoryId,subCategoryId,
+                        priority,page, size),
+                HttpStatus.OK
+        );
+    }
+
     @GetMapping("/closed")
     public ResponseEntity<?> closedIndents(
         @AuthenticationPrincipal Jwt token,
@@ -69,6 +103,22 @@ public class IndentController extends BaseController {
                 HttpStatus.OK
         );
     }
+
+    @PostMapping("/review/{id}")
+    public ResponseEntity<?> review(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id,
+            @RequestBody ReviewDto reviewDto
+            ){
+        indentService.reviewIndent(token,id,reviewDto);
+        return new ResponseEntity<>(
+                HttpStatus.NO_CONTENT
+        );
+    }
+
+
+
+
 
     
 }

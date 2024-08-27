@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.indent.service;
 
+import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.indent.dto.request.IndentRequestDto;
 import com.agi.aesl.erpscm.indent.dto.request.MoveIndentRequestDto;
 import com.agi.aesl.erpscm.indent.entity.Indent;
@@ -53,4 +54,6 @@ public interface IndentService extends VerificationDomainService {
 
 
     Page<?> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<String> priority);
+
+    void reviewIndent(Jwt token, Long id, ReviewDto reviewDto);
 }

@@ -42,8 +42,8 @@ public interface IndentQuery {
                            GROUP_CONCAT(DISTINCT sc.name)          as subCategoryName,
                            COUNT(ide.id)                           as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
-                           i.priority                              as priority,
-                           i.status                                as status,
+                           i.priority_date_time                              as priority,
+                           i.indent_status                                as status,
                            CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
                            (SELECT indent_status FROM indent_verification_approval_histories
                                    where employee_id = :nextVerifierId AND indent_id=i.id AND indent_status='VERIFIED') as indentStatus
@@ -55,7 +55,7 @@ public interface IndentQuery {
                              LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                              LEFT JOIN acl_users e ON e.id = i.requested_by_id
                      
-                    WHERE  ((i.next_verifier_id = :nextVerifierId AND i.status IN ('PENDING_VERIFICATION', 'REVIEW','VERIFIED'))
+                    WHERE  ((i.next_verifier_id = :nextVerifierId AND i.indent_status IN ('PENDING_VERIFICATION', 'REVIEW','VERIFIED'))
                         OR (ivah.employee_id = :nextVerifierId AND ivah.indent_status = 'VERIFIED'))
                         AND (COALESCE(:warehouseIds) IS NULL OR i.warehouse_id IN (:warehouseIds))
                         AND 
@@ -79,8 +79,8 @@ public interface IndentQuery {
                            GROUP_CONCAT(DISTINCT sc.name)          as subCategoryName,
                            COUNT(ide.id)                           as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
-                           i.priority                              as priority,
-                           i.status                                as status,
+                           i.priority_date_time                              as priority,
+                           i.indent_status                                as status,
                            CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
                            (SELECT indent_status FROM indent_verification_approval_histories
                                    where employee_id = :nextApproverId AND indent_id=i.id AND indent_status='APPROVED') as indentStatus
@@ -92,7 +92,7 @@ public interface IndentQuery {
                              LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                              LEFT JOIN acl_users e ON e.id = i.requested_by_id
                      
-                    WHERE  ((i.next_approver_id = :nextApproverId AND i.status IN ('PENDING_APPROVAL', 'REVIEW','APPROVED'))
+                    WHERE  ((i.next_approver_id = :nextApproverId AND i.indent_status IN ('PENDING_APPROVAL', 'REVIEW','APPROVED'))
                         OR (ivah.employee_id = :nextApproverId AND ivah.indent_status = 'APPROVED'))
                         AND (COALESCE(:warehouseIds) IS NULL OR i.warehouse_id IN (:warehouseIds))
                         AND 
@@ -115,8 +115,8 @@ public interface IndentQuery {
                            sc.name                                 as subCategoryName,
                            COUNT(ide.id)                           as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
-                           i.priority                              as priority,
-                           i.status                                as status,
+                           i.priority_date_time                              as priority,
+                           i.indent_status                                as status,
                            CONCAT(e.employee_id,'-',e.employee_name)        as employeeName
                     FROM indents i
                              LEFT JOIN indent_details ide on i.id = ide.indent_id
@@ -124,7 +124,7 @@ public interface IndentQuery {
                              LEFT JOIN scm_item_categories c on i.category_id = c.id
                              LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                              LEFT JOIN acl_users e ON e.id = i.requested_by_id
-                    WHERE i.status IN ('COMPLETED','REJECTED') 
+                    WHERE i.indent_status IN ('COMPLETED','REJECTED','APPROVED','VERIFIED') 
                         AND (
                             (COALESCE(:categoryIds) IS NULL OR c.id IN (:categoryIds))
                             OR 
@@ -209,11 +209,46 @@ public interface IndentQuery {
                              LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                              LEFT JOIN scm_items it ON ide.item_id = it.id
 
-                    WHERE i.status = 'INIT'
+                    WHERE i.istatus = 'INIT'
                     AND (COALESCE(:id) IS NOT NULL AND i.id IN (:ids))
                     group by i.category_id, i.sub_category_id,
                     CASE
                         WHEN it.id IS NOT NULL THEN it.id
                     END
             """;
+
+    String getIndentApprovedAndPendingRFqWithSearch =
+            """
+                    SELECT i.id                                    as id,
+                            i.indent_no                             as indentNo,
+                            i.indent_date                           as indentDate,
+                            i.category_id                           as categoryId,
+                            c.name                                  as categoryName,
+                            sc.name                                 as subCategoryName,
+                            COUNT(ide.id)                           as itemsCount,
+                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
+                            i.priority_date_time                    as priority,
+                            i.rfq_status                            as status,
+                            CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
+                            DATEDIFF(i.priority_date_time , CURRENT_DATE) as daysRemain
+                            
+                    FROM indents i
+                                    LEFT JOIN indent_details ide on i.id = ide.indent_id
+                                    LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
+                                    LEFT JOIN scm_item_categories c on i.category_id = c.id
+                                    LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
+                                    LEFT JOIN acl_users e ON e.id = i.requested_by_id
+                            
+                    WHERE  i.status = 'APPROVED' AND i.rfq_status = 'INIT'
+                            AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo))
+                            AND (:category IS NULL OR  LOWER(c.name) LIKE  CONCAT(LOWER(:category),'%'))
+                            AND (:subCategory IS NULL OR LOWER(sc.name) LIKE CONCAT(LOWER(:subCategory),'%'))
+                            AND (:priority IS NULL OR i.priority = :priority)
+                            AND (:daysRemain IS NULL OR DATEDIFF(i.priority_date_time , CURRENT_DATE) = :daysRemain)
+                            AND (:fromDate IS NULL OR (i.indent_date BETWEEN :fromDate AND :toDate))
+                            
+                    GROUP BY i.id
+                                                                            """;
+
+    String countPendingRfqs="SELECT COUNT(*) FROM ("+getIndentApprovedAndPendingRFqWithSearch+") as total";
 }

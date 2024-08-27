@@ -45,11 +45,16 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
     List<IndentViewInfo> getIndentByIds(List<Long> ids);
 
     @Modifying
-    @Query(value = "UPDATE Indent i SET i.status = 'OPEN' WHERE i.id in (:ids)")
+    @Query(value = "UPDATE Indent i SET i.istatus = 'OPEN' WHERE i.id in (:ids)")
     int moveIndentByIds(List<Long> ids);
 
     @Query("SELECT MAX(i.id) FROM Indent i")
     Optional<Long> findMaxIndentById();
+
+    @Query(value = getIndentApprovedAndPendingRFqWithSearch, countQuery = countPendingRfqs, nativeQuery = true)
+    Page<?> getAllApprovedIndents(String indentNo, String category, String subCategory, String priority,
+                                  Integer daysRemain, LocalDateTime fromDate, LocalDateTime toDate,
+                                  Pageable pageable);
 
     interface IndentInfo {
         Long getId();

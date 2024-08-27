@@ -6,6 +6,7 @@ import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.common.enums.IndentPriority;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
+import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.indent.dto.request.IndentRequestDto;
@@ -38,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -397,6 +399,7 @@ public class IndentServiceImpl implements IndentService{
     }
 
     @Override
+    @Transactional
     public int moveIndentByIds(MoveIndentRequestDto moveIndent) {
         if (CollectionUtils.isEmpty(moveIndent.getIds())) {
             throw new RuntimeException("Indents should not empty");
@@ -443,12 +446,18 @@ public class IndentServiceImpl implements IndentService{
         if(indentOp.isPresent()){
             Indent indent = indentOp.get();
             if(firstApprover.isPresent()){
+                IndentVerificationApprovalHistory indentVAHistory = new IndentVerificationApprovalHistory();
+                indentVAHistory.setIndent(indent);
+                indentVAHistory.setEmployee(new Employee(indent.getNextVerifierId()));
+                indentVAHistory.setIndentStatus(IndentVerificationStatus.VERIFIED);
+                indentVARepository.save(indentVAHistory);
+
                 indent.setNextApproverId(firstApprover.get().getVerifier().getId());
-                indent.setStatus(String.valueOf(IndentVerificationStatus.PENDING_APPROVAL));
+                indent.setIndentStatus(IndentVerificationStatus.PENDING_APPROVAL);
 
             }else {
 
-                indent.setStatus(String.valueOf(IndentVerificationStatus.VERIFIED));
+                indent.setIndentStatus(IndentVerificationStatus.VERIFIED);
                 IndentVerificationApprovalHistory indentVAHistory = new IndentVerificationApprovalHistory();
                 indentVAHistory.setIndent(indent);
                 indentVAHistory.setEmployee(new Employee(indent.getNextVerifierId()));
@@ -477,12 +486,50 @@ public class IndentServiceImpl implements IndentService{
     }
 
     @Override
+    @Transactional
     public void sendForReview(Long domainId, RefDto reviewer, String comment) {
+        Optional<Indent> indentOp  = indentRepository.findById(domainId);
+        if(indentOp.isPresent()){
+            Indent indent = indentOp.get();
+            indent.setReviewerId(reviewer.getId());
+            indent.setReviewPrevStatus(indent.getIndentStatus());
+            indent.setIndentStatus(IndentVerificationStatus.REVIEW);
+            indent.setReviewDate(LocalDateTime.now());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void reviewIndent(Jwt token, Long id, ReviewDto reviewDto) {
+        claimResolver.setToken(token);
+        if(claimResolver.getEmployee().isEmpty()){
+            throw new RuntimeException("Sorry! Employee Profile Required");
+        }
+
+        Optional<Indent> indentOp = indentRepository.findById(id);
+        if(indentOp.isEmpty()){
+            throw new RuntimeException("Indent not found");
+        }
+        Indent indent = indentOp.get();
+        indent.setReviewerId(null);
+        indent.setIndentStatus(indent.getReviewPrevStatus());
+        indent.setReviewPrevStatus(null);
+        indent.setReviewDate(LocalDateTime.now());
+
+        commentService.addComment(commentService.prepareComment(
+                claimResolver.getEmployee().get(),
+                reviewDto.getDomainType(),
+                indent.getId(),
+                reviewDto.getMessage(),
+                reviewDto.getAttachments()
+        ));
 
     }
 
     @Override
+    @Transactional
     public void onRejected(Employee verifier, Long domainId) {
-
+        Optional<Indent> indentOp = indentRepository.findById(domainId);
+        indentOp.ifPresent(indent -> indent.setIndentStatus(IndentVerificationStatus.REJECTED));
     }
 }

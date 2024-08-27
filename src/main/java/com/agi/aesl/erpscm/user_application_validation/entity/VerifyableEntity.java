@@ -16,6 +16,8 @@ public abstract class VerifyableEntity {
     public String reviewerId;
     public String nextApproverId;
     public LocalDateTime reviewDate;
+
+    @Transient
     private String status;
 
     public void setStatus(String status){

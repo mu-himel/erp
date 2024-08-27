@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.user_application_validation.controller;
 
 import com.agi.aesl.erpscm.account_finance.service.AccountService;
+import com.agi.aesl.erpscm.indent.service.IndentService;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.VerifyDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationVa
 public class VerifyController extends BaseController{
 
     @Autowired
-    private UserApplicationValidatorService verificationService;
+    private UserApplicationValidatorService<?> verificationService;
 
     @Autowired
     private DemandService demandService;
@@ -30,6 +31,8 @@ public class VerifyController extends BaseController{
     @Autowired
     private AccountService accountService;
 
+    @Autowired
+    private IndentService indentService;
 
     @PutMapping("/approve")
     public ResponseEntity<?> approve(
@@ -41,6 +44,10 @@ public class VerifyController extends BaseController{
         }
         if(approveDto.getDomainType().equals(DomainType.ACCOUNT_LEDGER)){
             verificationService.setVerificationDomainService(accountService);
+            verificationService.approve(token, approveDto);
+        }
+        if(approveDto.getDomainType().equals(DomainType.INDENT)){
+            verificationService.setVerificationDomainService(indentService);
             verificationService.approve(token, approveDto);
         }
 
@@ -59,6 +66,10 @@ public class VerifyController extends BaseController{
             verificationService.setVerificationDomainService(accountService);
             verificationService.verify(token, verifyDto);
         }
+        if(verifyDto.getDomainType().equals(DomainType.INDENT)){
+            verificationService.setVerificationDomainService(indentService);
+            verificationService.verify(token, verifyDto);
+        }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -72,6 +83,10 @@ public class VerifyController extends BaseController{
             verificationService.setVerificationDomainService(accountService);
             verificationService.review(verifyDto);
         }
+        if(verifyDto.getDomainType().equals(DomainType.INDENT)){
+            verificationService.setVerificationDomainService(indentService);
+            verificationService.review(verifyDto);
+        }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -82,6 +97,10 @@ public class VerifyController extends BaseController{
 
         if(rejectDto.getDomainType().equals(DomainType.ACCOUNT_LEDGER)){
             verificationService.setVerificationDomainService(accountService);
+            verificationService.reject(token, rejectDto);
+        }
+        if(rejectDto.getDomainType().equals(DomainType.INDENT)){
+            verificationService.setVerificationDomainService(indentService);
             verificationService.reject(token, rejectDto);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
