@@ -318,27 +318,7 @@ public class AccountServiceImpl implements AccountService{
             AppliedVADto appliedVADto = verificationService.applyVerifyApprovalProcess(
                     ledgerAccount,DomainType.ACCOUNT_LEDGER,AccountType.COMPLETED.toString(), uri,"CATEGORY",ids,
                     null);
-//            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver,uri,
-//                    "CATEGORY",String.join(",",ids));
-//
-//
-//
-//            List<VerifierInfo> verifiers = verificationService.getVerifiers(ledgerAccount, verifierOp,
-//                                                            AccountType.PENDING.toString());
-//
-//            List<ApprovalPanel> panels = verificationService.getApprovalPanels(claimResolver, uri, String.join(",",ids));
-//
-//            verificationService.setVerifiers(
-//                            ledgerAccount,
-//                            verifiers,
-//                            DomainType.ACCOUNT_LEDGER,
-//                            null)
-//                        .setApprovers(
-//                                ledgerAccount,
-//                                verifiers,
-//                                panels,
-//                                DomainType.ACCOUNT_LEDGER,
-//                null);
+
 
             if(appliedVADto.getVerifiers().size()==0 && appliedVADto.getPanels().size()==0){
                 integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
