@@ -35,8 +35,8 @@ import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository.VerificationResponse;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.transaction.Transactional;
 
 @Service
 public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> implements UserApplicationValidatorService<T>{
@@ -142,6 +142,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Transactional
     public void addVerification(List<UserApplicationValidation> verifications) {
         verificationRepository.saveAll(verifications);
+        System.out.println(verifications);
     }
 
     @Override
@@ -336,6 +337,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     }
 
     @Override
+    @Transactional
     public AppliedVADto applyVerifyApprovalProcess(T t, DomainType domainType, String status, String uri, String criteriaGroup,
                                                    List<String> ids,
                                                    VerifierMailService<T> mailService) {

@@ -65,7 +65,7 @@ public class IndentController extends BaseController {
             @PathVariable("id") Long id
     ){
         return new ResponseEntity<>(
-                indentService.getIndentById(id),
+                indentService.getIndentDetailById(id),
                 HttpStatus.OK
         );
     }

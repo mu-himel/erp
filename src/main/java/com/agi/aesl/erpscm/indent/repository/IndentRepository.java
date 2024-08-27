@@ -48,6 +48,9 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
     @Query(value = "UPDATE Indent i SET i.status = 'OPEN' WHERE i.id in (:ids)")
     int moveIndentByIds(List<Long> ids);
 
+    @Query("SELECT MAX(i.id) FROM Indent i")
+    Optional<Long> findMaxIndentById();
+
     interface IndentInfo {
         Long getId();
         String getIndentNo();
@@ -75,7 +78,7 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
         Long getId();
         Long getDetailId();
         Long getWarehouseId();
-        Long getWarehouseName();
+        String getWarehouseName();
         Long getPiwId();
         Long getPdId();
         LocalDate getPdDate();

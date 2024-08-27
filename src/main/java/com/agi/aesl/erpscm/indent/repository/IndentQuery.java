@@ -10,14 +10,14 @@ public interface IndentQuery {
                            c.name                                  as categoryName,
                            COUNT(ide.id)                           as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
-                           i.priority                              as priority,
-                           i.status                                as status
+                           i.priority_date_time                    as priority,
+                           i.indent_status                                as status
                      
                     FROM indents i
                              LEFT JOIN indent_details ide on i.id = ide.indent_id
                              LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
-                             LEFT JOIN item_categories c on i.category_id = c.id
-                             LEFT JOIN item_categories sc on ide.sub_category_id = sc.id
+                             LEFT JOIN scm_item_categories c on i.category_id = c.id
+                             LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                      
                     WHERE 
                     (COALESCE(:warehouseIds) IS NULL OR i.warehouse_id IN (:warehouseIds))
@@ -51,8 +51,8 @@ public interface IndentQuery {
                              LEFT JOIN indent_details ide on i.id = ide.indent_id
                              LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
                              LEFT JOIN indent_verification_approval_histories ivah ON ivah.indent_id = i.id
-                             LEFT JOIN item_categories c on i.category_id = c.id
-                             LEFT JOIN item_categories sc on ide.sub_category_id = sc.id
+                             LEFT JOIN scm_item_categories c on i.category_id = c.id
+                             LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                              LEFT JOIN acl_users e ON e.id = i.requested_by_id
                      
                     WHERE  ((i.next_verifier_id = :nextVerifierId AND i.status IN ('PENDING_VERIFICATION', 'REVIEW','VERIFIED'))
@@ -88,8 +88,8 @@ public interface IndentQuery {
                              LEFT JOIN indent_details ide on i.id = ide.indent_id
                              LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
                              LEFT JOIN indent_verification_approval_histories ivah ON ivah.indent_id = i.id
-                             LEFT JOIN item_categories c on i.category_id = c.id
-                             LEFT JOIN item_categories sc on ide.sub_category_id = sc.id
+                             LEFT JOIN scm_item_categories c on i.category_id = c.id
+                             LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                              LEFT JOIN acl_users e ON e.id = i.requested_by_id
                      
                     WHERE  ((i.next_approver_id = :nextApproverId AND i.status IN ('PENDING_APPROVAL', 'REVIEW','APPROVED'))
@@ -121,8 +121,8 @@ public interface IndentQuery {
                     FROM indents i
                              LEFT JOIN indent_details ide on i.id = ide.indent_id
                              LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
-                             LEFT JOIN item_categories c on i.category_id = c.id
-                             LEFT JOIN item_categories sc on ide.sub_category_id = sc.id
+                             LEFT JOIN scm_item_categories c on i.category_id = c.id
+                             LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                              LEFT JOIN acl_users e ON e.id = i.requested_by_id
                     WHERE i.status IN ('COMPLETED','REJECTED') 
                         AND (
@@ -160,7 +160,7 @@ public interface IndentQuery {
                            i.priority_date_time                              as priorityDate,
                            DATEDIFF(i.priority_date_time,CURRENT_DATE)       as daysRemain,
                            ide.brand_id                                      as brandId,
-                           (select name from category_brands cb WHERE cb.id = ide.brand_id) as brandName
+                           (select name from scm_category_brands cb WHERE cb.id = ide.brand_id) as brandName
 
                     FROM indents i
                              LEFT JOIN indent_details ide on i.id = ide.indent_id
@@ -198,7 +198,7 @@ public interface IndentQuery {
                            i.priority_date_time                              as priorityDate,
                            DATEDIFF(i.priority_date_time,CURRENT_DATE)       as daysRemain,
                            ide.brand_id                                      as brandId,
-                           (select name from category_brands cb WHERE cb.id = ide.brand_id) as brandName
+                           (select name from scm_category_brands cb WHERE cb.id = ide.brand_id) as brandName
 
                     FROM indents i
                              LEFT JOIN indent_details ide on i.id = ide.indent_id
@@ -207,7 +207,7 @@ public interface IndentQuery {
                              LEFT JOIN indent_partial_deliveries ipd ON ipd.indent_delivery_detail_id = idd.id
                              LEFT JOIN scm_item_categories c on i.category_id = c.id
                              LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
-                             LEFT JOIN items it ON ide.item_id = it.id
+                             LEFT JOIN scm_items it ON ide.item_id = it.id
 
                     WHERE i.status = 'INIT'
                     AND (COALESCE(:id) IS NOT NULL AND i.id IN (:ids))

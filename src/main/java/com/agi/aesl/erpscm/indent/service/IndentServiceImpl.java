@@ -11,6 +11,7 @@ import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.indent.dto.request.IndentRequestDto;
 import com.agi.aesl.erpscm.indent.dto.request.MoveIndentRequestDto;
 import com.agi.aesl.erpscm.indent.entity.*;
+import com.agi.aesl.erpscm.indent.enums.IndentStatus;
 import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
 import com.agi.aesl.erpscm.indent.enums.RfqStatus;
 import com.agi.aesl.erpscm.indent.repository.IndentRepository;
@@ -68,10 +69,17 @@ public class IndentServiceImpl implements IndentService{
 
     @Override
     public String getNextIndentNo() {
-        return null;
+        Optional<Long> demandOptional = indentRepository.findMaxIndentById();
+        if (demandOptional.isPresent()) {
+            Long demandNo = demandOptional.get();
+            Long newDemandNo = demandNo + 1L;
+            return String.format("%06d", newDemandNo);
+        }
+        return String.format("%06d", 1);
     }
 
     @Override
+    @Transactional
     public void createIndent(Jwt token, String uri, IndentRequestDto indentRequestDto) {
         claimResolver.setToken(token);
         List<String> ids = new ArrayList<>();
@@ -93,7 +101,7 @@ public class IndentServiceImpl implements IndentService{
         if(claimResolver.getEmployee().isPresent()) {
             indent.setRequestedBy(new Employee(claimResolver.getEmployee().get().getId()));
         }
-        indent.setPriority(IndentPriority.valueOf(indentRequestDto.getPriority()));
+//        indent.setPriority(IndentPriority.valueOf(indentRequestDto.getPriority()));
         indent.setPriorityDateTime(indentRequestDto.getPriorityDate());
 
 
@@ -129,22 +137,24 @@ public class IndentServiceImpl implements IndentService{
             return indentDetail;
         }).collect(Collectors.toList()));
 
-        AppliedVADto appliedVa = verificationService.applyVerifyApprovalProcess(indent, DomainType.INDENT, IndentVerificationStatus.APPROVED.toString(),
-                uri, "CATEGORY", ids, null);
 
-        if(appliedVa.getVerifiers().isEmpty() && appliedVa.getPanels().isEmpty()){
-            indent.setRfqStatus(RfqStatus.INIT);
-            indent.setIndentStatus(IndentVerificationStatus.APPROVED);
-        }
-
+        indent.setIstatus(IndentStatus.INIT);
         indent.setReviewerId(null);
         indent.setReviewDate(null);
 
-        indentRepository.save(indent);
+        Indent indentSaved = indentRepository.save(indent);
+        verificationService.removeVerification(indentSaved.getId(), DomainType.INDENT);
 
-        verificationService.removeVerification(indent.getId(), DomainType.INDENT);
-        indentVARepository.deleteAllByIndentId(indent.getId());
+        AppliedVADto appliedVa = verificationService.applyVerifyApprovalProcess(indentSaved, DomainType.INDENT, IndentVerificationStatus.APPROVED.toString(),
+                uri, "CATEGORY", ids, null);
 
+        if(appliedVa.getVerifiers().isEmpty() && appliedVa.getPanels().isEmpty()){
+            indentSaved.setRfqStatus(RfqStatus.INIT);
+            indentSaved.setIndentStatus(IndentVerificationStatus.APPROVED);
+        }
+
+        indentVARepository.deleteAllByIndentId(indentSaved.getId());
+        prIndentRepository.updatePrIndentToClose(indentRequestDto.getPrIds());
     }
 
     @Override
@@ -241,7 +251,6 @@ public class IndentServiceImpl implements IndentService{
         response.put("vatPercent", indent.getSubCategory().getVat());
         response.put("subCategoryId",indent.getSubCategory().getId());
         response.put("subCategoryName",indent.getSubCategory().getName());
-        response.put("status",indent.getStatus());
         response.put("reviewerId",indent.getReviewerId());
         response.put("isDevliverToSingleWarehouse", isDeliverInSingleWarehouse!=null? isDeliverInSingleWarehouse:false);
         response.put("singleWarehouseId",(warehouse!=null)? warehouse.getId(): null);
@@ -249,7 +258,7 @@ public class IndentServiceImpl implements IndentService{
         response.put("indentDetails", getProcessedResult(result));
         response.put("indentDate",indent.getIndentDate());
         response.put("expireDateTime",indent.getExpireDateTime());
-
+        response.put("status",indent.getIndentStatus());
         List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
         List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
         List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService

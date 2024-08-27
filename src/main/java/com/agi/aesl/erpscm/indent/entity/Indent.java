@@ -23,9 +23,9 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Indent extends VerifyableEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    private Long id;
 
     private String indentNo;
 
@@ -44,10 +44,10 @@ public class Indent extends VerifyableEntity {
 
     private LocalDateTime expireDateTime;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private ItemCategory category;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private ItemCategory subCategory;
 
     @Enumerated(EnumType.STRING)
