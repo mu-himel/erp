@@ -41,9 +41,7 @@ public interface IndentService extends VerificationDomainService {
                                          Optional<Integer> page,
                                          Optional<Integer> size);
 
-    Map<String,Object> getIndentById(
-            Optional<Long> indentId
-    );
+    Map<String,Object> getIndentDetailById(Long indentId);
 
     Optional<Indent> getIndentByCode(String code);
 

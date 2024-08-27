@@ -136,4 +136,84 @@ public interface IndentQuery {
             """;
 
     String countAllClosed="SELECT COUNT(*) FROM ("+getClosedIndents+") as total";
+
+    String getIndentDetail= """
+            SELECT i.id                                              as id,
+                           ide.id                                            as detailId,
+                           idd.warehouse_id                                  as warehouseId,
+                           w.name                                            as warehouseName,
+                           idd.id                                            as piwId,
+                           ipd.id                                            as pdId,
+                           ipd.pd_date                                       as pdDate,
+                           ipd.qty                                           as pdQty,
+                           i.indent_no                                       as indentNo,
+                           i.category_id                                     as categoryId,
+                           c.name                                            as categoryName,
+                           ide.sub_category_id                               as subCategoryId,
+                           ide.product_requirements_ids                      as productRequirementIds,
+                           sc.name                                           as subCategoryName,
+                           ide.item_attribute                                as itemName,
+                           COALESCE(SUM(idd.order_qty), 0)                   as orderQty,
+                           idd.rfq_qty                                       as rfqQty,
+                           COALESCE(SUM(idd.pr_qty), 0)                      as prQty,
+                           i.priority                                        as priority,
+                           i.priority_date_time                              as priorityDate,
+                           DATEDIFF(i.priority_date_time,CURRENT_DATE)       as daysRemain,
+                           ide.brand_id                                      as brandId,
+                           (select name from category_brands cb WHERE cb.id = ide.brand_id) as brandName
+
+                    FROM indents i
+                             LEFT JOIN indent_details ide on i.id = ide.indent_id
+                             LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
+                             LEFT JOIN scm_warehouses w ON w.id = idd.warehouse_id
+                             LEFT JOIN indent_partial_deliveries ipd ON ipd.indent_delivery_detail_id = idd.id
+                             LEFT JOIN scm_item_categories c on i.category_id = c.id
+                             LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
+
+
+                    WHERE (:id IS NOT NULL AND i.id = :id)
+                    group by ipd.id,idd.id
+            """;
+
+    String getIndentDetailWithIdRange= """
+            SELECT i.id                                                      as id,
+                           ide.id                                            as detailId,
+                           idd.warehouse_id                                  as warehouseId,
+                           w.name                                            as warehouseName,
+                           idd.id                                            as piwId,
+                           ipd.id                                            as pdId,
+                           ipd.pd_date                                       as pdDate,
+                           ipd.qty                                           as pdQty,
+                           i.indent_no                                       as indentNo,
+                           i.category_id                                     as categoryId,
+                           c.name                                            as categoryName,
+                           ide.sub_category_id                               as subCategoryId,
+                           ide.product_requirements_ids                      as productRequirementIds,
+                           sc.name                                           as subCategoryName,
+                           ide.item_attribute                                as itemName,
+                           COALESCE(SUM(idd.order_qty), 0)                   as orderQty,
+                           idd.rfq_qty                                       as rfqQty,
+                           COALESCE(SUM(idd.pr_qty), 0)                      as prQty,
+                           i.priority                                        as priority,
+                           i.priority_date_time                              as priorityDate,
+                           DATEDIFF(i.priority_date_time,CURRENT_DATE)       as daysRemain,
+                           ide.brand_id                                      as brandId,
+                           (select name from category_brands cb WHERE cb.id = ide.brand_id) as brandName
+
+                    FROM indents i
+                             LEFT JOIN indent_details ide on i.id = ide.indent_id
+                             LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
+                             LEFT JOIN scm_warehouses w ON w.id = idd.warehouse_id
+                             LEFT JOIN indent_partial_deliveries ipd ON ipd.indent_delivery_detail_id = idd.id
+                             LEFT JOIN scm_item_categories c on i.category_id = c.id
+                             LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
+                             LEFT JOIN items it ON ide.item_id = it.id
+
+                    WHERE i.status = 'INIT'
+                    AND (COALESCE(:id) IS NOT NULL AND i.id IN (:ids))
+                    group by i.category_id, i.sub_category_id,
+                    CASE
+                        WHEN it.id IS NOT NULL THEN it.id
+                    END
+            """;
 }

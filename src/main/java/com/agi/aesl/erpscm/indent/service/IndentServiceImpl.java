@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.indent.service;
 
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
+import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.common.enums.IndentPriority;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
@@ -33,11 +34,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,6 +57,9 @@ public class IndentServiceImpl implements IndentService{
 
     @Autowired
     private IntegrationReaderService integrationReaderService;
+
+    @Autowired
+    private CommentService commentService;
 
     @Autowired
     private ClaimResolver claimResolver;
@@ -211,28 +214,187 @@ public class IndentServiceImpl implements IndentService{
     }
 
     @Override
-    public Map<String, Object> getIndentById(Optional<Long> indentId) {
+    public Map<String, Object> getIndentDetailById(Long indentId) {
+        Optional<Indent> indentOptional = indentRepository.findById(indentId);
+        List<IndentRepository.IndentViewInfo> result = indentRepository.getIndentById(indentId);
+
+        if(indentOptional.isPresent() && !result.isEmpty()){
+            Map<String, Object> response = new HashMap<>();
+
+            Indent indent = indentOptional.get();
+            prepareDetail(indent,result,response);
+            return response;
+
+        }
+
         return null;
+    }
+
+    private void prepareDetail(Indent indent, List<IndentRepository.IndentViewInfo> result, Map<String, Object> response){
+        Warehouse warehouse = indent.getSingleWarehouse();
+        Boolean isDeliverInSingleWarehouse = indent.getIsDevliverToSingleWarehouse();
+        response.put("indentId",indent.getId());
+        response.put("indentNo",indent.getIndentNo());
+        response.put("requestedBy",indent.getRequestedBy());
+        response.put("categoryId", indent.getCategory().getId());
+        response.put("categoryName", indent.getCategory().getName());
+        response.put("vatPercent", indent.getSubCategory().getVat());
+        response.put("subCategoryId",indent.getSubCategory().getId());
+        response.put("subCategoryName",indent.getSubCategory().getName());
+        response.put("status",indent.getStatus());
+        response.put("reviewerId",indent.getReviewerId());
+        response.put("isDevliverToSingleWarehouse", isDeliverInSingleWarehouse!=null? isDeliverInSingleWarehouse:false);
+        response.put("singleWarehouseId",(warehouse!=null)? warehouse.getId(): null);
+        response.put("singleWarehouseName",(warehouse!=null)? warehouse.getName(): null);
+        response.put("indentDetails", getProcessedResult(result));
+        response.put("indentDate",indent.getIndentDate());
+        response.put("expireDateTime",indent.getExpireDateTime());
+
+        List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
+        List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
+        List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
+                .getVerificationsByDomainTypeAndDomainId(DomainType.INDENT, indent.getId());
+        vrs.stream().forEach(verifier->{
+            if(verifier.getIsApproval()==false){
+                verifiers.add(verifier);
+            }else{
+                approvers.add(verifier);
+            }
+        });
+
+        List<?> comments = commentService.getCommentsByDomain(DomainType.INDENT, indent.getId());
+
+        response.put("verifiers",verifiers);
+        response.put("approvers",approvers);
+        response.put("comments",comments);
+
+    }
+
+    private List<?> getProcessedResult(List<IndentRepository.IndentViewInfo> result){
+        List<Map<String,Object>> items = new ArrayList<>();
+
+        result.stream().forEach(indentViewInfo->{
+            Map<String,Object> item = new HashMap<>();
+            String warehouseKey = indentViewInfo.getItemName()+"_"+indentViewInfo.getWarehouseId();
+
+            Optional<Map<String,Object>> anyItemOp = items.stream().filter(_item->{
+                return  _item.get("itemName").equals(indentViewInfo.getItemName());
+            }).findAny();
+
+            if(anyItemOp.isEmpty()){
+                item.put("id", indentViewInfo.getDetailId());
+                item.put("productRequirementsIds",indentViewInfo.getProductRequirementIds());
+                item.put("prDetailId",indentViewInfo.getDetailId());
+                item.put("prQty",indentViewInfo.getPrQty());
+
+                item.put("itemName",indentViewInfo.getItemName());
+                item.put("categoryName", indentViewInfo.getCategoryName());
+                item.put("subCategoryName", indentViewInfo.getSubCategoryName());
+                item.put("categoryId", indentViewInfo.getCategoryId());
+                item.put("subCategoryId", indentViewInfo.getSubCategoryId());
+                item.put("daysRemain", indentViewInfo.getDaysRemain());
+                item.put("priority",indentViewInfo.getPriority());
+                item.put("priorityDate",indentViewInfo.getPriorityDate());
+                item.put("brandId", indentViewInfo.getBrandId());
+                item.put("brandName",indentViewInfo.getBrandName());
+                Map<String,Object> warehouseInfo = new HashMap<>();
+                warehouseInfo.put("id", indentViewInfo.getPiwId());
+                warehouseInfo.put("warehouseId",indentViewInfo.getWarehouseId());
+                warehouseInfo.put("warehouseName",indentViewInfo.getWarehouseName());
+                warehouseInfo.put("orderQty", indentViewInfo.getOrderQty());
+                warehouseInfo.put("prQty", indentViewInfo.getPrQty());
+                warehouseInfo.put("rfqQty", indentViewInfo.getRfqQty());
+                // add key for unique check in existing block
+                warehouseInfo.put("key", indentViewInfo.getDetailId()+"_"+indentViewInfo.getPiwId());
+
+                List<Map<String,Object>> pdList = new ArrayList<>();
+                Map<String,Object> pd = new HashMap<>();
+                pd.put("id",indentViewInfo.getPdId());
+                pd.put("pdDate",indentViewInfo.getPdDate());
+                pd.put("qty",indentViewInfo.getPdQty());
+                pdList.add(pd);
+                if(indentViewInfo.getPdDate()!= null && indentViewInfo.getPdQty()!=null){
+                    warehouseInfo.put("partialDeliveries",pdList);
+                }else{
+                    warehouseInfo.put("partialDeliveries", new ArrayList<>());
+                }
+
+                Map<String,Object> warehousKeyMap = new HashMap<>();
+
+                warehousKeyMap.put(warehouseKey, warehouseInfo);
+                item.put("warehouses",warehousKeyMap);
+
+                items.add(item);
+            }else{
+                Map<String,Object> existItem = (Map<String,Object>)anyItemOp.get();
+                if(existItem.containsKey("warehouses")){
+                    Map<String,Object> existWarehouseProp = (Map<String,Object>)existItem.get("warehouses");
+
+                    if(existWarehouseProp.containsKey(warehouseKey)){
+                        Map<String,Object> warehousKeyMap = (Map<String,Object>)existWarehouseProp.get(warehouseKey);
+
+                        String key = (String)warehousKeyMap.get("key");
+                        String currentkey = indentViewInfo.getDetailId()+"_"+indentViewInfo.getPiwId();
+
+                        if(!key.contains(currentkey))
+                        {
+                            BigDecimal orderQty = (BigDecimal)warehousKeyMap.get("orderQty");
+                            orderQty =indentViewInfo.getOrderQty().add(orderQty);
+                            warehousKeyMap.replace("orderQty",orderQty);
+                            Long prQty = (Long) warehousKeyMap.get("prQty");
+                            prQty += indentViewInfo.getPrQty();
+                            warehousKeyMap.replace("prQty",prQty);
+
+                            warehousKeyMap.replace("key", currentkey);
+                        }
+
+                        List<Map<String,Object>> pdList = (List<Map<String,Object>>)warehousKeyMap.get("partialDeliveries");
+                        Map<String,Object> pd = new HashMap<>();
+                        pd.put("id",indentViewInfo.getPdId());
+                        pd.put("pdDate",indentViewInfo.getPdDate());
+                        pd.put("qty",indentViewInfo.getPdQty());
+                        pdList.add(pd);
+                    }
+                }
+            }
+        });
+
+        List<?> fitems = items.stream().map(_item->{
+            Map<String,Object> warehouses = (Map<String,Object>)_item.get("warehouses");
+            _item.replace("warehouses", warehouses.values());
+            return _item;
+        }).collect(Collectors.toList());
+
+        return fitems;
     }
 
     @Override
     public Optional<Indent> getIndentByCode(String code) {
-        return Optional.empty();
+        return indentRepository.findByRfqUuid(code);
     }
 
     @Override
     public Optional<Indent> getIndentById(Long id) {
-        return Optional.empty();
+
+        return indentRepository.findById(id);
     }
 
     @Override
     public List<?> getIndentByIds(Optional<List<Long>> indentIds) {
-        return null;
+        List<?> results = indentRepository.getIndentByIds(
+                indentIds.orElseThrow(()->new RuntimeException("Indent ids should not empty"))
+        );
+        return results;
     }
 
     @Override
     public int moveIndentByIds(MoveIndentRequestDto moveIndent) {
-        return 0;
+        if (CollectionUtils.isEmpty(moveIndent.getIds())) {
+            throw new RuntimeException("Indents should not empty");
+        }
+        int result = indentRepository.moveIndentByIds(moveIndent.getIds());
+
+        return result;
     }
 
     @Override
