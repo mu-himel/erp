@@ -7,6 +7,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseStor
 
 // import io.swagger.annotations.Api;
 // import io.swagger.annotations.ApiOperation;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,7 @@ public class WarehouseStoreController extends BaseController{
 
     @PostMapping
     // @ApiOperation(value = "Create Store")
-    public ResponseEntity<?> createStore(@RequestBody StoreDto storeDto){
+    public ResponseEntity<?> createStore(@RequestBody @Valid  StoreDto storeDto){
         warehouseStoreService.createStore(storeDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
