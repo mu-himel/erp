@@ -18,4 +18,7 @@ public interface CategoryWarehouseStoreRepository extends JpaRepository<Category
     Optional<CategoryWarehouseStore> findByCategoryIdAndWarehouseId(Long id, Long id2);
 
     List<CategoryWarehouseStore> findByCategoryId(Long id);
+
+
+    List<CategoryWarehouseStore> findByWarehouseStoreId(Long id);
 }
