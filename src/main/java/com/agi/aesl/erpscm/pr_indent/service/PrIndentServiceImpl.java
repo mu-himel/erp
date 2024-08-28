@@ -169,7 +169,7 @@ public class PrIndentServiceImpl implements PrIndentService {
                                 warehousKeyMap.replace("orderQty",orderQty);
                             Long _prQty = (Long) warehousKeyMap.get("prQty");
                             Long existingVal = (item.get("prQty")!=null)? (long) item.get("prQty") : 0L;
-                            existItem.put("prQty",(long)item.get("prQty")+_prQty);
+                            existItem.put("prQty",((item.get("prQty")!=null)?(long)item.get("prQty"):0)+_prQty);
                             prQty+=_prQty;
                             prQty+= prIndentViewInfo.getPrQty();
                             warehousKeyMap.replace("prQty",_prQty);

@@ -121,6 +121,9 @@ public class IndentServiceImpl implements IndentService{
     public void createIndent(Jwt token, String uri, IndentRequestDto indentRequestDto) {
         claimResolver.setToken(token);
         List<String> ids = new ArrayList<>();
+        if(indentRequestDto.getIndentNo()==null || indentRequestDto.getIndentNo().trim().length()<=0){
+            throw new RuntimeException("Sorry! Indent No Required");
+        }
         ids.add(indentRequestDto.getCategoryId().toString());
 
         Indent indent = indentRequestDto.getEntity();
@@ -135,7 +138,7 @@ public class IndentServiceImpl implements IndentService{
 
         indent.setCategory(new ItemCategory(indentRequestDto.getCategoryId()));
         indent.setSubCategory(new ItemCategory(indentRequestDto.getSubCategoryId()));
-        indent.setIndentNo(getNextIndentNo());
+        indent.setIndentNo(indentRequestDto.getIndentNo());
         if(claimResolver.getEmployee().isPresent()) {
             indent.setRequestedBy(new Employee(claimResolver.getEmployee().get().getId()));
         }
@@ -144,6 +147,11 @@ public class IndentServiceImpl implements IndentService{
 
         setIndentDetail(indent,indentRequestDto,ids,true);
         indent.setIstatus(IndentStatus.INIT);
+
+        List<String> prids = indentRequestDto.getPrIds().stream().map(prid->{
+            return prid.toString();
+        }).toList();
+        indent.setPrIndents(String.join(",",prids));
 
         indentRepository.save(indent);
         verificationService.removeVerification(indent.getId(), DomainType.INDENT);
@@ -161,6 +169,7 @@ public class IndentServiceImpl implements IndentService{
     }
 
     @Override
+    @Transactional
     public void updateIndent(Jwt token, String uri, Long id, IndentRequestDto indentRequestDto) {
         claimResolver.setToken(token);
         List<String> ids = new ArrayList<>();
@@ -184,7 +193,12 @@ public class IndentServiceImpl implements IndentService{
         indentVARepository.deleteAllByIndentId(indent.getId());
         verificationService.applyVerifyApprovalProcess(indent,DomainType.INDENT,
                 IndentVerificationStatus.APPROVED.toString(),uri,"CATEGORY",ids,null);
-        prIndentRepository.updatePrIndentToClose(indentRequestDto.getPrIds());
+        List<Long> prids = Arrays.stream(indent.getPrIndents().split(",")).map(Long::parseLong).toList();
+        prIndentRepository.updatePrIndentToClose(prids);
+        indent.setReviewerId(null);
+        indent.setReviewPrevStatus(null);
+        indent.setReviewDate(null);
+
     }
 
     @Override
@@ -394,6 +408,33 @@ public class IndentServiceImpl implements IndentService{
                         pd.put("pdDate",indentViewInfo.getPdDate());
                         pd.put("qty",indentViewInfo.getPdQty());
                         pdList.add(pd);
+                    }else{
+                        Map<String,Object> warehouseInfo = new HashMap<>();
+                        warehouseInfo.put("id", indentViewInfo.getPiwId());
+                        warehouseInfo.put("warehouseId",indentViewInfo.getWarehouseId());
+                        warehouseInfo.put("warehouseName",indentViewInfo.getWarehouseName());
+                        warehouseInfo.put("orderQty", indentViewInfo.getOrderQty());
+                        warehouseInfo.put("prQty", indentViewInfo.getPrQty());
+                        warehouseInfo.put("rfqQty", indentViewInfo.getRfqQty());
+                        // add key for unique check in existing block
+                        warehouseInfo.put("key", indentViewInfo.getDetailId()+"_"+indentViewInfo.getPiwId());
+
+                        List<Map<String,Object>> pdList = new ArrayList<>();
+                        Map<String,Object> pd = new HashMap<>();
+                        pd.put("id",indentViewInfo.getPdId());
+                        pd.put("pdDate",indentViewInfo.getPdDate());
+                        pd.put("qty",indentViewInfo.getPdQty());
+                        pdList.add(pd);
+                        if(indentViewInfo.getPdDate()!= null && indentViewInfo.getPdQty()!=null){
+                            warehouseInfo.put("partialDeliveries",pdList);
+                        }else{
+                            warehouseInfo.put("partialDeliveries", new ArrayList<>());
+                        }
+
+//                        Map<String,Object> warehousKeyMap = new HashMap<>();
+
+                        existWarehouseProp.put(warehouseKey, warehouseInfo);
+                        existItem.put("warehouses",existWarehouseProp);
                     }
                 }
             }
@@ -485,7 +526,7 @@ public class IndentServiceImpl implements IndentService{
                 indent.setIndentStatus(IndentVerificationStatus.PENDING_APPROVAL);
 
             }else {
-
+                indent.setRfqStatus(RfqStatus.INIT);
                 indent.setIndentStatus(IndentVerificationStatus.VERIFIED);
                 IndentVerificationApprovalHistory indentVAHistory = new IndentVerificationApprovalHistory();
                 indentVAHistory.setIndent(indent);

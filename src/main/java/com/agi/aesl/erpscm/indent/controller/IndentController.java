@@ -14,6 +14,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -23,6 +26,13 @@ public class IndentController extends BaseController {
     @Autowired
     private IndentService indentService;
 
+    @GetMapping("/next-id")
+    public ResponseEntity<?> getNextId(){
+        Map<String,Object> code = new HashMap<>();
+        code.put("code",indentService.getNextIndentNo());
+        return new ResponseEntity<>(code,HttpStatus.OK);
+    }
+
     @PostMapping
     public ResponseEntity<?> addIndent(
             @AuthenticationPrincipal Jwt token,
@@ -31,6 +41,28 @@ public class IndentController extends BaseController {
             ){
         indentService.createIndent(token,uri,indentRequestDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateIndent(
+            @PathVariable("id") Long id,
+            @AuthenticationPrincipal Jwt token,
+            @RequestHeader("uri") String uri,
+            @RequestBody @Valid IndentRequestDto indentRequestDto
+    ){
+        indentService.updateIndent(token, uri,id, indentRequestDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/getByIds")
+    public ResponseEntity<?> getIndentByIds(
+            @RequestParam("indentIds") Optional<List<Long>> indentIds
+    ) {
+
+        return new ResponseEntity<>(
+                indentService.getIndentByIds(indentIds),
+                HttpStatus.OK
+        );
     }
 
     @GetMapping
