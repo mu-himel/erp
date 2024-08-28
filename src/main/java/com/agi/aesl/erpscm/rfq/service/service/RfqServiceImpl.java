@@ -1,12 +1,23 @@
-package com.agi.aesl.erpscm.rfq.controller.service;
+package com.agi.aesl.erpscm.rfq.service.service;
 
+import com.agi.aesl.erpscm.config.CpsServerConfig;
+import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.indent.repository.IndentRepository;
+import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.network.NetworkService;
+import com.agi.aesl.erpscm.organization.entity.Organization;
+import com.agi.aesl.erpscm.organization.service.OrgService;
+import com.agi.aesl.erpscm.rfq.dto.AvailableVendorCount;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +34,15 @@ public class RfqServiceImpl implements RfqService{
     @Autowired
     private ClaimResolver claimResolver;
 
+    @Autowired
+    private OrgService orgService;
+
+    @Autowired
+    private CpsServerConfig cpsConfig;
+
+    @Autowired
+    private NetworkService networkService;
+
     @Override
     public Page<?> getAllPendingRFQs(Jwt token, Optional<String> indentNo, Optional<String> category,
                                      Optional<String> subCategory, Optional<String> priority,
@@ -31,6 +51,7 @@ public class RfqServiceImpl implements RfqService{
 
         claimResolver.setToken(token);
         String uri="";
+        // add data filter
 
         if((fromDateOp.isPresent() && toDateOp.isEmpty()) ||
                 (fromDateOp.isEmpty() && toDateOp.isPresent())){
@@ -88,5 +109,42 @@ public class RfqServiceImpl implements RfqService{
                 fromDate,
                 toDate,
                 pageable);
+    }
+
+    @Override
+    public Optional<?> getAvailableVendorsCount(Jwt token, Long id) {
+        Optional<Indent> indentOp = indentRepository.findById(id);
+
+        claimResolver.setToken(token);
+
+        if(indentOp.isEmpty()){
+            throw new RuntimeException("Sorry! Indent not found");
+        }
+
+        ItemCategory subCategory = indentOp.get().getSubCategory();
+        if(subCategory==null){
+            throw new RuntimeException("Sorry! Indent's Sub Category not found");
+        }
+
+        return getVendorCount(subCategory.getCode());
+    }
+
+    private Optional<?> getVendorCount(String subCatCode){
+        HttpHeaders headers = new HttpHeaders();
+        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
+        if(orgOp.isPresent()){
+            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
+        }
+        System.out.println(cpsConfig.getVendorCountEndpoint(subCatCode));
+        HttpEntity<?> payload = new HttpEntity<>(headers);
+        ResponseEntity<AvailableVendorCount> resposne = networkService.get(
+                cpsConfig.getVendorCountEndpoint(subCatCode),
+                payload,
+                AvailableVendorCount.class
+        );
+        if(resposne.getStatusCode().equals(HttpStatus.OK)){
+            return Optional.ofNullable(resposne.getBody());
+        }
+        return Optional.empty();
     }
 }

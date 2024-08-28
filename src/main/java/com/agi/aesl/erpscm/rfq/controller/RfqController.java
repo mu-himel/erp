@@ -1,16 +1,13 @@
 package com.agi.aesl.erpscm.rfq.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
-import com.agi.aesl.erpscm.indent.service.IndentService;
-import com.agi.aesl.erpscm.rfq.controller.service.RfqService;
+import com.agi.aesl.erpscm.rfq.service.service.RfqService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
@@ -19,6 +16,7 @@ import java.util.Optional;
 public class RfqController extends BaseController {
 
 
+    @Autowired
     private RfqService rfqService;
 
     @GetMapping("/pending")
@@ -63,5 +61,14 @@ public class RfqController extends BaseController {
                 ),
                 HttpStatus.OK
         );
+    }
+
+    @GetMapping("/{id}/get-vendors-count")
+    public ResponseEntity<?> getAvailableVendorsCount(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id
+    ) {
+
+        return new ResponseEntity<>(rfqService.getAvailableVendorsCount(token,id),HttpStatus.OK);
     }
 }
