@@ -80,6 +80,41 @@ public class IndentServiceImpl implements IndentService{
         return String.format("%06d", 1);
     }
 
+    @Transactional
+    private void setIndentDetail(Indent indent, IndentRequestDto indentRequestDto, List<String> ids){
+        indent.setIndentDetails(indentRequestDto.getItems().stream().map(item->{
+
+            IndentDetail indentDetail = new IndentDetail(item.getId());
+            indentDetail.setIndent(indent);
+            indentDetail.setProductRequirementsIds(item.getProductRequirementsIds());
+            indentDetail.setItemAttribute(item.getAttribute());
+            indentDetail.setBrandId(item.getBrandId());
+            indentDetail.setSubCategory(new ItemCategory(item.getSubCategoryId()));
+            ids.add(item.getSubCategoryId().toString());
+
+
+            indentDetail.setWarehouses(item.getWarehouses().stream().map(w->{
+                IndentDeliveryDetail idd = new IndentDeliveryDetail(w.getId());
+                idd.setRfqQty(w.getRfqQty());
+                idd.setWarehouse(new Warehouse(w.getWarehouseId()));
+                idd.setIndentDetail(indentDetail);
+                idd.setOrderQty(w.getOrderQty());
+                idd.setPrQty(w.getPrQty());
+
+                idd.setPartialDeliveries(w.getPartialDeliveries().stream().map(pd->{
+                    IndentPartialDelivery ipd = new IndentPartialDelivery(pd.getId());
+                    ipd.setPdDate(pd.getPdDate());
+                    ipd.setQty(pd.getQty());
+                    ipd.setIndentDeliveryDetail(idd);
+                    return ipd;
+                }).collect(Collectors.toList()));
+                return idd;
+            }).collect(Collectors.toList()));
+
+            return indentDetail;
+        }).collect(Collectors.toList()));
+    }
+
     @Override
     @Transactional
     public void createIndent(Jwt token, String uri, IndentRequestDto indentRequestDto) {
@@ -106,56 +141,48 @@ public class IndentServiceImpl implements IndentService{
 //        indent.setPriority(IndentPriority.valueOf(indentRequestDto.getPriority()));
         indent.setPriorityDateTime(indentRequestDto.getPriorityDate());
 
-
-        indent.setIndentDetails(indentRequestDto.getItems().stream().map(item->{
-
-            IndentDetail indentDetail = new IndentDetail();
-            indentDetail.setIndent(indent);
-            indentDetail.setProductRequirementsIds(item.getProductRequirementsIds());
-            indentDetail.setItemAttribute(item.getAttribute());
-            indentDetail.setBrandId(item.getBrandId());
-            indentDetail.setSubCategory(new ItemCategory(item.getSubCategoryId()));
-            ids.add(item.getSubCategoryId().toString());
-
-
-            indentDetail.setWarehouses(item.getWarehouses().stream().map(w->{
-                IndentDeliveryDetail idd = new IndentDeliveryDetail();
-                idd.setRfqQty(w.getRfqQty());
-                idd.setWarehouse(new Warehouse(w.getWarehouseId()));
-                idd.setIndentDetail(indentDetail);
-                idd.setOrderQty(w.getOrderQty());
-                idd.setPrQty(w.getPrQty());
-
-                idd.setPartialDeliveries(w.getPartialDeliveries().stream().map(pd->{
-                    IndentPartialDelivery ipd = new IndentPartialDelivery();
-                    ipd.setPdDate(pd.getPdDate());
-                    ipd.setQty(pd.getQty());
-                    ipd.setIndentDeliveryDetail(idd);
-                    return ipd;
-                }).collect(Collectors.toList()));
-                return idd;
-            }).collect(Collectors.toList()));
-
-            return indentDetail;
-        }).collect(Collectors.toList()));
-
-
+        setIndentDetail(indent,indentRequestDto,ids);
         indent.setIstatus(IndentStatus.INIT);
-        indent.setReviewerId(null);
-        indent.setReviewDate(null);
 
-        Indent indentSaved = indentRepository.save(indent);
-        verificationService.removeVerification(indentSaved.getId(), DomainType.INDENT);
+        indentRepository.save(indent);
+        verificationService.removeVerification(indent.getId(), DomainType.INDENT);
 
-        AppliedVADto appliedVa = verificationService.applyVerifyApprovalProcess(indentSaved, DomainType.INDENT, IndentVerificationStatus.APPROVED.toString(),
+        AppliedVADto appliedVa = verificationService.applyVerifyApprovalProcess(indent, DomainType.INDENT, IndentVerificationStatus.APPROVED.toString(),
                 uri, "CATEGORY", ids, null);
 
         if(appliedVa.getVerifiers().isEmpty() && appliedVa.getPanels().isEmpty()){
-            indentSaved.setRfqStatus(RfqStatus.INIT);
-            indentSaved.setIndentStatus(IndentVerificationStatus.APPROVED);
+            indent.setRfqStatus(RfqStatus.INIT);
+            indent.setIndentStatus(IndentVerificationStatus.APPROVED);
         }
 
-        indentVARepository.deleteAllByIndentId(indentSaved.getId());
+        indentVARepository.deleteAllByIndentId(indent.getId());
+        prIndentRepository.updatePrIndentToClose(indentRequestDto.getPrIds());
+    }
+
+    @Override
+    public void updateIndent(Jwt token, String uri, Long id, IndentRequestDto indentRequestDto) {
+        claimResolver.setToken(token);
+        List<String> ids = new ArrayList<>();
+        ids.add(indentRequestDto.getCategoryId().toString());
+
+        Optional<Indent> indentOp = indentRepository.findById(id);
+        if(indentOp.isEmpty()){
+            throw new RuntimeException("Sorry! Indent not found");
+        }
+        Indent indent = indentOp.get();
+
+
+        if(indentRequestDto.getIsDevliverToSingleWarehouse()){
+            indent.setIsDevliverToSingleWarehouse(true);
+            indent.setSingleWarehouse(new Warehouse(indentRequestDto.getSingleWarehouse().getId()));
+        }
+        indent.setPriorityDateTime(indentRequestDto.getPriorityDate());
+        setIndentDetail(indent,indentRequestDto,ids);
+        indentRepository.save(indent);
+        verificationService.removeVerification(indent.getId(),DomainType.INDENT);
+        indentVARepository.deleteAllByIndentId(indent.getId());
+        verificationService.applyVerifyApprovalProcess(indent,DomainType.INDENT,
+                IndentVerificationStatus.APPROVED.toString(),uri,"CATEGORY",ids,null);
         prIndentRepository.updatePrIndentToClose(indentRequestDto.getPrIds());
     }
 
@@ -530,6 +557,8 @@ public class IndentServiceImpl implements IndentService{
     @Transactional
     public void onRejected(Employee verifier, Long domainId) {
         Optional<Indent> indentOp = indentRepository.findById(domainId);
-        indentOp.ifPresent(indent -> indent.setIndentStatus(IndentVerificationStatus.REJECTED));
+        indentOp.ifPresent(indent -> {
+            indent.setIndentStatus(IndentVerificationStatus.REJECTED);
+        });
     }
 }

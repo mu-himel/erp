@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.indent.service;
 
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
+import com.agi.aesl.erpscm.indent.dto.request.IndentRejectDto;
 import com.agi.aesl.erpscm.indent.dto.request.IndentRequestDto;
 import com.agi.aesl.erpscm.indent.dto.request.MoveIndentRequestDto;
 import com.agi.aesl.erpscm.indent.entity.Indent;
@@ -16,6 +17,8 @@ import java.util.Optional;
 public interface IndentService extends VerificationDomainService {
     String getNextIndentNo();
     void createIndent(Jwt token, String uri, IndentRequestDto productRequirementRequestDto);
+
+    void updateIndent(Jwt token, String uri, Long id, IndentRequestDto indentRequestDto);
     
     Page<?> getAllIndents(
             Jwt token,
