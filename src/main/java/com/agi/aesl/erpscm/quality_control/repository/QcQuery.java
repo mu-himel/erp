@@ -3,7 +3,7 @@ package com.agi.aesl.erpscm.quality_control.repository;
 public interface QcQuery {
 
     String qcResultByGrnId= """
-            SELECT qc.comment as comment, 
+            SELECT qc.id as id, qc.qc_status as qcStatus,qc.comment as comment, 
                     qck.name as name,
                     qck.remark as remark,
                 CASE WHEN qck.qc_type = 'PASS' THEN
@@ -262,6 +262,8 @@ public interface QcQuery {
     String countRejected = "SELECT COUNT(*) FROM ("+getRejectedQc+") as total";
 
     interface QcResultItem{
+        Long getId();
+        String getQcStatus();
         String getName();
         String getRemark();
         String getComment();

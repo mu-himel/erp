@@ -30,6 +30,7 @@ import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
@@ -318,27 +319,7 @@ public class AccountServiceImpl implements AccountService{
             AppliedVADto appliedVADto = verificationService.applyVerifyApprovalProcess(
                     ledgerAccount,DomainType.ACCOUNT_LEDGER,AccountType.COMPLETED.toString(), uri,"CATEGORY",ids,
                     null);
-//            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver,uri,
-//                    "CATEGORY",String.join(",",ids));
-//
-//
-//
-//            List<VerifierInfo> verifiers = verificationService.getVerifiers(ledgerAccount, verifierOp,
-//                                                            AccountType.PENDING.toString());
-//
-//            List<ApprovalPanel> panels = verificationService.getApprovalPanels(claimResolver, uri, String.join(",",ids));
-//
-//            verificationService.setVerifiers(
-//                            ledgerAccount,
-//                            verifiers,
-//                            DomainType.ACCOUNT_LEDGER,
-//                            null)
-//                        .setApprovers(
-//                                ledgerAccount,
-//                                verifiers,
-//                                panels,
-//                                DomainType.ACCOUNT_LEDGER,
-//                null);
+
 
             if(appliedVADto.getVerifiers().size()==0 && appliedVADto.getPanels().size()==0){
                 integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
@@ -432,7 +413,7 @@ public class AccountServiceImpl implements AccountService{
 
     @Override
     @Transactional
-    public void onRejected(Employee verifier, Long id) {
+    public void onRejected(Employee verifier, Long id, RejectDto rejectDto) {
         Optional<UserApplicationValidation> verificationOp = verificationService
                 .getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType.ACCOUNT_LEDGER,id,verifier);
         if(verificationOp.isPresent()){

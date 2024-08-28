@@ -58,7 +58,7 @@ public interface PrIndentRepository extends JpaRepository<PrIndent, Long>, PrInd
     @Query(value = """
                 UPDATE PrIndent 
                 SET status = 'CLOSE'
-                WHERE id IN :prIds
+                WHERE id IN (:prIds)
             """)
     int updatePrIndentToClose(@Param("prIds") List<Long> ids);
 

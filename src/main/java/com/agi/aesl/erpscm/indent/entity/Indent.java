@@ -12,6 +12,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,9 +24,9 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Indent extends VerifyableEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    private Long id;
 
     private String indentNo;
 
@@ -34,7 +35,7 @@ public class Indent extends VerifyableEntity {
 
     private LocalDateTime sentDate;
 
-    private LocalDateTime priorityDateTime;
+    private LocalDate priorityDateTime;
 
 
 
@@ -44,10 +45,10 @@ public class Indent extends VerifyableEntity {
 
     private LocalDateTime expireDateTime;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private ItemCategory category;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private ItemCategory subCategory;
 
     @Enumerated(EnumType.STRING)
@@ -78,6 +79,9 @@ public class Indent extends VerifyableEntity {
     // Verification
     @Enumerated(EnumType.STRING)
     private IndentVerificationStatus reviewPrevStatus;
+
+
+    private String prIndents;
 
 
     public Indent(Long id) {

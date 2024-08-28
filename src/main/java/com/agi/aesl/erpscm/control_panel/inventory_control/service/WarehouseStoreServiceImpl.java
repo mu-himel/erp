@@ -11,6 +11,10 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseS
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.entity.CategoryWarehouseStore;
+import com.agi.aesl.erpscm.inventory.entity.ItemStock;
+import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
+import com.agi.aesl.erpscm.inventory.repository.CategoryWarehouseStoreRepository;
+import com.agi.aesl.erpscm.inventory.repository.ItemStockRepository;
 import com.agi.aesl.erpscm.inventory.service.CategoryService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,10 +48,24 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
     @Autowired
     private ClaimResolver claimResolver;
 
+    @Autowired
+    private CategoryWarehouseStoreRepository cwsRepository;
+
+    @Autowired
+    private ItemStockRepository itemStockRepository;
+
     @Override
     @Transactional
     public void deleteWarehouseStore(Long id) {
         Optional<WarehouseStore> warehouseStoreOptional = warehouseStoreRepository.findById(id);
+        List<CategoryWarehouseStore> warehouseStoreOp = cwsRepository.findByWarehouseStoreId(id);
+        if(!warehouseStoreOp.isEmpty()){
+            throw new RuntimeException("Sorry! Store has some category or sub category ");
+        }
+        List<ItemStock> itemStockOp = itemStockRepository.findByWarehouseStoreId(id);
+        if(!itemStockOp.isEmpty()){
+            throw new RuntimeException("Sorry! Store has some items");
+        }
         warehouseStoreOptional.ifPresent(warehouseStore -> warehouseStore.setActive(false));
     }
 
@@ -78,6 +96,7 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
     }
 
     // @Override
+    // Deprecated
     // public void copyToStore(Long wId, CopyToStoreDto copyToStoreDto) {
 
     //     Optional<WarehouseStoreRepository.WarehouseStoreInfoSingle> warehouseStoreOptional = warehouseStoreRepository

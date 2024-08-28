@@ -2,20 +2,16 @@ package com.agi.aesl.erpscm.user_application_validation.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
-import com.agi.aesl.erpscm.account_finance.repository.UpdateLedgerVerifier;
 import com.agi.aesl.erpscm.comment.enums.ActionType;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -29,14 +25,13 @@ import com.agi.aesl.erpscm.modules.service.ModuleService;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.ApproveDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.VerifyDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
-import com.agi.aesl.erpscm.user_application_validation.dto.response.Verifier;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository.VerificationResponse;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.transaction.Transactional;
 
 @Service
 public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> implements UserApplicationValidatorService<T>{
@@ -57,7 +52,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
 
     @Override
     @Transactional
-    public Optional<VerifierConfig> getVerifiers(ClaimResolver claimResolver, String uri, String criteriaGroup, String categories) {
+    public Optional<VerifierConfig> prepareLogicForVerifiers(ClaimResolver claimResolver, String uri, String criteriaGroup, String categories) {
         
         // Map<String,Object> data = new HashMap<>();
         Optional<VerifierConfig> moduleVerifierConfigs = moduleService.getVerifierConfigByModuleAndCriteriaGroup(claimResolver, uri, criteriaGroup, categories);
@@ -142,6 +137,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Transactional
     public void addVerification(List<UserApplicationValidation> verifications) {
         verificationRepository.saveAll(verifications);
+        System.out.println(verifications);
     }
 
     @Override
@@ -286,7 +282,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
                 throw new RuntimeException("Message Required");
             }
 
-            verificationDomainService.onRejected(claimResolver.getEmployee().get(),rejectDto.getDomainId());
+            verificationDomainService.onRejected(claimResolver.getEmployee().get(),rejectDto.getDomainId(), rejectDto);
 
             comment(new Employee(rejectDto.getVerifier().getId()),
                     rejectDto.getDomainType(),
@@ -309,7 +305,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
 
     @Override
     @Transactional
-    public <T extends VerifyableEntity> List<VerifierInfo> getVerifiers(T t, Optional<VerifierConfig> verifierOp, String status) {
+    public <T extends VerifyableEntity> List<VerifierInfo> prepareLogicForVerifiers(T t, Optional<VerifierConfig> verifierOp, String status) {
         List<VerifierInfo> verifiers = new ArrayList<>();
         if(verifierOp.isPresent()){
             VerifierConfig verification = verifierOp.get();
@@ -336,13 +332,14 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     }
 
     @Override
+    @Transactional
     public AppliedVADto applyVerifyApprovalProcess(T t, DomainType domainType, String status, String uri, String criteriaGroup,
                                                    List<String> ids,
                                                    VerifierMailService<T> mailService) {
-        Optional<VerifierConfig> verifierOp = this.getVerifiers(claimResolver, uri,
+        Optional<VerifierConfig> verifierOp = this.prepareLogicForVerifiers(claimResolver, uri,
                 criteriaGroup, String.join(",", ids));
 
-        List<VerifierInfo> verifiers = this.getVerifiers(t, verifierOp,status);
+        List<VerifierInfo> verifiers = this.prepareLogicForVerifiers(t, verifierOp,status);
         List<ApprovalPanel> panels = this.getApprovalPanels(claimResolver, uri, String.join(",", ids));
         this.setVerifiers(t, verifiers, domainType,
                         null)

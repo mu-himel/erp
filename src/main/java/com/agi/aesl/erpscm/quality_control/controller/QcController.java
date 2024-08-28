@@ -122,7 +122,7 @@ public class QcController extends BaseController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/reject/{id}")
     public ResponseEntity<?> rejectQc(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,

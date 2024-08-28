@@ -21,6 +21,7 @@ import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
+import com.agi.aesl.erpscm.quality_control.repository.QcQuery;
 import com.agi.aesl.erpscm.quality_control.service.QcMailService;
 import com.agi.aesl.erpscm.quality_control.service.QcService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
@@ -286,11 +287,15 @@ public class GrnServiceImpl implements GrnService{
                     detailInfos.add(grnidi);
                 });
                 grnDetailInfo.setGoodReceiveItemDetails(detailInfos);
+                List<QcQuery.QcResultItem> qcResultByGrn = (List<QcQuery.QcResultItem>)qcService.getQcResultByGrn(detailInfo.getId());
 
                 _detailInfo.put("detailInfo", grnDetailInfo);
-                _detailInfo.put("qcResult", qcService.getQcResultByGrn(detailInfo.getId()));
+                _detailInfo.put("qcComment", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getComment():""));
+                _detailInfo.put("qcId", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getId():null));
+                _detailInfo.put("qcStatus", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getQcStatus():""));
+                _detailInfo.put("qcResult", qcResultByGrn);
             }
-            return Optional.ofNullable(_detailInfo);
+                return Optional.ofNullable(_detailInfo);
             }
 
 

@@ -33,6 +33,7 @@ import com.agi.aesl.erpscm.quality_control.enums.QcStatus;
 import com.agi.aesl.erpscm.quality_control.repository.QcRepository;
 import com.agi.aesl.erpscm.quality_control.repository.QcVerifyApprovalHistoryRepository;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
@@ -107,6 +108,9 @@ public class QcServiceImpl implements QcService{
     public void addQc(Jwt token, String uri, QcDto controlDto) throws IllegalAccessException {
 
         claimResolver.setToken(token);
+        if(claimResolver.getEmployee().isEmpty()){
+            throw new RuntimeException("Store Manager/Executive profile required to perform this");
+        }
         AtomicReference<Boolean> error = new AtomicReference<>(false);
 
         controlDto.getKpis().stream().forEach(qualityControlKpi -> {
@@ -132,7 +136,7 @@ public class QcServiceImpl implements QcService{
         List<String> ids = new ArrayList<>();
         controlDto.getQcItemDetails().stream().forEach(qcItemDetail -> {
             Optional<GoodReceiveItemDetail> grnItemDetail = grn.getGoodReceiveItemDetails().stream().filter(
-                    goodReceiveItemDetail -> goodReceiveItemDetail.getItem().getId().equals(qcItemDetail.getId())
+                    goodReceiveItemDetail -> goodReceiveItemDetail.getId().equals(qcItemDetail.getId())
             ).findFirst();
 
             if(grnItemDetail.isPresent()){
@@ -141,6 +145,10 @@ public class QcServiceImpl implements QcService{
                 ids.add(goodReceiveItemDetail.getItem().getItemParentCategory().getId().toString());
                 goodReceiveItemDetail.setDeclaredQty(qcItemDetail.getDeclaredQty());
                 goodReceiveItemDetail.setInspectedQty(qcItemDetail.getInspectedQty());
+                goodReceiveItemDetail.setTotalApprovedQty(qcItemDetail.getTotalApproveQty());
+                goodReceiveItemDetail.setTotalDeclinedQty(qcItemDetail.getTotalDeclineQty());
+                goodReceiveItemDetail.setApproveComment(qcItemDetail.getApproveComment());
+                goodReceiveItemDetail.setDeclineComment(qcItemDetail.getDeclineComment());
                 grnService.updateGrnItemDetail(goodReceiveItemDetail);
             }
         });
@@ -155,7 +163,7 @@ public class QcServiceImpl implements QcService{
 
         AtomicReference<Integer> qcPassCount = new AtomicReference<>(0);
         AtomicReference<Integer> qcFailCount = new AtomicReference<>(0);
-        if(controlDto.getKpis().size()==MAX_NO_OF_KPI && controlDto.getQcStatus()== QcStatus.APPROVED) {
+        if(controlDto.getKpis().size()==MAX_NO_OF_KPI && (controlDto.getQcStatus()== QcStatus.PARTIALLY_APPROVED || controlDto.getQcStatus()== QcStatus.APPROVED)) {
 
             qualityControl.setQcStatus(QcStatus.APPROVED);
 
@@ -178,6 +186,9 @@ public class QcServiceImpl implements QcService{
 
         if(qcPassCount.get().equals(MAX_NO_OF_KPI)){
             grn.setGrnStatus(GrnStatus.READY_FOR_STORE);
+        }
+        if(qualityControl.getQcStatus().equals(QcStatus.PARTIALLY_APPROVED)){
+            grn.setGrnStatus(GrnStatus.QC_PARTIAL);
         }
         if(qualityControl.getQcStatus().equals(QcStatus.REJECTED) ||  qcFailCount.get()>0){
             grn.setGrnStatus(GrnStatus.QC_FAILED);
@@ -364,19 +375,60 @@ public class QcServiceImpl implements QcService{
 
     @Override
     @Transactional
-    public void onRejected(Employee verifier, Long domainId) {
+    public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
         Optional<UserApplicationValidation> verificationOp = verificationService
                 .getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType.QC,domainId,verifier);
         if(verificationOp.isPresent()){
             UserApplicationValidation validation = verificationOp.get();
             validation.setVerified(true);
         }
-
         Optional<QualityControl> qcOp = qcRepository.findById(domainId);
         if(qcOp.isPresent()){
             QualityControl qc = qcOp.get();
             qc.setQcStatus(QcStatus.REJECTED);
+
+
+            if(qc.getGoodReceiveNote()!=null){
+                GoodReceiveNote grn = qc.getGoodReceiveNote();
+                grn.setGrnStatus(GrnStatus.REJECTED);
+
+                List<QualityControlKpi> kpis =  new ArrayList<>();
+
+
+                qc.setComment("Rejected");
+                Optional<Employee> empOp = claimResolver.getEmployee();
+                if(empOp.isPresent()) {
+                    Employee employee = empOp.get();
+                    qc.setCreatedBy(new Employee(employee.getId()));
+                    qc.setWarehouse(new Warehouse(employee.getWarehouseId()));
+                }
+                qc.setGoodReceiveNote(grn);
+                qc.setQcDate(LocalDate.now());
+                qc.setQcStatus(QcStatus.REJECTED);
+
+                kpis.add(getKpi("Description Goods",qc));
+                kpis.add(getKpi("Quantity",qc));
+                kpis.add(getKpi("Quality",qc));
+                kpis.add(getKpi("Packing & Labeling",qc));
+                qc.setQualityControlKpis(kpis);
+                qcRepository.save(qc);
+                ObjectMapper mapper = new ObjectMapper();
+                String kpi = null;
+                try {
+                    kpi = mapper.writeValueAsString(kpis);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                if(grn.getGrnMode().equals(GrnMode.AUTO)) {
+                    NoteDto note = new NoteDto(rejectDto.getComment());
+                    sentQcStatus(claimResolver.getToken().getTokenValue(), grn.getRemotePoId(), GrnStatus.QC_FAILED,
+                            new ArrayList<>(), note, kpi);
+                }
+            }
+        }else{
+            throw new RuntimeException("QC not found");
         }
+
     }
 
     @Override
