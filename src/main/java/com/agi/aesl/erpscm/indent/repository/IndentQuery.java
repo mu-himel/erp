@@ -251,4 +251,46 @@ public interface IndentQuery {
                                                                             """;
 
     String countPendingRfqs="SELECT COUNT(*) FROM ("+getIndentApprovedAndPendingRFqWithSearch+") as total";
+
+    // price quotations COALESCE((SELECT count(pq.id) FROM price_quotations pq
+    //                                        WHERE pq.status = 'RECEIVED' AND pq.rfq_id = i.id),0)
+    // total receive qty COALESCE((SELECT count(pq.id) FROM price_quotations pq
+    //                                        WHERE pq.rfq_id = i.id),0)
+    String getApprovedIndentWithOpenRfq= """
+            SELECT i.id                                    as id,
+                                i.indent_no                             as indentNo,
+                                i.indent_date                           as indentDate,
+                                i.sent_date                             as sentDate,
+                                i.category_id                           as categoryId,
+                                c.name                                  as categoryName,
+                                sc.name                                 as subCategoryName,
+                                COUNT(ide.id)                           as itemsCount,
+                                COALESCE(SUM(idd.order_qty), 0)         as orderQty,
+                                COALESCE(SUM(idd.rfq_qty), 0)           as rfqQty,
+                                i.priority                              as priority,
+                                i.indent_status                                as status,
+                                0 as receivedQty,
+                                0 as totalReceivedPq,
+                                CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
+                                DATEDIFF(i.priority_date_time , CURRENT_DATE) as daysRemain
+                                
+                        FROM indents i
+                                        LEFT JOIN indent_details ide on i.id = ide.indent_id
+                                        LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
+                                        LEFT JOIN scm_item_categories c on i.category_id = c.id
+                                        LEFT JOIN item_categories sc on ide.sub_category_id = sc.id
+                                        LEFT JOIN acl_users e ON e.id = i.requested_by_id
+                                
+                        WHERE  i.indent_status = 'APPROVED' AND i.rfq_status = 'OPEN'
+                                AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo))
+                                AND (:category IS NULL OR LOWER(c.name) LIKE  CONCAT(LOWER(:category),'%'))
+                                AND (:subCategory IS NULL OR LOWER(sc.name) LIKE CONCAT(LOWER(:subCategory),'%'))
+                                AND (:priority IS NULL OR i.priority = :priority)
+                                AND (:daysRemain IS NULL OR DATEDIFF(i.priority_date_time , CURRENT_DATE) = :daysRemain)
+                                AND (:fromDate IS NULL OR (i.sent_date BETWEEN :fromDate AND :toDate))
+                                
+                        GROUP BY i.id
+            """;
+
+    String countApprovedIndentWithOpenRfq="SELECT COUNT(*) FROM ("+getApprovedIndentWithOpenRfq+") as total";
 }

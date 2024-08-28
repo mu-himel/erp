@@ -289,6 +289,7 @@ public class IndentServiceImpl implements IndentService{
         response.put("indentDate",indent.getIndentDate());
         response.put("expireDateTime",indent.getExpireDateTime());
         response.put("status",indent.getIndentStatus());
+        response.put("warehouse",indent.getWarehouse());
         List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
         List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
         List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService

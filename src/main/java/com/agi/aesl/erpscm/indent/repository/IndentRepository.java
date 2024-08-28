@@ -52,10 +52,20 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
     Optional<Long> findMaxIndentById();
 
     @Query(value = getIndentApprovedAndPendingRFqWithSearch, countQuery = countPendingRfqs, nativeQuery = true)
-    Page<?> getAllApprovedIndents(String indentNo, String category, String subCategory, String priority,
+    Page<IndentInfo> getAllApprovedIndents(String indentNo, String category, String subCategory, String priority,
                                   Integer daysRemain, LocalDateTime fromDate, LocalDateTime toDate,
                                   Pageable pageable);
 
+    @Query(value = getApprovedIndentWithOpenRfq, countQuery = countApprovedIndentWithOpenRfq, nativeQuery = true)
+    Page<SentRfqListItem> getAllIndentsWithOpenRfqStatus(String indentNo, String category, String subCategory,
+                                                         String priority, Integer daysRemain, LocalDateTime fromDate,
+                                                         LocalDateTime toDate, Pageable pageable);
+    interface SentRfqListItem extends IndentInfo {
+        LocalDateTime getSentDate();
+        Integer getReceivedQty();
+        Integer getTotalReceivedPq();
+        Long getRfqQty();
+    }
     interface IndentInfo {
         Long getId();
         String getIndentNo();
