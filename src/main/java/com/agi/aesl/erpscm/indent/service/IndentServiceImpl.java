@@ -22,6 +22,7 @@ import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.pr_indent.repository.PrIndentRepository;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
@@ -81,10 +82,10 @@ public class IndentServiceImpl implements IndentService{
     }
 
     @Transactional
-    private void setIndentDetail(Indent indent, IndentRequestDto indentRequestDto, List<String> ids){
+    private void setIndentDetail(Indent indent, IndentRequestDto indentRequestDto, List<String> ids, Boolean isNew){
         indent.setIndentDetails(indentRequestDto.getItems().stream().map(item->{
 
-            IndentDetail indentDetail = new IndentDetail(item.getId());
+            IndentDetail indentDetail = new IndentDetail((!isNew)?item.getId():null);
             indentDetail.setIndent(indent);
             indentDetail.setProductRequirementsIds(item.getProductRequirementsIds());
             indentDetail.setItemAttribute(item.getAttribute());
@@ -94,7 +95,7 @@ public class IndentServiceImpl implements IndentService{
 
 
             indentDetail.setWarehouses(item.getWarehouses().stream().map(w->{
-                IndentDeliveryDetail idd = new IndentDeliveryDetail(w.getId());
+                IndentDeliveryDetail idd = new IndentDeliveryDetail((!isNew)?w.getId():null);
                 idd.setRfqQty(w.getRfqQty());
                 idd.setWarehouse(new Warehouse(w.getWarehouseId()));
                 idd.setIndentDetail(indentDetail);
@@ -102,7 +103,7 @@ public class IndentServiceImpl implements IndentService{
                 idd.setPrQty(w.getPrQty());
 
                 idd.setPartialDeliveries(w.getPartialDeliveries().stream().map(pd->{
-                    IndentPartialDelivery ipd = new IndentPartialDelivery(pd.getId());
+                    IndentPartialDelivery ipd = new IndentPartialDelivery((!isNew)?pd.getId():null);
                     ipd.setPdDate(pd.getPdDate());
                     ipd.setQty(pd.getQty());
                     ipd.setIndentDeliveryDetail(idd);
@@ -141,7 +142,7 @@ public class IndentServiceImpl implements IndentService{
 //        indent.setPriority(IndentPriority.valueOf(indentRequestDto.getPriority()));
         indent.setPriorityDateTime(indentRequestDto.getPriorityDate());
 
-        setIndentDetail(indent,indentRequestDto,ids);
+        setIndentDetail(indent,indentRequestDto,ids,true);
         indent.setIstatus(IndentStatus.INIT);
 
         indentRepository.save(indent);
@@ -177,7 +178,7 @@ public class IndentServiceImpl implements IndentService{
             indent.setSingleWarehouse(new Warehouse(indentRequestDto.getSingleWarehouse().getId()));
         }
         indent.setPriorityDateTime(indentRequestDto.getPriorityDate());
-        setIndentDetail(indent,indentRequestDto,ids);
+        setIndentDetail(indent,indentRequestDto,ids,false);
         indentRepository.save(indent);
         verificationService.removeVerification(indent.getId(),DomainType.INDENT);
         indentVARepository.deleteAllByIndentId(indent.getId());
@@ -555,7 +556,7 @@ public class IndentServiceImpl implements IndentService{
 
     @Override
     @Transactional
-    public void onRejected(Employee verifier, Long domainId) {
+    public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
         Optional<Indent> indentOp = indentRepository.findById(domainId);
         indentOp.ifPresent(indent -> {
             indent.setIndentStatus(IndentVerificationStatus.REJECTED);
