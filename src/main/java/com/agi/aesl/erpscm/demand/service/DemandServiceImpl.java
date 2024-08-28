@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -725,7 +726,7 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
-    public void onRejected(Employee verifier, Long id) {
+    public void onRejected(Employee verifier, Long id, RejectDto rejectDto) {
         // TODO need to optimize demand reject here
     }
 

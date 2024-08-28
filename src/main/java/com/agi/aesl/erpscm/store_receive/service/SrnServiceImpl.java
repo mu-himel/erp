@@ -23,6 +23,7 @@ import com.agi.aesl.erpscm.store_receive.enums.SrnStatus;
 import com.agi.aesl.erpscm.store_receive.repository.SrnRepository;
 import com.agi.aesl.erpscm.store_receive.repository.SrnVerifyApprovalHistoryRepository;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
@@ -293,7 +294,7 @@ public class SrnServiceImpl implements SrnService{
 
     @Override
     @Transactional
-    public void onRejected(Employee verifier, Long domainId) {
+    public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
         Optional<UserApplicationValidation> verificationOp = verificationService
                 .getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType.QC,domainId,verifier);
 

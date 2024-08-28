@@ -282,7 +282,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
                 throw new RuntimeException("Message Required");
             }
 
-            verificationDomainService.onRejected(claimResolver.getEmployee().get(),rejectDto.getDomainId());
+            verificationDomainService.onRejected(claimResolver.getEmployee().get(),rejectDto.getDomainId(), rejectDto);
 
             comment(new Employee(rejectDto.getVerifier().getId()),
                     rejectDto.getDomainType(),

@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.user_application_validation.controller;
 
 import com.agi.aesl.erpscm.account_finance.service.AccountService;
 import com.agi.aesl.erpscm.indent.service.IndentService;
+import com.agi.aesl.erpscm.quality_control.service.QcService;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.VerifyDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,9 @@ public class VerifyController extends BaseController{
 
     @Autowired
     private IndentService indentService;
+
+    @Autowired
+    private QcService qcService;
 
     @PutMapping("/approve")
     public ResponseEntity<?> approve(
@@ -101,6 +105,10 @@ public class VerifyController extends BaseController{
         }
         if(rejectDto.getDomainType().equals(DomainType.INDENT)){
             verificationService.setVerificationDomainService(indentService);
+            verificationService.reject(token, rejectDto);
+        }
+        if(rejectDto.getDomainType().equals(DomainType.QC)){
+            verificationService.setVerificationDomainService(qcService);
             verificationService.reject(token, rejectDto);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

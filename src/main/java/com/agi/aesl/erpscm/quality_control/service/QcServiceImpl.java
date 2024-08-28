@@ -33,6 +33,7 @@ import com.agi.aesl.erpscm.quality_control.enums.QcStatus;
 import com.agi.aesl.erpscm.quality_control.repository.QcRepository;
 import com.agi.aesl.erpscm.quality_control.repository.QcVerifyApprovalHistoryRepository;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
@@ -374,19 +375,60 @@ public class QcServiceImpl implements QcService{
 
     @Override
     @Transactional
-    public void onRejected(Employee verifier, Long domainId) {
+    public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
         Optional<UserApplicationValidation> verificationOp = verificationService
                 .getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType.QC,domainId,verifier);
         if(verificationOp.isPresent()){
             UserApplicationValidation validation = verificationOp.get();
             validation.setVerified(true);
         }
-
         Optional<QualityControl> qcOp = qcRepository.findById(domainId);
         if(qcOp.isPresent()){
             QualityControl qc = qcOp.get();
             qc.setQcStatus(QcStatus.REJECTED);
+
+
+            if(qc.getGoodReceiveNote()!=null){
+                GoodReceiveNote grn = qc.getGoodReceiveNote();
+                grn.setGrnStatus(GrnStatus.REJECTED);
+
+                List<QualityControlKpi> kpis =  new ArrayList<>();
+
+
+                qc.setComment("Rejected");
+                Optional<Employee> empOp = claimResolver.getEmployee();
+                if(empOp.isPresent()) {
+                    Employee employee = empOp.get();
+                    qc.setCreatedBy(new Employee(employee.getId()));
+                    qc.setWarehouse(new Warehouse(employee.getWarehouseId()));
+                }
+                qc.setGoodReceiveNote(grn);
+                qc.setQcDate(LocalDate.now());
+                qc.setQcStatus(QcStatus.REJECTED);
+
+                kpis.add(getKpi("Description Goods",qc));
+                kpis.add(getKpi("Quantity",qc));
+                kpis.add(getKpi("Quality",qc));
+                kpis.add(getKpi("Packing & Labeling",qc));
+                qc.setQualityControlKpis(kpis);
+                qcRepository.save(qc);
+                ObjectMapper mapper = new ObjectMapper();
+                String kpi = null;
+                try {
+                    kpi = mapper.writeValueAsString(kpis);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                if(grn.getGrnMode().equals(GrnMode.AUTO)) {
+                    NoteDto note = new NoteDto(rejectDto.getComment());
+                    sentQcStatus(claimResolver.getToken().getTokenValue(), grn.getRemotePoId(), GrnStatus.QC_FAILED,
+                            new ArrayList<>(), note, kpi);
+                }
+            }
+        }else{
+            throw new RuntimeException("QC not found");
         }
+
     }
 
     @Override
