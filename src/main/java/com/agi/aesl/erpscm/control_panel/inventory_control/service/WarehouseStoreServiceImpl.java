@@ -11,6 +11,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseS
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.entity.CategoryWarehouseStore;
+import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
 import com.agi.aesl.erpscm.inventory.service.CategoryService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,10 +45,14 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
     @Autowired
     private ClaimResolver claimResolver;
 
+    @Autowired
+    private CategoryBrandRepository categoryBrandRepository;
+
     @Override
     @Transactional
     public void deleteWarehouseStore(Long id) {
         Optional<WarehouseStore> warehouseStoreOptional = warehouseStoreRepository.findById(id);
+
         warehouseStoreOptional.ifPresent(warehouseStore -> warehouseStore.setActive(false));
     }
 
@@ -78,6 +83,7 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
     }
 
     // @Override
+    // Deprecated
     // public void copyToStore(Long wId, CopyToStoreDto copyToStoreDto) {
 
     //     Optional<WarehouseStoreRepository.WarehouseStoreInfoSingle> warehouseStoreOptional = warehouseStoreRepository
