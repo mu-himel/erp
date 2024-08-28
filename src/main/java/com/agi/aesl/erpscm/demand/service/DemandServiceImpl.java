@@ -9,9 +9,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
-import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties.AssertingParty.Verification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
-import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.dto.request.DemandReceiveDto;
 import com.agi.aesl.erpscm.demand.dto.request.DemandRequestDto;
@@ -52,7 +49,6 @@ import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
-import com.agi.aesl.erpscm.user_application_validation.dto.response.Verifier;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository.VerificationResponse;
@@ -179,7 +175,7 @@ public class DemandServiceImpl implements DemandService{
             throw new RuntimeException("Sorry! Employee not found");
         }
         
-        Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver,uri,"CATEGORY",demandRequestDto.getCategories());
+        Optional<VerifierConfig> verifierOp = verificationService.prepareLogicForVerifiers(claimResolver,uri,"CATEGORY",demandRequestDto.getCategories());
         
         Demand demand = demandRequestDto.getEntity();
 
@@ -846,7 +842,7 @@ public class DemandServiceImpl implements DemandService{
             dvahistoryRepository.deleteAllByDemandId(demand.getId());
 
             Optional<VerifierConfig> verifierOp = verificationService
-                .getVerifiers(claimResolver,uri,"CATEGORY",demandRequestDto.getCategories());
+                .prepareLogicForVerifiers(claimResolver,uri,"CATEGORY",demandRequestDto.getCategories());
 
             setVerifiers(demand, getVerifiers(demand, verifierOp));
             setApprovers(demand, getApprovalPanels(claimResolver,uri, demandRequestDto));
