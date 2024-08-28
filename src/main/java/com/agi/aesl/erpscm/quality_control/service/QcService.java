@@ -17,6 +17,7 @@ public interface QcService extends VerificationDomainService {
 
     Optional<?> getByGrnId(Long id);
 
+
     List<?> getQcResultByGrn(Long id);
 
     void rejectQc(Jwt token, Long id, NoteDto noteDto);
