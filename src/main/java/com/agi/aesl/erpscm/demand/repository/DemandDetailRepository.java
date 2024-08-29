@@ -19,4 +19,10 @@ public interface DemandDetailRepository extends JpaRepository<DemandDetail,Long>
 
     @Query(value="SELECT dd FROM DemandDetail dd WHERE dd.item.id IN :ids")
     List<DemandDetail> findAllByItemId(List<Long> ids);
+
+    @Query(value="SELECT dd FROM DemandDetail dd " +
+            "LEFT JOIN dd.demand d " +
+            "LEFT JOIN d.warehouse w " +
+            " WHERE dd.item.id IN (:ids) AND w.id=:wId")
+    List<DemandDetail> findAllByItemIdAndWarehouseId(List<Long> ids, Long wId);
 }

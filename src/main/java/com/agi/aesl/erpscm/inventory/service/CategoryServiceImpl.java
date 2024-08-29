@@ -20,12 +20,7 @@ import com.agi.aesl.erpscm.inventory.dto.request.*;
 import com.agi.aesl.erpscm.inventory.entity.*;
 import com.agi.aesl.erpscm.inventory.enums.BudgetType;
 import com.agi.aesl.erpscm.inventory.enums.CategoryStatus;
-import com.agi.aesl.erpscm.inventory.repository.CategoryAttributeRepository;
-import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
-import com.agi.aesl.erpscm.inventory.repository.CategoryBudgetRepository;
-import com.agi.aesl.erpscm.inventory.repository.CategoryRepository;
-import com.agi.aesl.erpscm.inventory.repository.CategoryWarehouseStoreRepository;
-import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
+import com.agi.aesl.erpscm.inventory.repository.*;
 
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
@@ -74,6 +69,9 @@ public class CategoryServiceImpl implements CategoryService {
     private ItemRepository itemRepository;
 
     @Autowired
+    private ItemStockRepository itemStockRepository;
+
+    @Autowired
     private CpsServerConfig cpsServerConfig;
 
     @Autowired
@@ -117,7 +115,10 @@ public class CategoryServiceImpl implements CategoryService {
                             categoryWarehouseStore.setWarehouseStore(new WarehouseStore(categoryRequestDto.getWarehouseStore().getId()));
                             categoryWarehouseStoreRepository.save(categoryWarehouseStore);
                         }
+                        ItemCategory itemCategory = codeExist.get();
+                        itemCategory.setActive(true);
                         continue;
+
                     }
                     cr.setCode(categoryRequestDto.getCode());
                     cr.setCpsCategoryId(categoryRequestDto.getCpsCategoryId());
@@ -654,19 +655,15 @@ public class CategoryServiceImpl implements CategoryService {
             List<Item> items = itemRepository.findAllByItemCategoryIdAndActive(itemCategory.getId(),true);
 
             List<Long> itemIds = items.stream().map(i->i.getId()).collect(Collectors.toList());
-            List<DemandDetail> demandDetails  = demandDetailRepository.findAllByItemId(itemIds);
-//            if(demandDetails.size()>0){
-//                throw new AesException("Sorry! un-checking sub category also trying to delete its items but item already used in different module.");
-//            }
-//
-//            if(demandDetails.size()==0){
-//                for(Item item:items){
-//                    item.setActive(false);
-//                    itemRepository.save(item);
-//                }
-//            }
+            List<ItemStock> stockExist = itemStockRepository.findByItemsAndWarehosueId(itemIds,warehouseId);
+            if(!stockExist.isEmpty()){
+                throw new RuntimeException("Sorry! Item exist under this category in this warehouse");
+            }
+            List<DemandDetail> demandDetails  = demandDetailRepository.findAllByItemIdAndWarehouseId(itemIds,warehouseId);
+            if(demandDetails.size()>0){
+                throw new RuntimeException("Sorry! Item under this category has some demand in this warehouse, so unable to remove");
+            }
 
-            itemCategory.setActive(false);
             categoryRepository.save(itemCategory);
         }
     }

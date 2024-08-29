@@ -12,6 +12,7 @@ import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 //import com.agi.aesl.erpscm.demand.repository.DemandRepository;
+import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.exception.AesException;
@@ -103,6 +104,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private ItemAttributeRepository itemAttributeRepository;
+
+    @Autowired
+    private DemandDetailRepository demandDetailRepository;
 
     @Autowired
     private ItemImportLogRepository itemImportLogRepository;
@@ -723,20 +727,25 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public void deleteItem(Long id) {
+    public void deleteItem(Long id, Long warehouseId, Long warehosueStoreId) {
         Optional<Item> itemOptional = itemRepository.findById(id);
-
-//        Optional<DemandDetail> ddOp = demandDetailRepository.findByItemId(id);
-
-//        if(ddOp.isPresent()){
-//            throw new AesException("Sorry! Item Cannot be deleted, this item used in demand");
-//        }
-
-        if(itemOptional.isPresent()) {
-            Item item = itemOptional.get();
-            item.setActive(false);
-            itemRepository.save(item);
+        if(itemOptional.isEmpty()){
+            throw new RuntimeException("Sorry! item not found");
         }
+
+        List<ItemStock> stocks = itemStockRepository.findByItemsAndWarehosueId(List.of(id),warehouseId);
+        if(stocks.size()>1){
+            throw new RuntimeException("Sorry! Item has stock");
+        }
+        List<DemandDetail> demandDetails  = demandDetailRepository.findAllByItemIdAndWarehouseId(List.of(id),warehouseId);
+        if(!demandDetails.isEmpty()){
+            throw new RuntimeException("Sorry! Item has some demand in this warehouse, so unable to remove");
+        }
+
+        for(ItemStock s : stocks){
+            itemStockRepository.delete(s);
+        }
+
     }
 
     @Override

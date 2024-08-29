@@ -26,7 +26,7 @@ public interface ItemService {
 
     void updateItem(Long id, ItemRequestDto itemRequestDto);
 
-    void deleteItem(Long id);
+    void deleteItem(Long id, Long warehouseId, Long warehouseStoreId);
 
     Optional<Item> getItemDetail(Long id);
 
