@@ -703,14 +703,16 @@ public class ItemServiceImpl implements ItemService {
 
         if(itemRequestDto.getCurrentStockQty()!=null){
             List<ItemStock> itemStocks = item.getStocks();
-            itemStocks.add(new ItemStock(
-                    itemRequestDto.getCurrentStockQty(),
-                    item,
-                    StockType.STOCK_IN,
-                    new Warehouse(itemRequestDto.getWarehouse().getId()),
-                    new WarehouseStore(itemRequestDto.getWarehouseStore().getId())
-            ));
-            item.setStocks(itemStocks);
+            if(itemStocks.size()==1 && itemStocks.get(0).getStockQty().equals(new BigDecimal(0))){
+                itemStocks.add(new ItemStock(
+                        itemRequestDto.getCurrentStockQty(),
+                        item,
+                        StockType.STOCK_IN,
+                        new Warehouse(itemRequestDto.getWarehouse().getId()),
+                        new WarehouseStore(itemRequestDto.getWarehouseStore().getId())
+                ));
+                item.setStocks(itemStocks);
+            }
         }
         
 

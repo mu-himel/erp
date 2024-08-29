@@ -136,6 +136,7 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
     interface ItemInfo{
         Long getId();
         String getName();
+        String getItemAttributeName();
         String getCode();
     }
 
