@@ -9,7 +9,8 @@ public interface ItemQuery {
             "ws.id as warehouseStoreId, ws.store_name as warehouseStoreName, " +
             "SUM(s.stock_qty) as qty," +
             " i.stock_threshold_qty as stockThresholdQty," +
-            " i.reorder_percentage as reorderPercentage " +
+            " i.reorder_percentage as reorderPercentage," +
+            " i.item_attribute_name as itemAttributeName " +
             "FROM scm_items i " +
             "LEFT JOIN scm_item_stocks s ON s.item_id = i.id " +
             "LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id " +
