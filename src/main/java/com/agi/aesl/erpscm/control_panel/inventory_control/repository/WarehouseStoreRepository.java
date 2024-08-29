@@ -54,6 +54,8 @@ public interface WarehouseStoreRepository extends JpaRepository<WarehouseStore,L
 
     Boolean existsByWarehouseId(Long id);
 
+    Optional<WarehouseStore> findByStoreNameAndWarehouseIdAndActive(String name,Long warehouseId,Boolean active);
+
     interface WarehouseStoreInfoSingle{
         Long getId();
         String getStoreName();

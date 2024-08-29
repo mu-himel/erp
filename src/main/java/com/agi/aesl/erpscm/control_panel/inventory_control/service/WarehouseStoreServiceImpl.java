@@ -143,6 +143,11 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
             throw new AesException("Sorry! Warehouse not found");
         }
         Warehouse warehouse = warehouseOp.get();
+        Optional<WarehouseStore> storeOp = warehouseStoreRepository.findByStoreNameAndWarehouseIdAndActive(storeDto.getName(),
+                warehouse.getId(),true);
+        if(storeOp.isPresent()){
+            throw new RuntimeException("Sorry! Store already exist with this name in this warehouse");
+        }
         warehouseStore.setStoreName(storeDto.getName());
         warehouseStore.setWarehouse(warehouse);
         warehouseStore.setActive(true);
@@ -161,9 +166,17 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
         if(warehouseOp.isEmpty()){
             throw new AesException("Sorry! Warehouse not found");
         }
+        Warehouse warehouse = warehouseOp.get();
+        Optional<WarehouseStore> storeOp = warehouseStoreRepository.findByStoreNameAndWarehouseIdAndActive(storeDto.getName(),
+                warehouse.getId(),true);
+        if(storeOp.isPresent()){
+            if(!storeOp.get().getId().equals(id)){
+                throw new RuntimeException("Sorry! This store name already exist with different #ID["+storeOp.get().getId()+"]");
+            }
+        }
 
         WarehouseStore warehouseStore = warehouseStoreOp.get();
-        Warehouse warehouse = warehouseOp.get();
+
         warehouseStore.setAlias(storeDto.getName().toLowerCase()+" - "+warehouse.getName().toLowerCase());
         warehouseStore.setStoreName(storeDto.getName());
         warehouseStore.setWarehouse(warehouse);

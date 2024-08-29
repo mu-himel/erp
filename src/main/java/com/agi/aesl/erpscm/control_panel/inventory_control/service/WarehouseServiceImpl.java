@@ -73,6 +73,15 @@ public class WarehouseServiceImpl implements WarehouseService{
         if(warehouseOptional.isEmpty()){
             throw new AesException("Warehouse not found");
         }
+        Optional<Warehouse> warehouseExistOptional = warehouseRepository.findByNameAndActive(warehouse.getName(),true);
+
+        if(warehouseExistOptional.isPresent()){
+            if(!warehouseExistOptional.get().getId().equals(warehouseOptional.get().getId())){
+                throw new RuntimeException("Sorry! This warehouse name already exist with different #ID["+warehouseExistOptional.get().getId()+"]");
+            }
+//            throw new AesException("Name already exist");
+        }
+
         String oldName = warehouseOptional.get().getName();
         Warehouse newWarehouse = new Warehouse(warehouse.getId());
         newWarehouse.setName(warehouse.getName());
