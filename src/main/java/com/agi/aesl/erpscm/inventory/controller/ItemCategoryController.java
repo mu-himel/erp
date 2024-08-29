@@ -219,7 +219,7 @@ public class ItemCategoryController extends BaseController{
             // @ApiParam(value = "Category Id",example = "1", required = true) 
             @PathVariable("id") Long id,
             @RequestParam("warehouseId") Long warehouseId,
-            @RequestParam("storeId") Long warehouseStoreId
+            @RequestParam("warehouseStoreId") Long warehouseStoreId
     ){
         categoryService.deleteCategory(id,warehouseId,warehouseStoreId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

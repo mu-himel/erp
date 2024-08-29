@@ -180,8 +180,11 @@ public class ItemController extends BaseController{
     // @ApiOperation(value = "Delete Item")
     public ResponseEntity<?>  deleteItem(
         // @ApiParam(value = "Item Id", example = "1", required = true)
-                                         @PathVariable("id") Long id){
-        itemService.deleteItem(id);
+                @PathVariable("id") Long id,
+                @RequestParam("warehouseId") Long warehouseId,
+                @RequestParam("warehouseStoreId") Long warehouseStoreId
+    ){
+        itemService.deleteItem(id, warehouseId, warehouseStoreId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
