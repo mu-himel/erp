@@ -122,6 +122,7 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
         Integer getQcPass();
         Integer getQcFail();
         Integer getQcHold();
+        String getQcStatus();
     }
 
     interface CategoryInfo{

@@ -10,6 +10,10 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore
 
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
+import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseRepository;
+import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseStoreRepository;
+import com.agi.aesl.erpscm.demand.entity.DemandDetail;
+import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.dto.request.*;
@@ -80,14 +84,14 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Autowired
     private IntegrationReaderService integrationReaderService;
-//    @Autowired
-//    private DemandDetailRepository demandDetailRepository;
-//
-//    @Autowired
-//    private WarehouseRepository warehouseRepository;
-//
-//    @Autowired
-//    private WarehouseStoreRepository warehouseStoreRepository;
+    @Autowired
+    private DemandDetailRepository demandDetailRepository;
+
+    @Autowired
+    private WarehouseRepository warehouseRepository;
+
+    @Autowired
+    private WarehouseStoreRepository warehouseStoreRepository;
 
     @Autowired
     private NetworkService networkService;
@@ -601,24 +605,24 @@ public class CategoryServiceImpl implements CategoryService {
         itemCategory.setActive(true);
         
 
-//        if(warehouseId!=null && storeId!=null){
-//
-//            Optional<Warehouse> wOptional = warehouseRepository.findById(warehouseId);
-//            if(wOptional.isEmpty()){
-//                throw new AesException("Sorry! Warehouse not found");
-//            }
-//
-//            Optional<WarehouseStore> wsOptional = warehouseStoreRepository.findById(storeId);
-//            if(wsOptional.isEmpty()){
-//                throw new AesException("Sorry! Store not found");
-//            }
-//
-//            CategoryWarehouseStore cws = new CategoryWarehouseStore();
-//            cws.setCategory(itemCategory);
-//            cws.setWarehouse(wOptional.get());
-//            cws.setWarehouseStore(wsOptional.get());
-//            categoryWarehouseStoreRepository.save(cws);
-//        }
+        if(warehouseId!=null && storeId!=null){
+
+            Optional<Warehouse> wOptional = warehouseRepository.findById(warehouseId);
+            if(wOptional.isEmpty()){
+                throw new AesException("Sorry! Warehouse not found");
+            }
+
+            Optional<WarehouseStore> wsOptional = warehouseStoreRepository.findById(storeId);
+            if(wsOptional.isEmpty()){
+                throw new AesException("Sorry! Store not found");
+            }
+
+            CategoryWarehouseStore cws = new CategoryWarehouseStore();
+            cws.setCategory(itemCategory);
+            cws.setWarehouse(wOptional.get());
+            cws.setWarehouseStore(wsOptional.get());
+            categoryWarehouseStoreRepository.save(cws);
+        }
         
     }
 
@@ -650,7 +654,7 @@ public class CategoryServiceImpl implements CategoryService {
             List<Item> items = itemRepository.findAllByItemCategoryIdAndActive(itemCategory.getId(),true);
 
             List<Long> itemIds = items.stream().map(i->i.getId()).collect(Collectors.toList());
-//            List<DemandDetail> demandDetails  = demandDetailRepository.findAllByItemId(itemIds);
+            List<DemandDetail> demandDetails  = demandDetailRepository.findAllByItemId(itemIds);
 //            if(demandDetails.size()>0){
 //                throw new AesException("Sorry! un-checking sub category also trying to delete its items but item already used in different module.");
 //            }

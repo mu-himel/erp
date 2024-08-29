@@ -95,8 +95,10 @@ public interface GrnQuery {
                         COALESCE(CASE WHEN grid.qc_type = 'HOLD' THEN
                             count(grid.qc_type)
                         END,0) qcHold,
-                        grn.warehouse_id as warehouseId
+                        grn.warehouse_id as warehouseId,
+                        qc.qc_status as qcStatus
                     FROM good_receive_notes grn
+                    LEFT JOIN quality_controls qc ON qc.good_receive_note_id = grn.id
                     LEFT JOIN good_receive_item_details grid ON grid.good_receive_note_id = grn.id
                     LEFT JOIN scm_item_categories ipc ON ipc.id = grid.category_id
                     LEFT JOIN scm_item_categories ic ON ic.id = grid.sub_category_id
