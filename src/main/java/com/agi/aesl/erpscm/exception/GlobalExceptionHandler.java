@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -17,7 +18,7 @@ import java.util.Map;
 /**
  * Class documentation Comments to be added
  * */
-//@ControllerAdvice
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
     public static final String INVALID_PATH = "Invalid Path";
@@ -37,6 +38,14 @@ public class GlobalExceptionHandler {
 
         Map<String,Object> response = new HashMap<>();
         response.put("message", INVALID_PATH);
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler({MissingServletRequestParameterException.class})
+    public ResponseEntity<Object> handleMethodArgumentTypeMismatchException(MissingServletRequestParameterException me) {
+
+        Map<String,Object> response = new HashMap<>();
+        response.put("message", me.getMessage());
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
