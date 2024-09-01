@@ -68,7 +68,20 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
                                                    @Param("year") Integer year, Pageable pageable);
 
 
-    Optional<Long> countAllByParentCategoryAndActive(ItemCategory itemCategory,Boolean active);
+    @Query(value = """
+                SELECT COUNT(*) FROM (
+                    SELECT * FROM scm_item_categories ic
+                    LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
+                    WHERE 
+                        ic.category_status IN ('APPROVED') 
+                        AND ic.active=:active 
+                        AND ic.parent_category_id IN (:itemCategoryId)
+                    AND cws.warehouse_id IN (:warehouseId) 
+                    AND cws.warehouse_store_id IN (:storeId)
+                ) as total
+            """, nativeQuery = true)
+    Optional<Long> countAllByParentCategoryAndActive(Long itemCategoryId,Long warehouseId, Long storeId,
+                                                     Boolean active);
 
     boolean existsByCode(String code);
 

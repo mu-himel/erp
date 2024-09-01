@@ -637,20 +637,13 @@ public class CategoryServiceImpl implements CategoryService {
             ItemCategory itemCategory = itemCategoryOptional.get();
             if(itemCategory.getParentCategory()==null){
                 Optional<Long> countOptional = categoryRepository.countAllByParentCategoryAndActive(
-                        itemCategoryOptional.get(),true);
+                        itemCategoryOptional.get().getId(),warehouseId,storeId, true);
                 if(countOptional.isPresent() && countOptional.get() > 0){
-                throw new AesException("Sorry! Unable to delete, Category already used in Child Category");
+                 throw new AesException("Sorry! Unable to delete, Category already used in Child Category");
                 }
             }
 
-            if(warehouseId!=null && storeId!=null){
-                categoryWarehouseStoreRepository
-                        .deleteByCategoryIdAndWarehouseIdAndWarehouseStoreId(
-                                itemCategory.getId(),
-                                warehouseId,
-                                storeId
-                                );
-            }
+
 
             List<Item> items = itemRepository.findAllByItemCategoryIdAndActive(itemCategory.getId(),true);
 
@@ -663,6 +656,16 @@ public class CategoryServiceImpl implements CategoryService {
             if(demandDetails.size()>0){
                 throw new RuntimeException("Sorry! Item under this category has some demand in this warehouse, so unable to remove");
             }
+
+            if(warehouseId!=null && storeId!=null){
+                categoryWarehouseStoreRepository
+                        .deleteByCategoryIdAndWarehouseIdAndWarehouseStoreId(
+                                itemCategory.getId(),
+                                warehouseId,
+                                storeId
+                        );
+            }
+
 
             categoryRepository.save(itemCategory);
         }
