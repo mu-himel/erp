@@ -20,4 +20,6 @@ public interface SrnService extends VerificationDomainService {
                            Optional<String> toDate);
 
     void review(Jwt token, Long id, ReviewDto reviewDto);
+
+    Page<?> getPendingVerifications(Jwt token, Optional<String> fromDate, Optional<String> toDate, Optional<Integer> page, Optional<Integer> size);
 }

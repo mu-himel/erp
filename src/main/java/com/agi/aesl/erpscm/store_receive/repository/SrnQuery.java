@@ -40,11 +40,97 @@ public interface SrnQuery {
                                        LEFT JOIN scm_item_categories ic ON ic.id = grid.category_id
                                        LEFT JOIN store_receive_notes srn on srn.grn_id = grn.id\s
                                        WHERE srn.srn_status IN (:status)
-                                       AND (:fromDate IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
+                                       AND (COALESCE(:fromDate) IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
                                        GROUP BY grn.id) p
             """;
 
+
+    String getPendingVerifications= """
+            select p.id,p.grnNo,p.srnId,p.createdAt,p.grnStatus,p.isReceivedByStore,p.categoryName,\s
+                                       p.receivedQty,p.itemAttributes,p.brandId,
+                                       p.items as items,
+                                       (select count(*) FROM (SELECT d.id,d.demand_no ,
+                                                       dd.brand_id,
+                                                       GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ') demand_attributes
+                                                       FROM scm_demand_details dd
+                                                       LEFT JOIN scm_demands d ON d.id = dd.demand_id
+                                                       LEFT JOIN scm_demand_detail_attributes dda on dda.demand_detail_id = dd.id
+                                                       WHERE dd.brand_id = p.brandId AND dd.status IN ('PENDING')
+                                                       GROUP BY d.id) d
+                                                       where d.demand_attributes=p.itemAttributes) as demands,
+                                                       srn.srn_status as srnStatus,
+                                                       
+                                       FROM(SELECT grn.id as id,
+                                           srn.id as srnId,
+                                           grn.created_at as createdAt,
+                                           grn.grn_no as grnNo,grn.grn_status grnStatus,
+                                           grn.is_received_by_store isReceivedByStore,
+                                           ic.name as categoryName,
+                                           i.brand_id as brandId,
+                                           (select count(grid1.id) from good_receive_notes grn1\s
+                                                                   left join good_receive_item_details grid1 on grn1.id = grid1.good_receive_note_id\s
+                                                                   where grn1.id=grn.id)  as items, 
+                                           (select sum(grid2.receive_qty) from good_receive_notes grn2\s
+                                                                   left join good_receive_item_details grid2 on grn2.id = grid2.good_receive_note_id\s
+                                                                   where grn2.id=grn.id)  as receivedQty,
+                                           GROUP_CONCAT(ia.attribute_type,' ',ia.attribute_value , ' ',ia.attribute_unit separator ' - ') itemAttributes
+                                       FROM good_receive_notes grn
+                                       LEFT JOIN good_receive_item_details grid ON grid.good_receive_note_id = grn.id
+                                       LEFT JOIN scm_items i ON i.id = grid.item_id
+                                       LEFT JOIN scm_item_attributes ia ON ia.item_id = i.id
+                                       LEFT JOIN scm_item_categories ic ON ic.id = grid.category_id
+                                       LEFT JOIN store_receive_notes srn on srn.grn_id = grn.id\s
+                                       WHERE srn.srn_status IN (:status)
+                                       AND srn.next_verifier_id = :nextVerifierId
+                                       AND (COALESCE(:fromDate) IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
+                                       GROUP BY grn.id) p
+            """;
+
+    String getPendingApprovals= """
+            select p.id,p.grnNo,p.srnId,p.createdAt,p.grnStatus,p.isReceivedByStore,p.categoryName,\s
+                                       p.receivedQty,p.itemAttributes,p.brandId,
+                                       p.items as items,
+                                       (select count(*) FROM (SELECT d.id,d.demand_no ,
+                                                       dd.brand_id,
+                                                       GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ') demand_attributes
+                                                       FROM scm_demand_details dd
+                                                       LEFT JOIN scm_demands d ON d.id = dd.demand_id
+                                                       LEFT JOIN scm_demand_detail_attributes dda on dda.demand_detail_id = dd.id
+                                                       WHERE dd.brand_id = p.brandId AND dd.status IN ('PENDING')
+                                                       GROUP BY d.id) d
+                                                       where d.demand_attributes=p.itemAttributes) as demands,
+                                                       srn.srn_status as srnStatus,
+                                                       
+                                       FROM(SELECT grn.id as id,
+                                           srn.id as srnId,
+                                           grn.created_at as createdAt,
+                                           grn.grn_no as grnNo,grn.grn_status grnStatus,
+                                           grn.is_received_by_store isReceivedByStore,
+                                           ic.name as categoryName,
+                                           i.brand_id as brandId,
+                                           (select count(grid1.id) from good_receive_notes grn1\s
+                                                                   left join good_receive_item_details grid1 on grn1.id = grid1.good_receive_note_id\s
+                                                                   where grn1.id=grn.id)  as items, 
+                                           (select sum(grid2.receive_qty) from good_receive_notes grn2\s
+                                                                   left join good_receive_item_details grid2 on grn2.id = grid2.good_receive_note_id\s
+                                                                   where grn2.id=grn.id)  as receivedQty,
+                                           GROUP_CONCAT(ia.attribute_type,' ',ia.attribute_value , ' ',ia.attribute_unit separator ' - ') itemAttributes
+                                       FROM good_receive_notes grn
+                                       LEFT JOIN good_receive_item_details grid ON grid.good_receive_note_id = grn.id
+                                       LEFT JOIN scm_items i ON i.id = grid.item_id
+                                       LEFT JOIN scm_item_attributes ia ON ia.item_id = i.id
+                                       LEFT JOIN scm_item_categories ic ON ic.id = grid.category_id
+                                       LEFT JOIN store_receive_notes srn on srn.grn_id = grn.id\s
+                                       WHERE srn.srn_status IN (:status)
+                                       AND srn.next_approver_id = :nextApproverId
+                                       AND (COALESCE(:fromDate) IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
+                                       GROUP BY grn.id) p
+            """;
+
+
     String countAll="SELECT COUNT(*) FROM ("+getAll+") as total";
+    String countPendingVerifications="SELECT COUNT(*) FROM ("+getPendingVerifications+") as total";
+    String countPendingApprovals="SELECT COUNT(*) FROM ("+getPendingApprovals+") as total";
 
     String getPendingDemandsBySrnForSrnItems = """
             SELECT 

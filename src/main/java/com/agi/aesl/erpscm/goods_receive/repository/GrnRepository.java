@@ -53,7 +53,7 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
             @Param("categoryIds") List<Long> categoryIds,
             @Param("grnNo") String grnNo,
             @Param("qty") Integer qty,
-            @Param("receivedQty") Integer receivedQty,String status, LocalDateTime fromDate,
+            @Param("receivedQty") Integer receivedQty,List<String> status, LocalDateTime fromDate,
            LocalDateTime toDate,Pageable pageable);
 
     Optional<GoodReceiveNote> findByGrnNo(String grnNo);

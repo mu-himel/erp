@@ -170,7 +170,8 @@ public class QcServiceImpl implements QcService{
 //        if(controlDto.getQcStatus() == QcStatus.PARTIALLY_APPROVED ||
 //                controlDto.getQcStatus() == QcStatus.APPROVED) {
 //
-//            qualityControl.setQcStatus(controlDto.getQcStatus());
+            qualityControl.setQcStatus(controlDto.getQcStatus());
+            qualityControl.setStatus(controlDto.getQcStatus().toString());
 
             qualityControl.setQualityControlKpis(
                     controlDto.getKpis().stream().map(qualityControlKpi -> {
@@ -211,7 +212,8 @@ public class QcServiceImpl implements QcService{
 //            grn.setGrnStatus(GrnStatus.QC_HOLD);
 //        }
 
-        if(ids.size()>0 && !uri.isBlank()) {
+        if(ids.size()>0 && !uri.isBlank() && !qualityControl.getQcStatus().equals(QcStatus.REJECTED)) {
+            System.out.println(uri);
             verificationService.applyVerifyApprovalProcess(qualityControl,DomainType.QC,QcStatus.APPROVED.toString(),uri,"CATEGORY",ids,
                     null);
 

@@ -15,7 +15,7 @@ import java.util.List;
 public interface SrnRepository extends JpaRepository<StoreReceiveNote, Long>, SrnQuery {
 
     @Query(value = getAll, countQuery = countAll, nativeQuery = true)
-    Page<?> findAllSrnByStatus(String status, LocalDateTime fromDate,
+    Page<StoreReceiveNoteInfo> findAllSrnByStatus(String status, LocalDateTime fromDate,
                                LocalDateTime toDate, Pageable pageable);
 
     @Query(value = getPendingDemandsBySrnForSrnItems,nativeQuery = true)
@@ -23,4 +23,21 @@ public interface SrnRepository extends JpaRepository<StoreReceiveNote, Long>, Sr
 
     @Query(value = getGetPendingDemandsByAttributes, nativeQuery = true)
     List<PendingDemandList> getPendingDemandsBySrnForSrnItems(@Param("attributes") String attributes);
+
+    @Query(value = getPendingVerifications, countQuery = countPendingVerifications, nativeQuery = true)
+    Page<StoreReceiveNoteInfo> findAllPendingVerification(String nextVerifierId, LocalDateTime fromDate,
+                                                          LocalDateTime toDate, Pageable pageable);
+
+    @Query(value = getPendingApprovals, countQuery = countPendingApprovals, nativeQuery = true)
+    Page<StoreReceiveNoteInfo> findAllPendingApproval(String nextApproverId, LocalDateTime fromDate,
+                                                      LocalDateTime toDate, Pageable pageable);
+
+    interface StoreReceiveNoteInfo{
+        String getGrnNo();
+        Long getSrnId();
+        String getGrnStatus();
+        String getCategoryName();
+        Long getDemands();
+        String getSrnStatus();
+    }
 }

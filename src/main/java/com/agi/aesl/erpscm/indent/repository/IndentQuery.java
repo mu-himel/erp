@@ -278,10 +278,10 @@ public interface IndentQuery {
                                         LEFT JOIN indent_details ide on i.id = ide.indent_id
                                         LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
                                         LEFT JOIN scm_item_categories c on i.category_id = c.id
-                                        LEFT JOIN item_categories sc on ide.sub_category_id = sc.id
+                                        LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                                         LEFT JOIN acl_users e ON e.id = i.requested_by_id
                                 
-                        WHERE  i.indent_status = 'APPROVED' AND i.rfq_status = 'OPEN'
+                        WHERE  i.indent_status IN ('APPROVED','VERIFIED') AND i.rfq_status = 'OPEN'
                                 AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo))
                                 AND (:category IS NULL OR LOWER(c.name) LIKE  CONCAT(LOWER(:category),'%'))
                                 AND (:subCategory IS NULL OR LOWER(sc.name) LIKE CONCAT(LOWER(:subCategory),'%'))
