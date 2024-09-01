@@ -323,10 +323,15 @@ public class GrnServiceImpl implements GrnService{
             fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
         }
+        List<String> status = new ArrayList<>();
+        status.add(GrnStatus.PENDING_QC.toString());
+        status.add(GrnStatus.QC_PARTIAL.toString());
+        status.add(GrnStatus.QC_PASS.toString());
+        status.add(GrnStatus.QC_FAILED.toString());
         return grnRepository.findAllGrnByStatus(
                 null,null,
                 grnNo.orElse(null), qty.orElse(null), receivedQty.orElse(null),
-                GrnStatus.PENDING_QC.toString(),
+                status,
                 fromDateObj,
                 toDateObj,pageable);
     }

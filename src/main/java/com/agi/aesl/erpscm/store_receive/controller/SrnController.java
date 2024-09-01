@@ -71,5 +71,20 @@ public class SrnController  extends BaseController {
                 HttpStatus.OK
         );
     }
+
+    @GetMapping("/pending-verifications")
+    public ResponseEntity<?> getPendingVerifications(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+
+    ){
+        return new ResponseEntity<>(
+                srnService.getPendingVerifications(token, fromDate,toDate, page,size),
+                HttpStatus.OK
+        );
+    }
 }
 

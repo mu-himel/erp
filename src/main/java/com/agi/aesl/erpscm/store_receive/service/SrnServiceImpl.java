@@ -197,6 +197,23 @@ public class SrnServiceImpl implements SrnService{
     }
 
     @Override
+    public Page<?> getPendingVerifications(Jwt token, Optional<String> fromDate, Optional<String> toDate,
+                                           Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+        String uri="";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+        LocalDateTime fromDateObj = null;
+        LocalDateTime toDateObj = null;
+
+        if(fromDate.isPresent() && toDate.isPresent()) {
+            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
+            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+        }
+        return srnRepository.findAllPendingVerification(claimResolver.getUserId(),fromDateObj,toDateObj,pageable);
+    }
+
+    @Override
     public Page<?> getAllComplete(Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate) {
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);

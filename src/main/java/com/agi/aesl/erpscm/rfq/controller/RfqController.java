@@ -1,7 +1,9 @@
 package com.agi.aesl.erpscm.rfq.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
+import com.agi.aesl.erpscm.rfq.dto.RfqRequestDto;
 import com.agi.aesl.erpscm.rfq.service.service.RfqService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,14 @@ public class RfqController extends BaseController {
 
     @Autowired
     private RfqService rfqService;
+
+    @PostMapping
+    public ResponseEntity<?> createRfQ(
+            @AuthenticationPrincipal Jwt token,
+            @Valid @RequestBody RfqRequestDto requestDto){
+        rfqService.createRfq(token,requestDto);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
 
     @GetMapping("/pending")
     public ResponseEntity<?> getAllPendingRFQs(
@@ -71,4 +81,6 @@ public class RfqController extends BaseController {
 
         return new ResponseEntity<>(rfqService.getAvailableVendorsCount(token,id),HttpStatus.OK);
     }
+
+
 }

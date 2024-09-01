@@ -59,11 +59,13 @@ public interface QcQuery {
                                 END,0) qcHold,
                                 grn.warehouse_id as warehouseId 
                     FROM quality_controls qc
+                    LEFT JOIN qc_verify_approval_histories qvah ON qvah.quality_control_id = qc.id
                     LEFT JOIN good_receive_notes grn ON grn.id = qc.good_receive_note_id
                     LEFT JOIN good_receive_item_details grid ON grid.good_receive_note_id = grn.id
                     LEFT JOIN scm_item_categories ipc ON ipc.id = grid.category_id
                     LEFT JOIN scm_item_categories ic ON ic.id = grid.sub_category_id
-                    WHERE (qc.next_verifier_id=:nextVerifierId AND qc.qc_status IN (:status))
+                    WHERE ((qc.next_verifier_id=:nextVerifierId AND qc.qc_status IN (:status))
+                    OR (qvah.employee_id = :nextVerifierId AND qvah.qc_status = 'VERIFIED'))
                     AND (:grnNo IS NULL OR grn.grn_no = :grnNo)
                     AND (COALESCE(:warehouseIds) IS NULL OR grn.warehouse_id IN (:warehouseIds))
                     AND (

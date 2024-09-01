@@ -88,6 +88,7 @@ public class Indent extends VerifyableEntity {
         this.id = id;
     }
 
+
     @Override
     public void setStatus(String status) {
         this.indentStatus = IndentVerificationStatus.valueOf(status);
