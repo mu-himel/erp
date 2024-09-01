@@ -688,6 +688,7 @@ public class ItemServiceImpl implements ItemService {
             item.setItemCategory(itemRequestDto.getItemCategory());
         }
 
+
         if(itemRequestDto.getItemUnit()!=null) {
             item.setItemUnit(itemRequestDto.getItemUnit());
         }
@@ -703,7 +704,7 @@ public class ItemServiceImpl implements ItemService {
 
         if(itemRequestDto.getCurrentStockQty()!=null){
             List<ItemStock> itemStocks = item.getStocks();
-            if(itemStocks.size()==1 && itemStocks.get(0).getStockQty().equals(new BigDecimal(0))){
+            if(itemStocks.size()==1 && itemStocks.get(0).getStockQty().equals(new BigDecimal("0.00"))){
                 itemStocks.add(new ItemStock(
                         itemRequestDto.getCurrentStockQty(),
                         item,
