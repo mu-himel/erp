@@ -158,6 +158,7 @@ public class ItemServiceImpl implements ItemService {
            }
         });
         itemDetail.setWarehouses(warehouses);
+
         return Optional.ofNullable(itemDetail);
     }
 
@@ -704,7 +705,11 @@ public class ItemServiceImpl implements ItemService {
 
         if(itemRequestDto.getCurrentStockQty()!=null){
             List<ItemStock> itemStocks = item.getStocks();
-            if(itemStocks.size()==1 && itemStocks.get(0).getStockQty().equals(new BigDecimal("0.00"))){
+
+           List<ItemStock> filteredItemStocks = itemStocks.stream().filter(stock->stock.getWarehouse().getId()
+                            .equals(itemRequestDto.getWarehouse().getId())
+            ).collect(Collectors.toList());
+           if(filteredItemStocks.size()==1 && filteredItemStocks.get(0).getStockQty().equals(new BigDecimal("0.00"))){
                 itemStocks.add(new ItemStock(
                         itemRequestDto.getCurrentStockQty(),
                         item,
@@ -713,7 +718,7 @@ public class ItemServiceImpl implements ItemService {
                         new WarehouseStore(itemRequestDto.getWarehouseStore().getId())
                 ));
                 item.setStocks(itemStocks);
-            }
+           }
         }
         
 
