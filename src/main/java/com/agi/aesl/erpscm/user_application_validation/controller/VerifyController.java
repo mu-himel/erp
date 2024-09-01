@@ -54,6 +54,10 @@ public class VerifyController extends BaseController{
             verificationService.setVerificationDomainService(indentService);
             verificationService.approve(token, approveDto);
         }
+        if(approveDto.getDomainType().equals(DomainType.QC)){
+            verificationService.setVerificationDomainService(qcService);
+            verificationService.approve(token, approveDto);
+        }
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
@@ -74,6 +78,10 @@ public class VerifyController extends BaseController{
             verificationService.setVerificationDomainService(indentService);
             verificationService.verify(token, verifyDto);
         }
+        if(verifyDto.getDomainType().equals(DomainType.QC)){
+            verificationService.setVerificationDomainService(qcService);
+            verificationService.verify(token, verifyDto);
+        }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -89,6 +97,10 @@ public class VerifyController extends BaseController{
         }
         if(verifyDto.getDomainType().equals(DomainType.INDENT)){
             verificationService.setVerificationDomainService(indentService);
+            verificationService.review(verifyDto);
+        }
+        if(verifyDto.getDomainType().equals(DomainType.QC)){
+            verificationService.setVerificationDomainService(qcService);
             verificationService.review(verifyDto);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

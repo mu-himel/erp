@@ -85,8 +85,8 @@ public class SrnServiceImpl implements SrnService{
             throw new RuntimeException("Grn not found");
         }
         GoodReceiveNote grn = goodReceiveNoteOp.get();
-        grn.setIsReceivedByStore(true);
-        grn.setGrnStatus(GrnStatus.COMPLETED);
+//        grn.setIsReceivedByStore(true);
+//        grn.setGrnStatus(GrnStatus.COMPLETED);
         storeReceiveNote.setGrn(grn);
         storeReceiveNote.setSrnDetails(srnDto.getSrnDetails().stream().map(storeReceiveDetail -> {
             Optional<Item> itemOp = itemService.getItemDetail(storeReceiveDetail.getItem().getId());
