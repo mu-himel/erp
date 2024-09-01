@@ -70,7 +70,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
 
     @Query(value = """
                 SELECT COUNT(*) FROM (
-                    SELECT * FROM scm_item_categories ic
+                    SELECT ic.id FROM scm_item_categories ic
                     LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
                     WHERE 
                         ic.category_status IN ('APPROVED') 
