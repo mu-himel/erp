@@ -113,6 +113,10 @@ public class QcServiceImpl implements QcService{
         }
         AtomicReference<Boolean> error = new AtomicReference<>(false);
 
+        if(controlDto.getKpis()==null || controlDto.getKpis().isEmpty()){
+            throw new RuntimeException("Sorry! KPI required");
+        }
+
         controlDto.getKpis().stream().forEach(qualityControlKpi -> {
             if(qualityControlKpi.getQcType().equals(null)){
                 error.set(true);
@@ -163,9 +167,10 @@ public class QcServiceImpl implements QcService{
 
         AtomicReference<Integer> qcPassCount = new AtomicReference<>(0);
         AtomicReference<Integer> qcFailCount = new AtomicReference<>(0);
-        if(controlDto.getKpis().size()==MAX_NO_OF_KPI && (controlDto.getQcStatus()== QcStatus.PARTIALLY_APPROVED || controlDto.getQcStatus()== QcStatus.APPROVED)) {
-
-            qualityControl.setQcStatus(QcStatus.APPROVED);
+//        if(controlDto.getQcStatus() == QcStatus.PARTIALLY_APPROVED ||
+//                controlDto.getQcStatus() == QcStatus.APPROVED) {
+//
+//            qualityControl.setQcStatus(controlDto.getQcStatus());
 
             qualityControl.setQualityControlKpis(
                     controlDto.getKpis().stream().map(qualityControlKpi -> {
@@ -177,25 +182,34 @@ public class QcServiceImpl implements QcService{
                     }).collect(Collectors.toList())
             );
 
-        }else{
-
-            qualityControl.setQcStatus(QcStatus.REJECTED);
-        }
+//        }else{
+//
+//            qualityControl.setQcStatus(QcStatus.REJECTED);
+//        }
 
         qcRepository.save(qualityControl);
-
-        if(qcPassCount.get().equals(MAX_NO_OF_KPI)){
-            grn.setGrnStatus(GrnStatus.READY_FOR_STORE);
-        }
         if(qualityControl.getQcStatus().equals(QcStatus.PARTIALLY_APPROVED)){
             grn.setGrnStatus(GrnStatus.QC_PARTIAL);
         }
-        if(qualityControl.getQcStatus().equals(QcStatus.REJECTED) ||  qcFailCount.get()>0){
+        if(qualityControl.getQcStatus().equals(QcStatus.APPROVED)){
+            grn.setGrnStatus(GrnStatus.QC_PASS);
+        }
+        if(qualityControl.getQcStatus().equals(QcStatus.REJECTED)){
             grn.setGrnStatus(GrnStatus.QC_FAILED);
         }
-        if(qcPassCount.get()==0 && qcFailCount.get()==0 ){
-            grn.setGrnStatus(GrnStatus.QC_HOLD);
-        }
+
+//        if(qcPassCount.get().equals(MAX_NO_OF_KPI)){
+//            grn.setGrnStatus(GrnStatus.READY_FOR_STORE);
+//        }
+//        if(qualityControl.getQcStatus().equals(QcStatus.PARTIALLY_APPROVED)){
+//            grn.setGrnStatus(GrnStatus.QC_PARTIAL);
+//        }
+//        if(qualityControl.getQcStatus().equals(QcStatus.REJECTED) ||  qcFailCount.get()>0){
+//            grn.setGrnStatus(GrnStatus.QC_FAILED);
+//        }
+//        if(qcPassCount.get()==0 && qcFailCount.get()==0 ){
+//            grn.setGrnStatus(GrnStatus.QC_HOLD);
+//        }
 
         if(ids.size()>0 && !uri.isBlank()) {
             verificationService.applyVerifyApprovalProcess(qualityControl,DomainType.QC,QcStatus.APPROVED.toString(),uri,"CATEGORY",ids,

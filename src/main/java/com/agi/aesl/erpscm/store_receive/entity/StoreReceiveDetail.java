@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.store_receive.entity;
 
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
+import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -21,6 +22,9 @@ public class StoreReceiveDetail {
     @ManyToOne
     @JsonIgnore
     private StoreReceiveNote storeReceiveNote;
+
+    @OneToOne
+    private GoodReceiveItemDetail goodReceiveItemDetail;
 
     @ManyToOne
     private Item item;

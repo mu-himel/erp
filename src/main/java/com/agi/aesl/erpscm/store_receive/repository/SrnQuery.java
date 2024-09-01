@@ -16,7 +16,9 @@ public interface SrnQuery {
                                                        LEFT JOIN scm_demand_detail_attributes dda on dda.demand_detail_id = dd.id
                                                        WHERE dd.brand_id = p.brandId AND dd.status IN ('PENDING')
                                                        GROUP BY d.id) d
-                                                       where d.demand_attributes=p.itemAttributes) as demands
+                                                       where d.demand_attributes=p.itemAttributes) as demands,
+                                                       srn.srn_status as srnStatus,
+                                                       
                                        FROM(SELECT grn.id as id,
                                            srn.id as srnId,
                                            grn.created_at as createdAt,
@@ -37,7 +39,7 @@ public interface SrnQuery {
                                        LEFT JOIN scm_item_attributes ia ON ia.item_id = i.id
                                        LEFT JOIN scm_item_categories ic ON ic.id = grid.category_id
                                        LEFT JOIN store_receive_notes srn on srn.grn_id = grn.id\s
-                                       WHERE grn.grn_status IN (:status)
+                                       WHERE srn.srn_status IN (:status)
                                        AND (:fromDate IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
                                        GROUP BY grn.id) p
             """;

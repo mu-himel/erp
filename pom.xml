@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.agi.aesl</groupId>
 	<artifactId>scmbe</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>scmbe:0.0.24</version>
 	<name>ERP SCM</name>
 	<description>ERP Supply Chain Management</description>
 	<properties>
