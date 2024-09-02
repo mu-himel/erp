@@ -16,10 +16,14 @@ public interface SrnService extends VerificationDomainService {
     List<?> getPendingDemandListBySrnItems(String attributes);
 
     Page<?> getAll(Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate);
-    Page<?> getAllComplete(Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate,
+    Page<?> getAllComplete(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate,
                            Optional<String> toDate);
 
     void review(Jwt token, Long id, ReviewDto reviewDto);
 
-    Page<?> getPendingVerifications(Jwt token, Optional<String> fromDate, Optional<String> toDate, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getPendingVerifications(Jwt token, Optional<String> fromDate, Optional<String> toDate,
+                                    Optional<Integer> page, Optional<Integer> size);
+
+    Page<?> getPendingApprovals(Jwt token, Optional<String> fromDate,
+                                Optional<String> toDate, Optional<Integer> page, Optional<Integer> size);
 }

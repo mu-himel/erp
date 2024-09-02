@@ -43,12 +43,13 @@ public class SrnController  extends BaseController {
     }
     @GetMapping("/complete")
     public ResponseEntity<?> getAllComplete(
+            @AuthenticationPrincipal Jwt token,
             @RequestParam("fromDate") Optional<String> fromDate,
             @RequestParam("toDate") Optional<String> toDate,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size){
         return new ResponseEntity<>(
-                srnService.getAllComplete(page,size, fromDate, toDate),
+                srnService.getAllComplete(token, page,size, fromDate, toDate),
                 HttpStatus.OK
         );
     }
@@ -83,6 +84,20 @@ public class SrnController  extends BaseController {
     ){
         return new ResponseEntity<>(
                 srnService.getPendingVerifications(token, fromDate,toDate, page,size),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/pending-approvals")
+    public ResponseEntity<?> getPendingApprovals(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                srnService.getPendingApprovals(token, fromDate,toDate, page,size),
                 HttpStatus.OK
         );
     }

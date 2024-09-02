@@ -23,6 +23,7 @@ public interface QcQuery {
     String getPendingVerificationsQc = """
             SELECT 
                     p.id as id,
+                    p.qcId as qcId,
                     p.createdAt as createdAt,
                     p.grnStatus as grnStatus,
                     p.qcStatus as qcStatus,
@@ -38,7 +39,9 @@ public interface QcQuery {
                     p.qcHold as qcHold,
                     p.warehouseId as warehouseId
                 FROM (
-                    SELECT      qc.id as id,
+                    SELECT      
+                                grn.id as id,
+                                qc.id as qcId,
                                 grn.created_at as createdAt, 
                                 grn.grn_no as grnNo, 
                                 grn.grn_status as grnStatus,

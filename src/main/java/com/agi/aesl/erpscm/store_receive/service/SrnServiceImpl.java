@@ -13,9 +13,6 @@ import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
-import com.agi.aesl.erpscm.quality_control.entity.QcVerifyApprovalHistory;
-import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
-import com.agi.aesl.erpscm.quality_control.enums.QcStatus;
 import com.agi.aesl.erpscm.store_receive.dto.SrnDto;
 import com.agi.aesl.erpscm.store_receive.entity.SrnVerifyApprovalHistory;
 import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveNote;
@@ -192,7 +189,9 @@ public class SrnServiceImpl implements SrnService{
             fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
         }
-        return srnRepository.findAllSrnByStatus(GrnStatus.READY_FOR_STORE.toString(), fromDateObj, toDateObj,
+        List<String> status = new ArrayList<>();
+        status.add(GrnStatus.READY_FOR_STORE.toString());
+        return srnRepository.findAllSrnByStatus(status, fromDateObj, toDateObj,
                 pageable);
     }
 
@@ -214,7 +213,10 @@ public class SrnServiceImpl implements SrnService{
     }
 
     @Override
-    public Page<?> getAllComplete(Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate) {
+    public Page<?> getPendingApprovals(Jwt token, Optional<String> fromDate, Optional<String> toDate,
+                                       Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+        String uri="";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
         LocalDateTime fromDateObj = null;
@@ -224,7 +226,26 @@ public class SrnServiceImpl implements SrnService{
             fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
         }
-        return srnRepository.findAllSrnByStatus(GrnStatus.COMPLETED.toString(),
+        return srnRepository.findAllPendingApproval(claimResolver.getUserId(),fromDateObj,toDateObj,pageable);
+
+    }
+
+    @Override
+    public Page<?> getAllComplete(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate) {
+        claimResolver.setToken(token);
+        String uri="";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+        LocalDateTime fromDateObj = null;
+        LocalDateTime toDateObj = null;
+
+        if(fromDate.isPresent() && toDate.isPresent()) {
+            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
+            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+        }
+        List<String> status = new ArrayList<>();
+        status.add(GrnStatus.COMPLETED.toString());
+        return srnRepository.findAllSrnByStatus(status,
                 fromDateObj, toDateObj,pageable);
     }
 
@@ -313,7 +334,7 @@ public class SrnServiceImpl implements SrnService{
     @Transactional
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
         Optional<UserApplicationValidation> verificationOp = verificationService
-                .getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType.QC,domainId,verifier);
+                .getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType.SRN,domainId,verifier);
 
         if(verificationOp.isPresent()){
             UserApplicationValidation validation = verificationOp.get();

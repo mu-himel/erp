@@ -15,7 +15,7 @@ import java.util.List;
 public interface SrnRepository extends JpaRepository<StoreReceiveNote, Long>, SrnQuery {
 
     @Query(value = getAll, countQuery = countAll, nativeQuery = true)
-    Page<StoreReceiveNoteInfo> findAllSrnByStatus(String status, LocalDateTime fromDate,
+    Page<StoreReceiveNoteInfo> findAllSrnByStatus(List<String> status, LocalDateTime fromDate,
                                LocalDateTime toDate, Pageable pageable);
 
     @Query(value = getPendingDemandsBySrnForSrnItems,nativeQuery = true)

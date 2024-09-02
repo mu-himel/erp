@@ -108,6 +108,7 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
     }
     interface GoodReceiveNoteInfo{
         Long getId();
+        Long getQcId();
         LocalDate getCreatedAt();
         Long getWarehouseId();
         String getPo();
