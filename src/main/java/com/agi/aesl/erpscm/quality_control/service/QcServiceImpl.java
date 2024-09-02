@@ -480,7 +480,9 @@ public class QcServiceImpl implements QcService{
         }
         QualityControl qc = qcOp.get();
         qc.setReviewerId(null);
-        qc.setQcStatus(qc.getReviewPrevStatus());
+        if(qc.getReviewPrevStatus()!=null) {
+            qc.setQcStatus(qc.getReviewPrevStatus());
+        }
         qc.setReviewPrevStatus(null);
         qc.setReviewDate(LocalDateTime.now());
 

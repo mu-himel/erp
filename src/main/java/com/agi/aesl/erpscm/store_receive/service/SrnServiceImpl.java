@@ -4,6 +4,7 @@ import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.erpn_integration.service.IntegrationWriterService;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
@@ -15,6 +16,7 @@ import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
 import com.agi.aesl.erpscm.store_receive.dto.SrnDto;
 import com.agi.aesl.erpscm.store_receive.entity.SrnVerifyApprovalHistory;
+import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveDetail;
 import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveNote;
 import com.agi.aesl.erpscm.store_receive.enums.SrnStatus;
 import com.agi.aesl.erpscm.store_receive.repository.SrnRepository;
@@ -36,10 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -69,11 +68,15 @@ public class SrnServiceImpl implements SrnService{
     @Autowired
     private UserApplicationValidatorService<StoreReceiveNote> verificationService;
 
+    @Autowired
+    private IntegrationWriterService integrationWriterService;
+
     @Override
     @Transactional
     public void addSrn(Jwt token, SrnDto srnDto) {
         claimResolver.setToken(token);
         StoreReceiveNote storeReceiveNote = new StoreReceiveNote();
+        List<String> ids = new ArrayList<>();
         storeReceiveNote.setSrnNo(srnDto.getSrnNo());
         storeReceiveNote.setComment(srnDto.getComment());
         storeReceiveNote.setEmployee(new Employee(claimResolver.getEmployee().get().getId()));
@@ -82,39 +85,51 @@ public class SrnServiceImpl implements SrnService{
             throw new RuntimeException("Grn not found");
         }
         GoodReceiveNote grn = goodReceiveNoteOp.get();
-//        grn.setIsReceivedByStore(true);
-//        grn.setGrnStatus(GrnStatus.COMPLETED);
+
         storeReceiveNote.setGrn(grn);
-        storeReceiveNote.setSrnDetails(srnDto.getSrnDetails().stream().map(storeReceiveDetail -> {
-            Optional<Item> itemOp = itemService.getItemDetail(storeReceiveDetail.getItem().getId());
+        storeReceiveNote.setSrnDetails(srnDto.getSrnDetails().stream().map(storeReceiveDetailDto -> {
+            StoreReceiveDetail storeReceiveDetail = new StoreReceiveDetail();
+            Optional<Item> itemOp = itemService.getItemDetail(storeReceiveDetailDto.getItem().getId());
             if(itemOp.isEmpty()) {
                 throw new RuntimeException("Sorry! Item not found");
             }
             Item item = itemOp.get();
-            Optional<ItemDetail> itemDetailOp = (Optional<ItemDetail>)itemService.getItemDetailWithWarehouse(item.getId());
-            if(itemDetailOp.isPresent()) {
-                ItemDetail itemDetail = itemDetailOp.get();
-                List<Map<String,Object>> stores = itemDetail
-                        .getWarehouses().get(claimResolver.getEmployee().get().getWarehouseId().toString());
-                Optional<Map<String,Object>> store = stores.stream().filter(
-                        stringObjectMap -> !((String)stringObjectMap.get("warehouseStoreName"))
-                                .toLowerCase().contains("finish goods")
-                ).findFirst();
-                store.ifPresent(stringObjectMap -> {
-                    Long warehouseStoreId = (Long)stringObjectMap.get("warehouseStoreId");
-                    itemService.stockIn(item, storeReceiveDetail.getStockInQty(),
-                            claimResolver.getEmployee().get().getWarehouseId(),
-                            warehouseStoreId);
-                });
+            storeReceiveDetail.setItem(item);
+            storeReceiveDetail.setWarehouse(storeReceiveDetailDto.getWarehouse());
+            storeReceiveDetail.setWarehouseStore(storeReceiveDetailDto.getWarehouseStore());
+            storeReceiveDetail.setGoodReceiveItemDetail(storeReceiveDetailDto.getGoodReceiveItemDetail());
+            storeReceiveDetail.setStoreReceiveNote(storeReceiveNote);
+            storeReceiveDetail.setCostCenter(storeReceiveDetailDto.getCostCenter());
+            storeReceiveDetail.setStockInQty(storeReceiveDetailDto.getStockInQty());
+            ids.add(item.getItemCategory().getId().toString());
+            ids.add(item.getItemParentCategory().getId().toString());
 
-                storeReceiveDetail.setStoreReceiveNote(storeReceiveNote);
-            }
+//              stock in process
+//            Optional<ItemDetail> itemDetailOp = (Optional<ItemDetail>)itemService.getItemDetailWithWarehouse(item.getId());
+//
+//            if(itemDetailOp.isPresent()) {
+            //        grn.setIsReceivedByStore(true);
+//               grn.setGrnStatus(GrnStatus.COMPLETED);
+//                ItemDetail itemDetail = itemDetailOp.get();
+//                List<Map<String,Object>> stores = itemDetail
+//                        .getWarehouses().get(claimResolver.getEmployee().get().getWarehouseId().toString());
+//                Optional<Map<String,Object>> store = stores.stream().filter(
+//                        stringObjectMap -> !((String)stringObjectMap.get("warehouseStoreName"))
+//                                .toLowerCase().contains("finish goods")
+//                ).findFirst();
+//                store.ifPresent(stringObjectMap -> {
+//                    Long warehouseStoreId = (Long)stringObjectMap.get("warehouseStoreId");
+//                    itemService.stockIn(item, storeReceiveDetailDto.getStockInQty(),
+//                            claimResolver.getEmployee().get().getWarehouseId(),
+//                            warehouseStoreId);
+//                });
+//            }
             return storeReceiveDetail;
         }).collect(Collectors.toList()));
+
         srnRepository.save(storeReceiveNote);
 
-        List<String> ids = new ArrayList<>();
-        String uri="";
+        String uri="inventory-management/good-receive/store-receive-note";
         if(ids.size()>0 && !uri.isBlank()) {
 
             verificationService.applyVerifyApprovalProcess(storeReceiveNote,DomainType.SRN,
@@ -306,6 +321,7 @@ public class SrnServiceImpl implements SrnService{
                 srn.setSrnStatus(SrnStatus.PENDING_APPROVAL);
             } else {
                 srn.setSrnStatus(SrnStatus.VERIFIED);
+                integrationWriterService.purchaseReceived(claimResolver.getToken(),srn);
             }
         }
     }
@@ -317,6 +333,7 @@ public class SrnServiceImpl implements SrnService{
         if(srnOp.isPresent()) {
             StoreReceiveNote srn = srnOp.get();
             srn.setSrnStatus(SrnStatus.APPROVED);
+            integrationWriterService.purchaseReceived(claimResolver.getToken(),srn);
         }
     }
 
@@ -373,5 +390,35 @@ public class SrnServiceImpl implements SrnService{
                 reviewDto.getMessage(),
                 reviewDto.getAttachments()
         ));
+    }
+
+    @Override
+    public Optional<?> getDetail(Long id) {
+        Optional<SrnRepository.SrnDetail> srnOp = srnRepository.findById(id, SrnRepository.SrnDetail.class);
+        if(srnOp.isPresent()){
+            SrnRepository.SrnDetail srn = srnOp.get();
+
+        List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
+        List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
+        List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
+                .getVerificationsByDomainTypeAndDomainId(DomainType.SRN, srn.getId());
+        vrs.stream().forEach(verifier->{
+            if(verifier.getIsApproval()==false){
+                verifiers.add(verifier);
+            }else{
+                approvers.add(verifier);
+            }
+        });
+
+        List<?> comments = commentService.getCommentsByDomain(DomainType.QC, srn.getId());
+
+        Map<String,Object> detail = new HashMap<>();
+        detail.put("approvers",approvers);
+        detail.put("comments",comments);
+        detail.put("verifiers",verifiers);
+        detail.put("detail",srn);
+        return Optional.ofNullable(detail);
+        }
+        return Optional.empty();
     }
 }

@@ -9,5 +9,5 @@ import java.util.List;
 public class SrnDto {
     private String srnNo;
     private String comment;
-    List<StoreReceiveDetail> srnDetails;
+    List<SrnDetailDto> srnDetails;
 }

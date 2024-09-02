@@ -52,4 +52,9 @@ public class StoreReceiveNote extends VerifyableEntity {
 
     private String reviewerId;
     private LocalDateTime reviewDate;
+
+    @Override
+    public void setStatus(String status) {
+        this.srnStatus = SrnStatus.valueOf(status);
+    }
 }

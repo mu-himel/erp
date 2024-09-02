@@ -55,6 +55,17 @@ public class SrnController  extends BaseController {
     }
 
     @GetMapping("/{id}")
+    public ResponseEntity<?> getDetail(
+            @AuthenticationPrincipal Jwt token,
+           @PathVariable("id") Long id){
+
+        return new ResponseEntity<>(
+                srnService.getDetail(id),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("demands/{id}")
     public ResponseEntity<?> getPendingDemandListBySrnItems(@PathVariable("id") Long id){
         return new ResponseEntity<>(
                 srnService.getPendingDemandListBySrnItems(id),

@@ -26,4 +26,6 @@ public interface SrnService extends VerificationDomainService {
 
     Page<?> getPendingApprovals(Jwt token, Optional<String> fromDate,
                                 Optional<String> toDate, Optional<Integer> page, Optional<Integer> size);
+
+    Optional<?> getDetail(Long id);
 }

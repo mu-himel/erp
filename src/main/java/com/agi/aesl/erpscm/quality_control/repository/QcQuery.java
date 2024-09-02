@@ -6,6 +6,7 @@ public interface QcQuery {
             SELECT qc.id as id, qc.qc_status as qcStatus,qc.comment as comment, 
                     qck.name as name,
                     qck.remark as remark,
+                    qc.review_prev_status as prevStatus,
                 CASE WHEN qck.qc_type = 'PASS' THEN
                  true
                 END as pass,
@@ -272,6 +273,7 @@ public interface QcQuery {
     interface QcResultItem{
         Long getId();
         String getQcStatus();
+        String getPrevStatus();
         String getName();
         String getRemark();
         String getComment();

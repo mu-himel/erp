@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.quality_control.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
+import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.quality_control.dto.request.QcDto;
@@ -93,6 +94,18 @@ public class QcController extends BaseController {
                         size, grnNo, qty,
                         receivedQty, fromDate, toDate),
                 HttpStatus.OK
+        );
+    }
+
+    @PutMapping("/review/{id}")
+    public ResponseEntity<?> review(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id,
+            @RequestBody ReviewDto reviewDto
+    ){
+        qcService.review(token,id,reviewDto);
+        return new ResponseEntity<>(
+                HttpStatus.NO_CONTENT
         );
     }
 

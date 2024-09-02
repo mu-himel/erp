@@ -1,20 +1,22 @@
 package com.agi.aesl.erpscm.erpn_integration.service;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import com.agi.aesl.erpscm.account_finance.dto.request.RemoteLedgerAccountDto;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
+import com.agi.aesl.erpscm.erpn_integration.dto.request.PurchaseRequest;
+import com.agi.aesl.erpscm.erpn_integration.dto.request.PurchaseRequestItem;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
+import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveNote;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
@@ -37,6 +39,9 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
     @Value("${app.hr.ledger.item.create}")
     private String ledgerItemCreateEndpoint;
+
+    @Value("${app.hr.purchase_receipt.create}")
+    private String purchaseReceivedEndpoint;
 
 
     @Value("${service.hr}")
@@ -118,6 +123,32 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
         System.out.println(ledgerItemCreateEndpoint);
         if(serviceExist.isPresent()) {
+            networkService.put(ledgerItemCreateEndpoint, payload, Void.class);
+        }else{
+            throw new RuntimeException("Sorry! Hr Service not available to create item ledger");
+        }
+    }
+
+    @Override
+    public void purchaseReceived(Jwt token, StoreReceiveNote receiveNote) {
+
+        Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
+        if(serviceExist.isPresent()) {
+            PurchaseRequest purchaseRequest = new PurchaseRequest();
+            purchaseRequest.setSupplierName(receiveNote.getGrn().getVendorEmail());
+            List<PurchaseRequestItem> items = new ArrayList<>();
+            receiveNote.getSrnDetails().stream().forEach(srnd->{
+                PurchaseRequestItem pri = new PurchaseRequestItem();
+                pri.setItemCode(srnd.getItem().getCode());
+                pri.setAcceptedQty(srnd.getStockInQty());
+                pri.setRate(srnd.getGoodReceiveItemDetail().getPricePerUnit());
+                pri.setCostCenter(srnd.getCostCenter());
+            });
+            purchaseRequest.setItems(items);
+
+            HttpHeaders headers = networkService.setHttpHeadersForHr(token);
+            HttpEntity<PurchaseRequest> payload = new HttpEntity<>(purchaseRequest,headers);
+
             networkService.put(ledgerItemCreateEndpoint, payload, Void.class);
         }else{
             throw new RuntimeException("Sorry! Hr Service not available to create item ledger");
