@@ -190,7 +190,10 @@ public class SrnServiceImpl implements SrnService{
             toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
         }
         List<String> status = new ArrayList<>();
+        status.add(GrnStatus.QC_PASS.toString());
         status.add(GrnStatus.READY_FOR_STORE.toString());
+        status.add(SrnStatus.APPROVED.toString());
+        status.add(SrnStatus.VERIFIED.toString());
         return srnRepository.findAllSrnByStatus(status, fromDateObj, toDateObj,
                 pageable);
     }

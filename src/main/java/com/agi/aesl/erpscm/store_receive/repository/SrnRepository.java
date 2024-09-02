@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.store_receive.repository;
 
 import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveNote;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -37,7 +39,13 @@ public interface SrnRepository extends JpaRepository<StoreReceiveNote, Long>, Sr
         Long getSrnId();
         String getGrnStatus();
         String getCategoryName();
+        BigDecimal getReceivedQty();
+        String getItemAttributes();
+        Long getBrandId();
+        Long getItems();
         Long getDemands();
         String getSrnStatus();
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDateTime getCreatedAt();
     }
 }

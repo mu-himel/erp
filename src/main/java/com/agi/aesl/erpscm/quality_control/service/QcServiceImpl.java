@@ -222,7 +222,30 @@ public class QcServiceImpl implements QcService{
 
     @Override
     public Optional<?> getDetailByGrnId(Long id) {
-        return grnService.getGrnById(id,false);
+        Optional<?> detailOp = grnService.getGrnById(id,false);
+        if(detailOp.isPresent()){
+            Map<String,Object> detail = (Map<String,Object>)detailOp.get();
+            List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
+            List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
+            List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
+                    .getVerificationsByDomainTypeAndDomainId(DomainType.QC, (Long)detail.get("qcId"));
+            vrs.stream().forEach(verifier->{
+                if(verifier.getIsApproval()==false){
+                    verifiers.add(verifier);
+                }else{
+                    approvers.add(verifier);
+                }
+            });
+
+            List<?> comments = commentService.getCommentsByDomain(DomainType.QC, (Long)detail.get("qcId"));
+
+
+            detail.put("approvers",approvers);
+            detail.put("comments",comments);
+            detail.put("verifiers",verifiers);
+            return Optional.ofNullable(detail);
+        }
+        return detailOp;
     }
 
     @Override
