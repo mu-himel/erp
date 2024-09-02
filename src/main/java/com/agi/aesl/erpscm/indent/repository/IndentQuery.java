@@ -267,7 +267,7 @@ public interface IndentQuery {
                                 COUNT(ide.id)                           as itemsCount,
                                 COALESCE(SUM(idd.order_qty), 0)         as orderQty,
                                 COALESCE(SUM(idd.rfq_qty), 0)           as rfqQty,
-                                i.priority                              as priority,
+                                i.priority_date_time                    as priority,
                                 i.indent_status                                as status,
                                 0 as receivedQty,
                                 0 as totalReceivedPq,
