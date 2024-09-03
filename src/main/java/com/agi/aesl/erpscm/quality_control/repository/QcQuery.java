@@ -7,6 +7,7 @@ public interface QcQuery {
                     qck.name as name,
                     qck.remark as remark,
                     qc.review_prev_status as prevStatus,
+                    qc.reviewer_id as reviewerId,
                 CASE WHEN qck.qc_type = 'PASS' THEN
                  true
                 END as pass,
@@ -46,7 +47,11 @@ public interface QcQuery {
                                 grn.created_at as createdAt, 
                                 grn.grn_no as grnNo, 
                                 grn.grn_status as grnStatus,
-                                qc.qc_status as  qcStatus,
+                                CASE WHEN  qc.qc_status != 'REVIEW'  AND (qvah.id IS NOT NULL AND qvah.employee_id = :nextVerifierId) THEN
+                                    qvah.qc_status
+                                ELSE
+                                    qc.qc_status
+                                END as  qcStatus,
                                 grn.indent_no as indentNo,
                                 ic.name as categoryName, 
                                 count(grid.id) as items, sum(grid.receive_qty) as receivedQty,
@@ -93,8 +98,10 @@ public interface QcQuery {
     String getPendingApprovalsQc = """
             SELECT 
                     p.id as id,
+                    p.qcId as qcId,
                     p.createdAt as createdAt,
                     p.grnStatus as grnStatus,
+                    p.qcStatus as qcStatus,
                     p.indentNo as indentNo,
                     p.grnNo as grnNo,
                     p.categoryName as categoryName,
@@ -106,10 +113,16 @@ public interface QcQuery {
                     p.qcHold as qcHold,
                     p.warehouseId as warehouseId
                 FROM (
-                    SELECT      qc.id as id,
+                    SELECT      grn.id as id,
+                                qc.id as qcId,
                                 grn.created_at as createdAt, 
                                 grn.grn_no as grnNo, 
                                 grn.grn_status grnStatus,
+                                CASE WHEN qc.qc_status != 'REVIEW' AND (qvah.id IS NOT NULL AND qvah.employee_id = :nextApproveId) THEN
+                                    qvah.qc_status
+                                ELSE
+                                    qc.qc_status
+                                END as  qcStatus,
                                 grn.indent_no as indentNo,
                                 ic.name as categoryName, 
                                 count(grid.id) as items, sum(grid.receive_qty) as receivedQty,
@@ -129,11 +142,13 @@ public interface QcQuery {
                                 END,0) qcHold,
                                 grn.warehouse_id as warehouseId 
                     FROM quality_controls qc
+                     LEFT JOIN qc_verify_approval_histories qvah ON qvah.quality_control_id = qc.id
                     LEFT JOIN good_receive_notes grn ON grn.id = qc.good_receive_note_id
                     LEFT JOIN good_receive_item_details grid ON grid.good_receive_note_id = grn.id
                     LEFT JOIN scm_item_categories ipc ON ipc.id = grid.category_id
                     LEFT JOIN scm_item_categories ic ON ic.id = grid.sub_category_id
-                    WHERE (qc.next_approver_id=:nextApproveId AND qc.qc_status IN (:status))
+                    WHERE ((qc.next_approver_id=:nextApproveId AND qc.qc_status IN (:status))
+                    OR (qvah.employee_id = :nextApproveId AND qvah.qc_status = 'APPROVED'))
                     AND (:grnNo IS NULL OR grn.grn_no = :grnNo)
                     AND (COALESCE(:warehouseIds) IS NULL OR grn.warehouse_id IN (:warehouseIds))
                     AND (
@@ -274,6 +289,7 @@ public interface QcQuery {
         Long getId();
         String getQcStatus();
         String getPrevStatus();
+        String getReviewerId();
         String getName();
         String getRemark();
         String getComment();

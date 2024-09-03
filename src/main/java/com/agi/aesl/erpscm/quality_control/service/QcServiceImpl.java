@@ -32,6 +32,7 @@ import com.agi.aesl.erpscm.quality_control.entity.QualityControlKpi;
 import com.agi.aesl.erpscm.quality_control.enums.QcStatus;
 import com.agi.aesl.erpscm.quality_control.repository.QcRepository;
 import com.agi.aesl.erpscm.quality_control.repository.QcVerifyApprovalHistoryRepository;
+import com.agi.aesl.erpscm.store_receive.enums.SrnStatus;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
@@ -530,6 +531,7 @@ public class QcServiceImpl implements QcService{
         List<String> status = new ArrayList<>();
         status.add(QcStatus.PENDING_VERIFICATION.toString());
         status.add(QcStatus.VERIFIED.toString());
+        status.add(QcStatus.REVIEW.toString());
 
         return qcRepository.findAllPendingVerification(
                     warehouseIds,categoryIds, claimResolver.getUserId(),status,
@@ -562,12 +564,16 @@ public class QcServiceImpl implements QcService{
         dataFilter.setReaderService(readerService);
         List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
         List<Long> categoryIds = dataFilter.getCategoryIds();
-
+        List<String> status = new ArrayList<>();
+        status.add(SrnStatus.PENDING_APPROVAL.toString());
+        status.add(SrnStatus.APPROVED.toString());
+        status.add(SrnStatus.REVIEW.toString());
         return qcRepository.findAllPendingApproval(
                 warehouseIds,categoryIds, claimResolver.getUserId(),
                 grnNo.orElse(null),
                 qty.orElse(null),
                 receivedQty.orElse(null),
+                status,
                 fromDateObj,
                 toDateObj,
                 pageable
