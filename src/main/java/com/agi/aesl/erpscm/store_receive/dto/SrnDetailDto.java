@@ -1,41 +1,40 @@
-package com.agi.aesl.erpscm.store_receive.entity;
+package com.agi.aesl.erpscm.store_receive.dto;
 
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.inventory.entity.Item;
+import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveNote;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
 @Data
-@Entity
-@Table(name = "store_receive_details")
-public class StoreReceiveDetail {
+@NoArgsConstructor
+@AllArgsConstructor
+public class SrnDetailDto {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JsonIgnore
+    private String costCenter;
+
     private StoreReceiveNote storeReceiveNote;
 
-    @OneToOne
     private GoodReceiveItemDetail goodReceiveItemDetail;
 
-    @ManyToOne
+
     private Item item;
 
     private BigDecimal stockInQty;
 
-    @ManyToOne
+
     private Warehouse warehouse;
 
-    @ManyToOne
-    private WarehouseStore warehouseStore;
 
-    private String costCenter;
+    private WarehouseStore warehouseStore;
 }

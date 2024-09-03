@@ -6,5 +6,5 @@ public enum SrnStatus {
     VERIFIED,
     APPROVED,
     REVIEW,
-    REJECTED
+    COMPLETED, REJECTED
 }

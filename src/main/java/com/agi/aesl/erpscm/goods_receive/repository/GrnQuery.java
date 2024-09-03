@@ -64,6 +64,7 @@ public interface GrnQuery {
                     p.id as id,
                     p.createdAt as createdAt,
                     p.grnStatus as grnStatus,
+                    p.qcStatus as qcStatus,
                     p.grnMode as grnMode,
                     p.indentNo as indentNo,
                     p.grnNo as grnNo,

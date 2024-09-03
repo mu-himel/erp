@@ -4,6 +4,7 @@ import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.erpn_integration.service.IntegrationWriterService;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
@@ -13,17 +14,16 @@ import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
-import com.agi.aesl.erpscm.quality_control.entity.QcVerifyApprovalHistory;
-import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
-import com.agi.aesl.erpscm.quality_control.enums.QcStatus;
 import com.agi.aesl.erpscm.store_receive.dto.SrnDto;
 import com.agi.aesl.erpscm.store_receive.entity.SrnVerifyApprovalHistory;
+import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveDetail;
 import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveNote;
 import com.agi.aesl.erpscm.store_receive.enums.SrnStatus;
 import com.agi.aesl.erpscm.store_receive.repository.SrnRepository;
 import com.agi.aesl.erpscm.store_receive.repository.SrnVerifyApprovalHistoryRepository;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
@@ -39,10 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -72,11 +69,15 @@ public class SrnServiceImpl implements SrnService{
     @Autowired
     private UserApplicationValidatorService<StoreReceiveNote> verificationService;
 
+    @Autowired
+    private IntegrationWriterService integrationWriterService;
+
     @Override
     @Transactional
     public void addSrn(Jwt token, SrnDto srnDto) {
         claimResolver.setToken(token);
         StoreReceiveNote storeReceiveNote = new StoreReceiveNote();
+        List<String> ids = new ArrayList<>();
         storeReceiveNote.setSrnNo(srnDto.getSrnNo());
         storeReceiveNote.setComment(srnDto.getComment());
         storeReceiveNote.setEmployee(new Employee(claimResolver.getEmployee().get().getId()));
@@ -85,44 +86,62 @@ public class SrnServiceImpl implements SrnService{
             throw new RuntimeException("Grn not found");
         }
         GoodReceiveNote grn = goodReceiveNoteOp.get();
-//        grn.setIsReceivedByStore(true);
-//        grn.setGrnStatus(GrnStatus.COMPLETED);
+        storeReceiveNote.setCostCenter(srnDto.getCostCenter());
         storeReceiveNote.setGrn(grn);
-        storeReceiveNote.setSrnDetails(srnDto.getSrnDetails().stream().map(storeReceiveDetail -> {
-            Optional<Item> itemOp = itemService.getItemDetail(storeReceiveDetail.getItem().getId());
+        storeReceiveNote.setSrnDetails(srnDto.getSrnDetails().stream().map(storeReceiveDetailDto -> {
+            StoreReceiveDetail storeReceiveDetail = new StoreReceiveDetail();
+            Optional<Item> itemOp = itemService.getItemDetail(storeReceiveDetailDto.getItem().getId());
             if(itemOp.isEmpty()) {
                 throw new RuntimeException("Sorry! Item not found");
             }
             Item item = itemOp.get();
-            Optional<ItemDetail> itemDetailOp = (Optional<ItemDetail>)itemService.getItemDetailWithWarehouse(item.getId());
-            if(itemDetailOp.isPresent()) {
-                ItemDetail itemDetail = itemDetailOp.get();
-                List<Map<String,Object>> stores = itemDetail
-                        .getWarehouses().get(claimResolver.getEmployee().get().getWarehouseId().toString());
-                Optional<Map<String,Object>> store = stores.stream().filter(
-                        stringObjectMap -> !((String)stringObjectMap.get("warehouseStoreName"))
-                                .toLowerCase().contains("finish goods")
-                ).findFirst();
-                store.ifPresent(stringObjectMap -> {
-                    Long warehouseStoreId = (Long)stringObjectMap.get("warehouseStoreId");
-                    itemService.stockIn(item, storeReceiveDetail.getStockInQty(),
-                            claimResolver.getEmployee().get().getWarehouseId(),
-                            warehouseStoreId);
-                });
+            storeReceiveDetail.setItem(item);
+            storeReceiveDetail.setWarehouse(storeReceiveDetailDto.getWarehouse());
+            storeReceiveDetail.setWarehouseStore(storeReceiveDetailDto.getWarehouseStore());
+            storeReceiveDetail.setGoodReceiveItemDetail(storeReceiveDetailDto.getGoodReceiveItemDetail());
+            storeReceiveDetail.setStoreReceiveNote(storeReceiveNote);
+            storeReceiveDetail.setCostCenter(storeReceiveDetailDto.getCostCenter());
+            storeReceiveDetail.setStockInQty(storeReceiveDetailDto.getStockInQty());
+            ids.add(item.getItemCategory().getId().toString());
+            ids.add(item.getItemParentCategory().getId().toString());
 
-                storeReceiveDetail.setStoreReceiveNote(storeReceiveNote);
-            }
+//              stock in process
+//            Optional<ItemDetail> itemDetailOp = (Optional<ItemDetail>)itemService.getItemDetailWithWarehouse(item.getId());
+//
+//            if(itemDetailOp.isPresent()) {
+            //        grn.setIsReceivedByStore(true);
+//               grn.setGrnStatus(GrnStatus.COMPLETED);
+//                ItemDetail itemDetail = itemDetailOp.get();
+//                List<Map<String,Object>> stores = itemDetail
+//                        .getWarehouses().get(claimResolver.getEmployee().get().getWarehouseId().toString());
+//                Optional<Map<String,Object>> store = stores.stream().filter(
+//                        stringObjectMap -> !((String)stringObjectMap.get("warehouseStoreName"))
+//                                .toLowerCase().contains("finish goods")
+//                ).findFirst();
+//                store.ifPresent(stringObjectMap -> {
+//                    Long warehouseStoreId = (Long)stringObjectMap.get("warehouseStoreId");
+//                    itemService.stockIn(item, storeReceiveDetailDto.getStockInQty(),
+//                            claimResolver.getEmployee().get().getWarehouseId(),
+//                            warehouseStoreId);
+//                });
+//            }
             return storeReceiveDetail;
         }).collect(Collectors.toList()));
+
         srnRepository.save(storeReceiveNote);
 
-        List<String> ids = new ArrayList<>();
-        String uri="";
+        String uri="inventory-management/good-receive/store-receive-note";
         if(ids.size()>0 && !uri.isBlank()) {
 
-            verificationService.applyVerifyApprovalProcess(storeReceiveNote,DomainType.SRN,
-                    SrnStatus.APPROVED.toString(),uri,
-                    "CATEGORY",ids,null);
+            AppliedVADto result = verificationService.applyVerifyApprovalProcess(storeReceiveNote, DomainType.SRN,
+                    SrnStatus.APPROVED.toString(), uri,
+                    "CATEGORY", ids, null);
+
+            if(result.getVerifiers().isEmpty() && result.getPanels().isEmpty()){
+                storeReceiveNote.setSrnStatus(SrnStatus.COMPLETED);
+                storeReceiveNote.getGrn().setGrnStatus(GrnStatus.COMPLETED);
+            }
+
 //            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver, uri,
 //                    "CATEGORY", String.join(",", ids));
 //
@@ -192,7 +211,12 @@ public class SrnServiceImpl implements SrnService{
             fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
         }
-        return srnRepository.findAllSrnByStatus(GrnStatus.READY_FOR_STORE.toString(), fromDateObj, toDateObj,
+        List<String> status = new ArrayList<>();
+        status.add(GrnStatus.QC_PASS.toString());
+        status.add(GrnStatus.READY_FOR_STORE.toString());
+        status.add(SrnStatus.APPROVED.toString());
+        status.add(SrnStatus.VERIFIED.toString());
+        return srnRepository.findAllSrnByStatus(status, fromDateObj, toDateObj,
                 pageable);
     }
 
@@ -214,7 +238,10 @@ public class SrnServiceImpl implements SrnService{
     }
 
     @Override
-    public Page<?> getAllComplete(Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate) {
+    public Page<?> getPendingApprovals(Jwt token, Optional<String> fromDate, Optional<String> toDate,
+                                       Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+        String uri="";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
         LocalDateTime fromDateObj = null;
@@ -224,7 +251,29 @@ public class SrnServiceImpl implements SrnService{
             fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
         }
-        return srnRepository.findAllSrnByStatus(GrnStatus.COMPLETED.toString(),
+        return srnRepository.findAllPendingApproval(claimResolver.getUserId(),fromDateObj,toDateObj,pageable);
+
+    }
+
+    @Override
+    public Page<?> getAllComplete(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate) {
+        claimResolver.setToken(token);
+        String uri="";
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+        LocalDateTime fromDateObj = null;
+        LocalDateTime toDateObj = null;
+
+        if(fromDate.isPresent() && toDate.isPresent()) {
+            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
+            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+        }
+        List<String> status = new ArrayList<>();
+        status.add(GrnStatus.COMPLETED.toString());
+        status.add(SrnStatus.VERIFIED.toString());
+        status.add(SrnStatus.APPROVED.toString());
+        status.add(SrnStatus.REJECTED.toString());
+        return srnRepository.findCompletedSrnByStatus(status,
                 fromDateObj, toDateObj,pageable);
     }
 
@@ -282,6 +331,8 @@ public class SrnServiceImpl implements SrnService{
                 srn.setSrnStatus(SrnStatus.PENDING_APPROVAL);
             } else {
                 srn.setSrnStatus(SrnStatus.VERIFIED);
+                srn.getGrn().setGrnStatus(GrnStatus.COMPLETED);
+                integrationWriterService.purchaseReceived(claimResolver.getToken(),srn);
             }
         }
     }
@@ -293,6 +344,18 @@ public class SrnServiceImpl implements SrnService{
         if(srnOp.isPresent()) {
             StoreReceiveNote srn = srnOp.get();
             srn.setSrnStatus(SrnStatus.APPROVED);
+            srn.getGrn().setGrnStatus(GrnStatus.COMPLETED);
+            srn.setSrnDetails(srn.getSrnDetails().stream().map(srnd->{
+                srnd.setStockInQty(srnd.getGoodReceiveItemDetail().getTotalApprovedQty());
+                return srnd;
+            }).collect(Collectors.toList()));
+
+            SrnVerifyApprovalHistory svah = new SrnVerifyApprovalHistory();
+            svah.setEmployee(new Employee(srn.getNextVerifierId()));
+            svah.setSrnStatus(SrnStatus.APPROVED);
+            svah.setStoreReceiveNote(srn);
+            srnVerifyApprovalHistoryRepository.save(svah);
+            integrationWriterService.purchaseReceived(claimResolver.getToken(),srn);
         }
     }
 
@@ -302,10 +365,13 @@ public class SrnServiceImpl implements SrnService{
         Optional<StoreReceiveNote> srnOp = srnRepository.findById(domainId);
         if(srnOp.isPresent()) {
             StoreReceiveNote srn = srnOp.get();
-            srn.setReviewPrevStatus(srn.getSrnStatus());
-            srn.setReviewerId(reviewer.getId());
-            srn.setSrnStatus(SrnStatus.REVIEW);
+            if(!srn.getSrnStatus().equals(SrnStatus.REVIEW)) {
+                srn.setReviewPrevStatus(srn.getSrnStatus());
+                srn.setSrnStatus(SrnStatus.REVIEW);
+            }
             srn.setReviewDate(LocalDateTime.now());
+            srn.setReviewerId(reviewer.getId());
+
         }
     }
 
@@ -313,7 +379,7 @@ public class SrnServiceImpl implements SrnService{
     @Transactional
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
         Optional<UserApplicationValidation> verificationOp = verificationService
-                .getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType.QC,domainId,verifier);
+                .getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType.SRN,domainId,verifier);
 
         if(verificationOp.isPresent()){
             UserApplicationValidation validation = verificationOp.get();
@@ -337,7 +403,9 @@ public class SrnServiceImpl implements SrnService{
         }
         StoreReceiveNote srn = srnOp.get();
         srn.setReviewerId(null);
-        srn.setSrnStatus(srn.getReviewPrevStatus());
+        if(srn.getReviewPrevStatus()!=null) {
+            srn.setSrnStatus(srn.getReviewPrevStatus());
+        }
         srn.setReviewPrevStatus(null);
         srn.setReviewDate(LocalDateTime.now());
 
@@ -349,5 +417,35 @@ public class SrnServiceImpl implements SrnService{
                 reviewDto.getMessage(),
                 reviewDto.getAttachments()
         ));
+    }
+
+    @Override
+    public Optional<?> getDetail(Long id) {
+        Optional<SrnRepository.SrnDetail> srnOp = srnRepository.findById(id, SrnRepository.SrnDetail.class);
+        if(srnOp.isPresent()){
+            SrnRepository.SrnDetail srn = srnOp.get();
+
+        List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
+        List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
+        List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
+                .getVerificationsByDomainTypeAndDomainId(DomainType.SRN, srn.getId());
+        vrs.stream().forEach(verifier->{
+            if(verifier.getIsApproval()==false){
+                verifiers.add(verifier);
+            }else{
+                approvers.add(verifier);
+            }
+        });
+
+        List<?> comments = commentService.getCommentsByDomain(DomainType.SRN, srn.getId());
+
+        Map<String,Object> detail = new HashMap<>();
+        detail.put("approvers",approvers);
+        detail.put("comments",comments);
+        detail.put("verifiers",verifiers);
+        detail.put("detail",srn);
+        return Optional.ofNullable(detail);
+        }
+        return Optional.empty();
     }
 }

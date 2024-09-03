@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.user_application_validation.controller;
 import com.agi.aesl.erpscm.account_finance.service.AccountService;
 import com.agi.aesl.erpscm.indent.service.IndentService;
 import com.agi.aesl.erpscm.quality_control.service.QcService;
+import com.agi.aesl.erpscm.store_receive.service.SrnService;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.VerifyDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,9 @@ public class VerifyController extends BaseController{
     @Autowired
     private QcService qcService;
 
+    @Autowired
+    private SrnService srnService;
+
     @PutMapping("/approve")
     public ResponseEntity<?> approve(
             @AuthenticationPrincipal Jwt token,
@@ -56,6 +60,10 @@ public class VerifyController extends BaseController{
         }
         if(approveDto.getDomainType().equals(DomainType.QC)){
             verificationService.setVerificationDomainService(qcService);
+            verificationService.approve(token, approveDto);
+        }
+        if(approveDto.getDomainType().equals(DomainType.SRN)){
+            verificationService.setVerificationDomainService(srnService);
             verificationService.approve(token, approveDto);
         }
 
@@ -82,6 +90,10 @@ public class VerifyController extends BaseController{
             verificationService.setVerificationDomainService(qcService);
             verificationService.verify(token, verifyDto);
         }
+        if(verifyDto.getDomainType().equals(DomainType.SRN)){
+            verificationService.setVerificationDomainService(srnService);
+            verificationService.verify(token, verifyDto);
+        }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -103,6 +115,10 @@ public class VerifyController extends BaseController{
             verificationService.setVerificationDomainService(qcService);
             verificationService.review(verifyDto);
         }
+        if(verifyDto.getDomainType().equals(DomainType.SRN)){
+            verificationService.setVerificationDomainService(srnService);
+            verificationService.review(verifyDto);
+        }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -121,6 +137,10 @@ public class VerifyController extends BaseController{
         }
         if(rejectDto.getDomainType().equals(DomainType.QC)){
             verificationService.setVerificationDomainService(qcService);
+            verificationService.reject(token, rejectDto);
+        }
+        if(rejectDto.getDomainType().equals(DomainType.SRN)){
+            verificationService.setVerificationDomainService(srnService);
             verificationService.reject(token, rejectDto);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

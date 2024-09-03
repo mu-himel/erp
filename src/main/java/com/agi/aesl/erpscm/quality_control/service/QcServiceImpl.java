@@ -34,6 +34,7 @@ import com.agi.aesl.erpscm.quality_control.repository.QcRepository;
 import com.agi.aesl.erpscm.quality_control.repository.QcVerifyApprovalHistoryRepository;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
@@ -214,15 +215,43 @@ public class QcServiceImpl implements QcService{
 
         if(ids.size()>0 && !uri.isBlank() && !qualityControl.getQcStatus().equals(QcStatus.REJECTED)) {
             System.out.println(uri);
-            verificationService.applyVerifyApprovalProcess(qualityControl,DomainType.QC,QcStatus.APPROVED.toString(),uri,"CATEGORY",ids,
+            AppliedVADto result = verificationService.applyVerifyApprovalProcess(qualityControl, DomainType.QC, QcStatus.APPROVED.toString(), uri, "CATEGORY", ids,
                     null);
+
+            if(result.getVerifiers().isEmpty() && result.getPanels().isEmpty()){
+                qualityControl.setQcStatus(QcStatus.COMPLETED);
+                grn.setGrnStatus(GrnStatus.READY_FOR_STORE);
+            }
 
         }
     }
 
     @Override
     public Optional<?> getDetailByGrnId(Long id) {
-        return grnService.getGrnById(id,false);
+        Optional<?> detailOp = grnService.getGrnById(id,false);
+        if(detailOp.isPresent()){
+            Map<String,Object> detail = (Map<String,Object>)detailOp.get();
+            List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
+            List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
+            List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
+                    .getVerificationsByDomainTypeAndDomainId(DomainType.QC, (Long)detail.get("qcId"));
+            vrs.stream().forEach(verifier->{
+                if(verifier.getIsApproval()==false){
+                    verifiers.add(verifier);
+                }else{
+                    approvers.add(verifier);
+                }
+            });
+
+            List<?> comments = commentService.getCommentsByDomain(DomainType.QC, (Long)detail.get("qcId"));
+
+
+            detail.put("approvers",approvers);
+            detail.put("comments",comments);
+            detail.put("verifiers",verifiers);
+            return Optional.ofNullable(detail);
+        }
+        return detailOp;
     }
 
     @Override
@@ -382,9 +411,11 @@ public class QcServiceImpl implements QcService{
         Optional<QualityControl> qcOp  = qcRepository.findById(domainId);
         if(qcOp.isPresent()){
             QualityControl qc = qcOp.get();
-            qc.setReviewPrevStatus(qc.getQcStatus());
+            if(!qc.getQcStatus().equals(QcStatus.REVIEW)) {
+                qc.setReviewPrevStatus(qc.getQcStatus());
+                qc.setQcStatus(QcStatus.REVIEW);
+            }
             qc.setReviewerId(reviewer.getId());
-            qc.setQcStatus(QcStatus.REVIEW);
             qc.setReviewDate(LocalDateTime.now());
         }
     }
@@ -457,7 +488,9 @@ public class QcServiceImpl implements QcService{
         }
         QualityControl qc = qcOp.get();
         qc.setReviewerId(null);
-        qc.setQcStatus(qc.getReviewPrevStatus());
+        if(qc.getReviewPrevStatus()!=null) {
+            qc.setQcStatus(qc.getReviewPrevStatus());
+        }
         qc.setReviewPrevStatus(null);
         qc.setReviewDate(LocalDateTime.now());
 

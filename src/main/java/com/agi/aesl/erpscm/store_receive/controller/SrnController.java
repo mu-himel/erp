@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.store_receive.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
+import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.store_receive.dto.SrnDto;
 import com.agi.aesl.erpscm.store_receive.service.SrnService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,17 +44,29 @@ public class SrnController  extends BaseController {
     }
     @GetMapping("/complete")
     public ResponseEntity<?> getAllComplete(
+            @AuthenticationPrincipal Jwt token,
             @RequestParam("fromDate") Optional<String> fromDate,
             @RequestParam("toDate") Optional<String> toDate,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size){
         return new ResponseEntity<>(
-                srnService.getAllComplete(page,size, fromDate, toDate),
+                srnService.getAllComplete(token, page,size, fromDate, toDate),
                 HttpStatus.OK
         );
     }
 
     @GetMapping("/{id}")
+    public ResponseEntity<?> getDetail(
+            @AuthenticationPrincipal Jwt token,
+           @PathVariable("id") Long id){
+
+        return new ResponseEntity<>(
+                srnService.getDetail(id),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("demands/{id}")
     public ResponseEntity<?> getPendingDemandListBySrnItems(@PathVariable("id") Long id){
         return new ResponseEntity<>(
                 srnService.getPendingDemandListBySrnItems(id),
@@ -84,6 +97,32 @@ public class SrnController  extends BaseController {
         return new ResponseEntity<>(
                 srnService.getPendingVerifications(token, fromDate,toDate, page,size),
                 HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/pending-approvals")
+    public ResponseEntity<?> getPendingApprovals(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                srnService.getPendingApprovals(token, fromDate,toDate, page,size),
+                HttpStatus.OK
+        );
+    }
+
+    @PutMapping("/review/{id}")
+    public ResponseEntity<?> review(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id,
+            @RequestBody ReviewDto reviewDto
+    ){
+        srnService.review(token,id,reviewDto);
+        return new ResponseEntity<>(
+                HttpStatus.NO_CONTENT
         );
     }
 }

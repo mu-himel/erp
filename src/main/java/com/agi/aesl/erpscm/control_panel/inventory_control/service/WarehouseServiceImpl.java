@@ -132,8 +132,11 @@ public class WarehouseServiceImpl implements WarehouseService{
         Optional<Warehouse> warehouseOptional = warehouseRepository.findById(id);
         Boolean exist = categoryWarehouseStoreRepository.existsByWarehouseId(id);
         Boolean exist1 = warehouseStoreRepository.existsByWarehouseIdAndActive(id,true);
-        if(exist || exist1){
-            throw new AesException("Sorry! This warehouse cannot be deleted");
+        if(exist){
+            throw new RuntimeException("Sorry! This warehouse cannot be deleted exist in warehouse referred to category or subcategory ");
+        }
+        if(exist1){
+            throw new AesException("Sorry! This warehouse cannot be deleted store exist");
         }
         warehouseOptional.ifPresent(warehouse -> {
             warehouse.setActive(false);

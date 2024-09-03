@@ -6,6 +6,7 @@ public interface QcQuery {
             SELECT qc.id as id, qc.qc_status as qcStatus,qc.comment as comment, 
                     qck.name as name,
                     qck.remark as remark,
+                    qc.review_prev_status as prevStatus,
                 CASE WHEN qck.qc_type = 'PASS' THEN
                  true
                 END as pass,
@@ -23,8 +24,11 @@ public interface QcQuery {
     String getPendingVerificationsQc = """
             SELECT 
                     p.id as id,
+                    p.qcId as qcId,
                     p.createdAt as createdAt,
                     p.grnStatus as grnStatus,
+                    p.qcStatus as qcStatus,
+                    p.grnMode as grnMode,
                     p.indentNo as indentNo,
                     p.grnNo as grnNo,
                     p.categoryName as categoryName,
@@ -36,10 +40,13 @@ public interface QcQuery {
                     p.qcHold as qcHold,
                     p.warehouseId as warehouseId
                 FROM (
-                    SELECT      qc.id as id,
+                    SELECT      
+                                grn.id as id,
+                                qc.id as qcId,
                                 grn.created_at as createdAt, 
                                 grn.grn_no as grnNo, 
-                                grn.grn_status grnStatus,
+                                grn.grn_status as grnStatus,
+                                qc.qc_status as  qcStatus,
                                 grn.indent_no as indentNo,
                                 ic.name as categoryName, 
                                 count(grid.id) as items, sum(grid.receive_qty) as receivedQty,
@@ -266,6 +273,7 @@ public interface QcQuery {
     interface QcResultItem{
         Long getId();
         String getQcStatus();
+        String getPrevStatus();
         String getName();
         String getRemark();
         String getComment();

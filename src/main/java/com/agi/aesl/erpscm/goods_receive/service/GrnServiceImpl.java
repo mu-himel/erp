@@ -293,6 +293,7 @@ public class GrnServiceImpl implements GrnService{
                 _detailInfo.put("qcComment", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getComment():""));
                 _detailInfo.put("qcId", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getId():null));
                 _detailInfo.put("qcStatus", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getQcStatus():""));
+                _detailInfo.put("prevStatus", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getPrevStatus():""));
                 _detailInfo.put("qcResult", qcResultByGrn);
             }
                 return Optional.ofNullable(_detailInfo);
