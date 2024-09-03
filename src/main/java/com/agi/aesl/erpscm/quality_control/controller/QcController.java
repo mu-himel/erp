@@ -80,7 +80,7 @@ public class QcController extends BaseController {
         );
     }
 
-    @GetMapping("/closed")
+    @GetMapping("/complete")
     public ResponseEntity<?> getAllClosed(@AuthenticationPrincipal Jwt token,
                                                     @RequestParam("grnNo") Optional<String> grnNo,
                                                     @RequestParam("items") Optional<Integer> qty,

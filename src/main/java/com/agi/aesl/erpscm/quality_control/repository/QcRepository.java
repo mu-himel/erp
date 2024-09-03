@@ -28,7 +28,8 @@ public interface QcRepository extends JpaRepository<QualityControl,Long>,QcQuery
     @Query(value = getPendingApprovalsQc,countQuery = countPendingApprovals,nativeQuery = true)
     Page<GrnRepository.GoodReceiveNoteInfo> findAllPendingApproval(List<Long> warehouseIds, List<Long> categoryIds,
                                                                    String nextApproveId, String grnNo,
-                                   Integer qty, Integer receivedQty, LocalDateTime fromDate,
+                                   Integer qty, Integer receivedQty,List<String> status,
+                                                                   LocalDateTime fromDate,
                                    LocalDateTime toDate, Pageable pageable);
 
     @Query(value = getClosedQc,countQuery = countClosed,nativeQuery = true)
