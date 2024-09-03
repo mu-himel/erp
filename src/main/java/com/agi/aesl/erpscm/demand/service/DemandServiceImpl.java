@@ -818,6 +818,7 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
+    @Transactional
     public Optional<DemandDetailResDto> updateDemand(Jwt loggedInUser, String uri, Long id,
             DemandRequestDto demandRequestDto) {
         
@@ -924,9 +925,11 @@ public class DemandServiceImpl implements DemandService{
         Optional<Demand> demandOp  = demandRepository.findById(id);
         if(demandOp.isPresent()){
             Demand demand = demandOp.get();
-            demand.setReviewPrevStatus(demand.getStatus());
+            if(!demand.getStatus().equals(DemandStatus.REVIEW)){
+                demand.setReviewPrevStatus(demand.getStatus());
+                demand.setStatus(DemandStatus.REVIEW);
+            }
             demand.setReviewerId(reviewer.getId());
-            demand.setStatus(DemandStatus.REVIEW);
             demand.setReviewDate(LocalDateTime.now());
         }
         

@@ -34,6 +34,7 @@ import com.agi.aesl.erpscm.quality_control.repository.QcRepository;
 import com.agi.aesl.erpscm.quality_control.repository.QcVerifyApprovalHistoryRepository;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
@@ -214,8 +215,13 @@ public class QcServiceImpl implements QcService{
 
         if(ids.size()>0 && !uri.isBlank() && !qualityControl.getQcStatus().equals(QcStatus.REJECTED)) {
             System.out.println(uri);
-            verificationService.applyVerifyApprovalProcess(qualityControl,DomainType.QC,QcStatus.APPROVED.toString(),uri,"CATEGORY",ids,
+            AppliedVADto result = verificationService.applyVerifyApprovalProcess(qualityControl, DomainType.QC, QcStatus.APPROVED.toString(), uri, "CATEGORY", ids,
                     null);
+
+            if(result.getVerifiers().isEmpty() && result.getPanels().isEmpty()){
+                qualityControl.setQcStatus(QcStatus.COMPLETED);
+                grn.setGrnStatus(GrnStatus.READY_FOR_STORE);
+            }
 
         }
     }
@@ -405,9 +411,11 @@ public class QcServiceImpl implements QcService{
         Optional<QualityControl> qcOp  = qcRepository.findById(domainId);
         if(qcOp.isPresent()){
             QualityControl qc = qcOp.get();
-            qc.setReviewPrevStatus(qc.getQcStatus());
+            if(!qc.getQcStatus().equals(QcStatus.REVIEW)) {
+                qc.setReviewPrevStatus(qc.getQcStatus());
+                qc.setQcStatus(QcStatus.REVIEW);
+            }
             qc.setReviewerId(reviewer.getId());
-            qc.setQcStatus(QcStatus.REVIEW);
             qc.setReviewDate(LocalDateTime.now());
         }
     }

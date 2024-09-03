@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.store_receive.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
+import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.store_receive.dto.SrnDto;
 import com.agi.aesl.erpscm.store_receive.service.SrnService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,6 +111,18 @@ public class SrnController  extends BaseController {
         return new ResponseEntity<>(
                 srnService.getPendingApprovals(token, fromDate,toDate, page,size),
                 HttpStatus.OK
+        );
+    }
+
+    @PutMapping("/review/{id}")
+    public ResponseEntity<?> review(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id,
+            @RequestBody ReviewDto reviewDto
+    ){
+        srnService.review(token,id,reviewDto);
+        return new ResponseEntity<>(
+                HttpStatus.NO_CONTENT
         );
     }
 }

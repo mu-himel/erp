@@ -561,9 +561,11 @@ public class IndentServiceImpl implements IndentService{
         Optional<Indent> indentOp  = indentRepository.findById(domainId);
         if(indentOp.isPresent()){
             Indent indent = indentOp.get();
+            if(!indent.getIndentStatus().equals(IndentVerificationStatus.REVIEW)){
+                indent.setReviewPrevStatus(indent.getIndentStatus());
+                indent.setIndentStatus(IndentVerificationStatus.REVIEW);
+            }
             indent.setReviewerId(reviewer.getId());
-            indent.setReviewPrevStatus(indent.getIndentStatus());
-            indent.setIndentStatus(IndentVerificationStatus.REVIEW);
             indent.setReviewDate(LocalDateTime.now());
         }
     }

@@ -25,6 +25,10 @@ public interface SrnRepository extends JpaRepository<StoreReceiveNote, Long>, Sr
     Page<StoreReceiveNoteInfo> findAllSrnByStatus(List<String> status, LocalDateTime fromDate,
                                LocalDateTime toDate, Pageable pageable);
 
+    @Query(value = getAllCompleted, countQuery = countAllCompleted, nativeQuery = true)
+    Page<StoreReceiveNoteInfo> findCompletedSrnByStatus(List<String> status, LocalDateTime fromDate,
+                                                  LocalDateTime toDate, Pageable pageable);
+
     @Query(value = getPendingDemandsBySrnForSrnItems,nativeQuery = true)
     List<PendingDemandList> getPendingDemandsBySrnForSrnItems(@Param("id") Long id);
 
@@ -63,6 +67,8 @@ public interface SrnRepository extends JpaRepository<StoreReceiveNote, Long>, Sr
         String getComment();
         String getNextVerifierId();
         String getNextApproverId();
+
+        String getReviewerId();
         SrnStatus getSrnStatus();
 
         @JsonFormat(pattern = "yyyy-MM-dd")
@@ -71,6 +77,8 @@ public interface SrnRepository extends JpaRepository<StoreReceiveNote, Long>, Sr
 
         Employee getEmployee();
         SrnStatus getReviewPrevStatus();
-        LocalDate getReviewDate();
+
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDateTime getReviewDate();
     }
 }

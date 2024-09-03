@@ -47,6 +47,8 @@ public class StoreReceiveNote extends VerifyableEntity {
     private String nextVerifierId;
     private String nextApproverId;
 
+    private String costCenter;
+
     @Enumerated(EnumType.STRING)
     private SrnStatus reviewPrevStatus;
 

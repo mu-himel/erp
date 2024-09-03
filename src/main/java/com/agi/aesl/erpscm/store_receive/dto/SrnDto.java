@@ -9,5 +9,6 @@ import java.util.List;
 public class SrnDto {
     private String srnNo;
     private String comment;
+    private String costCenter;
     List<SrnDetailDto> srnDetails;
 }

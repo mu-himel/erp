@@ -7,5 +7,6 @@ import java.util.List;
 @Data
 public class PurchaseRequest {
     private String supplierName;
+    private String costCenter;
     List<PurchaseRequestItem> items;
 }

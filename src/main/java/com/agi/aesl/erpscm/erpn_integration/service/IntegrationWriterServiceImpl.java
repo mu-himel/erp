@@ -136,6 +136,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         if(serviceExist.isPresent()) {
             PurchaseRequest purchaseRequest = new PurchaseRequest();
             purchaseRequest.setSupplierName(receiveNote.getGrn().getVendorEmail());
+            purchaseRequest.setCostCenter(receiveNote.getCostCenter());
             List<PurchaseRequestItem> items = new ArrayList<>();
             receiveNote.getSrnDetails().stream().forEach(srnd->{
                 PurchaseRequestItem pri = new PurchaseRequestItem();
@@ -143,13 +144,14 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
                 pri.setAcceptedQty(srnd.getStockInQty());
                 pri.setRate(srnd.getGoodReceiveItemDetail().getPricePerUnit());
                 pri.setCostCenter(srnd.getCostCenter());
+                items.add(pri);
             });
             purchaseRequest.setItems(items);
 
             HttpHeaders headers = networkService.setHttpHeadersForHr(token);
             HttpEntity<PurchaseRequest> payload = new HttpEntity<>(purchaseRequest,headers);
 
-            networkService.put(ledgerItemCreateEndpoint, payload, Void.class);
+            networkService.put(purchaseReceivedEndpoint, payload, Void.class);
         }else{
             throw new RuntimeException("Sorry! Hr Service not available to create item ledger");
         }
