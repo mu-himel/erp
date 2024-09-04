@@ -143,7 +143,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
                 pri.setItemCode(srnd.getItem().getCode());
                 pri.setAcceptedQty(srnd.getStockInQty());
                 pri.setRate(srnd.getGoodReceiveItemDetail().getPricePerUnit());
-                pri.setCostCenter(srnd.getCostCenter());
+//                pri.setCostCenter(srnd.getCostCenter());
                 items.add(pri);
             });
             purchaseRequest.setItems(items);

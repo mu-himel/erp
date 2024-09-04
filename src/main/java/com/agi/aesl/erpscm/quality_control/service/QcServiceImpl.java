@@ -220,6 +220,22 @@ public class QcServiceImpl implements QcService{
                     null);
 
             if(result.getVerifiers().isEmpty() && result.getPanels().isEmpty()){
+
+                controlDto.getQcItemDetails().stream().forEach(qcItemDetail -> {
+                    Optional<GoodReceiveItemDetail> grnItemDetail = grn.getGoodReceiveItemDetails().stream().filter(
+                            goodReceiveItemDetail -> goodReceiveItemDetail.getId().equals(qcItemDetail.getId())
+                    ).findFirst();
+
+                    if(grnItemDetail.isPresent()){
+                        GoodReceiveItemDetail goodReceiveItemDetail = grnItemDetail.get();
+//                        ids.add(goodReceiveItemDetail.getItem().getItemCategory().getId().toString());
+//                        ids.add(goodReceiveItemDetail.getItem().getItemParentCategory().getId().toString());
+//                        goodReceiveItemDetail.setDeclaredQty(qcItemDetail.getDeclaredQty());
+//                        goodReceiveItemDetail.setInspectedQty(qcItemDetail.getInspectedQty());
+                        goodReceiveItemDetail.setTotalApprovedQty(qcItemDetail.getDeclaredQty());
+                        grnService.updateGrnItemDetail(goodReceiveItemDetail);
+                    }
+                });
                 qualityControl.setQcStatus(QcStatus.COMPLETED);
                 grn.setGrnStatus(GrnStatus.READY_FOR_STORE);
             }
