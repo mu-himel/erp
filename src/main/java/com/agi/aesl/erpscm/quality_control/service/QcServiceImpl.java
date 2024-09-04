@@ -408,6 +408,7 @@ public class QcServiceImpl implements QcService{
                 qc.setQcStatus(QcStatus.PENDING_APPROVAL);
             } else {
                 qc.setQcStatus(QcStatus.VERIFIED);
+                qc.getGoodReceiveNote().setGrnStatus(GrnStatus.QC_PASS);
             }
         }
     }
@@ -419,6 +420,13 @@ public class QcServiceImpl implements QcService{
         if(qcOp.isPresent()) {
             QualityControl qc = qcOp.get();
             qc.setQcStatus(QcStatus.APPROVED);
+            qc.getGoodReceiveNote().setGrnStatus(GrnStatus.QC_PASS);
+
+            QcVerifyApprovalHistory qvah = new QcVerifyApprovalHistory();
+            qvah.setQcStatus(QcStatus.APPROVED);
+            qvah.setQualityControl(qc);
+            qvah.setEmployee(new Employee(qc.getNextVerifierId()));
+            qcVerifyApprovalHistoryRepository.save(qvah);
         }
     }
 
