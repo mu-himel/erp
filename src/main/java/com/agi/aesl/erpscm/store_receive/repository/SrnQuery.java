@@ -68,24 +68,33 @@ public interface SrnQuery {
                                            grn.created_at as createdAt,
                                            grn.grn_no as grnNo,grn.grn_status  as grnStatus,
                                            grn.is_received_by_store as isReceivedByStore,
-                                           srn.srn_status as srnStatus,
+                                           CASE WHEN srn.srn_status != 'REVIEW' AND (svah.id IS NOT NULL AND svah.employee_id = :nextVerifierId) THEN
+                                                    svah.srn_status
+                                                ELSE
+                                                    srn.srn_status
+                                           END as srnStatus,
                                            ic.name as categoryName,
                                            i.brand_id as brandId,
-                                           (select count(grid1.id) from good_receive_notes grn1\s
-                                                                   left join good_receive_item_details grid1 on grn1.id = grid1.good_receive_note_id\s
-                                                                   where grn1.id=grn.id)  as items, 
-                                           (select sum(grid2.receive_qty) from good_receive_notes grn2\s
-                                                                   left join good_receive_item_details grid2 on grn2.id = grid2.good_receive_note_id\s
+                                           (select count(grid1.id) from good_receive_notes grn1
+                                                                   left join good_receive_item_details grid1 on grn1.id = grid1.good_receive_note_id
+                                                                   where grn1.id=grn.id)  as items,
+                                           (select sum(grid2.receive_qty) from good_receive_notes grn2
+                                                                   left join good_receive_item_details grid2 on grn2.id = grid2.good_receive_note_id
                                                                    where grn2.id=grn.id)  as receivedQty,
                                            GROUP_CONCAT(ia.attribute_type,' ',ia.attribute_value , ' ',ia.attribute_unit separator ' - ') itemAttributes
                                        FROM good_receive_notes grn
+                                       
                                        LEFT JOIN good_receive_item_details grid ON grid.good_receive_note_id = grn.id
                                        LEFT JOIN scm_items i ON i.id = grid.item_id
                                        LEFT JOIN scm_item_attributes ia ON ia.item_id = i.id
                                        LEFT JOIN scm_item_categories ic ON ic.id = grid.category_id
-                                       LEFT JOIN store_receive_notes srn on srn.grn_id = grn.id\s
-                                       WHERE srn.srn_status IN ('PENDING_VERIFICATION','REVIEW')
-                                       AND srn.next_verifier_id = :nextVerifierId
+                                       LEFT JOIN store_receive_notes srn on srn.grn_id = grn.id
+                                       LEFT JOIN srn_verify_approval_histories svah ON svah.store_receive_note_id = srn.id
+                                       WHERE (
+                                        (srn.next_verifier_id = :nextVerifierId AND srn.srn_status IN ('PENDING_VERIFICATION','REVIEW','VERIFIED'))
+                                        OR
+                                        (svah.employee_id = :nextVerifierId AND svah.srn_status = 'VERIFIED')
+                                       )
                                        AND (COALESCE(:fromDate) IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
                                        GROUP BY grn.id) p
             """;
@@ -104,13 +113,18 @@ public interface SrnQuery {
                                                        GROUP BY d.id) d
                                                        where d.demand_attributes=p.itemAttributes
                                        ) as demands,
+                                       
                                        p.srnStatus as srnStatus
                                                        
                                        FROM(SELECT grn.id as id,
                                            srn.id as srnId,
                                            grn.created_at as createdAt,
                                            grn.grn_no as grnNo,grn.grn_status grnStatus,
-                                           srn.srn_status as srnStatus,
+                                           CASE WHEN srn.srn_status != 'REVIEW' AND (svah.id IS NOT NULL AND svah.employee_id = :nextApproverId) THEN
+                                                    svah.srn_status
+                                                ELSE
+                                                    srn.srn_status
+                                           END as srnStatus,
                                            grn.is_received_by_store isReceivedByStore,
                                            ic.name as categoryName,
                                            i.brand_id as brandId,
@@ -126,9 +140,13 @@ public interface SrnQuery {
                                        LEFT JOIN scm_items i ON i.id = grid.item_id
                                        LEFT JOIN scm_item_attributes ia ON ia.item_id = i.id
                                        LEFT JOIN scm_item_categories ic ON ic.id = grid.category_id
-                                       LEFT JOIN store_receive_notes srn on srn.grn_id = grn.id\s
-                                       WHERE srn.srn_status IN ('PENDING_APPROVAL','REVIEW')
-                                       AND srn.next_approver_id = :nextApproverId
+                                       LEFT JOIN store_receive_notes srn on srn.grn_id = grn.id
+                                       LEFT JOIN srn_verify_approval_histories svah ON svah.store_receive_note_id = srn.id
+                                       WHERE (
+                                       (srn.next_approver_id = :nextApproverId AND srn.srn_status IN ('PENDING_APPROVAL','REVIEW','APPROVED'))
+                                       OR
+                                       (svah.employee_id = :nextApproverId AND svah.srn_status = 'APPROVED')
+                                       )
                                        AND (COALESCE(:fromDate) IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
                                        GROUP BY grn.id) p
             """;

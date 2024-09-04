@@ -43,7 +43,11 @@ public interface IndentQuery {
                            COUNT(ide.id)                           as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
                            i.priority_date_time                              as priority,
-                           i.indent_status                                as status,
+                           CASE WHEN i.indent_status != 'REVIEW' AND (ivah.id IS NOT NULL AND ivah.employee_id = :nextVerifierId) THEN
+                                    ivah.indent_status
+                                ELSE
+                                    i.indent_status
+                           END                                 as status,
                            CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
                            (SELECT indent_status FROM indent_verification_approval_histories
                                    where employee_id = :nextVerifierId AND indent_id=i.id AND indent_status='VERIFIED') as indentStatus
@@ -80,7 +84,11 @@ public interface IndentQuery {
                            COUNT(ide.id)                           as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
                            i.priority_date_time                              as priority,
-                           i.indent_status                                as status,
+                           CASE WHEN i.indent_status != 'REVIEW' AND (ivah.id IS NOT NULL AND ivah.employee_id = :nextApproverId) THEN
+                                    ivah.indent_status
+                                ELSE
+                                    i.indent_status
+                           END                                 as status,
                            CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
                            (SELECT indent_status FROM indent_verification_approval_histories
                                    where employee_id = :nextApproverId AND indent_id=i.id AND indent_status='APPROVED') as indentStatus
