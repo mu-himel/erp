@@ -25,7 +25,7 @@ import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
 import com.agi.aesl.erpscm.fileupload.service.FileUploadService;
 
 @Service
-public class CommendServiceImpl implements CommentService{
+public class CommentServiceImpl implements CommentService{
 
     @Autowired  
     private CommentRepository commentRepository;
@@ -99,13 +99,16 @@ public class CommendServiceImpl implements CommentService{
 
     @Override
     public ByteArrayResource load(String domainType, Long domainId, Long id, String filename) {
-        Optional<CommentAttachment> CommentAttachmentOp = commentAttachmentRepository.findByCommentIdAndAttachmentPath(id,filename);
+        Optional<CommentAttachment> CommentAttachmentOp = commentAttachmentRepository.findById(id);
         if(CommentAttachmentOp.isEmpty()){
             return null;
         }
         try {
             CommentAttachment commentAttachment = CommentAttachmentOp.get();
-            Path path = Path.of("./uploads/"+domainType+"/"+domainId+"/comments/"+commentAttachment.getAttachmentPath());
+            if(!commentAttachment.getAttachmentPath().contains(filename)){
+                return null;
+            }
+            Path path = Path.of("."+commentAttachment.getAttachmentPath());
             ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
 
             if (resource.exists() || resource.isReadable()) {

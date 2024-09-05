@@ -5,8 +5,10 @@ import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationWriterService;
+import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
+import com.agi.aesl.erpscm.goods_receive.repository.GrnDetailRepository;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import com.agi.aesl.erpscm.inventory.dto.response.ItemDetail;
 import com.agi.aesl.erpscm.inventory.entity.Item;
@@ -72,6 +74,9 @@ public class SrnServiceImpl implements SrnService{
     @Autowired
     private IntegrationWriterService integrationWriterService;
 
+    @Autowired
+    private GrnDetailRepository grnDetailRepository;
+
     @Override
     @Transactional
     public void addSrn(Jwt token, SrnDto srnDto) {
@@ -94,11 +99,16 @@ public class SrnServiceImpl implements SrnService{
             if(itemOp.isEmpty()) {
                 throw new RuntimeException("Sorry! Item not found");
             }
+            Optional<GoodReceiveItemDetail> goodReceiveItemDetailOptional = grnDetailRepository.findById(storeReceiveDetailDto.getGoodReceiveItemDetail().getId());
+            if(goodReceiveItemDetailOptional.isEmpty()){
+                throw new RuntimeException("Good Receive Detail not found");
+            }
             Item item = itemOp.get();
             storeReceiveDetail.setItem(item);
             storeReceiveDetail.setWarehouse(storeReceiveDetailDto.getWarehouse());
             storeReceiveDetail.setWarehouseStore(storeReceiveDetailDto.getWarehouseStore());
-            storeReceiveDetail.setGoodReceiveItemDetail(storeReceiveDetailDto.getGoodReceiveItemDetail());
+
+            storeReceiveDetail.setGoodReceiveItemDetail(goodReceiveItemDetailOptional.get());
             storeReceiveDetail.setStoreReceiveNote(storeReceiveNote);
             storeReceiveDetail.setCostCenter(storeReceiveDetailDto.getCostCenter());
             storeReceiveDetail.setStockInQty(storeReceiveDetailDto.getStockInQty());
@@ -140,6 +150,7 @@ public class SrnServiceImpl implements SrnService{
             if(result.getVerifiers().isEmpty() && result.getPanels().isEmpty()){
                 storeReceiveNote.setSrnStatus(SrnStatus.COMPLETED);
                 storeReceiveNote.getGrn().setGrnStatus(GrnStatus.COMPLETED);
+                integrationWriterService.purchaseReceived(claimResolver.getToken(),storeReceiveNote);
             }
 
 //            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver, uri,

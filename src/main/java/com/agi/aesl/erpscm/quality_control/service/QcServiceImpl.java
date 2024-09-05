@@ -220,6 +220,22 @@ public class QcServiceImpl implements QcService{
                     null);
 
             if(result.getVerifiers().isEmpty() && result.getPanels().isEmpty()){
+
+                controlDto.getQcItemDetails().stream().forEach(qcItemDetail -> {
+                    Optional<GoodReceiveItemDetail> grnItemDetail = grn.getGoodReceiveItemDetails().stream().filter(
+                            goodReceiveItemDetail -> goodReceiveItemDetail.getId().equals(qcItemDetail.getId())
+                    ).findFirst();
+
+                    if(grnItemDetail.isPresent()){
+                        GoodReceiveItemDetail goodReceiveItemDetail = grnItemDetail.get();
+//                        ids.add(goodReceiveItemDetail.getItem().getItemCategory().getId().toString());
+//                        ids.add(goodReceiveItemDetail.getItem().getItemParentCategory().getId().toString());
+//                        goodReceiveItemDetail.setDeclaredQty(qcItemDetail.getDeclaredQty());
+//                        goodReceiveItemDetail.setInspectedQty(qcItemDetail.getInspectedQty());
+                        goodReceiveItemDetail.setTotalApprovedQty(qcItemDetail.getDeclaredQty());
+                        grnService.updateGrnItemDetail(goodReceiveItemDetail);
+                    }
+                });
                 qualityControl.setQcStatus(QcStatus.COMPLETED);
                 grn.setGrnStatus(GrnStatus.READY_FOR_STORE);
             }
@@ -392,6 +408,7 @@ public class QcServiceImpl implements QcService{
                 qc.setQcStatus(QcStatus.PENDING_APPROVAL);
             } else {
                 qc.setQcStatus(QcStatus.VERIFIED);
+                qc.getGoodReceiveNote().setGrnStatus(GrnStatus.QC_PASS);
             }
         }
     }
@@ -403,6 +420,13 @@ public class QcServiceImpl implements QcService{
         if(qcOp.isPresent()) {
             QualityControl qc = qcOp.get();
             qc.setQcStatus(QcStatus.APPROVED);
+            qc.getGoodReceiveNote().setGrnStatus(GrnStatus.QC_PASS);
+
+            QcVerifyApprovalHistory qvah = new QcVerifyApprovalHistory();
+            qvah.setQcStatus(QcStatus.APPROVED);
+            qvah.setQualityControl(qc);
+            qvah.setEmployee(new Employee(qc.getNextVerifierId()));
+            qcVerifyApprovalHistoryRepository.save(qvah);
         }
     }
 

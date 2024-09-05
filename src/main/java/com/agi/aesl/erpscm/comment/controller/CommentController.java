@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.comment.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -8,15 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.agi.aesl.erpscm.comment.dto.CommentDto;
@@ -89,20 +82,20 @@ public class CommentController extends BaseController{
               List<FileUploadResponse> response =  commentService.uploadAttachment(domainType,domainId,files);
             return new ResponseEntity<>(response,HttpStatus.CREATED);
         }
-    
-        @GetMapping(value = "/attachments/{id}/{domainId}/{domainType}/{filename:.+}",produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+
+        @GetMapping(value = "/attachments/{id}/{domainId}/{domainType}",produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
         public ResponseEntity<?> getImage(
                 @PathVariable("id") Long id,
                 @PathVariable("domainId") Long domainId,
                 @PathVariable("domainType") String domainType,
-                @PathVariable String filename) {
+                @RequestParam("filename") Optional<String> filename) {
     
                 String mediaType=null;
             
-                if(filename.contains("jpg")){
+                if(filename.get().contains("jpg")){
                     mediaType = "image/jpg";
                 }
-                if(filename.contains(".pdf")){
+                if(filename.get().contains(".pdf")){
                     mediaType = "application/pdf";
                 }
             
@@ -110,7 +103,7 @@ public class CommentController extends BaseController{
                     .ok()
                     .header("Content-Type", mediaType)
                     .body(
-                        commentService.load(domainType,domainId,id,filename)
+                        commentService.load(domainType,domainId,id,filename.get())
                     );
     
         }

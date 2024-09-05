@@ -80,5 +80,7 @@ public interface SrnRepository extends JpaRepository<StoreReceiveNote, Long>, Sr
 
         @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDateTime getReviewDate();
+
+        String getCostCenter();
     }
 }
