@@ -821,7 +821,7 @@ public class DemandServiceImpl implements DemandService{
     @Transactional
     public Optional<DemandDetailResDto> updateDemand(Jwt loggedInUser, String uri, Long id,
             DemandRequestDto demandRequestDto) {
-        
+            claimResolver.setToken(loggedInUser);
             if(id==null){
                 throw new AesException("Sorry! demand id is missing");
             }
@@ -842,7 +842,7 @@ public class DemandServiceImpl implements DemandService{
             // remove all previous verification and approval request
             verificationService.removeVerification(demand.getId(), DomainType.DEMAND);
             dvahistoryRepository.deleteAllByDemandId(demand.getId());
-
+            System.out.println(uri);
             Optional<VerifierConfig> verifierOp = verificationService
                 .prepareLogicForVerifiers(claimResolver,uri,"CATEGORY",demandRequestDto.getCategories());
 

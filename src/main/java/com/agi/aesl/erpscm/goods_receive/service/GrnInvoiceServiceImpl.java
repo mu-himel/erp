@@ -40,7 +40,7 @@ public class GrnInvoiceServiceImpl implements GrnInvoiceService{
             }
 
 
-            Path path = Path.of("./uploads/grn/"+id+"/po/invoice");
+            Path path = Path.of("/uploads/grn/"+id+"/po/invoice");
 
             FileUploadResponse fileUploadResponse = fileUploadService.uploadFile(path, file);
             if(fileUploadResponse!=null){
