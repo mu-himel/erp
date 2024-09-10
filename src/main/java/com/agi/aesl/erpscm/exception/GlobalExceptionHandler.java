@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * Class documentation Comments to be added
  * */
-//@RestControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     public static final String INVALID_PATH = "Invalid Path";
