@@ -316,6 +316,8 @@ public class AccountServiceImpl implements AccountService{
             ledgerAccount.setOpeningCreditAmount(ledgerAccountRequestDto.getOpeningCreditAmount());
             ledgerAccount.setOpeningDebitAmount(ledgerAccountRequestDto.getOpeningDebitAmount());
             ledgerAccount.setRequestedBy(employee);
+            ledgerAccount.setOpeningStock(ledgerAccountRequestDto.getOpeningStock());
+            ledgerAccount.setUnit(ledgerAccountRequestDto.getUnit());
             ledgerAccount.setAccountStatus(AccountType.PENDING_VERIFICATION);
             accountRepository.save(ledgerAccount);
 
