@@ -8,6 +8,7 @@ import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
+import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseStoreService;
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
@@ -96,6 +97,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private WarehouseService warehouseService;
+
+    @Autowired
+    private WarehouseStoreService warehouseStoreService;
     @Autowired
     private CategoryBrandRepository categoryBrandRepository;
 
@@ -545,6 +549,7 @@ public class ItemServiceImpl implements ItemService {
                 pendingItemRequestDto.setDesignation(employee.getDesignationName());
                 pendingItemRequestDto.setDepartment(employee.getDepartmentName());
                 pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
+                pendingItemRequestDto.setWarehouseStoreId(warehouseStore.getId());
                 pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
             }else{
                 throw new RuntimeException("Sorry! Employee Info missing");
@@ -1010,7 +1015,8 @@ public class ItemServiceImpl implements ItemService {
                 iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
                 itemImportLogRepository.save(iil);
             }
-            accountService.createItemLedger(item,new Warehouse(warehouseId));
+            accountService.setItemService(this);
+            accountService.createItemLedger(item,new Warehouse(warehouseId),new WarehouseStore(warehouseStoreId));
         }
         return item;
     }
@@ -1054,6 +1060,10 @@ public class ItemServiceImpl implements ItemService {
         if(warehouseOp.isEmpty()){
             throw new RuntimeException("Warehouse Missing");
         }
+        Optional<WarehouseStore> warehouseStoreOp = warehouseStoreService.getStoreById(approveRequestDto.getWarehouseStoreId());
+        if(warehouseStoreOp.isEmpty()){
+            throw new RuntimeException("Warehouse Store Missing");
+        }
         Optional<Item> itemOp = itemRepository.findById(id);
         if(itemOp.isPresent()){
             Item item = itemOp.get();
@@ -1065,7 +1075,8 @@ public class ItemServiceImpl implements ItemService {
                         ItemImportLog iil = iilOp.get();
                         iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
                     }
-                    accountService.createItemLedger(item, warehouseOp.get());
+                    accountService.setItemService(this);
+                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
                 }
                 if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()!=null){
                     item.setItemInactiveStatus(null);
@@ -1076,7 +1087,8 @@ public class ItemServiceImpl implements ItemService {
 
                     }
                     mergeItem(item, itemMergeRequestDto);
-                    accountService.createItemLedger(item, warehouseOp.get());
+                    accountService.setItemService(this);
+                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
 
                 }
             }else if(approveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)){
