@@ -733,7 +733,6 @@ public class DemandServiceImpl implements DemandService{
     @Override
     @Transactional
     public void reviewDemand(Jwt token, Long id, ReviewDto reviewDto) {
-        ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
         Optional<Demand> demandOp = demandRepository.findById(id);
         if(demandOp.isEmpty()){
@@ -741,7 +740,9 @@ public class DemandServiceImpl implements DemandService{
         }
         Demand demand = demandOp.get();
         demand.setReviewerId(null);
-        demand.setStatus(demand.getReviewPrevStatus());
+        if(demand.getReviewPrevStatus()!=null) {
+            demand.setStatus(demand.getReviewPrevStatus());
+        }
         demand.setReviewPrevStatus(null);
         demand.setReviewDate(LocalDateTime.now());
 

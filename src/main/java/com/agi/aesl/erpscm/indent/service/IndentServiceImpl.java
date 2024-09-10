@@ -584,7 +584,9 @@ public class IndentServiceImpl implements IndentService{
         }
         Indent indent = indentOp.get();
         indent.setReviewerId(null);
-        indent.setIndentStatus(indent.getReviewPrevStatus());
+        if(indent.getReviewPrevStatus()!=null) {
+            indent.setIndentStatus(indent.getReviewPrevStatus());
+        }
         indent.setReviewPrevStatus(null);
         indent.setReviewDate(LocalDateTime.now());
 
