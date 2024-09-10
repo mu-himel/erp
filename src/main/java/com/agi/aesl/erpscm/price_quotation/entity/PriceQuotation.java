@@ -5,6 +5,7 @@ import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStateStatus;
 import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStatus;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @Data
 @Entity
+@NoArgsConstructor
 @Table(name = "price_quotations")
 public class PriceQuotation {
     @Id

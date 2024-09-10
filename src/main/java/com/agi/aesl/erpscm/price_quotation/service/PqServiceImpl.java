@@ -1,7 +1,250 @@
 package com.agi.aesl.erpscm.price_quotation.service;
 
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
+import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
+import com.agi.aesl.erpscm.indent.entity.Indent;
+import com.agi.aesl.erpscm.indent.service.IndentService;
+import com.agi.aesl.erpscm.integration.tender.TenderService;
+import com.agi.aesl.erpscm.price_quotation.dto.request.*;
+import com.agi.aesl.erpscm.price_quotation.entity.*;
+import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStateStatus;
+import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStatus;
+import com.agi.aesl.erpscm.price_quotation.repository.PqRepository;
+import com.agi.aesl.erpscm.price_quotation.repository.PqSummaryRepository;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
+import com.agi.aesl.erpscm.utils.ClaimResolver;
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PqServiceImpl implements PqService{
+
+    @Autowired
+    private IndentService indentService;
+
+    @Autowired
+    private WarehouseService warehouseService;
+
+    @Autowired
+    private TenderService tenderService;
+
+    @Autowired
+    private PqRepository pqRepository;
+
+    @Autowired
+    private PqSummaryRepository pqSummaryRepository;
+
+    @Autowired
+    private ClaimResolver claimResolver;
+
+    @Override
+    @Transactional
+    public void onReceivePq(Jwt token, PriceQuotationReqDto pqDto) {
+        Optional<Indent> indentOp = indentService.getIndentFactory(pqDto);
+        this._savePq(indentOp,pqDto,PriceQuotationStatus.INIT,PriceQuotationStateStatus.RECEIVED);
+    }
+
+    @Override
+    @Transactional
+    public void onDeclinePq(Long id, NoteDto noteDto, PriceQuotationStateStatus status) {
+        Optional<PriceQuotation> pqOptional = pqRepository.findByRemoteOfferId(id);
+        if(pqOptional.isPresent()){
+            PriceQuotation priceQuotation = pqOptional.get();
+            priceQuotation.setStatus(status);
+            priceQuotation.setDeclinedMessage(noteDto.getNote());
+
+        }
+    }
+
+    @Transactional
+    private void _savePq(Optional<Indent> indentOp, PriceQuotationReqDto pqDto,
+                         PriceQuotationStatus priceQuotationStatus,
+                         PriceQuotationStateStatus priceQuotationStateStatus){
+        if(indentOp.isEmpty()){
+            throw new RuntimeException("Sorry! indent not found");
+        }
+        Indent indent = indentOp.get();
+        PriceQuotation pq = new PriceQuotation();
+        pq.setRfq(indent);
+
+        if(pqDto.getFile()!=null && !pqDto.getFile().isEmpty()){
+            pq.setFile(pqDto.getFile());
+        }
+
+        pq.setNegotiationHistoryId(pqDto.getNegotiationHistoryId());
+        pq.setRemoteOfferId(pqDto.getRemoteOfferId());
+        if(pqDto.getIsFinal()){
+            pq.setIsFinal(pqDto.getIsFinal());
+        }else{
+            pq.setIsFinal(false);
+        }
+
+        pq.setVendorId(pqDto.getVendorId());
+        pq.setVendorName(pqDto.getVendorName());
+        pq.setVendorEmail(pqDto.getVendorEmail());
+        pq.setVendorPhoneNo(pqDto.getVendorPhoneNo());
+        pq.setVendorType(pqDto.getVendorType());
+        if(pqDto.getTermsAndConditions().size()>0) {
+            pq.setTermsAndConditions(pqDto.getTermsAndConditions().stream().map(tnc -> {
+                PqTermsAndCondition pqTermsAndCondition = new PqTermsAndCondition();
+                pqTermsAndCondition.setPriceQuotation(pq);
+                pqTermsAndCondition.setTermAndCondition(tnc);
+                pqTermsAndCondition.setVendorId(pqDto.getVendorId());
+                pqTermsAndCondition.setRfq(indent);
+                return pqTermsAndCondition;
+            }).collect(Collectors.toList()));
+        }
+        if(priceQuotationStateStatus.equals(PriceQuotationStateStatus.SENT)){
+            Optional<PqRepository.PriceQuotationInfo> pqOp = pqRepository.getPrevPqByVendorId(pq.getVendorId());
+            if(pqOp.isPresent()){
+                pq.setScore(pqOp.get().getScore());
+            }
+        }else{
+            pq.setScore(pqDto.getScore());
+        }
+        pq.setPaymentMethod(pqDto.getPaymentMethod().toString());
+        pq.setPriceQuotationStatus(priceQuotationStatus);
+        pq.setStatus(priceQuotationStateStatus);
+        pq.setQuotationDetails(pqDto.getDetails().stream().map(detail->{
+            PriceQuotationDetail pqd = new PriceQuotationDetail();
+            pqd.setWarrantyDuration(detail.getWarrantyDuration());
+            pqd.setWarrantyUnit(detail.getWarrantyUnit());
+            pqd.setPriceQuotation(pq);
+            pqd.setBrandName(detail.getBrandName());
+            pqd.setItemAttribute(detail.getItemAttributeName());
+            pqd.setExtendedAttributes(detail.getExtendedAttributes());
+            pqd.setRfqQty(detail.getRfqQty());
+            pqd.setUnitPrice(detail.getUnitPrice());
+            pqd.setTotalPrice(pqd.getUnitPrice().multiply(BigDecimal.valueOf(detail.getRfqQty())));
+            pqd.setEstDeliveryDays(detail.getEstDeliveryDays());
+            pqd.setDeliveryDetails(detail.getDeliveryDetails().stream().map(_pqdd->{
+                PriceQuotationDeliveryDetail pqdd = new PriceQuotationDeliveryDetail();
+                pqdd.setDeliveryCharge(_pqdd.getDeliveryChargeType());
+                pqdd.setDeliveryChargeAmount(_pqdd.getDeliveryChargeAmount());
+                Optional<Warehouse> warehouseOp = warehouseService.getWarehouseByName(_pqdd.getWarehouseName());
+                if(warehouseOp.isEmpty()){
+                    throw new RuntimeException("Warehouse not found");
+                }
+                pqdd.setDeliveryOrderQty(_pqdd.getDeliveryOrderQty());
+                pqdd.setWarehouse(warehouseOp.get());
+                pqdd.setPriceQuotationDetail(pqd);
+                return pqdd;
+            }).collect(Collectors.toList()));
+
+            return pqd;
+        }).collect(Collectors.toList()));
+
+        pqRepository.save(pq);
+
+        this._savePriceQuotationSummary(pq,pqDto);
+
+        if(priceQuotationStateStatus.equals(PriceQuotationStateStatus.SENT)){
+            CounterPqDto offerRequestDto = _preparePayloadForSentCounterOffer(pqDto);
+            Optional<Long> remoteOfferIdOp = tenderService.sentCounterOffer(claimResolver, indent, offerRequestDto);
+            pq.setRemoteOfferId(remoteOfferIdOp.orElse(null));
+        }
+    }
+
+    @Transactional
+    private void _savePriceQuotationSummary(PriceQuotation priceQuotation, PriceQuotationReqDto pqDto){
+        PriceQuotationSummary pqs = new PriceQuotationSummary();
+        pqs.setMushakIncluded(pqDto.getPriceQuotationSummary().getMushak());
+        pqs.setDeliveryCharge(pqDto.getPriceQuotationSummary().getDeliveryCharge());
+        pqs.setDeliveryChargeAmount(pqDto.getPriceQuotationSummary().getDeliveryChargeAmount());
+        pqs.setCreditPaymentUnit(pqDto.getPriceQuotationSummary().getCreditPaymentUnit());
+        pqs.setCreditPaymentDuration(pqDto.getPriceQuotationSummary().getCreditPaymentDuration());
+        pqs.setIsAitAdded(pqDto.getPriceQuotationSummary().getIsAitAdded());
+        pqs.setIsVatAdded(pqDto.getPriceQuotationSummary().getIsVatAdded());
+        pqs.setNote(pqDto.getPriceQuotationSummary().getNote());
+        if(pqDto.getPriceQuotationSummary()!=null && pqDto.getPriceQuotationSummary().getVatAmount() !=null){
+            if(pqDto.getPriceQuotationSummary().getVatAmount().contains(".")){
+                pqs.setVatAmount(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getVatAmount())));
+            }else{
+                pqs.setVatAmount(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatAmount())));
+            }
+
+        }
+        if(pqDto.getPriceQuotationSummary()!=null && pqDto.getPriceQuotationSummary().getVatPercent() !=null){
+            pqs.setVatPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatPercent())));
+        }
+
+        pqs.setSubTotalPrice(pqDto.getPriceQuotationSummary().getSubTotalPrice());
+        pqs.setTotalPrice(pqDto.getPriceQuotationSummary().getTotalPrice());
+        pqs.setPriceQuotation(priceQuotation);
+        pqSummaryRepository.save(pqs);
+    }
+
+    private CounterPqDto _preparePayloadForSentCounterOffer(PriceQuotationReqDto pqDto){
+        CounterPqDto offerRequestDto = new CounterPqDto();
+        offerRequestDto.setCreditPaymentDays(pqDto.getPriceQuotationSummary().getCreditPaymentDuration());
+        offerRequestDto.setCreditType(pqDto.getPaymentMethod());
+        offerRequestDto.setVatIncluded(pqDto.getPriceQuotationSummary().getIsVatAdded());
+        offerRequestDto.setVatPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatPercent())));
+        if(pqDto.getPriceQuotationSummary().getVatAmount().contains(".")){
+            offerRequestDto.setVatAmount(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getVatAmount())));
+        }else{
+            offerRequestDto.setVatAmount(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatAmount())));
+        }
+
+        offerRequestDto.setIsFinal(pqDto.getIsFinal());
+        offerRequestDto.setNegotiationHistoryId(pqDto.getNegotiationHistoryId());
+        if(pqDto.getPriceQuotationSummary().getMushak()!=null){
+            offerRequestDto.setMushakIncluded(true);
+        }else{
+            offerRequestDto.setMushakIncluded(false);
+        }
+        offerRequestDto.setFinalOfferPrice(pqDto.getPriceQuotationSummary().getSubTotalPrice());
+        offerRequestDto.setTotalDeliveryChargeAmount(pqDto.getPriceQuotationSummary().getDeliveryChargeAmount());
+
+        offerRequestDto.setNote(pqDto.getPriceQuotationSummary().getNote());
+        List<CounterItemDto> offerItems = new ArrayList<>();
+
+
+        pqDto.getDetails().stream().forEach(d->{
+            CounterItemDto offerItemDto = new CounterItemDto();
+            offerItemDto.setWarrantyDuration(d.getWarrantyDuration());
+            offerItemDto.setWarrantyUnit(d.getWarrantyUnit());
+            offerItemDto.setEstimatedDeliveryDays(Long.valueOf(d.getEstDeliveryDays()));
+            offerItemDto.setItemQuantity(d.getRfqQty());
+            offerItemDto.setProductDescription(d.getItemAttributeName());
+            offerItemDto.setSpecification("Must be a good condition");
+            CounterPriceQuotation opq = new CounterPriceQuotation();
+            opq.setTotalPrice(d.getUnitPrice().multiply(BigDecimal.valueOf(d.getRfqQty())));
+            opq.setPricePerUnit(d.getUnitPrice());
+            offerItemDto.setPriceQuotation(opq);
+            offerItems.add(offerItemDto);
+
+        });
+        offerRequestDto.setTermsAndConditions(pqDto.getTermsAndConditions()
+                .stream().map(CounterTermAndConditionDto::new).collect(Collectors.toList())
+        );
+        offerRequestDto.setOfferItems(offerItems);
+        offerRequestDto.setWarehouses(pqDto.getWarehouses().stream().map(pd->{
+            DeliveryDetailDto odd = new DeliveryDetailDto();
+            odd.setDeliveryChargeAmount(pd.getDeliveryChargeAmount());
+            odd.setDeliveryChargeMode(pd.getDeliveryChargeMode().toString());
+            odd.setWarehouseId(pd.getWarehouseId());
+            odd.setItems(pd.getItems().stream().map(pdid->{
+                ItemDeliveryDetailDto oidd= new ItemDeliveryDetailDto();
+                oidd.setDeliveryOrderQty(pdid.getDeliveryOrderQty());
+                oidd.setItemName(pdid.getItemName());
+                return oidd;
+            }).collect(Collectors.toList()));
+            return odd;
+        }).collect(Collectors.toList()));
+        return offerRequestDto;
+    }
+
+    @Override
+    public List<?> getPriceQuotationsByIndent(Long id) {
+        return pqRepository.getPriceQuotationsByIndentId(id);
+    }
 }
