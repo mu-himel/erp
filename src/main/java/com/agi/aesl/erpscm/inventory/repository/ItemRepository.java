@@ -113,6 +113,8 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
                                                @Param("attribute") String attribute,
                                                @Param("warehouseId") Long warehouseId);
 
+    Optional<Item> findByItemAttributeName(String itemAttribute);
+
     interface ItemInfoByAttribute{
         Long getBrandId();
         Long getId();
