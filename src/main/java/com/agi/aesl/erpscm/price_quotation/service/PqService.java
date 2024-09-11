@@ -19,4 +19,6 @@ public interface PqService {
     Optional<?> getDetail(Long id);
 
     List<?> getHistoriesByRfq(Long id, Long vendorId);
+
+    void lockPq(Long id, PriceQuotationStateStatus locked);
 }

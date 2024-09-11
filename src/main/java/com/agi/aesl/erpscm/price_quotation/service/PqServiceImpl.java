@@ -1,10 +1,14 @@
 package com.agi.aesl.erpscm.price_quotation.service;
 
+import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.indent.service.IndentService;
 import com.agi.aesl.erpscm.integration.tender.TenderService;
+import com.agi.aesl.erpscm.network.NetworkService;
+import com.agi.aesl.erpscm.organization.entity.Organization;
+import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.price_quotation.dto.request.*;
 import com.agi.aesl.erpscm.price_quotation.entity.*;
 import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStateStatus;
@@ -15,6 +19,10 @@ import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +50,15 @@ public class PqServiceImpl implements PqService{
 
     @Autowired
     private ClaimResolver claimResolver;
+
+    @Autowired
+    private CpsServerConfig cpsConfig;
+
+    @Autowired
+    private NetworkService networkService;
+
+    @Autowired
+    private OrgService orgService;
 
     @Override
     @Transactional
@@ -333,5 +350,60 @@ public class PqServiceImpl implements PqService{
         }).collect(Collectors.toList());
 
         return histories;
+    }
+
+    @Override
+    @Transactional
+    public void lockPq(Long id, PriceQuotationStateStatus status) {
+        setStatus(id, status,null,null);
+    }
+    @FunctionalInterface
+    private interface Recommendable {
+        public void setIsRecommendForCs(PriceQuotation p);
+    }
+    @Transactional
+    private void setStatus(Long id, PriceQuotationStateStatus status, Recommendable recommendable,
+                           NoteDto noteDto) {
+        Optional<PriceQuotation> pqOptional = pqRepository.findById(id);
+        if(pqOptional.isPresent()){
+            PriceQuotation priceQuotation = pqOptional.get();
+            priceQuotation.setStatus(status);
+            if(recommendable!=null){
+                recommendable.setIsRecommendForCs(priceQuotation);
+            }
+            if(status.equals(PriceQuotationStateStatus.DECLINED)){
+                priceQuotation.setDeclinedMessage(noteDto.getNote());
+            }
+
+            setRemoteOfferStatus(status, priceQuotation.getRemoteOfferId(),priceQuotation.getVendorId(),noteDto);
+
+        }
+    }
+
+    @Transactional
+    private void setRemoteOfferStatus(PriceQuotationStateStatus status,Long remoteOfferId, Long venodrId, NoteDto noteDto){
+        HttpHeaders headers = new HttpHeaders();
+        Optional<Organization> orgOp = orgService.getOrgByCode(cpsConfig.getOrgCode());
+        if(orgOp.isPresent()){
+            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
+        }
+
+        ResponseEntity<?> response=null;
+        String url = "";
+        if(status.equals(PriceQuotationStateStatus.LOCKED)){
+            HttpEntity<Void> payload = new HttpEntity<>(headers);
+            url = cpsConfig.getLockOfferEndpoint(remoteOfferId, venodrId);
+            response = networkService.put(url, payload, Void.class);
+        }
+        if(status.equals(PriceQuotationStateStatus.DECLINED)){
+            HttpEntity<NoteDto> payload = new HttpEntity<>(noteDto,headers);
+            url = cpsConfig.getDeclineOfferEndpoint(remoteOfferId,venodrId);
+            response = networkService.put(url, payload, Void.class);
+        }
+
+
+        if(response!=null && response.getStatusCode()!= HttpStatus.NO_CONTENT){
+            throw new RuntimeException("Unable to send Offer to CPS");
+        }
     }
 }

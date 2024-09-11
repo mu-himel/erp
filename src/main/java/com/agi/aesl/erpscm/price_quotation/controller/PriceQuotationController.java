@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.price_quotation.controller;
 
 
 import com.agi.aesl.erpscm.price_quotation.dto.request.PriceQuotationReqDto;
+import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStateStatus;
 import com.agi.aesl.erpscm.price_quotation.service.PqService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,7 @@ public class PriceQuotationController {
 
     @PutMapping("/{id}/lock")
     public ResponseEntity<?> lockPriceQuotation(@PathVariable("id") Long id) {
+        pqService.lockPq(id, PriceQuotationStateStatus.LOCKED);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
