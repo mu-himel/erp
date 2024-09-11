@@ -17,6 +17,7 @@ public class PriceQuotationSummary {
     @OneToOne
     private PriceQuotation priceQuotation;
 
+    @Enumerated(EnumType.STRING)
     private DeliveryCharge deliveryCharge;
     private BigDecimal deliveryChargeAmount;
     private Boolean mushakIncluded;
