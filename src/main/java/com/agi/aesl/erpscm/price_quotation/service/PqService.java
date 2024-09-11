@@ -17,4 +17,6 @@ public interface PqService {
     List<?> getPriceQuotationsByIndent(Long id);
 
     Optional<?> getDetail(Long id);
+
+    List<?> getHistoriesByRfq(Long id, Long vendorId);
 }

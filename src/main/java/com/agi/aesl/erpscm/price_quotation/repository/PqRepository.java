@@ -21,6 +21,8 @@ public interface PqRepository extends JpaRepository<PriceQuotation,Long>,PqQuery
     @Query(value = getPriceQuotationsByIndentId,nativeQuery = true)
     List<PriceQuotationInfo> getPriceQuotationsByIndentId(@Param("indentId") Long id);
 
+    List<PriceQuotation> findByRfqIdAndVendorId(Long id, Long vendorId);
+
     interface PriceQuotationInfo {
         Long getId();
         Long getVendorId();

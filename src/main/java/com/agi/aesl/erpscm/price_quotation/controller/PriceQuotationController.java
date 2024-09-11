@@ -45,7 +45,10 @@ public class PriceQuotationController {
     @GetMapping("/rfq/{id}/negotiation-history/{vendorId}")
     public ResponseEntity<?> getNegotiationHistories(@PathVariable("id") Long id,
                                                      @PathVariable("vendorId") Long vendorId){
-        return new ResponseEntity<>(HttpStatus.OK);
+
+        return new ResponseEntity<>(
+                pqService.getHistoriesByRfq(id,vendorId),
+                HttpStatus.OK);
     }
 
     @PutMapping("/{id}/lock")

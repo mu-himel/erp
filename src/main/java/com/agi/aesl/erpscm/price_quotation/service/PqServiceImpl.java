@@ -308,4 +308,30 @@ public class PqServiceImpl implements PqService{
         result.put("details",details);
         return Optional.ofNullable(result);
     }
+
+    @Override
+    public List<?> getHistoriesByRfq(Long id, Long vendorId) {
+        List<PriceQuotation> priceQuotations = pqRepository.findByRfqIdAndVendorId(id,vendorId);
+
+        record NegotiationHistory(Long id, String title){ };
+
+        List<NegotiationHistory> histories = priceQuotations.stream().map(priceQuotation->{
+            StringBuilder sb = new StringBuilder();
+            if(priceQuotation.getIsFinal()!=null && priceQuotation.getIsFinal().equals(true)){
+                sb.append("Final ");
+            }
+            if(priceQuotation.getPriceQuotationStatus().equals(PriceQuotationStatus.INIT)){
+                sb.append("Initial Quotation Received From "+priceQuotation.getVendorName());
+            }
+            if(priceQuotation.getPriceQuotationStatus().equals(PriceQuotationStatus.COUNTER_TO_VENDOR)){
+                sb.append("Counter Offer to "+priceQuotation.getVendorName());
+            }
+            if(priceQuotation.getPriceQuotationStatus().equals(PriceQuotationStatus.COUNTER_TO_COMPANY)){
+                sb.append("Counter Offer Received from "+priceQuotation.getVendorName());
+            }
+            return new NegotiationHistory(priceQuotation.getId(), sb.toString());
+        }).collect(Collectors.toList());
+
+        return histories;
+    }
 }
