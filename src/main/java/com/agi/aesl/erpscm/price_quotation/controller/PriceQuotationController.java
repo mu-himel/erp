@@ -29,7 +29,9 @@ public class PriceQuotationController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getPriceQuotationDetail(@PathVariable("id") Long id){
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(
+                pqService.getDetail(id),
+                HttpStatus.OK);
     }
 
     @GetMapping("/rfq/{id}")

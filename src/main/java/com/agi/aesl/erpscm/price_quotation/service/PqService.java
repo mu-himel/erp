@@ -6,6 +6,7 @@ import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.List;
+import java.util.Optional;
 
 
 public interface PqService {
@@ -14,4 +15,6 @@ public interface PqService {
     void onDeclinePq(Long id, NoteDto noteDto, PriceQuotationStateStatus declined);
 
     List<?> getPriceQuotationsByIndent(Long id);
+
+    Optional<?> getDetail(Long id);
 }

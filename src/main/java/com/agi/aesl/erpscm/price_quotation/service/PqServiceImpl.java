@@ -19,9 +19,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -246,5 +244,68 @@ public class PqServiceImpl implements PqService{
     @Override
     public List<?> getPriceQuotationsByIndent(Long id) {
         return pqRepository.getPriceQuotationsByIndentId(id);
+    }
+    @Override
+    public Optional<?> getDetail(Long id) {
+        Optional<PriceQuotation> pqOptional = pqRepository.findById(id);
+        if(pqOptional.isEmpty()){
+            throw new RuntimeException("Sorry! Price quotation not found by this id");
+        }
+        Map<String,Object> result = new HashMap<>();
+        PriceQuotation pq = pqOptional.get();
+
+        Optional<PriceQuotationSummary> sOptional = pqSummaryRepository.findByPriceQuotationId(pq.getId());
+
+        result.put("vendorId",pq.getVendorId());
+        result.put("vendorEmail",pq.getVendorEmail());
+        result.put("vendorType",pq.getVendorType());
+        result.put("vendorPhoneNo",pq.getVendorPhoneNo());
+        result.put("vendorName", pq.getVendorName());
+        result.put("dateTime",pq.getPriceQuotationDate());
+        result.put("paymentMethod",pq.getPaymentMethod());
+        result.put("negotiationHistoryId",pq.getNegotiationHistoryId());
+        result.put("declineMessage",pq.getDeclinedMessage());
+        result.put("isRecommendedForCs",pq.getIsRecommendForCs());
+        List<String> termsAndConditions = pq.getTermsAndConditions().stream().filter(
+                tnc->tnc.getVendorId().equals(pq.getVendorId())
+        ).map(tnc->tnc.getTermAndCondition()).collect(Collectors.toList());
+        result.put("termsAndConditions",termsAndConditions);
+        //TODO Fetch Terms and conditions
+
+        if(sOptional.isPresent()){
+            PriceQuotationSummary pqs = sOptional.get();
+            pqs.setPriceQuotation(null);
+            result.put("pqSummary",pqs);
+        }
+
+        List<Map<String,Object>> details = new ArrayList<>();
+        pq.getQuotationDetails().stream().forEach(pqd->{
+            Map<String,Object> itemDef = new HashMap<>();
+            itemDef.put("itemAttribute",pqd.getItemAttribute());
+            itemDef.put("brandName", pqd.getBrandName());
+            itemDef.put("extendedAttributes",pqd.getExtendedAttributes());
+            itemDef.put("estimatedDeliveryDays",pqd.getEstDeliveryDays());
+            itemDef.put("warrantyDuration",pqd.getWarrantyDuration());
+            itemDef.put("warrantyUnit",pqd.getWarrantyUnit());
+            itemDef.put("rfqQty",pqd.getRfqQty());
+            itemDef.put("unitPrice",pqd.getUnitPrice());
+            itemDef.put("totalPrice",pqd.getTotalPrice());
+            List<Map<String,Object>> warehouses = new ArrayList<>();
+            pqd.getDeliveryDetails().stream().forEach(pqdd->{
+                Map<String,Object> itemWDef = new HashMap<>();
+                itemWDef.put("warehouseId",pqdd.getWarehouse().getId());
+                itemWDef.put("warehouseName",pqdd.getWarehouse().getName());
+                itemWDef.put("warehouseLocation",pqdd.getWarehouse().getLocation());
+                itemWDef.put("deliveryCharge", pqdd.getDeliveryCharge());
+                itemWDef.put("deliveryChargeAmount", pqdd.getDeliveryChargeAmount());
+                itemWDef.put("deliveryOrderQty",pqdd.getDeliveryOrderQty());
+                warehouses.add(itemWDef);
+            });
+            itemDef.put("warehouses",warehouses);
+            details.add(itemDef);
+        });
+
+        result.put("details",details);
+        return Optional.ofNullable(result);
     }
 }
