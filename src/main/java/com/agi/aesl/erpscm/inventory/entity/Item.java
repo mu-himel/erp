@@ -23,6 +23,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +65,7 @@ public class Item {
     private String itemUnit;
 
     private Integer stockThresholdQty;
-    private Integer reorderPercentage;
+    private BigDecimal reorderPercentage;
 
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
     private List<ItemAttribute> attributes=new ArrayList<>();

@@ -46,7 +46,7 @@ public class ItemRequestDto implements EntityConvertable<Item> {
 
     private BigDecimal currentStockQty;
 
-    private Integer reorderPercentage;
+    private BigDecimal reorderPercentage;
 
     private List<ItemAttribute> attributes;
 

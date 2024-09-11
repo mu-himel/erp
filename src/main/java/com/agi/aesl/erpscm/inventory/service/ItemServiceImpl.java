@@ -7,6 +7,7 @@ import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
+import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseStoreRepository;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseStoreService;
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
@@ -39,6 +40,7 @@ import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -116,7 +118,13 @@ public class ItemServiceImpl implements ItemService {
     private ItemImportLogRepository itemImportLogRepository;
 
     @Autowired
+    private WarehouseStoreRepository warehouseStoreRepository;
+
+    @Autowired
     private IntegrationReaderService integrationReaderService;
+
+    @Value("${upload.dir}")
+    private String uploadDir;
 
     @Override
     public Optional<Item> getItemDetail(Long id) {
@@ -829,55 +837,92 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public void importItems(Optional<MultipartFile> fileOp) {
-        Path path = Path.of("./uploads/inventory-mgm/items");
+        Path path = Path.of(uploadDir+"/inventory-mgm/items");
         FileUploadResponse fileUploadResponse = null;
         if(fileOp.isPresent()){
             fileUploadResponse = fileUploadService.uploadFile(path, fileOp.get());
             try {
                 Iterable<CSVRecord> records = getItemRecords(fileUploadResponse);
-                Map<String,Object> item = new HashMap<>();
+                Map<String,Object> _item = new HashMap<>();
                 for(CSVRecord r : records){
-                    String catName = r.get("CATEGORY_NAME");
-                    String subCatName = r.get("SUB_CATEGORY_NAME");
-                    String itemName = r.get("ITEM_NAME");
-                    String vat = r.get("VAT");
-                    String attrType = r.get("ATTRIBUTE_TYPE");
-                    String attrValue = r.get("ATTRIBUTE_VALUE");
-                    String attrUnit = r.get("ATTRIBUTE_UNIT");
-                    String brands = r.get("BRANDS");
-                    String _key = subCatName.replaceAll(" ","_").toLowerCase();
+//                    String catName = r.get("CATEGORY_NAME");
+//                    String subCatName = r.get("SUB_CATEGORY_NAME");
+//                    String itemName = r.get("ITEM_NAME");
+//                    String vat = r.get("VAT");
+//                    String attrType = r.get("ATTRIBUTE_TYPE");
+//                    String attrValue = r.get("ATTRIBUTE_VALUE");
+//                    String attrUnit = r.get("ATTRIBUTE_UNIT");
+//                    String brands = r.get("BRANDS");
+//                    String _key = subCatName.replaceAll(" ","_").toLowerCase();
 
-                    Optional<ItemCategory> icOp = categoryService.getItemCategoryByName(catName);
-                    if(icOp.isEmpty()){
-                        throw new AesException("Item Category Not found");
-                    }
-                    Optional<ItemCategory> subCatOp = categoryService.getItemCategoryByName(subCatName);
-                    if(subCatOp.isEmpty()){
-                        throw new AesException("Item Sub Category Not found");
-                    }
+                    System.out.println(r);
+                    String itemAttribute = r.get("ITEM_ATTRIBUTE_NAME");
+                    String storeId = r.get("STORE_ID");
+                    String currentStock = r.get("CURRENT_STOCK");
+                    String safetyStock = r.get("SAFETY_STOCK");
+                    String unitMeasurement = r.get("UNIT_MEASUREMENT");
+                    String reorderPercent = r.get("REORDER_PERCENT");
+
+//                    Optional<ItemCategory> icOp = categoryService.getItemCategoryByName(catName);
+//                    if(icOp.isEmpty()){
+//                        throw new AesException("Item Category Not found");
+//                    }
+//                    Optional<ItemCategory> subCatOp = categoryService.getItemCategoryByName(subCatName);
+//                    if(subCatOp.isEmpty()){
+//                        throw new AesException("Item Sub Category Not found");
+//                    }
                    
-                    ItemCategory ic = icOp.get();
-                    ItemCategory subCat = subCatOp.get();
-                    Optional<CategoryBrand> catBrandOp = catBrandRepo.findByCategoryIdAndName(subCat.getId(),brands);
-                    if(catBrandOp.isEmpty()){
-                        throw new AesException("Brand not found");
-                    }
+//                    ItemCategory ic = icOp.get();
+//                    ItemCategory subCat = subCatOp.get();
+//                    Optional<CategoryBrand> catBrandOp = catBrandRepo.findByCategoryIdAndName(subCat.getId(),brands);
+//                    if(catBrandOp.isEmpty()){
+//                        throw new AesException("Brand not found");
+//                    }
+//
+//                    StringBuilder itemCode = new StringBuilder();
+//                    itemCode.append(ic.getName().substring(0,1)).append(ic.getId());
+//                    itemCode.append(subCat.getName().substring(0, 1)).append(subCat.getId());
+//                    itemCode.append("B").append(catBrandOp.get().getId());
+//
+//
+//                    if(!item.containsKey(_key)){
+//                        Map<String, Object> itemProps = new HashMap<>();
+//                        itemProps.put("name",itemName);
+//                    }
 
-                    StringBuilder itemCode = new StringBuilder();
-                    itemCode.append(ic.getName().substring(0,1)).append(ic.getId());
-                    itemCode.append(subCat.getName().substring(0, 1)).append(subCat.getId());
-                    itemCode.append("B").append(catBrandOp.get().getId());
-                    
+                    if(!itemAttribute.isEmpty()){
+                        Optional<Item> itemOp = itemRepository.findByItemAttributeName(itemAttribute);
+                        if(itemOp.isPresent() && storeId !=null){
+                            Optional<WarehouseStore> wsOp = warehouseStoreRepository.findById(Long.parseLong(storeId));
+                            if(wsOp.isPresent()){
+                                WarehouseStore ws = wsOp.get();
+                                Item item = itemOp.get();
+                                BigDecimal stockQty = new BigDecimal(0);
+                                for(ItemStock stock : item.getStocks()){
+                                    stockQty = stockQty.add(stock.getStockQty());
+                                }
+                                if(stockQty.compareTo(new BigDecimal(0)) == 0){
+                                    stockIn(itemOp.get(), new BigDecimal(Double.parseDouble(currentStock)), ws.getWarehouse().getId(), ws.getId());
+                                }
 
-                    if(!item.containsKey(_key)){
-                        Map<String, Object> itemProps = new HashMap<>();
-                        itemProps.put("name",itemName);
+                                if(!safetyStock.isEmpty()){
+                                    item.setStockThresholdQty(Integer.parseInt(safetyStock));
+                                }
+
+                                item.setItemUnit(unitMeasurement);
+                                if(!reorderPercent.isEmpty()){
+                                    item.setReorderPercentage(new BigDecimal(Double.parseDouble(reorderPercent)));
+                                }
+
+
+                            }
+                        }
                     }
                 }
             } catch (FileNotFoundException e) {
                 throw new AesException(e.getMessage());
             } catch (IOException e) {
-                throw new AesException(e.getMessage());
+                throw new AesException("File Columns are not valid for extracting value: "+e.getMessage());
             }
         }
     }
