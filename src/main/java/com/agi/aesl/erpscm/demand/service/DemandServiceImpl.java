@@ -104,7 +104,7 @@ public class DemandServiceImpl implements DemandService{
 
     @Override
     public void closeDemandItem(Jwt token, DemandReceiveDto demandReceiveDto) {
-        ClaimResolver claimResolver = new ClaimResolver();
+//        ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
 
         Optional<DemandDetail> demandDetailOp = demandDetailRepository
@@ -391,7 +391,7 @@ public class DemandServiceImpl implements DemandService{
     @Override
     public Page<?> getAllPendingApprovalDemands(Jwt token, Optional<Integer> page, Optional<Integer> size,
             Optional<String> fromDateStr, Optional<String> toDateStr) {
-                ClaimResolver claimResolver = new ClaimResolver();
+//                ClaimResolver claimResolver = new ClaimResolver();
                 claimResolver.setToken(token);
         
                 String moduleUri = "demand/pending-approval";
@@ -434,7 +434,7 @@ public class DemandServiceImpl implements DemandService{
     @Override
     public Page<?> getAllPendingVerificationDemands(Jwt token, Optional<Integer> page, Optional<Integer> size,
             Optional<String> fromDateStr, Optional<String> toDateStr) {
-        ClaimResolver claimResolver = new ClaimResolver();
+//        ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
         
         String moduleUri = "demand/pending-verification";
@@ -567,7 +567,7 @@ public class DemandServiceImpl implements DemandService{
     @Override
     public Page<?> getMyDemands(Jwt token, Optional<Integer> page, Optional<Integer> size,
             Optional<String> fromDateStr, Optional<String> toDateStr) {
-        ClaimResolver claimResolver = new ClaimResolver();
+//        ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
 
        Optional<Employee> employeeOptional = userService.getUserById(claimResolver.getUserId());
@@ -658,7 +658,6 @@ public class DemandServiceImpl implements DemandService{
     @Override
     @Transactional
     public void rejectDemand(Jwt token, DemandReceiveDto demandReceiveDto) {
-        ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
         Optional<Demand> demandOp = demandRepository.findById(demandReceiveDto.getDemandId());
         if(demandOp.isPresent()){
@@ -678,7 +677,6 @@ public class DemandServiceImpl implements DemandService{
     @Override
     @Transactional
     public void rejectDemandItem(Jwt token, DemandReceiveDto demandReceiveDto) {
-        ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
         Optional<DemandDetail> demandDetailOp = demandDetailRepository
                                         .findById(demandReceiveDto.getDemandDetailId());
@@ -701,8 +699,8 @@ public class DemandServiceImpl implements DemandService{
     @Override
     @Transactional
     public void resendDemandItem(Jwt token, DemandReceiveDto demandReceiveDto) {
-        
-        ClaimResolver claimResolver = new ClaimResolver();
+
+//        ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
         Optional<DemandDetail> demandDetailOp = demandDetailRepository
                 .findById(demandReceiveDto.getDemandDetailId());
