@@ -40,6 +40,7 @@ public class ModuleServiceImpl implements ModuleService{
         httpHeaders.set("uri",uri);
         String url = aclAPIEndpoint+"/verifiers?criteriaGroup="+criteriaGroup+"&categories="+criteriaValues;
         HttpEntity<?> payload = new HttpEntity<>(httpHeaders);
+        System.out.println(url);
         ResponseEntity<VerifierConfig> response = networkService.get(url, payload, VerifierConfig.class);
         
         System.out.println(response.getBody());
