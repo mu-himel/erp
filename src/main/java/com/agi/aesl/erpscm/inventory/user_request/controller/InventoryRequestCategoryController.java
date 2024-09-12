@@ -1,16 +1,15 @@
 package com.agi.aesl.erpscm.inventory.user_request.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
+import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
+import com.agi.aesl.erpscm.inventory.user_request.service.InventoryCategoryRequestService;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
@@ -21,6 +20,9 @@ public class InventoryRequestCategoryController extends BaseController {
     @Autowired
     private InventoryRequestService inventoryRequestService;
 
+    @Autowired
+    private InventoryCategoryRequestService categoryRequestService;
+
     @GetMapping("/categories/my-requests")
     public ResponseEntity<?> getMyCategories(
             @AuthenticationPrincipal Jwt token,
@@ -28,8 +30,26 @@ public class InventoryRequestCategoryController extends BaseController {
             @RequestParam("size")Optional<Integer> size
             ){
         return new ResponseEntity<>(
-                inventoryRequestService.getMyCategories(token,page,size),
+                categoryRequestService.getMyCategories(token,page,size),
                 HttpStatus.OK);
+    }
+
+    @PostMapping("/categories")
+    public ResponseEntity<?> createCategory(
+            @AuthenticationPrincipal Jwt token,
+            @RequestHeader("uri") String uri,
+            @RequestBody CategoryRequestDto categoryRequestDto){
+        categoryRequestService.createCategory(token,uri,categoryRequestDto);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @PostMapping("/sub-categories")
+    public ResponseEntity<?> createSubCategory(
+            @AuthenticationPrincipal Jwt token,
+            @RequestHeader("uri") String uri,
+            @RequestBody CategoryRequestDto categoryRequestDto){
+        categoryRequestService.createCategory(token,uri, categoryRequestDto);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @GetMapping("/subcategories/my-requests")
@@ -39,7 +59,7 @@ public class InventoryRequestCategoryController extends BaseController {
             @RequestParam("size")Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                inventoryRequestService.getMySubCategories(token,page,size),
+                categoryRequestService.getMySubCategories(token,page,size),
                 HttpStatus.OK);
     }
 
