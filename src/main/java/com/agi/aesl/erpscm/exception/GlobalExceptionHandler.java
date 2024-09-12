@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import javax.xml.bind.ValidationException;
@@ -18,7 +19,7 @@ import java.util.Map;
 /**
  * Class documentation Comments to be added
  * */
-@ControllerAdvice
+//@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     public static final String INVALID_PATH = "Invalid Path";
