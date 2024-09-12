@@ -309,7 +309,9 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
         List<VerifierInfo> verifiers = new ArrayList<>();
         if(verifierOp.isPresent()){
             VerifierConfig verification = verifierOp.get();
-            verifiers = verification.getVerifiers();
+            if(verification.getVerifiers().isEmpty()) {
+                verifiers = verification.getVerifiers();
+            }
             Boolean verificationRequired = verification.getVerificationRequired();
             if(verificationRequired!=null && verificationRequired==true && verifiers!=null && verifiers.size()>0){
                 t.setStatus(AccountType.PENDING_VERIFICATION.toString());
