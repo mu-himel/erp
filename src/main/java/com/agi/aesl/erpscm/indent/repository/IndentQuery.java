@@ -277,7 +277,8 @@ public interface IndentQuery {
                                 COALESCE(SUM(idd.rfq_qty), 0)           as rfqQty,
                                 i.priority_date_time                    as priority,
                                 i.indent_status                                as status,
-                                0 as receivedQty,
+                                (select count(id) as total from price_quotations pq
+                                where rfq_id = i.id AND status = 'RECEIVED') as receivedQty,
                                 0 as totalReceivedPq,
                                 CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
                                 DATEDIFF(i.priority_date_time , CURRENT_DATE) as daysRemain
