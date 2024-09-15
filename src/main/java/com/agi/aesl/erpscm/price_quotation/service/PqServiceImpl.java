@@ -63,6 +63,7 @@ public class PqServiceImpl implements PqService{
     @Override
     @Transactional
     public void onReceivePq(Jwt token, PriceQuotationReqDto pqDto) {
+        claimResolver.setToken(token);
         Optional<Indent> indentOp = indentService.getIndentFactory(pqDto);
         this._savePq(indentOp,pqDto,PriceQuotationStatus.INIT,PriceQuotationStateStatus.RECEIVED);
     }
@@ -365,25 +366,28 @@ public class PqServiceImpl implements PqService{
     private void setStatus(Long id, PriceQuotationStateStatus status, Recommendable recommendable,
                            NoteDto noteDto) {
         Optional<PriceQuotation> pqOptional = pqRepository.findById(id);
-        if(pqOptional.isPresent()){
-            PriceQuotation priceQuotation = pqOptional.get();
-            priceQuotation.setStatus(status);
-            if(recommendable!=null){
-                recommendable.setIsRecommendForCs(priceQuotation);
-            }
-            if(status.equals(PriceQuotationStateStatus.DECLINED)){
-                priceQuotation.setDeclinedMessage(noteDto.getNote());
-            }
-
-            setRemoteOfferStatus(status, priceQuotation.getRemoteOfferId(),priceQuotation.getVendorId(),noteDto);
-
+        if(pqOptional.isEmpty()){
+            throw new RuntimeException("Sorry! Price Quotation not found");
         }
+
+        PriceQuotation priceQuotation = pqOptional.get();
+        priceQuotation.setStatus(status);
+        if(recommendable!=null){
+            recommendable.setIsRecommendForCs(priceQuotation);
+        }
+        if(status.equals(PriceQuotationStateStatus.DECLINED)){
+            priceQuotation.setDeclinedMessage(noteDto.getNote());
+        }
+
+        setRemoteOfferStatus(status, priceQuotation.getRemoteOfferId(),priceQuotation.getVendorId(),noteDto);
+
+
     }
 
     @Transactional
     private void setRemoteOfferStatus(PriceQuotationStateStatus status,Long remoteOfferId, Long venodrId, NoteDto noteDto){
         HttpHeaders headers = new HttpHeaders();
-        Optional<Organization> orgOp = orgService.getOrgByCode(cpsConfig.getOrgCode());
+        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
         if(orgOp.isPresent()){
             headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
         }
@@ -400,10 +404,46 @@ public class PqServiceImpl implements PqService{
             url = cpsConfig.getDeclineOfferEndpoint(remoteOfferId,venodrId);
             response = networkService.put(url, payload, Void.class);
         }
-
+        if(status.equals(PriceQuotationStateStatus.AWARDED)){
+            HttpEntity<Void> payload = new HttpEntity<>(headers);
+            url = cpsConfig.getAwardedOfferEndpoint(remoteOfferId,venodrId);
+            response = networkService.put(url, payload, Void.class);
+        }
 
         if(response!=null && response.getStatusCode()!= HttpStatus.NO_CONTENT){
             throw new RuntimeException("Unable to send Offer to CPS");
         }
+    }
+
+    @Override
+    @Transactional
+    public void sendPq(Jwt token, PriceQuotationReqDto pqDto) {
+        claimResolver.setToken(token);
+        Optional<Indent> indentOp = indentService.getIndentFactory(pqDto);
+        this._savePq(indentOp,pqDto,PriceQuotationStatus.COUNTER_TO_VENDOR,PriceQuotationStateStatus.SENT);
+    }
+
+    @Override
+    @Transactional
+    public void addManualPq(Jwt token, PriceQuotationReqDto pqDto) {
+        claimResolver.setToken(token);
+        Optional<Indent> indentOp = indentService.getIndentFactory(pqDto);
+        this._savePq(indentOp,pqDto,PriceQuotationStatus.INIT,PriceQuotationStateStatus.RECEIVED);
+    }
+
+    @Override
+    @Transactional
+    public void recommendPq(Jwt token, Long id) {
+        claimResolver.setToken(token);
+
+        setStatus(id,PriceQuotationStateStatus.LOCKED,(pq)->{
+            pq.setIsRecommendForCs(true);
+            sentAwardedSignal(pq);
+        },null);
+    }
+
+    @Transactional
+    private void sentAwardedSignal(PriceQuotation priceQuotation) {
+        setRemoteOfferStatus(PriceQuotationStateStatus.AWARDED, priceQuotation.getRemoteOfferId(),priceQuotation.getVendorId(),null);
     }
 }

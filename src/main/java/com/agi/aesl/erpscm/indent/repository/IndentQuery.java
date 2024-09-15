@@ -302,4 +302,40 @@ public interface IndentQuery {
             """;
 
     String countApprovedIndentWithOpenRfq="SELECT COUNT(*) FROM ("+getApprovedIndentWithOpenRfq+") as total";
+
+    String getAllIndentsByExpireDateTimeWithSearch= """
+            SELECT * FROM (SELECT  i.id                                    as id,
+                        csheet.id                               as csId,
+                        i.indent_no                             as indentNo,
+                        i.sent_date                             as sentDate,
+                        i.indent_date                           as indentDate,
+                        i.category_id                           as categoryId,
+                        CONCAT(c.name,'-',sc.name)              as categoryName,
+                        COUNT(ide.id)                           as itemsCount,
+                        COALESCE(SUM(idd.order_qty), 0)         as orderQty,
+                        COALESCE(SUM(idd.rfq_qty), 0)           as rfqQty,
+                        i.priority                              as priority,
+                        CASE WHEN csheet.id IS NULL THEN
+                                'PENDING'
+                        ELSE
+                                csheet.status
+                        END                                as status,
+                        CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
+                        (SELECT count(*) FROM price_quotations pq 
+                                WHERE status='LOCKED' AND rfq_id = i.id) as lockedVendor
+                        
+                FROM indents i
+                        LEFT JOIN indent_details ide on i.id = ide.indent_id
+                        LEFT JOIN cs csheet ON csheet.indent_id = i.id
+                        LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
+                        LEFT JOIN scm_item_categories c on i.category_id = c.id
+                        LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
+                        LEFT JOIN acl_users e ON e.id = i.requested_by_id
+                        
+                WHERE  (i.status = 'APPROVED' AND i.expire_date_time < :expiredDateTime)
+                GROUP BY i.id) r WHERE r.status IN ('PENDING','PENDING_VERIFICATION', 'PENDING_APPROVAL','REVIEW')
+            """;
+
+    String countAllIndentsByExpireDateTimeWithSearch = "SELECT COUNT(*) FROM ("+
+            getAllIndentsByExpireDateTimeWithSearch+") as total";
 }

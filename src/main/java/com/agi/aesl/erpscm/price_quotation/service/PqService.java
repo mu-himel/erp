@@ -21,4 +21,11 @@ public interface PqService {
     List<?> getHistoriesByRfq(Long id, Long vendorId);
 
     void lockPq(Long id, PriceQuotationStateStatus locked);
+
+    void sendPq(Jwt token, PriceQuotationReqDto pqDto);
+
+
+    void addManualPq(Jwt token, PriceQuotationReqDto pqDto);
+
+    void recommendPq(Jwt token, Long id);
 }

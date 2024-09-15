@@ -25,6 +25,7 @@ public class PriceQuotationController {
             @AuthenticationPrincipal Jwt token,
             @RequestBody PriceQuotationReqDto pqDto
             ){
+        pqService.addManualPq(token,pqDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -59,7 +60,10 @@ public class PriceQuotationController {
     }
 
     @PutMapping("/{id}/recommend-for-cs")
-    public ResponseEntity<?> recommendPq(@PathVariable("id") Long id){
+    public ResponseEntity<?> recommendPq(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id){
+        pqService.recommendPq(token, id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -77,6 +81,7 @@ public class PriceQuotationController {
             @AuthenticationPrincipal Jwt token,
             @RequestBody PriceQuotationReqDto pqDto
     ){
+        pqService.sendPq(token,pqDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
