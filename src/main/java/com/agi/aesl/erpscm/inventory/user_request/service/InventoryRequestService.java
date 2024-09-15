@@ -9,8 +9,10 @@ import java.util.Optional;
 
 public interface InventoryRequestService {
 
+    @Deprecated(forRemoval = true)
     Page<?> getMyCategories(Jwt token, Optional<Integer> page, Optional<Integer> size);
 
+    @Deprecated(forRemoval = true)
     Page<?> getMySubCategories(Jwt token, Optional<Integer> page, Optional<Integer> size);
 
     Page<?> getMyProducts(Jwt token, Optional<Integer> page, Optional<Integer> size);

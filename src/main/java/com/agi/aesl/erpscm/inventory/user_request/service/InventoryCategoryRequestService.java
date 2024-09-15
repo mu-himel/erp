@@ -12,4 +12,6 @@ public interface InventoryCategoryRequestService {
 
     Page<?> getMyCategories(Jwt token, Optional<Integer> page, Optional<Integer> size);
     Page<?> getMySubCategories(Jwt token, Optional<Integer> page, Optional<Integer> size);
+
+    Page<?> getPendingVerifications(Jwt token, Optional<Integer> page, Optional<Integer> size, Boolean isCategory);
 }

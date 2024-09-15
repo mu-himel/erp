@@ -63,14 +63,14 @@ public class InventoryRequestCategoryController extends BaseController {
                 HttpStatus.OK);
     }
 
-    @GetMapping("/products/my-requests")
-    public ResponseEntity<?> getMyProducts(
+    @GetMapping("/categories/pending-verifications")
+    public ResponseEntity<?> getPendingVerification(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
-            @RequestParam("size")Optional<Integer> size
+            @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                inventoryRequestService.getMyProducts(token,page,size),
+                categoryRequestService.getPendingVerifications(token,page,size,true),
                 HttpStatus.OK);
     }
 }

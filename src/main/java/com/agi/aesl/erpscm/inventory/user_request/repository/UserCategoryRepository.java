@@ -35,6 +35,26 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
 
     Boolean existsByName(String name);
 
+    @Query(value = """
+            select id as id, name as categoryName, (
+                SELECT COUNT(*) FROM user_categories uc1
+                WHERE uc1.parent_category_id=uc.id
+            ) as subCategoryCount, 0 as productCount,
+            category_status as status
+            FROM user_categories uc
+            WHERE uc.next_verifier_id=:userId AND uc.parent_category_id IS NULL
+            """, nativeQuery = true)
+    Page<UserCategory> findAllCategoryByNextVerifierId(String userId, Pageable pageable);
+
+    @Query(value = """
+            select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
+            uc.category_status as status
+             FROM user_categories uc
+             LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
+             WHERE uc.next_verifier_id=:userId AND uc.parent_category_id IS NOT NULL
+            """, nativeQuery = true)
+    Page<UserSubCategory> findAllSubCategoryByNextVerifierId(String userId, Pageable pageable);
+
     interface UserCategory{
         Long getId();
         String getCategoryName();

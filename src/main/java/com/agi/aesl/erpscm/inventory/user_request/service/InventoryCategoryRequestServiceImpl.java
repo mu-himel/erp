@@ -48,7 +48,10 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         if(exists){
             throw new RuntimeException("Sorry! Category already exist");
         }
+
+        DomainType domainType = DomainType.INVENTORY_REQ_CATEGORY;
         if(categoryRequestDto.getParentCategory()!=null) {
+            domainType = DomainType.INVENTORY_REQ_SUB_CATEGORY;
             Optional<UserCategory> catOp = userCategoryRepository.findById(categoryRequestDto.getParentCategory().getId());
             if(catOp.isPresent()) {
                 userCategory.setParentCategory(catOp.get());
@@ -63,8 +66,8 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         userCategoryRepository.save(userCategory);
 
         verificationService.applyVerifyApprovalProcess(
-                userCategory, DomainType.INVENTORY_REQ, UserCategoryStatus.COMPLETED.toString(),
-                uri,"INVENTORY_REQUEST_CATEGORY", List.of("ALL"),
+                userCategory, domainType, UserCategoryStatus.COMPLETED.toString(),
+                uri,domainType.toString(), List.of("-1"),
                 null);
     }
 
@@ -82,5 +85,22 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
         return userCategoryRepository.findAllSubCategoryByCreatedById(claimResolver.getUserId(),pageable);
+    }
+
+    @Override
+    public Page<?> getPendingVerifications(Jwt token, Optional<Integer> page, Optional<Integer> size, Boolean isCategory) {
+        claimResolver.setToken(token);
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
+        if(isCategory){
+            return userCategoryRepository.findAllCategoryByNextVerifierId(
+                    claimResolver.getUserId(),
+                    pageable
+            );
+        }
+        return userCategoryRepository.findAllSubCategoryByNextVerifierId(
+                claimResolver.getUserId(),
+                pageable
+        );
     }
 }

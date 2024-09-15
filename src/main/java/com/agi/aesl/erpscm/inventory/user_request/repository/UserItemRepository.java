@@ -1,6 +1,8 @@
 package com.agi.aesl.erpscm.inventory.user_request.repository;
 
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserItem;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -19,4 +21,24 @@ public interface UserItemRepository extends JpaRepository<UserItem,Long> {
             WHERE p.brand_id=:brandId AND itemAttributes = :attribute
             """,nativeQuery = true)
     List<?> findByAttributes(Long brandId, String attribute);
+
+    @Query(value = """
+            select ui.id as id, cat.name as categoryName, subCat.name as subCategoryName,
+             ui.item_attribute_name as productName,
+            uc.item_status as status
+             FROM user_items ui
+             LEFT JOIN user_categories subCat ON ui.sub_category_id = subCat.id
+             LEFT JOIN user_categories cat ON ui.category_id = cat.id
+             WHERE uc.created_by_id=:userId
+            """, nativeQuery = true)
+    Page<UserItem> findAllByCreatedById(String userId, Pageable pageable);
+
+    interface UserItem{
+        Long getId();
+        String getCategoryName();
+        String getSubCategoryName();
+        String getProductName();
+        String getStatus();
+
+    }
 }
