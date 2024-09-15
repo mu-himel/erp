@@ -103,6 +103,7 @@ public class DemandServiceImpl implements DemandService{
     
 
     @Override
+    @Transactional
     public void closeDemandItem(Jwt token, DemandReceiveDto demandReceiveDto) {
 //        ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
@@ -285,6 +286,7 @@ public class DemandServiceImpl implements DemandService{
     }
 
     @Override
+    @Transactional
     public void declineDemandItem(Jwt loggedInUser, DemandReceiveDto demandReceiveDto) {
         Optional<Demand> demandOptional = demandRepository.findById(demandReceiveDto.getDemandId());
         if(demandOptional.isEmpty()){
