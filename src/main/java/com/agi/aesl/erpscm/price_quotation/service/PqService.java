@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.price_quotation.service;
 
 import com.agi.aesl.erpscm.price_quotation.dto.request.PriceQuotationReqDto;
 import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStateStatus;
+import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStatus;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -12,7 +13,7 @@ import java.util.Optional;
 public interface PqService {
     void onReceivePq(Jwt token, PriceQuotationReqDto pqDto);
 
-    void onDeclinePq(Long id, NoteDto noteDto, PriceQuotationStateStatus declined);
+    void onDeclinePq(Long id, NoteDto noteDto, PriceQuotationStateStatus declined, PriceQuotationStatus status);
 
     List<?> getPriceQuotationsByIndent(Long id);
 
@@ -20,7 +21,7 @@ public interface PqService {
 
     List<?> getHistoriesByRfq(Long id, Long vendorId);
 
-    void lockPq(Long id, PriceQuotationStateStatus locked);
+    void lockPq(Jwt token, Long id, PriceQuotationStateStatus locked);
 
     void sendPq(Jwt token, PriceQuotationReqDto pqDto);
 

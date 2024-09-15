@@ -1,8 +1,10 @@
 package com.agi.aesl.erpscm.price_quotation.controller;
 
 
+import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.price_quotation.dto.request.PriceQuotationReqDto;
 import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStateStatus;
+import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStatus;
 import com.agi.aesl.erpscm.price_quotation.service.PqService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/pq")
-public class PriceQuotationController {
+public class PriceQuotationController extends BaseController {
 
     @Autowired
     private PqService pqService;
@@ -54,12 +56,14 @@ public class PriceQuotationController {
     }
 
     @PutMapping("/{id}/lock")
-    public ResponseEntity<?> lockPriceQuotation(@PathVariable("id") Long id) {
-        pqService.lockPq(id, PriceQuotationStateStatus.LOCKED);
+    public ResponseEntity<?> lockPriceQuotation(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id) {
+        pqService.lockPq(token,id, PriceQuotationStateStatus.LOCKED);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PutMapping("/{id}/recommend-for-cs")
+    @PutMapping("/{id}/recommended-for-cs")
     public ResponseEntity<?> recommendPq(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id){
@@ -73,6 +77,7 @@ public class PriceQuotationController {
             @PathVariable("id") Long id,
             @RequestBody NoteDto noteDto
             ){
+        pqService.onDeclinePq(id,noteDto,PriceQuotationStateStatus.DECLINED, PriceQuotationStatus.COUNTER_TO_VENDOR);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

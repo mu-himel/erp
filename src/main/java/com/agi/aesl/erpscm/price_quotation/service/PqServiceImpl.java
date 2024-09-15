@@ -70,8 +70,13 @@ public class PqServiceImpl implements PqService{
 
     @Override
     @Transactional
-    public void onDeclinePq(Long id, NoteDto noteDto, PriceQuotationStateStatus status) {
-        Optional<PriceQuotation> pqOptional = pqRepository.findByRemoteOfferId(id);
+    public void onDeclinePq(Long id, NoteDto noteDto, PriceQuotationStateStatus status, PriceQuotationStatus actionFrom) {
+        if(noteDto.getNote()==null || noteDto.getNote().isEmpty()){
+            throw new RuntimeException("Sorry! Decline Note Required");
+        }
+        Optional<PriceQuotation> pqOptional =
+                ((actionFrom.equals(PriceQuotationStatus.COUNTER_TO_COMPANY))?
+                pqRepository.findByRemoteOfferId(id): pqRepository.findById(id));
         if(pqOptional.isPresent()){
             PriceQuotation priceQuotation = pqOptional.get();
             priceQuotation.setStatus(status);
@@ -355,7 +360,8 @@ public class PqServiceImpl implements PqService{
 
     @Override
     @Transactional
-    public void lockPq(Long id, PriceQuotationStateStatus status) {
+    public void lockPq(Jwt token, Long id, PriceQuotationStateStatus status) {
+        claimResolver.setToken(token);
         setStatus(id, status,null,null);
     }
     @FunctionalInterface
@@ -371,9 +377,12 @@ public class PqServiceImpl implements PqService{
         }
 
         PriceQuotation priceQuotation = pqOptional.get();
-        priceQuotation.setStatus(status);
+
         if(recommendable!=null){
+
             recommendable.setIsRecommendForCs(priceQuotation);
+        }else{
+            priceQuotation.setStatus(status);
         }
         if(status.equals(PriceQuotationStateStatus.DECLINED)){
             priceQuotation.setDeclinedMessage(noteDto.getNote());
@@ -436,14 +445,15 @@ public class PqServiceImpl implements PqService{
     public void recommendPq(Jwt token, Long id) {
         claimResolver.setToken(token);
 
-        setStatus(id,PriceQuotationStateStatus.LOCKED,(pq)->{
+        setStatus(id,PriceQuotationStateStatus.AWARDED,(pq)->{
             pq.setIsRecommendForCs(true);
-            sentAwardedSignal(pq);
+            pq.setStatus(PriceQuotationStateStatus.LOCKED);
+
         },null);
     }
 
     @Transactional
     private void sentAwardedSignal(PriceQuotation priceQuotation) {
-        setRemoteOfferStatus(PriceQuotationStateStatus.AWARDED, priceQuotation.getRemoteOfferId(),priceQuotation.getVendorId(),null);
+//        setRemoteOfferStatus(PriceQuotationStateStatus.AWARDED, priceQuotation.getRemoteOfferId(),priceQuotation.getVendorId(),null);
     }
 }
