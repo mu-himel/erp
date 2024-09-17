@@ -2,13 +2,23 @@ package com.agi.aesl.erpscm.inventory.user_request.service;
 
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
+import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.indent.entity.Indent;
+import com.agi.aesl.erpscm.indent.entity.IndentVerificationApprovalHistory;
+import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
+import com.agi.aesl.erpscm.indent.enums.RfqStatus;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryAttribute;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryRepository;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
+import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
+import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
@@ -20,8 +30,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,10 +42,13 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     private UserCategoryRepository userCategoryRepository;
 
     @Autowired
+    private ClaimResolver claimResolver;
+
+    @Autowired
     private UserApplicationValidatorService<UserCategory> verificationService;
 
     @Autowired
-    private ClaimResolver claimResolver;
+    private CommentService commentService;
 
     @Override
     @Transactional
@@ -102,5 +115,148 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
                 claimResolver.getUserId(),
                 pageable
         );
+    }
+
+    @Override
+    public Page<?> getPendingApprovals(Jwt token, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+        claimResolver.setToken(token);
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
+        if(isCategory){
+            return userCategoryRepository.findAllCategoryByNextApproverId(
+                    claimResolver.getUserId(),
+                    pageable
+            );
+        }
+        return userCategoryRepository.findAllSubCategoryByNextApproverId(
+                claimResolver.getUserId(),
+                pageable
+        );
+    }
+
+    @Override
+    public Page<?> getClosed(Jwt token, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+        claimResolver.setToken(token);
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
+        if(isCategory){
+            return userCategoryRepository.findAllClosed(claimResolver.getUserId(),pageable);
+        }
+        return userCategoryRepository.findAllClosedSubCategory(
+                claimResolver.getUserId(),
+                pageable
+        );
+    }
+
+    @Override
+    public Map<String, Object> getDetail(Long id) {
+        Optional<UserCategory> catOp = userCategoryRepository.findById(id);
+        if(catOp.isEmpty()){
+            throw new RuntimeException("Sorry! not found");
+        }
+        Map<String,Object> detail = new HashMap<>();
+        UserCategory category = catOp.get();
+        detail.put("detail",category);
+        List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
+        List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
+        DomainType domainType = (category.getParentCategory()!=null)? DomainType.INVENTORY_REQ_SUB_CATEGORY:
+                DomainType.INVENTORY_REQ_CATEGORY;
+        List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
+                .getVerificationsByDomainTypeAndDomainId(domainType, category.getId());
+        vrs.stream().forEach(verifier->{
+            if(verifier.getIsApproval()==false){
+                verifiers.add(verifier);
+            }else{
+                approvers.add(verifier);
+            }
+        });
+
+        List<?> comments = commentService.getCommentsByDomain(domainType, category.getId());
+        detail.put("verifiers",verifiers);
+        detail.put("approvers",approvers);
+        detail.put("comments",comments);
+        return detail;
+    }
+
+    @Override
+    @Transactional
+    public void onVerify(Long id, UserApplicationValidation verification, UserApplicationValidationRepository.VerificationResponse nextVerifier) {
+        Optional<UserCategory> catOp = userCategoryRepository.findById(id);
+        if(catOp.isPresent()){
+            UserCategory category = catOp.get();
+            category.setNextVerifierId(nextVerifier.getVerifier().getId());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void onApprove(Long id, UserApplicationValidation verification, UserApplicationValidationRepository.VerificationResponse nextApprover) {
+        Optional<UserCategory> catOp = userCategoryRepository.findById(id);
+        if(catOp.isPresent()){
+            UserCategory category = catOp.get();
+            category.setNextApproverId(nextApprover.getVerifier().getId());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void verifyComplete(Long id, Optional<UserApplicationValidationRepository.VerificationResponse> firstApprover) {
+        Optional<UserCategory> catOp = userCategoryRepository.findById(id);
+        if(catOp.isPresent()) {
+            UserCategory category = catOp.get();
+            if (firstApprover.isPresent()) {
+//                IndentVerificationApprovalHistory indentVAHistory = new IndentVerificationApprovalHistory();
+//                indentVAHistory.setIndent(indent);
+//                indentVAHistory.setEmployee(new Employee(indent.getNextVerifierId()));
+//                indentVAHistory.setIndentStatus(IndentVerificationStatus.VERIFIED);
+//                indentVARepository.save(indentVAHistory);
+
+                category.setNextApproverId(firstApprover.get().getVerifier().getId());
+                category.setCategoryStatus(UserCategoryStatus.PENDING_APPROVAL);
+
+            } else {
+
+                category.setCategoryStatus(UserCategoryStatus.VERIFIED);
+//                IndentVerificationApprovalHistory indentVAHistory = new IndentVerificationApprovalHistory();
+//                indentVAHistory.setIndent(indent);
+//                indentVAHistory.setEmployee(new Employee(indent.getNextVerifierId()));
+//                indentVAHistory.setIndentStatus(IndentVerificationStatus.VERIFIED);
+//                indentVARepository.save(indentVAHistory);
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public void approveComplete(Long id) {
+        Optional<UserCategory> catOp = userCategoryRepository.findById(id);
+        if(catOp.isPresent()){
+            UserCategory category = catOp.get();
+            category.setStatus(String.valueOf(IndentVerificationStatus.APPROVED));
+        }
+    }
+
+    @Override
+    @Transactional
+    public void sendForReview(Long domainId, RefDto reviewer, String comment) {
+        Optional<UserCategory> catOp  = userCategoryRepository.findById(domainId);
+        if(catOp.isPresent()){
+            UserCategory category = catOp.get();
+            if(!category.getCategoryStatus().equals(UserCategoryStatus.REVIEW)){
+                category.setReviewPrevStatus(category.getCategoryStatus());
+                category.setCategoryStatus(UserCategoryStatus.REVIEW);
+            }
+            category.setReviewerId(reviewer.getId());
+            category.setReviewDate(LocalDateTime.now());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
+        Optional<UserCategory> catOp = userCategoryRepository.findById(domainId);
+        catOp.ifPresent((cat)->{
+            cat.setCategoryStatus(UserCategoryStatus.REJECTED);
+        });
     }
 }

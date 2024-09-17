@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.inventory.user_request.entity;
 
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
 import com.agi.aesl.erpscm.inventory.entity.CategoryBrand;
@@ -48,6 +49,9 @@ public class UserCategory extends VerifyableEntity {
 
     @Enumerated(EnumType.STRING)
     private UserCategoryStatus categoryStatus;
+
+    @Enumerated(EnumType.STRING)
+    private UserCategoryStatus reviewPrevStatus;
 
     @CreationTimestamp
     @Column(updatable = false)
