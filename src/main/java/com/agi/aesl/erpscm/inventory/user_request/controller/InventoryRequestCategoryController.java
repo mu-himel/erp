@@ -43,6 +43,14 @@ public class InventoryRequestCategoryController extends BaseController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    @GetMapping("/category/{id}")
+    public ResponseEntity<?> getCategory(@PathVariable("id") Long id){
+        return new ResponseEntity<>(
+                categoryRequestService.getDetail(id),
+            HttpStatus.OK
+        );
+    }
+
     @PostMapping("/sub-categories")
     public ResponseEntity<?> createSubCategory(
             @AuthenticationPrincipal Jwt token,
@@ -71,6 +79,61 @@ public class InventoryRequestCategoryController extends BaseController {
     ){
         return new ResponseEntity<>(
                 categoryRequestService.getPendingVerifications(token,page,size,true),
+                HttpStatus.OK);
+    }
+
+    @GetMapping("/subcategories/pending-verifications")
+    public ResponseEntity<?> getSubCatPendingVerification(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                categoryRequestService.getPendingVerifications(token,page,size,false),
+                HttpStatus.OK);
+    }
+
+    @GetMapping("/categories/pending-approvals")
+    public ResponseEntity<?> getPendingApprovals(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                categoryRequestService.getPendingApprovals(token,page,size,true),
+                HttpStatus.OK);
+    }
+
+    @GetMapping("/subcategories/pending-approvals")
+    public ResponseEntity<?> getSubCatPendingApprovals(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                categoryRequestService.getPendingApprovals(token,page,size,false),
+                HttpStatus.OK);
+    }
+
+    @GetMapping("/categories/closed")
+    public ResponseEntity<?> getClosed(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                categoryRequestService.getClosed(token,page,size,false),
+                HttpStatus.OK);
+    }
+
+    @GetMapping("/subcategories/closed")
+    public ResponseEntity<?> getClosedSubCategories(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                categoryRequestService.getClosed(token,page,size,true),
                 HttpStatus.OK);
     }
 }
