@@ -23,6 +23,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -208,6 +209,7 @@ public class PqServiceImpl implements PqService{
         offerRequestDto.setCreditPaymentDays(pqDto.getPriceQuotationSummary().getCreditPaymentDuration());
         offerRequestDto.setCreditType(pqDto.getPaymentMethod());
         offerRequestDto.setVatIncluded(pqDto.getPriceQuotationSummary().getIsVatAdded());
+        offerRequestDto.setAitIncluded(pqDto.getPriceQuotationSummary().getIsAitAdded());
         offerRequestDto.setVatPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatPercent())));
         if(pqDto.getPriceQuotationSummary().getVatAmount().contains(".")){
             offerRequestDto.setVatAmount(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getVatAmount())));
@@ -452,8 +454,23 @@ public class PqServiceImpl implements PqService{
         },null);
     }
 
+    @Override
     @Transactional
-    private void sentAwardedSignal(PriceQuotation priceQuotation) {
-//        setRemoteOfferStatus(PriceQuotationStateStatus.AWARDED, priceQuotation.getRemoteOfferId(),priceQuotation.getVendorId(),null);
+    public void onLockPq(Jwt token, Long id) {
+        claimResolver.setToken(token);
+        Optional<PriceQuotation> pqOp = pqRepository.findByRemoteOfferId(id);
+        if(pqOp.isEmpty()){
+            throw new RuntimeException("Sorry! Price Quotation not exist");
+        }
+        PriceQuotation priceQuotation = pqOp.get();
+        priceQuotation.setStatus(PriceQuotationStateStatus.LOCKED);
+//        priceQuotation.setPriceQuotationStatus(PriceQuotationStatus.COUNTER_TO_COMPANY);
+    }
+
+    @Override
+    @Transactional
+    public void onReceiveCounterPq(Jwt token, PriceQuotationReqDto pqDto) {
+        Optional<Indent> indentOp = indentService.getIndentFactory(pqDto);
+        this._savePq(indentOp,pqDto,PriceQuotationStatus.COUNTER_TO_COMPANY,PriceQuotationStateStatus.SENT);
     }
 }

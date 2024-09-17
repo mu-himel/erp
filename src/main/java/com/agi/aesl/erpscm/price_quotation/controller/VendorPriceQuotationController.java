@@ -28,12 +28,19 @@ public class VendorPriceQuotationController {
     }
 
     @PostMapping("/receive-counter")
-    public ResponseEntity<?> onReceiveCounter(@RequestBody PriceQuotationReqDto pqDto){
+    public ResponseEntity<?> onReceiveCounter(
+            @AuthenticationPrincipal Jwt token,
+            @RequestBody PriceQuotationReqDto pqDto){
+        pqService.onReceiveCounterPq(token,pqDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/{id}/lock")
-    public ResponseEntity<?> onAcceptPriceQuotation(){
+    public ResponseEntity<?> onAcceptPriceQuotation(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id
+    ){
+        pqService.onLockPq(token,id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

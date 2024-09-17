@@ -29,4 +29,8 @@ public interface PqService {
     void addManualPq(Jwt token, PriceQuotationReqDto pqDto);
 
     void recommendPq(Jwt token, Long id);
+
+    void onLockPq(Jwt token, Long id);
+
+    void onReceiveCounterPq(Jwt token, PriceQuotationReqDto pqDto);
 }
