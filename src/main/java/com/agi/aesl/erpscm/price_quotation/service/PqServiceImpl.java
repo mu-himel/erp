@@ -11,6 +11,7 @@ import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.price_quotation.dto.request.*;
 import com.agi.aesl.erpscm.price_quotation.entity.*;
+import com.agi.aesl.erpscm.price_quotation.enums.CreditType;
 import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStateStatus;
 import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStatus;
 import com.agi.aesl.erpscm.price_quotation.repository.PqRepository;
@@ -71,7 +72,8 @@ public class PqServiceImpl implements PqService{
 
     @Override
     @Transactional
-    public void onDeclinePq(Long id, NoteDto noteDto, PriceQuotationStateStatus status, PriceQuotationStatus actionFrom) {
+    public void onDeclinePq(Jwt token, Long id, NoteDto noteDto, PriceQuotationStateStatus status, PriceQuotationStatus actionFrom) {
+        claimResolver.setToken(token);
         if(noteDto.getNote()==null || noteDto.getNote().isEmpty()){
             throw new RuntimeException("Sorry! Decline Note Required");
         }
@@ -82,7 +84,9 @@ public class PqServiceImpl implements PqService{
             PriceQuotation priceQuotation = pqOptional.get();
             priceQuotation.setStatus(status);
             priceQuotation.setDeclinedMessage(noteDto.getNote());
-
+            if((actionFrom.equals(PriceQuotationStatus.COUNTER_TO_VENDOR))){
+                setStatus(id,PriceQuotationStateStatus.DECLINED,null,noteDto);
+            }
         }
     }
 
@@ -204,6 +208,69 @@ public class PqServiceImpl implements PqService{
         pqSummaryRepository.save(pqs);
     }
 
+    private CounterPqDto _preparePayloadForSentCounterOffer(PriceQuotationReqDto pqDto, PriceQuotation pq, PriceQuotationSummary pqs){
+        CounterPqDto offerRequestDto = new CounterPqDto();
+        offerRequestDto.setCreditPaymentDays(pqs.getCreditPaymentDuration());
+        offerRequestDto.setCreditType(CreditType.valueOf(pq.getPaymentMethod()));
+        offerRequestDto.setVatIncluded(pqs.getIsVatAdded());
+        offerRequestDto.setAitIncluded(pqs.getIsAitAdded());
+        offerRequestDto.setVatPercent(pqs.getVatPercent());
+//        if(pqs.getVatAmount().contains(".")){
+//            offerRequestDto.setVatAmount(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getVatAmount())));
+//        }else{
+//            offerRequestDto.setVatAmount(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatAmount())));
+//        }
+        offerRequestDto.setVatAmount(pqs.getVatAmount());
+
+        offerRequestDto.setIsFinal(pq.getIsFinal());
+        offerRequestDto.setNegotiationHistoryId(pq.getNegotiationHistoryId());
+        if(pqs.getMushakIncluded()!=null){
+            offerRequestDto.setMushakIncluded(true);
+        }else{
+            offerRequestDto.setMushakIncluded(false);
+        }
+        offerRequestDto.setFinalOfferPrice(pqs.getSubTotalPrice());
+        offerRequestDto.setTotalDeliveryChargeAmount(pqs.getDeliveryChargeAmount());
+
+        offerRequestDto.setNote(pqs.getNote());
+        List<CounterItemDto> offerItems = new ArrayList<>();
+
+
+        pq.getQuotationDetails().stream().forEach(d->{
+            CounterItemDto offerItemDto = new CounterItemDto();
+            offerItemDto.setWarrantyDuration(d.getWarrantyDuration());
+            offerItemDto.setWarrantyUnit(d.getWarrantyUnit());
+            offerItemDto.setEstimatedDeliveryDays(Long.valueOf(d.getEstDeliveryDays()));
+            offerItemDto.setItemQuantity(d.getRfqQty());
+            String desc = (d.getBrandName()!=null)? d.getBrandName() + "-"+ d.getItemAttribute() : d.getItemAttribute();
+            offerItemDto.setProductDescription(desc);
+            offerItemDto.setSpecification("Must be a good condition");
+            CounterPriceQuotation opq = new CounterPriceQuotation();
+            opq.setTotalPrice(d.getUnitPrice().multiply(BigDecimal.valueOf(d.getRfqQty())));
+            opq.setPricePerUnit(d.getUnitPrice());
+            offerItemDto.setPriceQuotation(opq);
+            offerItems.add(offerItemDto);
+
+        });
+        offerRequestDto.setTermsAndConditions(pq.getTermsAndConditions()
+                .stream().map(ta-> new CounterTermAndConditionDto(ta.getTermAndCondition())).collect(Collectors.toList())
+        );
+        offerRequestDto.setOfferItems(offerItems);
+        offerRequestDto.setWarehouses(pqDto.getWarehouses().stream().map(pd->{
+            DeliveryDetailDto odd = new DeliveryDetailDto();
+            odd.setDeliveryChargeAmount(pd.getDeliveryChargeAmount());
+            odd.setDeliveryChargeMode(pd.getDeliveryChargeMode().toString());
+            odd.setWarehouseId(pd.getWarehouseId());
+            odd.setItems(pd.getItems().stream().map(pdid->{
+                ItemDeliveryDetailDto oidd= new ItemDeliveryDetailDto();
+                oidd.setDeliveryOrderQty(pdid.getDeliveryOrderQty());
+                oidd.setItemName(pdid.getItemName());
+                return oidd;
+            }).collect(Collectors.toList()));
+            return odd;
+        }).collect(Collectors.toList()));
+        return offerRequestDto;
+    }
     private CounterPqDto _preparePayloadForSentCounterOffer(PriceQuotationReqDto pqDto){
         CounterPqDto offerRequestDto = new CounterPqDto();
         offerRequestDto.setCreditPaymentDays(pqDto.getPriceQuotationSummary().getCreditPaymentDuration());
@@ -413,6 +480,7 @@ public class PqServiceImpl implements PqService{
         if(status.equals(PriceQuotationStateStatus.DECLINED)){
             HttpEntity<NoteDto> payload = new HttpEntity<>(noteDto,headers);
             url = cpsConfig.getDeclineOfferEndpoint(remoteOfferId,venodrId);
+            System.out.println(url);
             response = networkService.put(url, payload, Void.class);
         }
         if(status.equals(PriceQuotationStateStatus.AWARDED)){

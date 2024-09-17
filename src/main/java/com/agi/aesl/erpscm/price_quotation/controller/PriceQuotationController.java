@@ -77,7 +77,7 @@ public class PriceQuotationController extends BaseController {
             @PathVariable("id") Long id,
             @RequestBody NoteDto noteDto
             ){
-        pqService.onDeclinePq(id,noteDto,PriceQuotationStateStatus.DECLINED, PriceQuotationStatus.COUNTER_TO_VENDOR);
+        pqService.onDeclinePq(token, id,noteDto,PriceQuotationStateStatus.DECLINED, PriceQuotationStatus.COUNTER_TO_VENDOR);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

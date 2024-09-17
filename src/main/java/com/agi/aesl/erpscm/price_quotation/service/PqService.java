@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface PqService {
     void onReceivePq(Jwt token, PriceQuotationReqDto pqDto);
 
-    void onDeclinePq(Long id, NoteDto noteDto, PriceQuotationStateStatus declined, PriceQuotationStatus status);
+    void onDeclinePq(Jwt token, Long id, NoteDto noteDto, PriceQuotationStateStatus declined, PriceQuotationStatus status);
 
     List<?> getPriceQuotationsByIndent(Long id);
 

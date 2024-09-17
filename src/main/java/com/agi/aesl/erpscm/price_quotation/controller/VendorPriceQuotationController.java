@@ -45,8 +45,10 @@ public class VendorPriceQuotationController {
     }
 
     @PutMapping("/{id}/decline")
-    public ResponseEntity<?> onDeclinePriceQuotation(@PathVariable("id") Long id, @RequestBody NoteDto noteDto){
-        pqService.onDeclinePq(id,noteDto, PriceQuotationStateStatus.DECLINED, PriceQuotationStatus.COUNTER_TO_COMPANY);
+    public ResponseEntity<?> onDeclinePriceQuotation(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id, @RequestBody NoteDto noteDto){
+        pqService.onDeclinePq(token, id,noteDto, PriceQuotationStateStatus.DECLINED, PriceQuotationStatus.COUNTER_TO_COMPANY);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

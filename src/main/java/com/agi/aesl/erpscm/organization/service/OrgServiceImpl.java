@@ -90,6 +90,8 @@ public class OrgServiceImpl implements OrgService{
         HttpEntity<?> payload = new HttpEntity<>(headers);
         try{
             String url = aclApiEndpoint.concat("/organization");
+            log.info("Token get from: "+ url);
+            log.info("TOKEN: "+token);
             ResponseEntity<Organization> response = (ResponseEntity<Organization>) networkService.get(url, payload, Organization.class);
             return Optional.ofNullable(response.getBody());
         }catch(Exception ex){
