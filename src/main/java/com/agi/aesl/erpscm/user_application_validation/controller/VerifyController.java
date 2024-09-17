@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.user_application_validation.controller;
 import com.agi.aesl.erpscm.account_finance.service.AccountService;
 import com.agi.aesl.erpscm.indent.service.IndentService;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryCategoryRequestService;
+import com.agi.aesl.erpscm.inventory.user_request.service.InventoryRequestService;
 import com.agi.aesl.erpscm.quality_control.service.QcService;
 import com.agi.aesl.erpscm.store_receive.service.SrnService;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
@@ -46,6 +47,9 @@ public class VerifyController extends BaseController{
     @Autowired
     private InventoryCategoryRequestService categoryRequestService;
 
+    @Autowired
+    private InventoryRequestService inventoryRequestService;
+
     @PutMapping("/approve")
     public ResponseEntity<?> approve(
             @AuthenticationPrincipal Jwt token,
@@ -74,6 +78,11 @@ public class VerifyController extends BaseController{
         if(approveDto.getDomainType().equals(DomainType.INVENTORY_REQ_CATEGORY) ||
         approveDto.getDomainType().equals(DomainType.INVENTORY_REQ_SUB_CATEGORY)){
             verificationService.setVerificationDomainService(categoryRequestService);
+            verificationService.approve(token, approveDto);
+        }
+
+        if(approveDto.getDomainType().equals(DomainType.INVENTORY_REQ_PRODUCT)){
+            verificationService.setVerificationDomainService(inventoryRequestService);
             verificationService.approve(token, approveDto);
         }
 
@@ -114,6 +123,12 @@ public class VerifyController extends BaseController{
             verificationService.setVerificationDomainService(categoryRequestService);
             verificationService.verify(token, verifyDto);
         }
+
+        if(verifyDto.getDomainType().equals(DomainType.INVENTORY_REQ_PRODUCT)
+        ){
+            verificationService.setVerificationDomainService(inventoryRequestService);
+            verificationService.verify(token, verifyDto);
+        }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -141,6 +156,11 @@ public class VerifyController extends BaseController{
             verificationService.setVerificationDomainService(categoryRequestService);
             verificationService.review(verifyDto);
         }
+        if(verifyDto.getDomainType().equals(DomainType.INVENTORY_REQ_PRODUCT)
+        ){
+            verificationService.setVerificationDomainService(inventoryRequestService);
+            verificationService.review(verifyDto);
+        }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -165,6 +185,12 @@ public class VerifyController extends BaseController{
                 rejectDto.getDomainType().equals(DomainType.INVENTORY_REQ_SUB_CATEGORY)
         ){
             verificationService.setVerificationDomainService(categoryRequestService);
+            verificationService.reject(token, rejectDto);
+        }
+
+        if(rejectDto.getDomainType().equals(DomainType.INVENTORY_REQ_PRODUCT)
+        ){
+            verificationService.setVerificationDomainService(inventoryRequestService);
             verificationService.reject(token, rejectDto);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

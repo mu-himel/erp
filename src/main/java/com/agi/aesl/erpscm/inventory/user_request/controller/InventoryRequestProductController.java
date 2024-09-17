@@ -39,4 +39,14 @@ public class InventoryRequestProductController extends BaseController {
                 inventoryRequestService.getMyProducts(token,page,size),
                 HttpStatus.OK);
     }
+
+    @GetMapping("/products/{id}")
+    public ResponseEntity<?> getDetail(
+            @PathVariable("id") Long id
+    ){
+        return new ResponseEntity<>(
+                inventoryRequestService.getDetail(id),
+                HttpStatus.OK
+        );
+    }
 }

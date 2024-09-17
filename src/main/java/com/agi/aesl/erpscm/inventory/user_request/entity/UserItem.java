@@ -63,6 +63,9 @@ public class UserItem extends VerifyableEntity {
     @Enumerated(EnumType.STRING)
     private UserCategoryStatus itemStatus;
 
+    @Enumerated(EnumType.STRING)
+    private UserCategoryStatus reviewPrevStatus;
+
     @Override
     public void setStatus(String status){
         this.itemStatus = UserCategoryStatus.valueOf(status);

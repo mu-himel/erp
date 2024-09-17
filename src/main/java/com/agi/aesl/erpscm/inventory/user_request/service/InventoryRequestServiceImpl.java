@@ -1,9 +1,12 @@
 package com.agi.aesl.erpscm.inventory.user_request.service;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
+import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
+import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserItem;
@@ -12,6 +15,10 @@ import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryBrandRepository;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryRepository;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserItemRepository;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
+import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
@@ -20,9 +27,8 @@ import org.springframework.data.domain.*;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 public class InventoryRequestServiceImpl implements InventoryRequestService{
@@ -42,6 +48,9 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
 
     @Autowired
     private UserApplicationValidatorService<UserItem> verificationService;
+
+    @Autowired
+    private CommentService commentService;
 
     record MyCategory(Long id, String categoryName, Integer subCategoryCount, Integer productCount, String status){}
     record MySubCategory(Long id, String categoryName,String subCategoryName, Integer productCount, String status){}
@@ -126,5 +135,102 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
 
     private List<?> getByAttributes(Long brandId, String attribute) {
         return userItemRepository.findByAttributes(brandId,attribute);
+    }
+
+    @Override
+    public Map<String, Object> getDetail(Long id) {
+        Optional<UserItem> itemOp = userItemRepository.findById(id);
+        Map<String,Object> detail = new HashMap<>();
+        if(itemOp.isPresent()){
+            UserItem item = itemOp.get();
+            detail.put("detail",item);
+            List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
+            List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
+            DomainType domainType = DomainType.INVENTORY_REQ_PRODUCT;
+            List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
+                    .getVerificationsByDomainTypeAndDomainId(domainType, item.getId());
+            vrs.stream().forEach(verifier->{
+                if(verifier.getIsApproval()==false){
+                    verifiers.add(verifier);
+                }else{
+                    approvers.add(verifier);
+                }
+            });
+
+            List<?> comments = commentService.getCommentsByDomain(domainType, item.getId());
+            detail.put("verifiers",verifiers);
+            detail.put("approvers",approvers);
+            detail.put("comments",comments);
+        }
+        return detail;
+    }
+
+    @Override
+    @Transactional
+    public void onVerify(Long id, UserApplicationValidation verification, UserApplicationValidationRepository.VerificationResponse nextVerifier) {
+        Optional<UserItem> itemOp = userItemRepository.findById(id);
+        if(itemOp.isPresent()){
+            UserItem item = itemOp.get();
+            item.setNextVerifierId(nextVerifier.getVerifier().getId());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void onApprove(Long id, UserApplicationValidation verification, UserApplicationValidationRepository.VerificationResponse nextApprover) {
+        Optional<UserItem> itemOp = userItemRepository.findById(id);
+        if(itemOp.isPresent()){
+            UserItem item = itemOp.get();
+            item.setNextApproverId(nextApprover.getVerifier().getId());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void verifyComplete(Long id, Optional<UserApplicationValidationRepository.VerificationResponse> firstApprover) {
+        Optional<UserItem> itemOp = userItemRepository.findById(id);
+        if(itemOp.isPresent()){
+            UserItem userItem = itemOp.get();
+            if(firstApprover.isPresent()){
+                userItem.setNextApproverId(firstApprover.get().getVerifier().getId());
+                userItem.setItemStatus(UserCategoryStatus.PENDING_APPROVAL);
+            }else {
+                userItem.setItemStatus(UserCategoryStatus.VERIFIED);
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public void approveComplete(Long id) {
+        Optional<UserItem> itemOp = userItemRepository.findById(id);
+        if(itemOp.isPresent()){
+            UserItem item = itemOp.get();
+            item.setItemStatus(UserCategoryStatus.APPROVED);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void sendForReview(Long domainId, RefDto reviewer, String comment) {
+        Optional<UserItem> itemOp = userItemRepository.findById(domainId);
+        if(itemOp.isPresent()){
+            UserItem item = itemOp.get();
+            if(!item.getItemStatus().equals(UserCategoryStatus.REVIEW)){
+                item.setReviewPrevStatus(item.getItemStatus());
+                item.setItemStatus(UserCategoryStatus.REVIEW);
+            }
+            item.setReviewerId(reviewer.getId());
+            item.setReviewDate(LocalDateTime.now());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
+        Optional<UserItem> itemOp = userItemRepository.findById(domainId);
+        itemOp.ifPresent((item)->{
+            item.setItemStatus(UserCategoryStatus.REJECTED);
+        });
     }
 }
