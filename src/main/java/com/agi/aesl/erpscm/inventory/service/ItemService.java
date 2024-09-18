@@ -1,5 +1,8 @@
 package com.agi.aesl.erpscm.inventory.service;
 
+import com.agi.aesl.erpscm.common.ItemAttributeInterface;
+import com.agi.aesl.erpscm.common.ItemInterface;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
@@ -9,6 +12,7 @@ import com.agi.aesl.erpscm.inventory.dto.request.RemoteItemRequestDto;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.enums.StockType;
 
+import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,6 +36,11 @@ public interface ItemService {
 
     List<?> getByAttributes(Long brandId,String attribute,Long warehouseId);
     Optional<?> getItemDetailWithWarehouse(Long id);
+
+    <T extends ItemInterface> void sendItemToCps(ClaimResolver claimResolver, String _employee,T item,
+                                                 List<ItemAttributeInterface> attributes,
+                                                 WarehouseStore warehouseStore
+    );
 
     Page<?> getAllItems(
             Jwt token, String uri,Optional<Integer> page, Optional<Integer> size,

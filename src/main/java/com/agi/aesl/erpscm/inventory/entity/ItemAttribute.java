@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.inventory.entity;
 
+import com.agi.aesl.erpscm.common.ItemAttributeInterface;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
@@ -16,7 +17,7 @@ import lombok.Data;
 @Entity
 @Table(name = "scm_item_attributes")
 @Data
-public class ItemAttribute {
+public class ItemAttribute implements ItemAttributeInterface {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

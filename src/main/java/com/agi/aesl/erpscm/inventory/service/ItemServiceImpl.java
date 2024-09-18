@@ -4,6 +4,8 @@ package com.agi.aesl.erpscm.inventory.service;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
 import com.agi.aesl.erpscm.account_finance.service.AccountService;
 import com.agi.aesl.erpscm.common.DataFilter;
+import com.agi.aesl.erpscm.common.ItemAttributeInterface;
+import com.agi.aesl.erpscm.common.ItemInterface;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
@@ -548,52 +550,69 @@ public class ItemServiceImpl implements ItemService {
 
 
         if(item.getId()!=null){
+            sendItemToCps(claimResolver,itemRequestDto.getEmployee(),item, item.getItemAttributes(),warehouseStore);
 
-            PendingItemRequestDto pendingItemRequestDto = new PendingItemRequestDto();
-            Employee employee = claimResolver.getEmployee().orElse(null);
-            pendingItemRequestDto.setItemAttributeName(itemAttributeName);
-            if(employee!=null) {
-                pendingItemRequestDto.setRequestedBy(itemRequestDto.getEmployee());
-                pendingItemRequestDto.setDesignation(employee.getDesignationName());
-                pendingItemRequestDto.setDepartment(employee.getDepartmentName());
-                pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
-                pendingItemRequestDto.setWarehouseStoreId(warehouseStore.getId());
-                pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
-            }else{
-                throw new RuntimeException("Sorry! Employee Info missing");
-            }
-            Optional<ItemCategory> catOp = categoryService.getAnyItemCategory(item.getItemCategory().getId());
-
-
-            pendingItemRequestDto.setSubCategoryCode(catOp.get().getCode());
-            if(item.getBrand()!=null) {
-                Optional<CategoryBrand> brandOp = categoryBrandRepository.findById(item.getBrand().getId());
-                pendingItemRequestDto.setBrand(brandOp.get().getName());
-            }
-            pendingItemRequestDto.setReportingManager(employee.getReportingManager());
-            pendingItemRequestDto.setEmployeeId(employee.getId());
-            pendingItemRequestDto.setAttributes(itemRequestDto.getAttributes());
-            pendingItemRequestDto.setItemUnit(item.getItemUnit());
-            pendingItemRequestDto.setScmItemId(item.getId());
-            pendingItemRequestDto.setCode(item.getCode());
-
-            HttpHeaders headers =  new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(loggedInUser.getTokenValue());
-            if(orgOp.isPresent()){
-                pendingItemRequestDto.setOrganizationId(orgOp.get().getCpsVendorRegistrationId());
-                headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
-                itemRequestDto.setOrgId(orgOp.get().getId());
-            }
-            HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(pendingItemRequestDto,headers);
-            String url = cpsConfig.getPendingItemReqEndpoint();
-            ResponseEntity<?> response = networkService.post(url,payload,Void.class);
-            System.out.println("STATUS CODE: "+response.getStatusCode());
         }
 
     }
 
-    
+
+
+    @Override
+    public  <T extends ItemInterface> void sendItemToCps(ClaimResolver claimResolver, String _employee, T item,
+                                                         List<ItemAttributeInterface> attributes,
+                                                         WarehouseStore warehouseStore
+                                                         ) {
+        PendingItemRequestDto pendingItemRequestDto = new PendingItemRequestDto();
+        Employee employee = claimResolver.getEmployee().orElse(null);
+        pendingItemRequestDto.setItemAttributeName(item.getItemAttributeName());
+        if(employee!=null) {
+            pendingItemRequestDto.setRequestedBy(_employee);
+            pendingItemRequestDto.setDesignation(employee.getDesignationName());
+            pendingItemRequestDto.setDepartment(employee.getDepartmentName());
+            pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
+            if(warehouseStore!=null){
+                pendingItemRequestDto.setWarehouseStoreId(warehouseStore.getId());
+            }
+
+            pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
+        }else{
+            throw new RuntimeException("Sorry! Employee Info missing");
+        }
+        Optional<ItemCategory> catOp = categoryService.getAnyItemCategory(item.getCategory().getId());
+
+
+        pendingItemRequestDto.setSubCategoryCode(catOp.get().getCode());
+        if(item.getBrand()!=null) {
+            Optional<CategoryBrand> brandOp = categoryBrandRepository.findById(item.getBrand().getId());
+            pendingItemRequestDto.setBrand(brandOp.get().getName());
+        }
+        pendingItemRequestDto.setReportingManager(employee.getReportingManager());
+        pendingItemRequestDto.setEmployeeId(employee.getId());
+        pendingItemRequestDto.setAttributes(attributes.stream().map(attr->{
+            ItemAttribute attribute = new ItemAttribute();
+            attribute.setAttributeType(attr.getAttributeType());
+            attribute.setAttributeUnit(attr.getAttributeUnit());
+            attribute.setAttributeValue(attr.getAttributeValue());
+            return attribute;
+        }).collect(Collectors.toList()));
+        pendingItemRequestDto.setItemUnit(item.getItemUnit());
+        pendingItemRequestDto.setScmItemId(item.getId());
+        pendingItemRequestDto.setCode(item.getCode());
+
+        HttpHeaders headers =  new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
+        if(orgOp.isPresent()){
+            pendingItemRequestDto.setOrganizationId(orgOp.get().getCpsVendorRegistrationId());
+            headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
+//            itemRequestDto.setOrgId(orgOp.get().getId());
+        }
+        HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(pendingItemRequestDto,headers);
+        String url = cpsConfig.getPendingItemReqEndpoint();
+        ResponseEntity<?> response = networkService.post(url,payload,Void.class);
+        System.out.println("STATUS CODE: "+response.getStatusCode());
+    }
 
     @Override
     public void createItem(Jwt loggedInUser, RemoteItemRequestDto itemRequestDto) {

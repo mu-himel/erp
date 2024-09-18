@@ -12,6 +12,7 @@ import com.agi.aesl.erpscm.indent.entity.IndentVerificationApprovalHistory;
 import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
 import com.agi.aesl.erpscm.indent.enums.RfqStatus;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
+import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryAttribute;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
@@ -241,6 +242,8 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         if(catOp.isPresent()){
             UserCategory category = catOp.get();
             category.setStatus(String.valueOf(IndentVerificationStatus.APPROVED));
+
+
         }
     }
 

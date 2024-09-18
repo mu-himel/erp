@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.inventory.entity;
 
 // import io.swagger.annotations.ApiModelProperty;
 // import io.swagger.annotations.ApiParam;
+import com.agi.aesl.erpscm.common.CategoryInterface;
 import com.agi.aesl.erpscm.inventory.enums.CategoryStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -20,7 +21,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "scm_item_categories")
-public class ItemCategory {
+public class ItemCategory implements CategoryInterface {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

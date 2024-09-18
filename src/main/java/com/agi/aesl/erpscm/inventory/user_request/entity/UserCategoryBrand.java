@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.inventory.user_request.entity;
 
+import com.agi.aesl.erpscm.common.BrandInterface;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "user_category_brands")
-public class UserCategoryBrand {
+public class UserCategoryBrand implements BrandInterface {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

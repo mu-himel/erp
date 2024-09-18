@@ -6,6 +6,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseServ
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
+import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserItem;
@@ -20,6 +21,8 @@ import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationVal
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
@@ -53,6 +56,9 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
 
     @Autowired
     private WarehouseService warehouseService;
+
+    @Autowired
+    private ItemService itemService;
 
     record MyCategory(Long id, String categoryName, Integer subCategoryCount, Integer productCount, String status){}
     record MySubCategory(Long id, String categoryName,String subCategoryName, Integer productCount, String status){}
@@ -223,6 +229,16 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
                 userItem.setItemStatus(UserCategoryStatus.PENDING_APPROVAL);
             }else {
                 userItem.setItemStatus(UserCategoryStatus.VERIFIED);
+                ObjectMapper mapper = new ObjectMapper();
+                try {
+                    String employee = mapper.writeValueAsString(userItem.getCreatedBy());
+                    /**
+                     * Here may be need something more todo
+                     */
+                    itemService.sendItemToCps(claimResolver,employee,userItem,userItem.getItemAttributes(),null);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }
@@ -232,8 +248,19 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     public void approveComplete(Long id) {
         Optional<UserItem> itemOp = userItemRepository.findById(id);
         if(itemOp.isPresent()){
-            UserItem item = itemOp.get();
-            item.setItemStatus(UserCategoryStatus.APPROVED);
+            UserItem userItem = itemOp.get();
+            userItem.setItemStatus(UserCategoryStatus.APPROVED);
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                String employee = mapper.writeValueAsString(userItem.getCreatedBy());
+                /**
+                 * Here may be need something more todo
+                 */
+                itemService.sendItemToCps(claimResolver,employee,userItem,userItem.getItemAttributes(),null);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+
         }
     }
 

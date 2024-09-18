@@ -1,5 +1,7 @@
 package com.agi.aesl.erpscm.inventory.user_request.entity;
 
+import com.agi.aesl.erpscm.common.ItemAttributeInterface;
+import com.agi.aesl.erpscm.common.ItemInterface;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
@@ -20,7 +22,7 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "user_items")
-public class UserItem extends VerifyableEntity {
+public class UserItem extends VerifyableEntity implements ItemInterface {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -77,5 +79,15 @@ public class UserItem extends VerifyableEntity {
         this.itemUnit = itemRequestDto.getItemUnit();
         this.attributes = itemRequestDto.getAttributes().stream()
                 .map(attr-> new UserItemAttribute(attr,this)).collect(Collectors.toList());
+    }
+
+    public List<ItemAttributeInterface> getItemAttributes() {
+        return this.getAttributes().stream().map((attr)->{
+            ItemAttributeInterface iattr = new UserItemAttribute();
+            iattr.setAttributeType(attr.getAttributeType());
+            iattr.setAttributeUnit(attr.getAttributeUnit());
+            iattr.setAttributeValue(attr.getAttributeValue());
+            return iattr;
+        }).collect(Collectors.toList());
     }
 }

@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.inventory.user_request.entity;
 
+import com.agi.aesl.erpscm.common.CategoryInterface;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
@@ -24,7 +25,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Table(name = "user_categories")
 @NoArgsConstructor
-public class UserCategory extends VerifyableEntity {
+public class UserCategory extends VerifyableEntity implements CategoryInterface {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

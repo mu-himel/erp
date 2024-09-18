@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.inventory.entity;
 
+import com.agi.aesl.erpscm.common.BrandInterface;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Entity;
@@ -19,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "scm_category_brands")
-public class CategoryBrand {
+public class CategoryBrand implements BrandInterface {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
