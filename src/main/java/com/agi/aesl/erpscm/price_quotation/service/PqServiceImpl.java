@@ -159,7 +159,22 @@ public class PqServiceImpl implements PqService{
                 if(warehouseOp.isEmpty()){
                     throw new RuntimeException("Warehouse not found");
                 }
-                pqdd.setDeliveryOrderQty(_pqdd.getDeliveryOrderQty());
+                if(priceQuotationStateStatus.equals(PriceQuotationStateStatus.SENT)){
+                    Optional<DeliveryDetailDto> deliveryDetailDtoOp = pqDto.getWarehouses().stream().filter(w->{
+                       return w.getWarehouseId().equals(_pqdd.getWarehouseId());
+                    }).findFirst();
+                    if(deliveryDetailDtoOp.isPresent()){
+                        Optional<ItemDeliveryDetailDto> itemOp = deliveryDetailDtoOp.get().getItems().stream().filter(itemDeliveryDetailDto -> {
+                           return itemDeliveryDetailDto.getItemName().equals(detail.getItemAttributeName());
+                        }).findFirst();
+                        if(itemOp.isPresent()){
+                            pqdd.setDeliveryOrderQty(itemOp.get().getDeliveryOrderQty());
+                        }
+
+                    }
+                }else {
+                    pqdd.setDeliveryOrderQty(_pqdd.getDeliveryOrderQty());
+                }
                 pqdd.setWarehouse(warehouseOp.get());
                 pqdd.setPriceQuotationDetail(pqd);
                 return pqdd;
@@ -304,6 +319,7 @@ public class PqServiceImpl implements PqService{
             offerItemDto.setWarrantyUnit(d.getWarrantyUnit());
             offerItemDto.setEstimatedDeliveryDays(Long.valueOf(d.getEstDeliveryDays()));
             offerItemDto.setItemQuantity(d.getRfqQty());
+            offerItemDto.setBrandName(d.getBrandName());
             offerItemDto.setProductDescription(d.getItemAttributeName());
             offerItemDto.setSpecification("Must be a good condition");
             CounterPriceQuotation opq = new CounterPriceQuotation();
@@ -539,6 +555,6 @@ public class PqServiceImpl implements PqService{
     @Transactional
     public void onReceiveCounterPq(Jwt token, PriceQuotationReqDto pqDto) {
         Optional<Indent> indentOp = indentService.getIndentFactory(pqDto);
-        this._savePq(indentOp,pqDto,PriceQuotationStatus.COUNTER_TO_COMPANY,PriceQuotationStateStatus.SENT);
+        this._savePq(indentOp,pqDto,PriceQuotationStatus.COUNTER_TO_COMPANY,PriceQuotationStateStatus.RECEIVED);
     }
 }

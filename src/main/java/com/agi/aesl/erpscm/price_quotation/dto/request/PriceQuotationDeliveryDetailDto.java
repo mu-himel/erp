@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 @Data
 public class PriceQuotationDeliveryDetailDto {
     private  String warehouseName;
-
+    private Long warehouseId;
     private DeliveryCharge deliveryChargeType;
     private BigDecimal deliveryOrderQty;
     private BigDecimal deliveryChargeAmount;
