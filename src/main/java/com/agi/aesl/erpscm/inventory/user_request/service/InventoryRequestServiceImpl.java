@@ -3,11 +3,9 @@ package com.agi.aesl.erpscm.inventory.user_request.service;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
+import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
-import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
-import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
-import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserItem;
@@ -252,6 +250,33 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
             item.setReviewerId(reviewer.getId());
             item.setReviewDate(LocalDateTime.now());
         }
+    }
+
+    @Override
+    @Transactional
+    public void review(Jwt token, Long id, ReviewDto reviewDto) {
+        claimResolver.setToken(token);
+        Optional<UserItem> userItemOp = userItemRepository.findById(id);
+        if(userItemOp.isEmpty()){
+            throw new RuntimeException("User Item not found");
+        }
+        UserItem userItem = userItemOp.get();
+        userItem.setReviewerId(null);
+        if(userItem.getReviewPrevStatus()!=null) {
+            userItem.setItemStatus(userItem.getReviewPrevStatus());
+        }
+        userItem.setReviewPrevStatus(null);
+        userItem.setReviewDate(LocalDateTime.now());
+
+        commentService.addComment(commentService.prepareComment(
+                claimResolver.getEmployee().get(),
+                reviewDto.getDomainType(),
+                reviewDto.getActionType(),
+                userItem.getId(),
+                reviewDto.getMessage(),
+                reviewDto.getAttachments()
+        ));
+
     }
 
     @Override

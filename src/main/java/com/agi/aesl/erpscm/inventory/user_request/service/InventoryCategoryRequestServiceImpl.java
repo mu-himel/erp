@@ -5,6 +5,7 @@ import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
+import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.indent.entity.IndentVerificationApprovalHistory;
@@ -16,6 +17,7 @@ import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryAttribute;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryRepository;
+import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
@@ -255,6 +257,32 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
             category.setReviewerId(reviewer.getId());
             category.setReviewDate(LocalDateTime.now());
         }
+    }
+
+    @Override
+    @Transactional
+    public void review(Jwt token, Long id, ReviewDto reviewDto) {
+        claimResolver.setToken(token);
+        Optional<UserCategory> userCatOp = userCategoryRepository.findById(id);
+        if(userCatOp.isEmpty()){
+            throw new RuntimeException("QC not found");
+        }
+        UserCategory userCategory = userCatOp.get();
+        userCategory.setReviewerId(null);
+        if(userCategory.getReviewPrevStatus()!=null) {
+            userCategory.setCategoryStatus(userCategory.getReviewPrevStatus());
+        }
+        userCategory.setReviewPrevStatus(null);
+        userCategory.setReviewDate(LocalDateTime.now());
+
+        commentService.addComment(commentService.prepareComment(
+                claimResolver.getEmployee().get(),
+                reviewDto.getDomainType(),
+                reviewDto.getActionType(),
+                userCategory.getId(),
+                reviewDto.getMessage(),
+                reviewDto.getAttachments()
+        ));
     }
 
     @Override

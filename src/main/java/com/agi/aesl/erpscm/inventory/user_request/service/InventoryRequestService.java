@@ -1,6 +1,6 @@
 package com.agi.aesl.erpscm.inventory.user_request.service;
 
-import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
+import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomainService;
 import org.springframework.data.domain.Page;
@@ -27,4 +27,6 @@ public interface InventoryRequestService extends VerificationDomainService {
     Page<?> getPendingVerifications(Jwt token, Optional<Integer> page, Optional<Integer> size);
     Page<?> getPendingApprovals(Jwt token, Optional<Integer> page, Optional<Integer> size);
     Page<?> getClosed(Jwt token, Optional<Integer> page, Optional<Integer> size);
+
+    void review(Jwt token, Long id, ReviewDto reviewDto);
 }

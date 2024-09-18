@@ -1,10 +1,12 @@
 package com.agi.aesl.erpscm.inventory.user_request.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
+import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryCategoryRequestService;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -135,5 +137,25 @@ public class InventoryRequestCategoryController extends BaseController {
         return new ResponseEntity<>(
                 categoryRequestService.getClosed(token,page,size,true),
                 HttpStatus.OK);
+    }
+
+    @PutMapping("/categories/review/{id}")
+    public ResponseEntity<?> reviewCat(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id,
+            @RequestBody ReviewDto reviewDto
+    ){
+       categoryRequestService.review(token,id,reviewDto);
+       return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/subcategories/review/{id}")
+    public ResponseEntity<?> reviewSubCat(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id,
+            @RequestBody ReviewDto reviewDto
+    ){
+        categoryRequestService.review(token,id,reviewDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

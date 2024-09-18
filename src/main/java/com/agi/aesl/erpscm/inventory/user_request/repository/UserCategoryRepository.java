@@ -11,17 +11,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface UserCategoryRepository extends JpaRepository<UserCategory,Long> {
+public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>, UserCategoryQuery {
 
-    @Query(value = """
-            select id as id, name as categoryName, (
-                SELECT COUNT(*) FROM user_categories uc1
-                WHERE uc1.parent_category_id=uc.id
-            ) as subCategoryCount, 0 as productCount,
-            category_status as status
-            FROM user_categories uc
-            WHERE uc.created_by_id=:userId AND uc.parent_category_id IS NULL
-            """, nativeQuery = true)
+    @Query(value = getMyCategories, countQuery = countMyCategories, nativeQuery = true)
     Page<UserCategory> findAllCategoryByCreatedById(String userId, Pageable pageable);
 
     @Query(value = """

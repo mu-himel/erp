@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.inventory.user_request.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
+import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,5 +85,15 @@ public class InventoryRequestProductController extends BaseController {
                 inventoryRequestService.getClosed(token,page,size),
                 HttpStatus.OK
         );
+    }
+
+    @PutMapping("/products/review/{id}")
+    public ResponseEntity<?> reviewProduct(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id,
+            @RequestBody ReviewDto reviewDto
+            ){
+        inventoryRequestService.review(token, id, reviewDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
