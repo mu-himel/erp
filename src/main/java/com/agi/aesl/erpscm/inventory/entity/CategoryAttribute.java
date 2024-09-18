@@ -1,5 +1,7 @@
 package com.agi.aesl.erpscm.inventory.entity;
 
+import com.agi.aesl.erpscm.common.CategoryAttributeInterface;
+import com.agi.aesl.erpscm.common.ItemAttributeInterface;
 import com.agi.aesl.erpscm.inventory.enums.AttributeUnit;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -17,7 +19,7 @@ import lombok.Data;
 @Entity
 @Data
 @Table(name = "scm_category_attributes")
-public class CategoryAttribute {
+public class CategoryAttribute implements CategoryAttributeInterface {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

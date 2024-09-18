@@ -42,5 +42,6 @@ public class RemoteCategoryRequestDto {
     private String createdBy;
 
     private String categoryStatus;
+    private Boolean isUserGenerated;
 
 }

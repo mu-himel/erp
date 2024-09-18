@@ -3,6 +3,8 @@ package com.agi.aesl.erpscm.inventory.user_request.service;
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.common.ReferenceObjectDto;
+import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
@@ -12,12 +14,19 @@ import com.agi.aesl.erpscm.indent.entity.IndentVerificationApprovalHistory;
 import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
 import com.agi.aesl.erpscm.indent.enums.RfqStatus;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
+import com.agi.aesl.erpscm.inventory.dto.request.RemoteCategoryRequestDto;
+import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
+import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.service.CategoryService;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryAttribute;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryRepository;
+import com.agi.aesl.erpscm.network.NetworkService;
+import com.agi.aesl.erpscm.organization.entity.Organization;
+import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
@@ -26,12 +35,18 @@ import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationVal
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -57,6 +72,18 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
 
     @Autowired
     private WarehouseService warehouseService;
+
+    @Autowired
+    private OrgService orgService;
+
+    @Autowired
+    private NetworkService networkService;
+
+    @Autowired
+    private CpsServerConfig cpsServerConfig;
+
+    @Autowired
+    private CategoryService categoryService;
 
     @Override
     @Transactional
@@ -226,6 +253,13 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
             } else {
 
                 category.setCategoryStatus(UserCategoryStatus.VERIFIED);
+                ObjectMapper mapper = new ObjectMapper();
+                try {
+                    String employee = mapper.writeValueAsString(category.getCreatedBy());
+                    categoryService.sendToCps(claimResolver.getToken(),category,employee);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
 //                IndentVerificationApprovalHistory indentVAHistory = new IndentVerificationApprovalHistory();
 //                indentVAHistory.setIndent(indent);
 //                indentVAHistory.setEmployee(new Employee(indent.getNextVerifierId()));
@@ -242,6 +276,14 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         if(catOp.isPresent()){
             UserCategory category = catOp.get();
             category.setStatus(String.valueOf(IndentVerificationStatus.APPROVED));
+            ObjectMapper mapper = new ObjectMapper();
+
+            try {
+                String employee = mapper.writeValueAsString(category.getCreatedBy());
+                categoryService.sendToCps(claimResolver.getToken(),category,employee);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
 
 
         }
@@ -296,4 +338,46 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
             cat.setCategoryStatus(UserCategoryStatus.REJECTED);
         });
     }
+
+//    private void sentToCps(Jwt token, UserCategory category){
+//        RemoteCategoryRequestDto remoteCategoryRequestDto = new RemoteCategoryRequestDto();
+//        remoteCategoryRequestDto.setName(category.getName());
+//        remoteCategoryRequestDto.setCode(category.getCode());
+//
+//        if(category.getParentCategory()!=null) {
+//            Optional<UserCategory> parentCategoryOp = userCategoryRepository.findById(category.getParentCategory().getId());
+//
+//            if (parentCategoryOp.isPresent()) {
+//                remoteCategoryRequestDto.setParentCategory(new ReferenceObjectDto(parentCategoryOp.get().getCpsCategoryId()));
+//            }
+//
+//            remoteCategoryRequestDto.setAttributes(category.getAttributes().stream().map(attr->{
+//                CategoryAttribute ca = new CategoryAttribute();
+//                ca.setAttributeType(attr.getAttributeType());
+//                ca.setAttributeUnit(attr.getAttributeUnit());
+//                ca.setAttributeValue(attr.getAttributeValue());
+//                return ca;
+//            }).collect(Collectors.toList()));
+//            remoteCategoryRequestDto.setBrands(category.getBrands().stream().map(b->b.getName()).collect(Collectors.toList()));
+//            remoteCategoryRequestDto.setVat(category.getVat());
+//        }
+//        remoteCategoryRequestDto.setScmCategoryId(category.getId());
+//        remoteCategoryRequestDto.setCreatedBy(category.getCreatedBy().getId());
+//        remoteCategoryRequestDto.setCategoryStatus("PENDING");
+//        remoteCategoryRequestDto.setIsUserGenerated(true);
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
+//        if(orgOp.isPresent()){
+//            headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
+//        }
+//        HttpEntity<RemoteCategoryRequestDto> payload = new HttpEntity<>(remoteCategoryRequestDto,headers);
+//        String url = cpsServerConfig.getItemCategoriesEndpoint();
+//        ResponseEntity<?> response = networkService.post(url,payload,Void.class);
+//        HttpHeaders httpHeaders = response.getHeaders();
+//        List<String> headerId = httpHeaders.get("id");
+//        if(headerId.size()>0){
+//            category.setCpsCategoryId(Long.parseLong(headerId.get(0)));
+//        }
+//    }
 }

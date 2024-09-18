@@ -1,14 +1,18 @@
 package com.agi.aesl.erpscm.inventory.user_request.entity;
 
+import com.agi.aesl.erpscm.common.CategoryAttributeInterface;
+import com.agi.aesl.erpscm.common.ItemAttributeInterface;
 import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity
+@NoArgsConstructor
 @Table(name = "user_category_attributes")
-public class UserCategoryAttribute {
+public class UserCategoryAttribute implements CategoryAttributeInterface {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

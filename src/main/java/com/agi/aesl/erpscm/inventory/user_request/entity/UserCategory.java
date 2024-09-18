@@ -1,5 +1,7 @@
 package com.agi.aesl.erpscm.inventory.user_request.entity;
 
+import com.agi.aesl.erpscm.common.BrandInterface;
+import com.agi.aesl.erpscm.common.CategoryAttributeInterface;
 import com.agi.aesl.erpscm.common.CategoryInterface;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
@@ -17,8 +19,10 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Entity
@@ -64,6 +68,8 @@ public class UserCategory extends VerifyableEntity implements CategoryInterface 
     @ManyToOne
     private Employee createdBy;
 
+    private Long cpsCategoryId;
+
     public UserCategory(CategoryRequestDto categoryRequestDto){
         this.name = categoryRequestDto.getName();
         this.code = categoryRequestDto.getCode();
@@ -77,5 +83,31 @@ public class UserCategory extends VerifyableEntity implements CategoryInterface 
 
     public UserCategory(Long id) {
         this.id = id;
+    }
+
+    @Override
+    public BigDecimal getVat() {
+        return null;
+    }
+
+    @Override
+    public List<BrandInterface> getBrandInterfaces() {
+        return this.brands.stream().map(b->{
+            BrandInterface brandInterface = new CategoryBrand();
+            brandInterface.setId(b.getId());
+            brandInterface.setName(b.getName());
+            return brandInterface;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CategoryAttributeInterface> getAttributeInterfaces() {
+        return this.attributes.stream().map(attr->{
+            CategoryAttributeInterface cai = new UserCategoryAttribute();
+            cai.setAttributeValue(attr.getAttributeValue());
+            cai.setAttributeUnit(attr.getAttributeUnit());
+            cai.setAttributeType(attr.getAttributeType());
+            return cai;
+        }).collect(Collectors.toList());
     }
 }
