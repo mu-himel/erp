@@ -49,4 +49,40 @@ public class InventoryRequestProductController extends BaseController {
                 HttpStatus.OK
         );
     }
+
+    @GetMapping("/products/pending-verifications")
+    public ResponseEntity<?> getPendingVerifications(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                inventoryRequestService.getPendingVerifications(token, page,size),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/products/pending-approvals")
+    public ResponseEntity<?> getPendingApprovals(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                inventoryRequestService.getPendingApprovals(token,page,size),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/products/closed")
+    public ResponseEntity<?> getClosed(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                inventoryRequestService.getClosed(token,page,size),
+                HttpStatus.OK
+        );
+    }
 }

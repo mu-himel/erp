@@ -23,4 +23,8 @@ public interface InventoryRequestService extends VerificationDomainService {
     void createProduct(Jwt token, String uri, ItemRequestDto itemRequestDto);
 
     Map<String,Object> getDetail(Long id);
+
+    Page<?> getPendingVerifications(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getPendingApprovals(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getClosed(Jwt token, Optional<Integer> page, Optional<Integer> size);
 }

@@ -3,6 +3,8 @@ package com.agi.aesl.erpscm.inventory.user_request.service;
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
+import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.indent.entity.IndentVerificationApprovalHistory;
@@ -49,6 +51,9 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
 
     @Autowired
     private CommentService commentService;
+
+    @Autowired
+    private WarehouseService warehouseService;
 
     @Override
     @Transactional
@@ -157,6 +162,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         Map<String,Object> detail = new HashMap<>();
         UserCategory category = catOp.get();
         detail.put("detail",category);
+        detail.put("warehouse",warehouseService.getWarehouse(category.getCreatedBy().getWarehouseId()));
         List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
         List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
         DomainType domainType = (category.getParentCategory()!=null)? DomainType.INVENTORY_REQ_SUB_CATEGORY:

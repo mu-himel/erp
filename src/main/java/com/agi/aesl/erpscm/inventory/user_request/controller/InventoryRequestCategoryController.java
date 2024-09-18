@@ -43,7 +43,7 @@ public class InventoryRequestCategoryController extends BaseController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @GetMapping("/category/{id}")
+    @GetMapping("/categories/{id}")
     public ResponseEntity<?> getCategory(@PathVariable("id") Long id){
         return new ResponseEntity<>(
                 categoryRequestService.getDetail(id),

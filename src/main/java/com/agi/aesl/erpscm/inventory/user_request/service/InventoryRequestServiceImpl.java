@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.inventory.user_request.service;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
@@ -52,6 +53,9 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private WarehouseService warehouseService;
+
     record MyCategory(Long id, String categoryName, Integer subCategoryCount, Integer productCount, String status){}
     record MySubCategory(Long id, String categoryName,String subCategoryName, Integer productCount, String status){}
     record MyProduct(Long id, String categoryName,String subCategoryName, String productName, String status){}
@@ -84,6 +88,30 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
                 claimResolver.getUserId(),
                 pageable
         );
+    }
+
+    @Override
+    public Page<?> getPendingVerifications(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
+        return userItemRepository.findAllPendingVerifications(claimResolver.getUserId(),pageable);
+    }
+
+    @Override
+    public Page<?> getPendingApprovals(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
+        return userItemRepository.findAllPendingApprovals(claimResolver.getUserId(),pageable);
+    }
+
+    @Override
+    public Page<?> getClosed(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
+        return userItemRepository.findAllClosed(claimResolver.getUserId(),pageable);
     }
 
     @Override
@@ -144,6 +172,7 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
         if(itemOp.isPresent()){
             UserItem item = itemOp.get();
             detail.put("detail",item);
+            detail.put("warehouse",warehouseService.getWarehouse(item.getCreatedBy().getWarehouseId()));
             List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
             List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
             DomainType domainType = DomainType.INVENTORY_REQ_PRODUCT;

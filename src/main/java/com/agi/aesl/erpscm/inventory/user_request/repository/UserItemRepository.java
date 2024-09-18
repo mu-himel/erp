@@ -33,6 +33,39 @@ public interface UserItemRepository extends JpaRepository<UserItem,Long> {
             """, nativeQuery = true)
     Page<UserItem> findAllByCreatedById(String userId, Pageable pageable);
 
+    @Query(value = """
+            select ui.id as id, cat.name as categoryName, subCat.name as subCategoryName,
+             ui.item_attribute_name as productName,
+            uc.item_status as status
+             FROM user_items ui
+             LEFT JOIN user_categories subCat ON ui.sub_category_id = subCat.id
+             LEFT JOIN user_categories cat ON ui.category_id = cat.id
+             WHERE ui.next_verifier_id=:userId
+            """, nativeQuery = true)
+    Page<UserItem> findAllPendingVerifications(String userId, Pageable pageable);
+
+    @Query(value = """
+            select ui.id as id, cat.name as categoryName, subCat.name as subCategoryName,
+             ui.item_attribute_name as productName,
+            uc.item_status as status
+             FROM user_items ui
+             LEFT JOIN user_categories subCat ON ui.sub_category_id = subCat.id
+             LEFT JOIN user_categories cat ON ui.category_id = cat.id
+             WHERE ui.next_approver_id=:userId
+            """, nativeQuery = true)
+    Page<UserItem> findAllPendingApprovals(String userId, Pageable pageable);
+
+    @Query(value = """
+            select ui.id as id, cat.name as categoryName, subCat.name as subCategoryName,
+             ui.item_attribute_name as productName,
+            uc.item_status as status
+             FROM user_items ui
+             LEFT JOIN user_categories subCat ON ui.sub_category_id = subCat.id
+             LEFT JOIN user_categories cat ON ui.category_id = cat.id
+             WHERE ui.created_by_id=:userId AND ui.item_status IN ('VERIFIED','APPROVED','COMPLETED')
+            """, nativeQuery = true)
+    Page<UserItem> findAllClosed(String userId, Pageable pageable);
+
     interface UserItem{
         Long getId();
         String getCategoryName();
