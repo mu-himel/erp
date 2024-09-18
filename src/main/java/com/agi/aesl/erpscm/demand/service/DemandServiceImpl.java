@@ -205,7 +205,7 @@ public class DemandServiceImpl implements DemandService{
         setDemandDetail(demandRequestDto, demand);
         demandRepository.save(demand);
         setVerifiers(demand, verifiers);
-        List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, demandRequestDto);
+        List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, demandRequestDto.getCategories());
         if(verifiers.size()==0 && panels.size()>0){
             demand.setStatus(DemandStatus.PENDING_APPROVAL);
             Optional<ApprovalPanel> firstPanel = panels.stream().findFirst();
@@ -261,9 +261,9 @@ public class DemandServiceImpl implements DemandService{
         }).collect(Collectors.toList()));
     }
 
-    private List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, DemandRequestDto demandRequestDto) {
+    private List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories) {
         List<ApprovalPanel> approvalPanels = moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
-                Optional.ofNullable(demandRequestDto.getCategories()),Optional.empty());
+                Optional.ofNullable(categories),Optional.empty());
         return approvalPanels;
     }
 
@@ -848,9 +848,29 @@ public class DemandServiceImpl implements DemandService{
                 .prepareLogicForVerifiers(claimResolver,uri,"CATEGORY",demandRequestDto.getCategories());
 
             setVerifiers(demand, getVerifiers(demand, verifierOp));
-            setApprovers(demand, getApprovalPanels(claimResolver,uri, demandRequestDto));
+            setApprovers(demand, getApprovalPanels(claimResolver,uri, demandRequestDto.getCategories()));
 
         return this.getDemandDetail(demand.getId());
+    }
+
+    @Override
+    @Transactional
+    public void cancelDemand(Jwt token, Long id, String uri, String categories) {
+        claimResolver.setToken(token);
+        Optional<Demand> demandOp = demandRepository.findById(id);
+        if(demandOp.isEmpty()){
+            throw new RuntimeException("Sorry! Demand not found");
+        }
+
+        Demand demand = demandOp.get();
+        demand.setIsCanceled(true);
+        verificationService.removeVerification(demand.getId(), DomainType.DEMAND);
+        dvahistoryRepository.deleteAllByDemandId(demand.getId());
+        Optional<VerifierConfig> verifierOp = verificationService
+                .prepareLogicForVerifiers(claimResolver,uri,"CATEGORY",categories);
+
+        setVerifiers(demand, getVerifiers(demand, verifierOp));
+        setApprovers(demand, getApprovalPanels(claimResolver,uri, categories));
     }
 
     @Override
@@ -859,19 +879,22 @@ public class DemandServiceImpl implements DemandService{
         Optional<Demand> demandOp  = demandRepository.findById(id);
         if(demandOp.isPresent()){
             Demand demand = demandOp.get();
+            if(!demand.getIsCanceled()) {
+                demandMailService.setClaimResolver(claimResolver);
+                demandMailService.setDemand(demand);
+                demandMailService.getStoreUsers("demand/pending");
+                demandMailService.sentMail(null, "Pending Demand");
 
-            demandMailService.setClaimResolver(claimResolver);
-            demandMailService.setDemand(demand);
-            demandMailService.getStoreUsers("demand/pending");
-            demandMailService.sentMail(null,"Pending Demand");
-
-            demand.setStatus(DemandStatus.PENDING);
-            demand.setDemandDetails(
-                    demand.getDemandDetails().stream().map(demandDetail -> {
-                        demandDetail.setStatus(DemandStatus.PENDING);
-                        return demandDetail;
-                    }).collect(Collectors.toList())
-            );
+                demand.setStatus(DemandStatus.PENDING);
+                demand.setDemandDetails(
+                        demand.getDemandDetails().stream().map(demandDetail -> {
+                            demandDetail.setStatus(DemandStatus.PENDING);
+                            return demandDetail;
+                        }).collect(Collectors.toList())
+                );
+            }else{
+                demand.setStatus(DemandStatus.CANCELED);
+            }
             DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
             demandVAHistory.setDemand(demand);
             demandVAHistory.setEmployee(new Employee(demand.getNextApproverId()));
@@ -963,19 +986,22 @@ public class DemandServiceImpl implements DemandService{
                 );
             }else {
 
-                demandMailService.setClaimResolver(claimResolver);
-                demandMailService.setDemand(demand);
-                demandMailService.getStoreUsers("demand/pending");
-                demandMailService.sentMail(null,"Pending Demand");
+                if(!demand.getIsCanceled()) {
+                    demandMailService.setClaimResolver(claimResolver);
+                    demandMailService.setDemand(demand);
+                    demandMailService.getStoreUsers("demand/pending");
+                    demandMailService.sentMail(null, "Pending Demand");
 
-                demand.setStatus(DemandStatus.PENDING);
-                demand.setDemandDetails(
-                        demand.getDemandDetails().stream().map(demandDetail -> {
-                            demandDetail.setStatus(DemandStatus.PENDING);
-                            return demandDetail;
-                        }).collect(Collectors.toList())
-                );
-
+                    demand.setStatus(DemandStatus.PENDING);
+                    demand.setDemandDetails(
+                            demand.getDemandDetails().stream().map(demandDetail -> {
+                                demandDetail.setStatus(DemandStatus.PENDING);
+                                return demandDetail;
+                            }).collect(Collectors.toList())
+                    );
+                }else{
+                    demand.setStatus(DemandStatus.CANCELED);
+                }
                 
             }
 

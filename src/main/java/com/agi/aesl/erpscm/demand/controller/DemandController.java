@@ -54,6 +54,17 @@ public class DemandController extends BaseController{
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<?> cancelDemand(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id,
+            @RequestHeader("uri") String uri,
+            @RequestParam("categories") String categories
+    ){
+        demandService.cancelDemand(token,id,uri,categories);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
     @GetMapping("/my")
     public ResponseEntity<?> getMyDemands(@AuthenticationPrincipal Jwt loggedInUser,
                                           @RequestParam("page") Optional<Integer> page,

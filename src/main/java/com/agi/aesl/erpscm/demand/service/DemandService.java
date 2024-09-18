@@ -52,4 +52,6 @@ public interface DemandService extends VerificationDomainService{
     void rejectDemandItem(Jwt loggedInUser, DemandReceiveDto demandReceiveDto);
     void rejectDemand(Jwt loggedInUser, DemandReceiveDto demandReceiveDto);
     void resendDemandItem(Jwt loggedInUser, DemandReceiveDto demandReceiveDto);
+
+    void cancelDemand(Jwt token, Long id, String uri, String categories);
 }
