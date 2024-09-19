@@ -21,5 +21,9 @@ public interface RfqService {
 
     void createRfq(Jwt token, RfqRequestDto requestDto);
 
-    Page<?> getAllClosedRFQs(Jwt token, Optional<String> indentNo, Optional<String> category, Optional<String> subCategory, Optional<String> priority, Optional<Integer> daysRemain, Optional<String> fromDate, Optional<String> toDate, Optional<Integer> page, Optional<Integer> size);
+    public Page<?> getAllClosedRFQs(Jwt token, Optional<String> indentNo, Optional<String> category,
+                                    Optional<String> subCategory, Optional<String> priority,
+                                    Optional<Integer> daysRemain, Optional<String> fromDateOp,
+                                    Optional<String> toDateOp, Optional<Integer> page, Optional<Integer> size);
+    void expire(Jwt token, Long id);
 }

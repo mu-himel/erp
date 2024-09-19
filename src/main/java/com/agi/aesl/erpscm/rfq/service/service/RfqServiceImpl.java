@@ -285,4 +285,11 @@ public class RfqServiceImpl implements RfqService{
         }
         return Optional.empty();
     }
+
+    @Override
+    @Transactional
+    public void expire(Jwt token, Long id) {
+        Optional<Indent> indentOp = indentRepository.findById(id);
+        indentOp.ifPresent(indent-> indent.setExpireDateTime(LocalDateTime.now()));
+    }
 }

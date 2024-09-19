@@ -3,6 +3,8 @@ package com.agi.aesl.erpscm.cs.controller;
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.cs.dto.CsGetItemWiseVendorsDto;
 import com.agi.aesl.erpscm.cs.dto.CsRequestDto;
+import com.agi.aesl.erpscm.cs.dto.CsUpdateRequestDto;
+import com.agi.aesl.erpscm.cs.enums.CsOperation;
 import com.agi.aesl.erpscm.cs.service.CsService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,6 +82,25 @@ public class CsController extends BaseController {
                 csService.getItemWiseVendors(id, vendorId, dto.getItemName()),
                 HttpStatus.OK
         );
+    }
+
+    @PutMapping("/{id}/add-vendor")
+    public ResponseEntity<?> addVendorCs(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id,
+            @RequestBody @Valid CsUpdateRequestDto csDto){
+        csService.updateCs(token,id,csDto, CsOperation.ADD_VENDOR);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/{id}/remove-vendor")
+    public ResponseEntity<?> removeVendorCs(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id,
+            @RequestBody @Valid CsUpdateRequestDto csDto
+    ){
+        csService.updateCs(token,id,csDto,CsOperation.REMOVE_VENDOR);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
 

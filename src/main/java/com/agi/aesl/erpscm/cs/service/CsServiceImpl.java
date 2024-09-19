@@ -3,14 +3,18 @@ package com.agi.aesl.erpscm.cs.service;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.cs.dto.CsRequestDto;
+import com.agi.aesl.erpscm.cs.dto.CsUpdateRequestDto;
+import com.agi.aesl.erpscm.cs.dto.CsVendorDetailDto;
 import com.agi.aesl.erpscm.cs.entity.Cs;
 import com.agi.aesl.erpscm.cs.entity.CsDeliveryDetail;
 import com.agi.aesl.erpscm.cs.entity.CsDetail;
 import com.agi.aesl.erpscm.cs.entity.CsVendorDetail;
+import com.agi.aesl.erpscm.cs.enums.CsOperation;
 import com.agi.aesl.erpscm.cs.enums.CsStatus;
 import com.agi.aesl.erpscm.cs.repository.CsDetailRepository;
 import com.agi.aesl.erpscm.cs.repository.CsRepository;
 import com.agi.aesl.erpscm.cs.repository.CsVaHistoryRepository;
+import com.agi.aesl.erpscm.cs.repository.CsVendorDetailRepository;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.indent.entity.IndentDetail;
@@ -66,6 +70,8 @@ public class CsServiceImpl implements CsService{
     @Autowired
     private PqTermAndConditionRepository pqTermAndConditionRepository;
 
+    @Autowired
+    private CsVendorDetailRepository csVendorDetailRepository;
 
 
     @Override
@@ -367,5 +373,53 @@ public class CsServiceImpl implements CsService{
         result.put("itemWiseVendor",itemWiseVendorDetails);
         result.put("termsAndConditions",termsAndConditions);
         return result;
+    }
+
+    @Override
+    @Transactional
+    public void updateCs(Jwt token, Long id, CsUpdateRequestDto csDto, CsOperation csOperation) {
+        Optional<Cs> csOp = csRepository.findById(id);
+        if(csOp.isEmpty()){
+            throw new RuntimeException("Sorry! Cs Not Found");
+        }
+
+        Cs cs = csOp.get();
+        CsVendorDetailDto vendorDetailDto = csDto.getCsVendorDetailDto();
+        if(csOperation.equals(CsOperation.ADD_VENDOR)){
+            CsDetail csDetail = null;
+            Optional<CsDetail> csDetailOp = cs.getCsDetails().stream().filter(csd->csd.getId().equals(csDto.getCsDetailId())).findFirst();
+            if(csDetailOp.isPresent()){
+                csDetail = csDetailOp.get();
+            }else{
+                csDetail = new CsDetail();
+                csDetail.setCs(cs);
+                csDetail.setIndentDetail(new IndentDetail(csDto.getIndentDetailId()));
+                csDetail.setVendorDetails(new ArrayList<>());
+            }
+
+
+            List<CsVendorDetail> csVendorDetails = csDetail.getVendorDetails();
+            CsVendorDetail csVendorDetail = new CsVendorDetail();
+
+            csVendorDetail.setVendorId(vendorDetailDto.getVendorId());
+            csVendorDetail.setVatAmount(vendorDetailDto.getVatAmount());
+            csVendorDetail.setDiscountAmount(vendorDetailDto.getDiscountAmount());
+            csVendorDetail.setPriceQuotation(new PriceQuotation(vendorDetailDto.getPriceQuotation().getId()));
+            csVendorDetail.setOrderQty(vendorDetailDto.getOrderQty());
+            csVendorDetail.setTotalPrice(vendorDetailDto.getTotalPrice());
+            csVendorDetail.setTransactionType(vendorDetailDto.getTransactionType());
+            csVendorDetail.setCsDetail(csDetail);
+            csVendorDetails.add(csVendorDetail);
+            csDetail.setVendorDetails(csVendorDetails);
+        }
+        if(csOperation.equals(CsOperation.REMOVE_VENDOR)){
+            Optional<CsVendorDetail> csDetailOp = csVendorDetailRepository
+                    .findByCsDetailIdAndVendorId(csDto.getCsDetailId(),
+                            vendorDetailDto.getVendorId());
+            if(csDetailOp.isPresent()){
+                CsVendorDetail csVendorDetail = csDetailOp.get();
+                csVendorDetailRepository.delete(csVendorDetail);
+            }
+        }
     }
 }

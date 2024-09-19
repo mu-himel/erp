@@ -104,5 +104,12 @@ public class RfqController extends BaseController {
         return new ResponseEntity<>(rfqService.getAvailableVendorsCount(token,id),HttpStatus.OK);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> expire(@AuthenticationPrincipal Jwt token,
+                                    @PathVariable("id") Long id){
+        rfqService.expire(token,id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
 
 }

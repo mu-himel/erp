@@ -351,26 +351,26 @@ public interface IndentQuery {
                                 COALESCE(SUM(idd.order_qty), 0)         as orderQty,
                                 COALESCE(SUM(idd.rfq_qty), 0)           as rfqQty,
                                 i.priority                              as priority,
-                                CASE WHEN ((i.status = 'APPROVED' AND i.rfq_status = 'OPEN' AND i.expire_date_time < SYSDATE())) THEN
+                                CASE WHEN ((i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.rfq_status = 'OPEN' AND i.expire_date_time < SYSDATE())) THEN
                                         'CLOSED'
                                 ELSE
-                                        i.status
+                                        i.indent_status
                                 END as status,
                                 COALESCE((SELECT count(pq.id) FROM price_quotations pq 
                                         WHERE pq.status = 'RECEIVED' AND pq.rfq_id = i.id),0) as receivedQty,
                                 COALESCE((SELECT count(pq.id) FROM price_quotations pq 
                                         WHERE pq.rfq_id = i.id),0) as totalReceivedPq,
-                                CONCAT(e.employee_id,'-',e.name)        as employeeName
+                                CONCAT(e.employee_id,'-',e.employee_name)        as employeeName
                                 
                         FROM indents i
                                         LEFT JOIN indent_details ide on i.id = ide.indent_id
                                         LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
-                                        LEFT JOIN item_categories c on i.category_id = c.id
-                                        LEFT JOIN item_categories sc on ide.sub_category_id = sc.id
-                                        LEFT JOIN employees e ON e.id = i.requested_by_id
+                                        LEFT JOIN scm_item_categories c on i.category_id = c.id
+                                        LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
+                                        LEFT JOIN acl_users e ON e.id = i.requested_by_id
                                 
                         WHERE   (
-                                        (i.status = 'APPROVED' AND i.rfq_status = 'OPEN' AND i.expire_date_time < SYSDATE()) 
+                                        (i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.rfq_status = 'OPEN' AND i.expire_date_time < SYSDATE()) 
                                         OR i.rfq_status = 'REJECTED'
                                 )
                                 AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo))
