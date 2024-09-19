@@ -19,6 +19,7 @@ interface DemandQuery {
                 d.demand_date as demandDate,
                 d.demand_no as demandNo,
                 d.status as demandStatus,
+                d.is_canceled as isCanceled,
                 dd.approved_quantity as approvedQuantity,
                 dd.request_quantity as requestQuantity,
                 dd.status as demandDetailStatus,

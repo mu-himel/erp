@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.inventory.user_request.entity;
 import com.agi.aesl.erpscm.common.BrandInterface;
 import com.agi.aesl.erpscm.common.CategoryAttributeInterface;
 import com.agi.aesl.erpscm.common.CategoryInterface;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
@@ -51,6 +52,9 @@ public class UserCategory extends VerifyableEntity implements CategoryInterface 
     private List<UserCategoryBrand> brands;
 
     private Boolean active=true;
+
+    @ManyToOne
+    private WarehouseStore store;
 
     @Enumerated(EnumType.STRING)
     private UserCategoryStatus categoryStatus;

@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.demand.service;
 
 import java.util.Optional;
 
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -53,5 +54,5 @@ public interface DemandService extends VerificationDomainService{
     void rejectDemand(Jwt loggedInUser, DemandReceiveDto demandReceiveDto);
     void resendDemandItem(Jwt loggedInUser, DemandReceiveDto demandReceiveDto);
 
-    void cancelDemand(Jwt token, Long id, String uri, String categories);
+    void cancelDemand(Jwt token, Long id, String uri, String categories, NoteDto noteDto);
 }

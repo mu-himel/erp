@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -488,8 +489,10 @@ public class DemandServiceImpl implements DemandService{
         DemandDetailResDto resDto = DemandDetailResDto.builder().build();
         for(DemandRepository.DemandDetailItem demandDetailItem: demandList){
 
+
+
             List<DemandDetailAttribute> demandDetailAttrs= demandDetailAttributeRepository.findByDemandDetailId(demandDetailItem.getDemandDetailId());
-            
+            resDto.setIsCanceled(demandDetailItem.getIsCanceled());
             resDto.setDaysRemain(demandDetailItem.getDaysRemain());
             resDto.setDeliveryDate(demandDetailItem.getDeliveryDate());
             resDto.setDemandNo(demandDetailItem.getDemandNo());
@@ -855,7 +858,7 @@ public class DemandServiceImpl implements DemandService{
 
     @Override
     @Transactional
-    public void cancelDemand(Jwt token, Long id, String uri, String categories) {
+    public void cancelDemand(Jwt token, Long id, String uri, String categories, NoteDto noteDto) {
         claimResolver.setToken(token);
         Optional<Demand> demandOp = demandRepository.findById(id);
         if(demandOp.isEmpty()){
@@ -871,6 +874,9 @@ public class DemandServiceImpl implements DemandService{
 
         setVerifiers(demand, getVerifiers(demand, verifierOp));
         setApprovers(demand, getApprovalPanels(claimResolver,uri, categories));
+
+        commentService.addComment(commentService.prepareComment(claimResolver.getEmployee().get(),DomainType.DEMAND,demand.getId(),noteDto.getNote(),
+                noteDto.getAttachments()));
     }
 
     @Override

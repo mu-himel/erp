@@ -92,6 +92,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         claimResolver.setToken(token);
         UserCategory userCategory = new UserCategory(categoryRequestDto);
         userCategory.setCreatedBy(claimResolver.getEmployee().orElse(null));
+        userCategory.setStore(new WarehouseStore(categoryRequestDto.getWarehouseStore().getId()));
         Boolean exists = userCategoryRepository.existsByName(categoryRequestDto.getName());
         if(exists){
             throw new RuntimeException("Sorry! Category already exist");
