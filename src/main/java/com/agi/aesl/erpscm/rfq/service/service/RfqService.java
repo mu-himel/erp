@@ -20,4 +20,6 @@ public interface RfqService {
     Optional<?> getAvailableVendorsCount(Jwt token, Long id);
 
     void createRfq(Jwt token, RfqRequestDto requestDto);
+
+    Page<?> getAllClosedRFQs(Jwt token, Optional<String> indentNo, Optional<String> category, Optional<String> subCategory, Optional<String> priority, Optional<Integer> daysRemain, Optional<String> fromDate, Optional<String> toDate, Optional<Integer> page, Optional<Integer> size);
 }

@@ -73,6 +73,28 @@ public class RfqController extends BaseController {
         );
     }
 
+    @GetMapping("/closed")
+    public ResponseEntity<?> getClosedRfqs(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam Optional<String> indentNo,
+            @RequestParam Optional<String> category,
+            @RequestParam Optional<String> subCategory,
+            @RequestParam Optional<String> priority,
+            @RequestParam Optional<Integer> daysRemain,
+            @RequestParam Optional<String> fromDate,
+            @RequestParam Optional<String> toDate,
+            @RequestParam Optional<Integer> page,
+            @RequestParam Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                rfqService.getAllClosedRFQs(
+                        token,
+                        indentNo,category,subCategory,priority,daysRemain,
+                        fromDate,toDate, page,size
+                ),
+                HttpStatus.OK);
+    }
+
     @GetMapping("/{id}/get-vendors-count")
     public ResponseEntity<?> getAvailableVendorsCount(
             @AuthenticationPrincipal Jwt token,
