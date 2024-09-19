@@ -756,6 +756,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void approveItemCategory(Jwt token, Long id, CategoryApproveRequestDto categoryApproveRequestDto) {
+        claimResolver.setToken(token);
         Optional<ItemCategory> catOp = categoryRepository.findById(id);
         MergePendingCategoryDto mergePendingCategoryDto = categoryApproveRequestDto.getMergePendingCategoryDto();
         if(catOp.isPresent()) {
