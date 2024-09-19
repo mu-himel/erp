@@ -888,12 +888,13 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void validateCategorySubCategoryRelation(ItemCategory _category, ItemCategory _subCategory) {
-        Optional<ItemCategory> itemCatOp = getItemCategory(_category.getId());
+
+        Optional<ItemCategory> itemCatOp = getAnyItemCategory(_category.getId());
         if(itemCatOp.isEmpty()){
             throw new AesException("Sorry! Category not found");
         }
 
-        Optional<ItemCategory> itemSubCatOp = getItemCategory(_subCategory.getId());
+        Optional<ItemCategory> itemSubCatOp = getAnyItemCategory(_subCategory.getId());
         if(itemSubCatOp.isEmpty()){
             throw new AesException("Sorry! SubCategory not found");
         }
