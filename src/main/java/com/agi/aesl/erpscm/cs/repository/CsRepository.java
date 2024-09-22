@@ -1,6 +1,8 @@
 package com.agi.aesl.erpscm.cs.repository;
 
 import com.agi.aesl.erpscm.cs.entity.Cs;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +19,18 @@ public interface CsRepository extends JpaRepository<Cs,Long>, CsQuery {
 
     @Query(value = fetchLockedVendorsByVendorAndItem,nativeQuery = true)
     List<ItemWiseVendorDetail> findLockedVendorsByItemName(Long tenderId, Long vendorId, String itemName);
+
+    @Query(value = pendingVerifications,countQuery = countPendingVerifications, nativeQuery = true)
+    Page<?> findPendingVerificationCs(String nextVerifierId, Pageable pageable);
+
+    @Query(value = pendingApprovals,countQuery = countPendingApprovals, nativeQuery = true)
+    Page<?> findPendingApprovalCs(String nextApproverId, Pageable pageable);
+
+    @Query(value = closedCs,countQuery = countClosedCs, nativeQuery = true)
+    Page<?> findClosedCs(Pageable pageable);
+
+    @Query(value = approvedCs,countQuery = countApprovedCs, nativeQuery = true)
+    Page<?> findApprovedCs(Pageable pageable);
 
     interface ItemWiseVendorDetail{
         Long getPqId();

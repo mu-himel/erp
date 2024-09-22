@@ -6,6 +6,7 @@ import com.agi.aesl.erpscm.cs.dto.CsRequestDto;
 import com.agi.aesl.erpscm.cs.dto.CsUpdateRequestDto;
 import com.agi.aesl.erpscm.cs.enums.CsOperation;
 import com.agi.aesl.erpscm.cs.service.CsService;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -100,6 +101,73 @@ public class CsController extends BaseController {
             @RequestBody @Valid CsUpdateRequestDto csDto
     ){
         csService.updateCs(token,id,csDto,CsOperation.REMOVE_VENDOR);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/pending-verification")
+    public ResponseEntity<?> getAllPendingVerificationCs(
+            @AuthenticationPrincipal Jwt token,
+            Optional<Integer> page, Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                csService.getPendingVerificationCs(token,page, size), HttpStatus.OK);
+    }
+
+    @GetMapping("/pending-approval")
+    public ResponseEntity<?> getAllPendingApprovalCs(
+            @AuthenticationPrincipal Jwt token,
+            Optional<Integer> page, Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                csService.getPendingApprovalCs(token,page, size), HttpStatus.OK);
+    }
+
+    @GetMapping("/approved")
+    public ResponseEntity<?> getAllApprovedCs(
+            @AuthenticationPrincipal Jwt token,
+            Optional<Integer> page, Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                csService.getApprovedCs(token,page, size), HttpStatus.OK);
+    }
+
+    @GetMapping("/closed")
+    public ResponseEntity<?> getAllClosedCs(
+            @AuthenticationPrincipal Jwt token,
+            Optional<Integer> page, Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                csService.getClosedCs(token,page, size), HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<?> rejectCs(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id, @RequestBody @Valid NoteDto noteDto){
+        csService.rejectCs(token,id,noteDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/{id}/review")
+    public ResponseEntity<?> reviewCs(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id, @RequestBody @Valid NoteDto noteDto){
+        csService.reviewCs(token, id, noteDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/{id}/resent-to-pr")
+    public ResponseEntity<?> resentToPr(@AuthenticationPrincipal Jwt token,
+                                        @PathVariable Long id) {
+        csService.resentToPr(token,id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/{id}/resubmit")
+    public ResponseEntity<?> resubmitForVerification(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id){
+        csService.resubmit(token,id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

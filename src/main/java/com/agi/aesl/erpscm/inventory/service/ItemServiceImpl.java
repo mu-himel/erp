@@ -1032,14 +1032,16 @@ public class ItemServiceImpl implements ItemService {
             if(itemExistByCode.isPresent()){
                 item = itemExistByCode.get();
                 List<ItemStock> stocks = item.getStocks();
-                stocks.add(new ItemStock(
-                        new BigDecimal(0l),
-                        item,
-                        StockType.STOCK_IN,
-                        new Warehouse(warehouseId),
-                        new WarehouseStore(warehouseStoreId)
-                ));
-                item.setStocks(stocks);
+                if(stocks.isEmpty()) {
+                    stocks.add(new ItemStock(
+                            new BigDecimal(0l),
+                            item,
+                            StockType.STOCK_IN,
+                            new Warehouse(warehouseId),
+                            new WarehouseStore(warehouseStoreId)
+                    ));
+                    item.setStocks(stocks);
+                }
             }else{
                 item.setItemUnit(syncItemDetail.getItemUnit());
                 item.setManufacturer(syncItemDetail.getManufacturer());

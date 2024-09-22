@@ -23,6 +23,8 @@ import com.agi.aesl.erpscm.indent.repository.IndentRepository;
 import com.agi.aesl.erpscm.price_quotation.entity.PqTermsAndCondition;
 import com.agi.aesl.erpscm.price_quotation.entity.PriceQuotation;
 import com.agi.aesl.erpscm.price_quotation.repository.PqTermAndConditionRepository;
+import com.agi.aesl.erpscm.product_requirements.service.ProductRequirementService;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
@@ -66,6 +68,9 @@ public class CsServiceImpl implements CsService{
 
     @Autowired
     private CommentService commentService;
+
+    @Autowired
+    private ProductRequirementService productRequirementService;
 
     @Autowired
     private PqTermAndConditionRepository pqTermAndConditionRepository;
@@ -421,5 +426,116 @@ public class CsServiceImpl implements CsService{
                 csVendorDetailRepository.delete(csVendorDetail);
             }
         }
+    }
+
+    @Override
+    public Page<?> getPendingVerificationCs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
+        return csRepository.findPendingVerificationCs(claimResolver.getUserId(),pageable);
+    }
+
+    @Override
+    public Page<?> getPendingApprovalCs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
+        return csRepository.findPendingApprovalCs(claimResolver.getUserId(),pageable);
+    }
+
+    @Override
+    public Page<?> getApprovedCs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
+        return csRepository.findApprovedCs(pageable);
+    }
+
+    @Override
+    public Page<?> getClosedCs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
+        return csRepository.findClosedCs(pageable);
+    }
+
+    @Override
+    @Transactional
+    public void rejectCs(Jwt token, Long id, NoteDto noteDto) {
+        claimResolver.setToken(token);
+        Optional<Cs> csOp = csRepository.findById(id);
+        if(csOp.isPresent()){
+            Cs cs = csOp.get();
+            if(noteDto.getNote()!=null && !noteDto.getNote().isEmpty()){
+                cs.setDeclineNote(noteDto.getNote());
+                commentService.addComment(commentService.prepareComment(claimResolver.getEmployee().get(),
+                        DomainType.CS, cs.getId(), noteDto.getNote(),noteDto.getAttachments()));
+            }
+            cs.setCsStatus(CsStatus.REJECTED);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void reviewCs(Jwt token, Long id, NoteDto noteDto) {
+        claimResolver.setToken(token);
+        Optional<Cs> csOp = csRepository.findById(id);
+        if(csOp.isEmpty()){
+            throw new RuntimeException("Sorry! Cs not found");
+        }
+
+        Cs cs = csOp.get();
+        cs.setReviewerId(null);
+        cs.setReviewDate(LocalDateTime.now());
+        cs.setCsStatus(cs.getReviewPrevStatus());
+        cs.setReviewPrevStatus(null);
+        // if(cs.getNextVerifierId() != null && cs.getNextApproverId() == null){
+        //     cs.setStatus(CsStatus.PENDING_VERIFICATION);
+        // }
+        // if(cs.getNextVerifierId()!= null && cs.getNextApproverId() != null){
+        //     cs.setStatus(CsStatus.PENDING_APPROVAL);
+        // }
+
+        commentService.addComment(
+                commentService.prepareComment(claimResolver.getEmployee().get(),
+                        DomainType.CS,cs.getId(),noteDto.getNote(),noteDto.getAttachments())
+        );
+    }
+
+    @Override
+    @Transactional
+    public void resentToPr(Jwt token, Long id) {
+        claimResolver.setToken(token);
+        Optional<Cs> csOp = csRepository.findById(id);
+        if(csOp.isEmpty()){
+            throw new RuntimeException("Sorry! Cs not found");
+        }
+        Cs cs = csOp.get();
+        cs.setCsStatus(CsStatus.REJECTED);
+        cs.getIndent().getIndentDetails().stream().forEach(ide->{
+            productRequirementService.reOpen(ide.getProductRequirementsIds());
+        });
+        commentService.addComment(
+                commentService.prepareComment(claimResolver.getEmployee().get(),
+                        DomainType.CS,cs.getId(),"Rejected & Resent To PR",new ArrayList<>())
+        );
+    }
+
+    @Override
+    @Transactional
+    public void resubmit(Jwt token, Long id) {
+        claimResolver.setToken(token);
+        Optional<Cs> csOp = csRepository.findById(id);
+        if(csOp.isEmpty()){
+            throw new RuntimeException("Sorry! Cs not found");
+        }
+        Cs cs = csOp.get();
+        cs.setCsStatus(CsStatus.REJECTED);
+        cs.getIndent().getIndentDetails().stream().forEach(ide->{
+            productRequirementService.reOpen(ide.getProductRequirementsIds());
+        });
+        commentService.addComment(
+                commentService.prepareComment(claimResolver.getEmployee().get(),
+                        DomainType.CS,cs.getId(),"Rejected & Resent To PR",new ArrayList<>())
+        );
     }
 }

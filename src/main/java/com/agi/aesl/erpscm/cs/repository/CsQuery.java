@@ -65,4 +65,105 @@ public interface CsQuery {
             AND pq.vendor_id = :vendorId AND pq.is_recommend_for_cs = 1 AND pq.status = 'LOCKED'
             group by vendor_id
             """;
+
+    String pendingVerifications= """
+            SELECT
+            i.id as id,
+            csheet.id as csId,
+            csheet.cs_status as status,
+            csheet.created_at               as csDate,
+            csheet.cs_no                     as csNo,
+             CONCAT(c.name ,'-', sc.name) as categoryName,
+             count(csd.id)                as items,
+             COALESCE(sum(idd.rfq_qty),0) as rfqQty,
+
+             COALESCE((SELECT count(*) FROM price_quotations pq 
+                                WHERE status='LOCKED' AND rfq_id = csheet.indent_id),0) as lockedVendor
+            FROM cs csheet
+            LEFT JOIN indents i ON i.id = csheet.indent_id
+            LEFT JOIN cs_details csd ON csd.cs_id = csheet.id
+            LEFT JOIN indent_details ide ON ide.id = csd.indent_detail_id
+            LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id  
+            LEFT JOIN scm_item_categories c ON c.id = i.category_id
+            LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
+            WHERE csheet.cs_status IN ('PENDING_VERIFICATION','REVIEW')
+            AND csheet.next_verifier_id = :nextVerifierId
+            GROUP BY csheet.id
+            """;
+    String countPendingVerifications="SELECT COUNT(*) FROM ("+pendingVerifications+") as total";
+
+    String pendingApprovals= """
+            SELECT
+            i.id as id,
+            csheet.id as csId,
+            csheet.cs_status as status,
+            csheet.created_at    as csDate,
+            csheet.cs_no                      as csNo,
+            CONCAT(c.name ,'-', sc.name) as categoryName,
+            count(csd.id)                as items,
+            COALESCE(sum(idd.rfq_qty),0)   as rfqQty,
+            COALESCE((SELECT count(*) FROM price_quotations pq 
+                            WHERE status='LOCKED' AND rfq_id = csheet.indent_id),0) as lockedVendor
+        FROM cs csheet
+        LEFT JOIN indents i ON i.id = csheet.indent_id
+        LEFT JOIN cs_details csd ON csd.cs_id = csheet.id
+        LEFT JOIN indent_details ide ON ide.id = csd.indent_detail_id
+        LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id  
+        LEFT JOIN scm_item_categories c ON c.id = i.category_id
+        LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
+        WHERE csheet.cs_status IN ('PENDING_APPROVAL','REVIEW')
+            AND csheet.next_approver_id = :nextApproverId
+            GROUP BY csheet.id
+            """;
+
+    String countPendingApprovals="SELECT COUNT(*) FROM ("+pendingApprovals+") as total";
+
+    String closedCs="""
+        SELECT
+        i.id as id,
+        csheet.id as csId,
+        csheet.cs_status as status,
+        csheet.created_at    as csDate,
+        csheet.cs_no                      as csNo,
+        CONCAT(c.name ,'-', sc.name) as categoryName,
+        count(csd.id)                as items,
+        COALESCE(sum(idd.rfq_qty),0)   as rfqQty,
+        COALESCE((SELECT count(*) FROM price_quotations pq 
+                        WHERE status='LOCKED' AND rfq_id = csheet.indent_id),0) as lockedVendor
+    FROM cs csheet
+    LEFT JOIN indents i ON i.id = csheet.indent_id
+    LEFT JOIN cs_details csd ON csd.cs_id = csheet.id
+    LEFT JOIN indent_details ide ON ide.id = csd.indent_detail_id
+    LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id  
+    LEFT JOIN scm_item_categories c ON c.id = i.category_id
+    LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
+    WHERE csheet.cs_status IN ('REJECTED', 'APPROVED')
+    GROUP BY csheet.id
+        """;
+    String countClosedCs="SELECT COUNT(*) FROM ("+closedCs+") as total";
+
+    String approvedCs= """
+            SELECT
+            i.id as id,
+            csheet.id as csId,
+            csheet.cs_status as status,
+            csheet.created_at    as csDate,
+            csheet.cs_no                      as csNo,
+            CONCAT(c.name ,'-', sc.name) as categoryName,
+            count(csd.id)                as items,
+            COALESCE(sum(idd.rfq_qty),0)   as rfqQty,
+            COALESCE((SELECT count(*) FROM price_quotations pq 
+                            WHERE status='LOCKED' AND rfq_id = csheet.indent_id),0) as lockedVendor
+        FROM cs csheet
+        LEFT JOIN indents i ON i.id = csheet.indent_id
+        LEFT JOIN cs_details csd ON csd.cs_id = csheet.id
+        LEFT JOIN indent_details ide ON ide.id = csd.indent_detail_id
+        LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id  
+        LEFT JOIN scm_item_categories c ON c.id = i.category_id
+        LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
+        WHERE csheet.cs_status IN ('APPROVED')
+        GROUP BY csheet.id
+            """;
+
+    String countApprovedCs="SELECT COUNT(*) FROM ("+approvedCs+") as total";
 }
