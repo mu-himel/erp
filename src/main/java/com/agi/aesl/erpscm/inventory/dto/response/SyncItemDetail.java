@@ -6,6 +6,7 @@ import com.agi.aesl.erpscm.common.EntityConvertable;
 import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
+import com.agi.aesl.erpscm.inventory.entity.ItemFunctionalUnit;
 import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
 
 import lombok.AllArgsConstructor;
@@ -26,6 +27,7 @@ public class SyncItemDetail implements EntityConvertable<Item>{
     private String manufacturer;
     private BrandInfo brand;
     private StoreTypeInfo storeType;
+    private List<ItemFunctionalUnit>functionalUnits;
     private List<ItemAttribute> attributes;
     private SubCateInfo itemCategory;
 
