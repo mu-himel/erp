@@ -6,6 +6,7 @@ import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.entity.ItemFunctionalUnit;
 import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
 
 import jakarta.validation.constraints.NotBlank;
@@ -41,6 +42,8 @@ public class ItemRequestDto implements EntityConvertable<Item> {
     private ItemCategory itemParentCategory;
 
     private String itemUnit;
+
+    private List<ItemFunctionalUnit> functionalUnits;
 
     private Integer stockThresholdQty;
 
