@@ -1078,6 +1078,15 @@ public class ItemServiceImpl implements ItemService {
                 }).collect(Collectors.toList()));
             }
 
+            if(itemExistByCode.isEmpty() && syncItemDetail.getFunctionalUnits()!=null && syncItemDetail.getFunctionalUnits().size()>0) {
+                Item finalItem = item;
+                item.setItemFunctionalUnits(syncItemDetail.getFunctionalUnits().stream().map(itemFunctionalUnit -> {
+                    itemFunctionalUnit.setId(null);
+                    itemFunctionalUnit.setItem(finalItem);
+                    return itemFunctionalUnit;
+                }).collect(Collectors.toList()));
+            }
+
             itemRepository.save(item);
 
             Optional<ItemImportLog> importLogExist = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseId);
