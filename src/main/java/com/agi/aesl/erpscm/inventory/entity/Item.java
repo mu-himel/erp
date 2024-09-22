@@ -68,6 +68,9 @@ public class Item implements ItemInterface {
 
     private String itemUnit;
 
+    @OneToMany(mappedBy="item",cascade=CascadeType.ALL)
+    private List<ItemFunctionalUnit>itemFunctionalUnits;
+
     private Integer stockThresholdQty;
     private BigDecimal reorderPercentage;
 
