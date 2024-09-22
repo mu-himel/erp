@@ -1,0 +1,62 @@
+package com.agi.aesl.erpscm.purchase_order.repository;
+
+import com.agi.aesl.erpscm.price_quotation.repository.PqQuery;
+import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Repository
+public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Long>, PoQuery {
+    @Query(value = getPendingPOs, countQuery = countPendingPOs, nativeQuery = true)
+    Page<PendingPOItemDetail> findAllPendingPOs(Pageable pageable);
+
+    @Query(value = getPendingVerificationPOs, countQuery = countGetPendingVerificationPOs, nativeQuery = true)
+    Page<PoListItem> findAllPendingVerificationPOs(String userId, Pageable pageable);
+
+
+    @Query(value = getPendingApprovalPOs, countQuery = countGetPendingApprovalPOs, nativeQuery = true)
+    Page<PoListItem> findAllPendingApprovalPOs(String userId, Pageable pageable);
+
+    @Query(value = getClosedPOs, countQuery = countClosedPOs, nativeQuery = true)
+    Page<ClosedPOListItem> findAllClosedPOs(Pageable pageable);
+
+    @Query(value = getApprovedPOs, countQuery = countApprovedPOs, nativeQuery = true)
+    Page<ClosedPOListItem> findAllApprovedPos(Pageable pageable);
+
+    interface PendingPOItemDetail{
+        Long getId();
+
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDateTime getPoDate();
+        String getPoIds();
+        String getIndentNo();
+        String getCategoryName();
+        BigDecimal getItemQty();
+        BigDecimal getTotalOrderQty();
+        String getStatus();
+    }
+
+    interface PoListItem{
+        Long getPoGroupId();
+        Long getId();
+        LocalDateTime getPoDate();
+        String getIndentNo();
+        String getCategoryName();
+        Long getItemQty();
+        Long getTotalOrderQty();
+        String getDeliveryDate();
+        String getRemainTime();
+        String getStatus();
+    }
+
+    interface ClosedPOListItem extends PoListItem{
+        String getVendorName();
+    }
+}

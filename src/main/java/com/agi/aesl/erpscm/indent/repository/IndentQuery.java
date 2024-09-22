@@ -291,6 +291,7 @@ public interface IndentQuery {
                                         LEFT JOIN acl_users e ON e.id = i.requested_by_id
                                 
                         WHERE  i.indent_status IN ('APPROVED','VERIFIED') AND i.rfq_status = 'OPEN'
+                                AND i.expire_date_time > SYSDATE()
                                 AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo))
                                 AND (:category IS NULL OR LOWER(c.name) LIKE  CONCAT(LOWER(:category),'%'))
                                 AND (:subCategory IS NULL OR LOWER(sc.name) LIKE CONCAT(LOWER(:subCategory),'%'))
@@ -318,7 +319,7 @@ public interface IndentQuery {
                         CASE WHEN csheet.id IS NULL THEN
                                 'PENDING'
                         ELSE
-                                csheet.status
+                                csheet.cs_status
                         END                                as status,
                         CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
                         (SELECT count(*) FROM price_quotations pq 
@@ -332,7 +333,7 @@ public interface IndentQuery {
                         LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                         LEFT JOIN acl_users e ON e.id = i.requested_by_id
                         
-                WHERE  (i.status = 'APPROVED' AND i.expire_date_time < :expiredDateTime)
+                WHERE  (i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.expire_date_time < :expiredDateTime)
                 GROUP BY i.id) r WHERE r.status IN ('PENDING','PENDING_VERIFICATION', 'PENDING_APPROVAL','REVIEW')
             """;
 
