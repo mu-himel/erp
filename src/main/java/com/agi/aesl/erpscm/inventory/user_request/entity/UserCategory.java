@@ -45,6 +45,9 @@ public class UserCategory extends VerifyableEntity implements CategoryInterface 
     @ManyToOne
     private UserCategory parentCategory;
 
+    @ManyToOne
+    private ItemCategory activeParentCategory;
+
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     private List<UserCategoryAttribute> attributes;
 

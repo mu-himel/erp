@@ -89,6 +89,41 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
             """, nativeQuery = true)
     Page<UserSubCategory> findAllClosedSubCategory(String userId, Pageable pageable);
 
+    @Query(value = """
+            SELECT 'USER_MANAGED' as `type`, ua.id, ua.name, ua.code FROM user_categories ua
+            WHERE (:name IS NULL OR LOWER(ua.name) LIKE LOWER(CONCAT('%',:name,'%')))
+            AND (:code IS NULL OR LOWER(ua.code) LIKE LOWER(CONCAT('%',:code,'%')))
+            AND ua.created_by_id = :userId
+            UNION
+            SELECT 'STORE_MANAGED' as `type`, ic.id,ic.name,ic.code from scm_item_categories ic
+            WHERE (:name IS NULL OR LOWER(ic.name) LIKE LOWER(CONCAT('%',:name,'%')))
+            AND (:code IS NULL OR LOWER(ic.code) LIKE LOWER(CONCAT('%',:code,'%')))
+            """,nativeQuery = true)
+    List<UserCategoryInfo> getAllCategories(String userId, String name, String code);
+
+    @Query(value = """
+            SELECT 'USER_MANAGED' as `type`, ua.id, ua.name, ua.code FROM user_categories ua
+            WHERE (:name IS NULL OR LOWER(ua.name) LIKE LOWER(CONCAT('%',:name,'%')))
+            AND (:code IS NULL OR LOWER(ua.code) LIKE LOWER(CONCAT('%',:code,'%')))
+            AND ua.parent_category_id = :categoryId
+            AND ua.created_by_id = :userId
+            UNION
+            SELECT 'STORE_MANAGED' as `type`, ic.id,ic.name,ic.code from scm_item_categories ic
+            WHERE (:name IS NULL OR LOWER(ic.name) LIKE LOWER(CONCAT('%',:name,'%')))
+            AND (:code IS NULL OR LOWER(ic.code) LIKE LOWER(CONCAT('%',:code,'%')))
+            AND ic.parent_category_id = :categoryId
+            """,nativeQuery = true)
+    List<UserCategoryInfo> getAllSubCategories(String userId, Long categoryId, String name, String code);
+
+    interface UserCategoryInfo{
+
+        String getType();
+        Long getId();
+        String getCode();
+        String getName();
+
+
+    }
     interface UserCategory{
         Long getId();
         String getCategoryName();

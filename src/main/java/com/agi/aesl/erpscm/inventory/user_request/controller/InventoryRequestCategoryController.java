@@ -53,13 +53,38 @@ public class InventoryRequestCategoryController extends BaseController {
         );
     }
 
-    @PostMapping("/sub-categories")
+    @PostMapping("/subcategories")
     public ResponseEntity<?> createSubCategory(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @RequestBody CategoryRequestDto categoryRequestDto){
         categoryRequestService.createCategory(token,uri, categoryRequestDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @GetMapping("/categories/list")
+    public ResponseEntity<?> getList(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("name") Optional<String> name,
+            @RequestParam("code") Optional<String> code
+    ){
+        return new ResponseEntity<>(
+                categoryRequestService.getCategories(token,name,code),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/subcategories/list")
+    public ResponseEntity<?> getList(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("categoryId") Long categoryId,
+            @RequestParam("name") Optional<String> name,
+            @RequestParam("code") Optional<String> code
+    ){
+        return new ResponseEntity<>(
+                categoryRequestService.getSubCategories(token,categoryId,name,code),
+                HttpStatus.OK
+        );
     }
 
     @GetMapping("/subcategories/my-requests")

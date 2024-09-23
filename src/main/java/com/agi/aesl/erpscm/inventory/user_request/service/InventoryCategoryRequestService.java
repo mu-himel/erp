@@ -13,6 +13,9 @@ import java.util.Optional;
 public interface InventoryCategoryRequestService extends VerificationDomainService {
     void createCategory(Jwt token, String uri, CategoryRequestDto categoryRequestDto);
 
+    List<?> getCategories(Jwt token, Optional<String> name, Optional<String> code);
+    List<?> getSubCategories(Jwt token, Long categoryId, Optional<String> name, Optional<String> code);
+
     Page<?> getMyCategories(Jwt token, Optional<Integer> page, Optional<Integer> size);
     Page<?> getMySubCategories(Jwt token, Optional<Integer> page, Optional<Integer> size);
 

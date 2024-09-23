@@ -104,7 +104,11 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
             Optional<UserCategory> catOp = userCategoryRepository.findById(categoryRequestDto.getParentCategory().getId());
             if(catOp.isPresent()) {
                 userCategory.setParentCategory(catOp.get());
+            } else {
+                Optional<ItemCategory> _catOp = categoryService.getItemCategory(categoryRequestDto.getParentCategory().getId());
+                _catOp.ifPresent(userCategory::setActiveParentCategory);
             }
+
             userCategory.setAttributes(categoryRequestDto.getAttributes().stream()
                     .map(ca-> new UserCategoryAttribute(ca,userCategory))
                     .collect(Collectors.toList()));
@@ -118,6 +122,19 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
                 userCategory, domainType, UserCategoryStatus.COMPLETED.toString(),
                 uri,domainType.toString(), List.of("-1"),
                 null);
+    }
+
+    @Override
+    public List<?> getCategories(Jwt token, Optional<String> name, Optional<String> code) {
+        claimResolver.setToken(token);
+        return userCategoryRepository.getAllCategories(claimResolver.getUserId(),name.orElse(null),code.orElse(null));
+    }
+
+    @Override
+    public List<?> getSubCategories(Jwt token, Long categoryId, Optional<String> name, Optional<String> code) {
+        claimResolver.setToken(token);
+        return userCategoryRepository.getAllSubCategories(claimResolver.getUserId(),categoryId,
+                name.orElse(null),code.orElse(null));
     }
 
     @Override
