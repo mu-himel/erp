@@ -16,4 +16,6 @@ public interface PqTermAndConditionRepository extends JpaRepository<PqTermsAndCo
             GROUP BY tnc.termAndCondition
             """)
     List<PqTermsAndCondition> findAllByRfqIdAndVendorId(@Param("rfqId")Long tenderId, @Param("vendorId") Long vendorId);
+
+    List<PqTermsAndCondition> findAllByVendorIdAndPriceQuotationId(Long vendorId, Long priceQuotationId);
 }

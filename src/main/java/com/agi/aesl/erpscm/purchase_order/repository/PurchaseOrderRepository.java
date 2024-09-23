@@ -1,7 +1,12 @@
 package com.agi.aesl.erpscm.purchase_order.repository;
 
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
+import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.indent.repository.IndentRepository;
+import com.agi.aesl.erpscm.price_quotation.entity.PriceQuotationDetail;
 import com.agi.aesl.erpscm.price_quotation.repository.PqQuery;
 import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
+import com.agi.aesl.erpscm.purchase_order.enums.PurchaseOrderStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,7 +15,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Long>, PoQuery {
@@ -29,6 +36,11 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
 
     @Query(value = getApprovedPOs, countQuery = countApprovedPOs, nativeQuery = true)
     Page<ClosedPOListItem> findAllApprovedPos(Pageable pageable);
+
+    List<PurchaseOrderDetailInfo> findAllByPoGroupId(Long id);
+
+    @Query(value = purchaseOrderDetail,nativeQuery = true)
+    List<PqDetailInfo> getPurchaseOrderDetail(Long poId);
 
     interface PendingPOItemDetail{
         Long getId();
@@ -58,5 +70,79 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
 
     interface ClosedPOListItem extends PoListItem{
         String getVendorName();
+    }
+
+    interface PurchaseOrderDetailInfo {
+        Long getId();
+        CsInfo getCs();
+        String getPoNo();
+        LocalDate getCreatedAt();
+        LocalDate getPoDate();
+        PurchaseOrderStatus getStatus();
+        List<POD> getPurchaseOrderDetails();
+        Employee getRequestedBy();
+    }
+
+    interface CsInfo {
+        Long getId();
+        IndentRepository.IndentInfo getIndent();
+    }
+
+    interface POD{
+        Long getId();
+        String getPoNo();
+        LocalDate getDeliveryDate();
+        Warehouse getWarehouse();
+        CsVendorDetailInfo getCsVendorDetail();
+    }
+
+    interface CsVendorDetailInfo {
+
+        Long getId();
+        BigDecimal getDiscountAmount();
+        BigDecimal getOrderQty();
+        BigDecimal getTotalPrice();
+        BigDecimal getVatAmount();
+        String getTransactionType();
+        CsDetailInfo getCsDetail();
+        Long getVendorId();
+
+        PriceQuotationInfo getPriceQuotation();
+
+    }
+
+    interface PriceQuotationInfo {
+
+        Long getId();
+        String getVendorName();
+        List<PriceQuotationDetail> getQuotationDetails();
+        Long getVendorId();
+        String getVendorPhoneNo();
+        String getVendorEmail();
+        Integer getScore();
+        Long getRemoteOfferId();
+        String getPaymentMethod();
+        Long getNegotiationHistoryId();
+    }
+
+    interface CsDetailInfo {
+        Long getId();
+        IndentDetailInfo getIndentDetail();
+
+    }
+
+    interface IndentDetailInfo {
+        String getItemAttribute();
+        Long getId();
+    }
+
+    interface PqDetailInfo {
+        Long getPoId();
+        String getItemAttribute();
+        String getTransactionType();
+        BigDecimal getTotalPrice();
+        BigDecimal getOrderQty();
+        Long getPriceQuotationId();
+        String getSummary();
     }
 }
