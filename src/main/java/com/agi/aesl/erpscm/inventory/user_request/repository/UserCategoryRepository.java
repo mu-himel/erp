@@ -43,9 +43,9 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
             uc.category_status as status
              FROM user_categories uc
              LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
-             WHERE uc.next_verifier_id=:userId AND uc.parent_category_id IS NOT NULL
+             WHERE uc.next_verifier_id=:userId AND uc.parent_category_id = :categoryId
             """, nativeQuery = true)
-    Page<UserSubCategory> findAllSubCategoryByNextVerifierId(String userId, Pageable pageable);
+    Page<UserSubCategory> findAllSubCategoryByNextVerifierId(String userId,Long categoryId, Pageable pageable);
 
     @Query(value = """
             select id as id, name as categoryName, (
@@ -63,9 +63,9 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
             uc.category_status as status
              FROM user_categories uc
              LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
-             WHERE uc.next_approver_id=:userId AND uc.parent_category_id IS NOT NULL
+             WHERE uc.next_approver_id=:userId AND uc.parent_category_id = :categoryId
             """, nativeQuery = true)
-    Page<UserSubCategory> findAllSubCategoryByNextApproverId(String userId, Pageable pageable);
+    Page<UserSubCategory> findAllSubCategoryByNextApproverId(String userId, Long categoryId, Pageable pageable);
 
     @Query(value = """
             select id as id, name as categoryName, (
@@ -84,10 +84,10 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
             uc.category_status as status
              FROM user_categories uc
              LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
-             WHERE uc.created_by_id=:userId AND uc.parent_category_id IS NOT NULL
+             WHERE uc.created_by_id=:userId AND uc.parent_category_id = :categoryId
              AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED')
             """, nativeQuery = true)
-    Page<UserSubCategory> findAllClosedSubCategory(String userId, Pageable pageable);
+    Page<UserSubCategory> findAllClosedSubCategory(String userId,Long categoryId, Pageable pageable);
 
     @Query(value = """
             SELECT 'USER_MANAGED' as `type`, ua.id, ua.name, ua.code FROM user_categories ua

@@ -106,18 +106,19 @@ public class InventoryRequestCategoryController extends BaseController {
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                categoryRequestService.getPendingVerifications(token,page,size,true),
+                categoryRequestService.getPendingVerifications(token,null,page,size,true),
                 HttpStatus.OK);
     }
 
     @GetMapping("/subcategories/pending-verifications")
     public ResponseEntity<?> getSubCatPendingVerification(
             @AuthenticationPrincipal Jwt token,
+            @RequestParam("categoryId") Long categoryId,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                categoryRequestService.getPendingVerifications(token,page,size,false),
+                categoryRequestService.getPendingVerifications(token,categoryId,page,size,false),
                 HttpStatus.OK);
     }
 
@@ -128,18 +129,19 @@ public class InventoryRequestCategoryController extends BaseController {
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                categoryRequestService.getPendingApprovals(token,page,size,true),
+                categoryRequestService.getPendingApprovals(token,null,page,size,true),
                 HttpStatus.OK);
     }
 
     @GetMapping("/subcategories/pending-approvals")
     public ResponseEntity<?> getSubCatPendingApprovals(
             @AuthenticationPrincipal Jwt token,
+            @RequestParam("categoryId") Long categoryId,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                categoryRequestService.getPendingApprovals(token,page,size,false),
+                categoryRequestService.getPendingApprovals(token,categoryId,page,size,false),
                 HttpStatus.OK);
     }
 
@@ -150,18 +152,19 @@ public class InventoryRequestCategoryController extends BaseController {
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                categoryRequestService.getClosed(token,page,size,false),
+                categoryRequestService.getClosed(token,null,page,size,false),
                 HttpStatus.OK);
     }
 
     @GetMapping("/subcategories/closed")
     public ResponseEntity<?> getClosedSubCategories(
             @AuthenticationPrincipal Jwt token,
+            @RequestParam("categoryId") Long categoryId,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                categoryRequestService.getClosed(token,page,size,true),
+                categoryRequestService.getClosed(token,categoryId,page,size,true),
                 HttpStatus.OK);
     }
 

@@ -154,7 +154,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
-    public Page<?> getPendingVerifications(Jwt token, Optional<Integer> page, Optional<Integer> size, Boolean isCategory) {
+    public Page<?> getPendingVerifications(Jwt token, Long categoryId, Optional<Integer> page, Optional<Integer> size, Boolean isCategory) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
@@ -166,12 +166,13 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         }
         return userCategoryRepository.findAllSubCategoryByNextVerifierId(
                 claimResolver.getUserId(),
+                categoryId,
                 pageable
         );
     }
 
     @Override
-    public Page<?> getPendingApprovals(Jwt token, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+    public Page<?> getPendingApprovals(Jwt token, Long categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
@@ -183,12 +184,13 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         }
         return userCategoryRepository.findAllSubCategoryByNextApproverId(
                 claimResolver.getUserId(),
+                categoryId,
                 pageable
         );
     }
 
     @Override
-    public Page<?> getClosed(Jwt token, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+    public Page<?> getClosed(Jwt token,Long categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
@@ -197,6 +199,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         }
         return userCategoryRepository.findAllClosedSubCategory(
                 claimResolver.getUserId(),
+                categoryId,
                 pageable
         );
     }

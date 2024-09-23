@@ -19,10 +19,10 @@ public interface InventoryCategoryRequestService extends VerificationDomainServi
     Page<?> getMyCategories(Jwt token, Optional<Integer> page, Optional<Integer> size);
     Page<?> getMySubCategories(Jwt token, Long categoryId, Optional<Integer> page, Optional<Integer> size);
 
-    Page<?> getPendingVerifications(Jwt token, Optional<Integer> page, Optional<Integer> size, Boolean isCategory);
+    Page<?> getPendingVerifications(Jwt token, Long categoryId, Optional<Integer> page, Optional<Integer> size, Boolean isCategory);
 
-    Page<?> getPendingApprovals(Jwt token, Optional<Integer> page, Optional<Integer> size, boolean isCategory);
-    Page<?> getClosed(Jwt token, Optional<Integer> page, Optional<Integer> size, boolean isCategory);
+    Page<?> getPendingApprovals(Jwt token, Long categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory);
+    Page<?> getClosed(Jwt token, Long categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory);
 
     Map<String,Object> getDetail(Long id);
 
