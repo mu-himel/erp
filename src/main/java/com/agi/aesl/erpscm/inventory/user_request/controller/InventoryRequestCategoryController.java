@@ -90,11 +90,12 @@ public class InventoryRequestCategoryController extends BaseController {
     @GetMapping("/subcategories/my-requests")
     public ResponseEntity<?> getMySubCategories(
             @AuthenticationPrincipal Jwt token,
+            @RequestParam("categoryId") Long categoryId,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size")Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                categoryRequestService.getMySubCategories(token,page,size),
+                categoryRequestService.getMySubCategories(token,categoryId,page,size),
                 HttpStatus.OK);
     }
 

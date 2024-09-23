@@ -17,7 +17,7 @@ public interface InventoryCategoryRequestService extends VerificationDomainServi
     List<?> getSubCategories(Jwt token, Long categoryId, Optional<String> name, Optional<String> code);
 
     Page<?> getMyCategories(Jwt token, Optional<Integer> page, Optional<Integer> size);
-    Page<?> getMySubCategories(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getMySubCategories(Jwt token, Long categoryId, Optional<Integer> page, Optional<Integer> size);
 
     Page<?> getPendingVerifications(Jwt token, Optional<Integer> page, Optional<Integer> size, Boolean isCategory);
 

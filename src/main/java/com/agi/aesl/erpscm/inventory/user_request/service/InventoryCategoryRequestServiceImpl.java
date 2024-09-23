@@ -146,11 +146,11 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
-    public Page<?> getMySubCategories(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getMySubCategories(Jwt token,Long categoryId, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
-        return userCategoryRepository.findAllSubCategoryByCreatedById(claimResolver.getUserId(),pageable);
+        return userCategoryRepository.findAllSubCategoryByCreatedById(claimResolver.getUserId(),categoryId,pageable);
     }
 
     @Override

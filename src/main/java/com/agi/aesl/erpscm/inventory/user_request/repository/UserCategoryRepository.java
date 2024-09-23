@@ -21,9 +21,9 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
             uc.category_status as status
              FROM user_categories uc
              LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
-             WHERE uc.created_by_id=:userId AND uc.parent_category_id IS NOT NULL
+             WHERE uc.created_by_id=:userId AND uc.parent_category_id = :categoryId
             """, nativeQuery = true)
-    Page<UserSubCategory> findAllSubCategoryByCreatedById(String userId, Pageable pageable);
+    Page<UserSubCategory> findAllSubCategoryByCreatedById(String userId,Long categoryId, Pageable pageable);
 
     Boolean existsByName(String name);
 
