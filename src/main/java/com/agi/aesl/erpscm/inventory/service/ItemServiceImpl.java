@@ -766,8 +766,9 @@ public class ItemServiceImpl implements ItemService {
 
         if(itemRequestDto.getFunctionalUnits()!=null&& itemRequestDto.getFunctionalUnits().size()>0){
             item.setItemFunctionalUnits(itemRequestDto.getFunctionalUnits().stream().map(itemFunctionalUnit -> {
-                itemFunctionalUnit.setItem(item);
-                return itemFunctionalUnit;
+                ItemFunctionalUnit _functionalUnit = (ItemFunctionalUnit) itemFunctionalUnit;
+                _functionalUnit.setItem(item);
+                return _functionalUnit;
             }).collect(Collectors.toList()));
         }
         itemRepository.save(item);

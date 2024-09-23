@@ -5,6 +5,7 @@ import com.agi.aesl.erpscm.common.ItemInterface;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
+import com.agi.aesl.erpscm.inventory.entity.UserItemFunctionalUnit;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
 import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import jakarta.persistence.*;
@@ -47,6 +48,9 @@ public class UserItem extends VerifyableEntity implements ItemInterface {
     @OneToMany(mappedBy = "userItem", cascade = CascadeType.ALL)
     private List<UserItemAttribute> attributes=new ArrayList<>();
 
+    @OneToMany(mappedBy = "userItem", cascade = CascadeType.ALL)
+    private List<UserItemFunctionalUnit> functionalUnits = new ArrayList<>();
+
     private Boolean active=true;
 
     @ManyToOne
@@ -79,6 +83,10 @@ public class UserItem extends VerifyableEntity implements ItemInterface {
         this.itemUnit = itemRequestDto.getItemUnit();
         this.attributes = itemRequestDto.getAttributes().stream()
                 .map(attr-> new UserItemAttribute(attr,this)).collect(Collectors.toList());
+
+        this.functionalUnits = itemRequestDto.getFunctionalUnits().stream()
+                .map(unit->new UserItemFunctionalUnit((UserItemFunctionalUnit) unit,this))
+                .collect(Collectors.toList());
     }
 
     public List<ItemAttributeInterface> getItemAttributes() {
