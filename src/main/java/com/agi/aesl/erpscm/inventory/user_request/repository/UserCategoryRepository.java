@@ -21,7 +21,8 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
             uc.category_status as status
              FROM user_categories uc
              LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
-             WHERE uc.created_by_id=:userId AND uc.parent_category_id = :categoryId
+             WHERE uc.created_by_id=:userId 
+             AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId)
             """, nativeQuery = true)
     Page<UserSubCategory> findAllSubCategoryByCreatedById(String userId,Long categoryId, Pageable pageable);
 
@@ -43,7 +44,8 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
             uc.category_status as status
              FROM user_categories uc
              LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
-             WHERE uc.next_verifier_id=:userId AND uc.parent_category_id = :categoryId
+             WHERE uc.next_verifier_id=:userId 
+             AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId)
             """, nativeQuery = true)
     Page<UserSubCategory> findAllSubCategoryByNextVerifierId(String userId,Long categoryId, Pageable pageable);
 
@@ -63,7 +65,8 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
             uc.category_status as status
              FROM user_categories uc
              LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
-             WHERE uc.next_approver_id=:userId AND uc.parent_category_id = :categoryId
+             WHERE uc.next_approver_id=:userId 
+             AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId)
             """, nativeQuery = true)
     Page<UserSubCategory> findAllSubCategoryByNextApproverId(String userId, Long categoryId, Pageable pageable);
 
@@ -84,7 +87,8 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
             uc.category_status as status
              FROM user_categories uc
              LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
-             WHERE uc.created_by_id=:userId AND uc.parent_category_id = :categoryId
+             WHERE uc.created_by_id=:userId 
+             AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId)
              AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED')
             """, nativeQuery = true)
     Page<UserSubCategory> findAllClosedSubCategory(String userId,Long categoryId, Pageable pageable);
