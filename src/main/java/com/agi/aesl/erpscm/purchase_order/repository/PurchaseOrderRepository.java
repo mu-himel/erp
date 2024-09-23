@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.purchase_order.repository;
 
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.indent.repository.IndentRepository;
 import com.agi.aesl.erpscm.price_quotation.entity.PriceQuotationDetail;
 import com.agi.aesl.erpscm.price_quotation.repository.PqQuery;
@@ -85,7 +86,20 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
 
     interface CsInfo {
         Long getId();
-        IndentRepository.IndentInfo getIndent();
+        IndentInfo getIndent();
+    }
+
+    interface IndentInfo {
+        Long getId();
+        String getIndentNo();
+        CategoryInfo getCategory();
+        CategoryInfo getSubCategory();
+    }
+
+    interface CategoryInfo {
+        Long getId();
+        String getCode();
+        String getName();
     }
 
     interface POD{

@@ -4,10 +4,12 @@ import com.agi.aesl.erpscm.cs.entity.Cs;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.purchase_order.enums.PurchaseOrderStatus;
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.time.LocalDate;
 import java.util.List;
 
+@Data
 @Entity
 @Table(name = "purchase_orders")
 public class PurchaseOrder {

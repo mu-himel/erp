@@ -3,28 +3,45 @@ package com.agi.aesl.erpscm.purchase_order.service;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.common.enums.DeliveryCharge;
+import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.cs.entity.Cs;
+import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
+import com.agi.aesl.erpscm.network.NetworkService;
+import com.agi.aesl.erpscm.organization.entity.Organization;
+import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.price_quotation.entity.PqTermsAndCondition;
 import com.agi.aesl.erpscm.price_quotation.repository.PqTermAndConditionRepository;
+import com.agi.aesl.erpscm.purchase_order.dto.request.PoRemoteDetailReqDto;
+import com.agi.aesl.erpscm.purchase_order.dto.request.PoRemoteReqDto;
 import com.agi.aesl.erpscm.purchase_order.entity.PoGroup;
+import com.agi.aesl.erpscm.purchase_order.entity.PoVerificationApprovalHistory;
 import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
 import com.agi.aesl.erpscm.purchase_order.enums.PurchaseOrderStatus;
 import com.agi.aesl.erpscm.purchase_order.repository.PoGroupRepository;
+import com.agi.aesl.erpscm.purchase_order.repository.PoVaHistoryRepository;
 import com.agi.aesl.erpscm.purchase_order.repository.PurchaseOrderRepository;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,6 +70,19 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     @Autowired
     private ItemService itemService;
     List<PqTermsAndCondition> termsAndConditions = new ArrayList<>();
+
+    @Autowired
+    private PoVaHistoryRepository poVaHistoryRepository;
+
+    @Autowired
+    private OrgService orgService;
+    
+    @Autowired
+    private NetworkService networkService;
+
+    @Autowired
+    private CpsServerConfig cpsServerConfig;
+
 
     @Override
     public Page<?> getPendingPOs(Optional<Integer> page, Optional<Integer> size) {
@@ -249,12 +279,178 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     }
 
     @Override
+    @Transactional
     public void reviewPo(Jwt token, Long id, NoteDto noteDto) {
+        claimResolver.setToken(token);
+        Optional<PoGroup> poGroupOp = poGroupRepository.findById(id);
+        if(poGroupOp.isEmpty()){
+            throw new RuntimeException("Sorry! PO not found");
+        }
+
+        PoGroup po = poGroupOp.get();
+        po.setReviewerId(null);
+        po.setReviewDate(LocalDateTime.now());
+        if(po.getNextApproverId()!=null && po.getNextApproverId() == null){
+            po.setPurchaseOrderStatus(PurchaseOrderStatus.PENDING_VERIFICATION);
+        }
+        if(po.getNextVerifierId()!=null && po.getNextApproverId() != null){
+            po.setPurchaseOrderStatus(PurchaseOrderStatus.PENDING_APPROVAL);
+        }
+
+        commentService.addComment(
+                commentService.prepareComment(claimResolver.getEmployee().get(),DomainType.PO,po.getId(),noteDto.getNote(),
+                        noteDto.getAttachments())
+        );
+
+
 
     }
 
     @Override
-    public void rejectPo(Jwt loggedInUser, Long id, NoteDto noteDto) {
+    @Transactional
+    public void rejectPo(Jwt token, Long id, NoteDto noteDto) {
+        claimResolver.setToken(token);
+        Optional<PurchaseOrder> poOp = purchaseOrderRepository.findById(id);
+        if(poOp.isEmpty()){
+            throw new RuntimeException("Sorry! PO not found");
+        }
+        PurchaseOrder po = poOp.get();
+        po.setStatus(PurchaseOrderStatus.REJECTED);
+        commentService.addComment(
+                commentService.prepareComment(claimResolver.getEmployee().get(),DomainType.PO,po.getId(),noteDto.getNote(),
+                        noteDto.getAttachments())
+        );
+    }
+
+    @Transactional
+    private void setVAHistory(PoGroup po, PurchaseOrderStatus status){
+        PoVerificationApprovalHistory poVaHistory = new PoVerificationApprovalHistory();
+        poVaHistory.setPo(po);
+        poVaHistory.setEmployee(new Employee(po.getNextVerifierId()));
+        poVaHistory.setPoStatus(status);
+        poVaHistoryRepository.save(poVaHistory);
+    }
+
+    @Override
+    @Transactional
+    public void onVerify(Long id, UserApplicationValidation verification,
+                         UserApplicationValidationRepository.VerificationResponse nextVerifier) {
+        Optional<PoGroup> poGroupOp = poGroupRepository.findById(id);
+        if(poGroupOp.isPresent()){
+            PoGroup po = poGroupOp.get();
+            po.setNextVerifierId(nextVerifier.getVerifier().getId());
+            po.setPurchaseOrderStatus(PurchaseOrderStatus.VERIFIED);
+            setVAHistory(po,PurchaseOrderStatus.VERIFIED);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void onApprove(Long id, UserApplicationValidation verification,
+                          UserApplicationValidationRepository.VerificationResponse nextApprover) {
+        Optional<PoGroup> poGroupOp = poGroupRepository.findById(id);
+        if(poGroupOp.isPresent()){
+            PoGroup po = poGroupOp.get();
+            po.setNextApproverId(nextApprover.getVerifier().getId());
+            po.setPurchaseOrderStatus(PurchaseOrderStatus.APPROVED);
+            setVAHistory(po, PurchaseOrderStatus.APPROVED);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void verifyComplete(Long id, Optional<UserApplicationValidationRepository.VerificationResponse> firstApprover) {
+        Optional<PoGroup> poGroupOp = poGroupRepository.findById(id);
+        if(poGroupOp.isPresent()){
+            PoGroup poGroup = poGroupOp.get();
+            if(firstApprover.isPresent()){
+                poGroup.setNextApproverId(firstApprover.get().getVerifier().getId());
+                poGroup.setPurchaseOrderStatus(PurchaseOrderStatus.PENDING_APPROVAL);
+            }else {
+                poGroup.setPurchaseOrderStatus(PurchaseOrderStatus.VERIFIED);
+                sentPoToVendors(poGroup);
+            }
+            setVAHistory(poGroup,PurchaseOrderStatus.VERIFIED);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void approveComplete(Long id) {
+        Optional<PoGroup> poGroup = poGroupRepository.findById(id);
+        if(poGroup.isPresent()){
+            PoGroup po = poGroup.get();
+            po.setPurchaseOrderStatus(PurchaseOrderStatus.APPROVED);
+            setVAHistory(po,PurchaseOrderStatus.APPROVED);
+            sentPoToVendors(po);
+        }
+    }
+
+    @Async
+    private void sentPoToVendors(PoGroup poGroup) {
+        // Replace Purchase Order Reference with Po group for this method
+        // Get List of Purchase Orders and process sent po to vendor for that collection of po items
+        List<PoRemoteReqDto> remotePos = new ArrayList<>();
+
+
+        List<PurchaseOrderRepository.PurchaseOrderDetailInfo> purchaseOrders = purchaseOrderRepository.findAllByPoGroupId(poGroup.getId());
+
+        for(PurchaseOrderRepository.PurchaseOrderDetailInfo po : purchaseOrders){
+            PoRemoteReqDto poRemoteReqDto = new PoRemoteReqDto();
+            List<PoRemoteDetailReqDto> orderDetails = new ArrayList<>();
+            List<PurchaseOrderRepository.PqDetailInfo> pqDetailInfos = purchaseOrderRepository.getPurchaseOrderDetail(po.getId());
+            poRemoteReqDto.setId(po.getId());
+            poRemoteReqDto.setPoNo(po.getPoNo());
+            System.out.println(po.getCreatedAt().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
+            poRemoteReqDto.setPoDate(po.getCreatedAt().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
+            poRemoteReqDto.setCategoryCode(po.getCs().getIndent().getSubCategory().getCode());
+            poRemoteReqDto.setTenderNo(po.getCs().getIndent().getIndentNo());
+            poRemoteReqDto.setDeliveryDate(po.getPoDate().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
+            pqDetailInfos.stream().forEach(pqdi->{
+                if(po.getId().equals(pqdi.getPoId())){
+                    PoRemoteDetailReqDto prdr = new PoRemoteDetailReqDto();
+                    prdr.setItemQty(pqdi.getOrderQty());
+                    String[] summary = pqdi.getSummary().split(",");
+                    prdr.setItemName(summary[10]+" - "+summary[12]);
+                    poRemoteReqDto.setVendorId(Long.valueOf(summary[1]));
+                    poRemoteReqDto.setOfferId(Long.valueOf(summary[5]));
+                    orderDetails.add(prdr);
+                }
+
+            });
+            poRemoteReqDto.setOrderDetails(orderDetails);
+            remotePos.add(poRemoteReqDto);
+        }
+
+        try{
+            HttpHeaders headers = new HttpHeaders();
+            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
+            if(orgOp.isPresent()){
+                headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
+            }
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            Map<String,List<PoRemoteReqDto>> payloadMap = new HashMap<>();
+            payloadMap.put("purchaseOrders",remotePos);
+            HttpEntity<Map<String,List<PoRemoteReqDto>>> payload = new HttpEntity<>(payloadMap,headers);
+            String url = cpsServerConfig.getSentPoEndpoint();
+            ResponseEntity<Void> response = networkService.post(url, payload,Void.class);
+            if(!response.getStatusCode().equals(HttpStatus.CREATED)){
+                throw new RuntimeException("Sorry! Something wrong");
+            }
+        }catch(Exception ex){
+            throw new RuntimeException(ex.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void sendForReview(Long domainId, RefDto reviewer, String comment) {
+
+    }
+
+    @Override
+    @Transactional
+    public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
 
     }
 }
