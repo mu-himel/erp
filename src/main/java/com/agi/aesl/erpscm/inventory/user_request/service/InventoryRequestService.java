@@ -17,16 +17,20 @@ public interface InventoryRequestService extends VerificationDomainService {
     @Deprecated(forRemoval = true)
     Page<?> getMySubCategories(Jwt token, Optional<Integer> page, Optional<Integer> size);
 
-    Page<?> getMyProducts(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getMyProducts(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                          Optional<Integer> page, Optional<Integer> size);
 
 
     void createProduct(Jwt token, String uri, ItemRequestDto itemRequestDto);
 
     Map<String,Object> getDetail(Long id);
 
-    Page<?> getPendingVerifications(Jwt token, Optional<Integer> page, Optional<Integer> size);
-    Page<?> getPendingApprovals(Jwt token, Optional<Integer> page, Optional<Integer> size);
-    Page<?> getClosed(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getPendingVerifications(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                    Optional<Integer> page, Optional<Integer> size);
+    Page<?> getPendingApprovals(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                Optional<Integer> page, Optional<Integer> size);
+    Page<?> getClosed(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                      Optional<Integer> page, Optional<Integer> size);
 
     void review(Jwt token, Long id, ReviewDto reviewDto);
 }

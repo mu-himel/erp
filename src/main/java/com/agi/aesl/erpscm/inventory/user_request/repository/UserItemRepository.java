@@ -23,16 +23,21 @@ public interface UserItemRepository extends JpaRepository<UserItem,Long>, UserIt
     List<?> findByAttributes(Long brandId, String attribute);
 
     @Query(value = getMyList, countQuery = countMyList, nativeQuery = true)
-    Page<UserItem> findAllByCreatedById(String userId, Pageable pageable);
+    Page<UserItem> findAllByCreatedById(String userId,Long categoryId,
+                                        Long subCategoryId,Pageable pageable);
 
     @Query(value = getPendingVerifications, countQuery = countPendingVerifications,nativeQuery = true)
-    Page<UserItem> findAllPendingVerifications(String userId, Pageable pageable);
+    Page<UserItem> findAllPendingVerifications(String userId,Long categoryId,
+                                               Long subCategoryId,
+                                               Pageable pageable);
 
     @Query(value = getPendingApprovals, countQuery =  countPendingApprovals, nativeQuery = true)
-    Page<UserItem> findAllPendingApprovals(String userId, Pageable pageable);
+    Page<UserItem> findAllPendingApprovals(String userId, Long categoryId,
+                                           Long subCategoryId,Pageable pageable);
 
     @Query(value = getClosed, countQuery =  countClosed, nativeQuery = true)
-    Page<UserItem> findAllClosed(String userId, Pageable pageable);
+    Page<UserItem> findAllClosed(String userId, Long categoryId,
+                                 Long subCategoryId,Pageable pageable);
 
     interface UserItem{
         Long getId();

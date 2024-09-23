@@ -84,38 +84,47 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     }
 
     @Override
-    public Page<?> getMyProducts(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getMyProducts(Jwt token,
+                                 Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                 Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
         return userItemRepository.findAllByCreatedById(
                 claimResolver.getUserId(),
+                categoryId.orElse(null),subCategoryId.orElse(null),
                 pageable
         );
     }
 
     @Override
-    public Page<?> getPendingVerifications(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getPendingVerifications(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                           Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
-        return userItemRepository.findAllPendingVerifications(claimResolver.getUserId(),pageable);
+        return userItemRepository.findAllPendingVerifications(claimResolver.getUserId(),
+                categoryId.orElse(null),subCategoryId.orElse(null), pageable);
     }
 
     @Override
-    public Page<?> getPendingApprovals(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getPendingApprovals(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                       Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
-        return userItemRepository.findAllPendingApprovals(claimResolver.getUserId(),pageable);
+        return userItemRepository.findAllPendingApprovals(claimResolver.getUserId(),
+                categoryId.orElse(null),subCategoryId.orElse(null),pageable);
     }
 
     @Override
-    public Page<?> getClosed(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getClosed(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                             Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
-        return userItemRepository.findAllClosed(claimResolver.getUserId(),pageable);
+        return userItemRepository.findAllClosed(claimResolver.getUserId(),
+                categoryId.orElse(null),subCategoryId.orElse(null),pageable);
     }
 
     @Override
