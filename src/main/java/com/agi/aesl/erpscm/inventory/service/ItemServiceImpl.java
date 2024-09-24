@@ -12,6 +12,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseStoreRepository;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseStoreService;
+import com.agi.aesl.erpscm.demand.dto.request.PendingAttributeDto;
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
@@ -590,7 +591,7 @@ public class ItemServiceImpl implements ItemService {
         pendingItemRequestDto.setReportingManager(employee.getReportingManager());
         pendingItemRequestDto.setEmployeeId(employee.getId());
         pendingItemRequestDto.setAttributes(attributes.stream().map(attr->{
-            ItemAttribute attribute = new ItemAttribute();
+            PendingAttributeDto attribute = new PendingAttributeDto();
             attribute.setAttributeType(attr.getAttributeType());
             attribute.setAttributeUnit(attr.getAttributeUnit());
             attribute.setAttributeValue(attr.getAttributeValue());

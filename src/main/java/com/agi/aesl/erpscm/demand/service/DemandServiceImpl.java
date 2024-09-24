@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.demand.service;
 
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -8,7 +9,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.agi.aesl.erpscm.config.CpsServerConfig;
+import com.agi.aesl.erpscm.demand.dto.request.*;
 import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
+import com.agi.aesl.erpscm.network.NetworkService;
+import com.agi.aesl.erpscm.organization.entity.Organization;
+import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,15 +22,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
-import com.agi.aesl.erpscm.demand.dto.request.DemandReceiveDto;
-import com.agi.aesl.erpscm.demand.dto.request.DemandRequestDto;
-import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.demand.dto.response.DemandDetailItemResDto;
 import com.agi.aesl.erpscm.demand.dto.response.DemandDetailResDto;
 import com.agi.aesl.erpscm.demand.entity.Demand;
@@ -101,7 +107,15 @@ public class DemandServiceImpl implements DemandService{
 
     @Autowired
     private ModuleService moduleService;
-    
+
+    @Autowired
+    private NetworkService networkService;
+
+    @Autowired
+    private CpsServerConfig cpsServerConfig;
+
+    @Autowired
+    private OrgService orgService;
 
     @Override
     @Transactional
@@ -203,7 +217,8 @@ public class DemandServiceImpl implements DemandService{
         if(claimResolver.getEmployee().isPresent() && claimResolver.getEmployee().get().getWarehouseId()!=null){
             demand.setWarehouse(new Warehouse(claimResolver.getEmployee().get().getWarehouseId()));
         }
-        setDemandDetail(demandRequestDto, demand);
+        List<PendingAttributeDto> pendingAttributes = new ArrayList<>();
+        setDemandDetail(demandRequestDto, demand,pendingAttributes);
         demandRepository.save(demand);
         setVerifiers(demand, verifiers);
         List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, demandRequestDto.getCategories());
@@ -218,12 +233,21 @@ public class DemandServiceImpl implements DemandService{
             }
         }
         setApprovers(demand, panels);
+        if(!pendingAttributes.isEmpty()) {
+            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
+            if (orgOp.isPresent()) {
+                HttpHeaders httpHeaders = networkService.setHttpHeaders(orgOp.get());
+                PendingAttributeRemoteDto pendingAttributeRemoteDto = new PendingAttributeRemoteDto(pendingAttributes);
+                HttpEntity<PendingAttributeRemoteDto> payload = new HttpEntity<>(pendingAttributeRemoteDto, httpHeaders);
+                networkService.post(cpsServerConfig.getPendingItemReqEndpoint() + "/pending-attributes", payload, Void.class);
+            }
+        }
 
         return this.getDemandDetail(demand.getId());
     }
 
     @Transactional
-    private void setDemandDetail(DemandRequestDto demandRequestDto, Demand demand) {
+    private void setDemandDetail(DemandRequestDto demandRequestDto, Demand demand, List<PendingAttributeDto> pendingAttributes) {
         demand.setDemandDetails(demandRequestDto.getDemandDetails().stream().map(demandDetailDto -> {
             DemandDetail demandDetail = new DemandDetail();
             if(demandDetailDto.getId()!=null){
@@ -249,6 +273,13 @@ public class DemandServiceImpl implements DemandService{
 
             demandDetail.setAttributes(demandDetailDto.getAttributes()
                     .stream().map(demandDetailAttribute -> {
+                        if(demandDetailAttribute.getIsCustom()) {
+                            PendingAttributeDto pendingAttributeDto = new PendingAttributeDto();
+                            pendingAttributeDto.setAttributeType(demandDetailAttribute.getAttributeType());
+                            pendingAttributeDto.setAttributeUnit(demandDetailAttribute.getAttributeUnit());
+                            pendingAttributeDto.setAttributeValue(demandDetailAttribute.getAttributeValue());
+                            pendingAttributes.add(pendingAttributeDto);
+                        }
                         demandDetailAttribute.setDemandDetail(demandDetail);
                         return demandDetailAttribute;
                     }).collect(Collectors.toList()));
@@ -839,7 +870,7 @@ public class DemandServiceImpl implements DemandService{
 
                 demand.setDeliveryDate(LocalDate.parse(demandRequestDto.getDeliveryDate()));
             }
-            setDemandDetail(demandRequestDto, demand);
+            setDemandDetail(demandRequestDto, demand, new ArrayList<>());
             demand.setReviewerId(null);
             demandRepository.save(demand);
             // TODO following code needs to modify to maintain same behavior
