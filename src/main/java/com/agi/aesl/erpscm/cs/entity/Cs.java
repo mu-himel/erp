@@ -56,4 +56,9 @@ public class Cs extends VerifyableEntity {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @Override
+    public void setStatus(String status){
+        this.csStatus = CsStatus.valueOf(status);
+    }
+
 }

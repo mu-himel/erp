@@ -4,6 +4,7 @@ import com.agi.aesl.erpscm.cs.dto.CsRequestDto;
 import com.agi.aesl.erpscm.cs.dto.CsUpdateRequestDto;
 import com.agi.aesl.erpscm.cs.enums.CsOperation;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
+import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomainService;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public interface CsService {
+public interface CsService extends VerificationDomainService {
     Page<?> getAllPendingCs(Jwt token, Optional<Integer> page, Optional<Integer> size);
 
     void createCs(Jwt token, String uri, CsRequestDto csRequestDto);

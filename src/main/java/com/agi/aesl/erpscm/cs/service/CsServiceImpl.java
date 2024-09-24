@@ -2,29 +2,48 @@ package com.agi.aesl.erpscm.cs.service;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.config.CpsServerConfig;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.cs.dto.CsRequestDto;
 import com.agi.aesl.erpscm.cs.dto.CsUpdateRequestDto;
 import com.agi.aesl.erpscm.cs.dto.CsVendorDetailDto;
-import com.agi.aesl.erpscm.cs.entity.Cs;
-import com.agi.aesl.erpscm.cs.entity.CsDeliveryDetail;
-import com.agi.aesl.erpscm.cs.entity.CsDetail;
-import com.agi.aesl.erpscm.cs.entity.CsVendorDetail;
+import com.agi.aesl.erpscm.cs.entity.*;
 import com.agi.aesl.erpscm.cs.enums.CsOperation;
 import com.agi.aesl.erpscm.cs.enums.CsStatus;
 import com.agi.aesl.erpscm.cs.repository.CsDetailRepository;
 import com.agi.aesl.erpscm.cs.repository.CsRepository;
 import com.agi.aesl.erpscm.cs.repository.CsVaHistoryRepository;
 import com.agi.aesl.erpscm.cs.repository.CsVendorDetailRepository;
+import com.agi.aesl.erpscm.demand.dto.request.PendingAttributeDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.indent.entity.IndentDetail;
 import com.agi.aesl.erpscm.indent.repository.IndentDetailRepository;
 import com.agi.aesl.erpscm.indent.repository.IndentRepository;
+import com.agi.aesl.erpscm.inventory.dto.request.PendingItemRequestDto;
+import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
+import com.agi.aesl.erpscm.inventory.entity.Item;
+import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.service.CategoryService;
+import com.agi.aesl.erpscm.inventory.service.ItemService;
+import com.agi.aesl.erpscm.network.NetworkService;
+import com.agi.aesl.erpscm.organization.entity.Organization;
+import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.price_quotation.entity.PqTermsAndCondition;
 import com.agi.aesl.erpscm.price_quotation.entity.PriceQuotation;
+import com.agi.aesl.erpscm.price_quotation.repository.PqRepository;
 import com.agi.aesl.erpscm.price_quotation.repository.PqTermAndConditionRepository;
 import com.agi.aesl.erpscm.product_requirements.service.ProductRequirementService;
+import com.agi.aesl.erpscm.purchase_order.entity.PoGroup;
+import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
+import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrderDetail;
+import com.agi.aesl.erpscm.purchase_order.enums.PurchaseOrderStatus;
+import com.agi.aesl.erpscm.purchase_order.repository.PoGroupRepository;
+import com.agi.aesl.erpscm.purchase_order.service.PurchaseOrderService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
@@ -34,10 +53,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -77,6 +100,29 @@ public class CsServiceImpl implements CsService{
 
     @Autowired
     private CsVendorDetailRepository csVendorDetailRepository;
+
+    @Autowired
+    private OrgService orgService;
+
+    @Autowired
+    private NetworkService networkService;
+
+    @Autowired
+    private CpsServerConfig cpsServerConfig;
+
+    @Autowired
+    private ItemService itemService;
+    @Autowired
+    private CategoryService categoryService;
+
+    @Autowired
+    private PoGroupRepository poGroupRepository;
+
+    @Autowired
+    private PqRepository pqRepository;
+
+    @Autowired
+    private PurchaseOrderService purchaseOrderService;
 
 
     @Override
@@ -537,5 +583,306 @@ public class CsServiceImpl implements CsService{
                 commentService.prepareComment(claimResolver.getEmployee().get(),
                         DomainType.CS,cs.getId(),"Rejected & Resent To PR",new ArrayList<>())
         );
+    }
+
+    @Override
+    @Transactional
+    public void onVerify(Long id, UserApplicationValidation verification, UserApplicationValidationRepository.VerificationResponse nextVerifier) {
+        Optional<Cs> csOp  = csRepository.findById(id);
+        if(csOp.isPresent()){
+            Cs cs = csOp.get();
+            cs.setNextVerifierId(nextVerifier.getVerifier().getId());
+            cs.setCsStatus(CsStatus.VERIFIED);
+            setVAHistory(cs, CsStatus.VERIFIED);
+        }
+    }
+
+    @Override
+    public void onApprove(Long id, UserApplicationValidation verification, UserApplicationValidationRepository.VerificationResponse nextApprover) {
+        Optional<Cs> csOp  = csRepository.findById(id);
+        if(csOp.isPresent()){
+            Cs cs = csOp.get();
+            cs.setNextApproverId(nextApprover.getVerifier().getId());
+            cs.setCsStatus(CsStatus.APPROVED);
+            setVAHistory(cs, CsStatus.APPROVED);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void verifyComplete(Long id, Optional<UserApplicationValidationRepository.VerificationResponse> firstApprover) {
+        Optional<Cs> csOp  = csRepository.findById(id);
+        if(csOp.isPresent()){
+            Cs cs = csOp.get();
+            if(firstApprover.isPresent()){
+                cs.setNextApproverId(firstApprover.get().getVerifier().getId());
+                cs.setCsStatus(CsStatus.PENDING_APPROVAL);
+                setVAHistory(cs,CsStatus.VERIFIED);
+
+            }else {
+
+                cs.setCsStatus(CsStatus.VERIFIED);
+                setVAHistory(cs,CsStatus.VERIFIED);
+                generatePO(cs.getRequestedBy(),cs);
+            }
+
+        }
+    }
+
+    @Override
+    @Transactional
+    public void approveComplete(Long id) {
+        Optional<Cs> csOp  = csRepository.findById(id);
+        if(csOp.isPresent()){
+            Cs cs = csOp.get();
+            cs.setCsStatus(CsStatus.APPROVED);
+            setVAHistory(cs,CsStatus.APPROVED);
+
+            generatePO(cs.getRequestedBy(),cs);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void sendForReview(Long domainId, RefDto reviewer, String comment) {
+        Optional<Cs> csOp  = csRepository.findById(domainId);
+        if(csOp.isPresent()){
+            Cs cs = csOp.get();
+            cs.setReviewerId(reviewer.getId());
+            cs.setReviewPrevStatus(cs.getCsStatus());
+            cs.setCsStatus(CsStatus.REVIEW);
+
+        }
+    }
+
+    @Override
+    @Transactional
+    public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
+
+    }
+
+    @Transactional
+    private void setVAHistory(Cs cs, CsStatus status){
+        CsVerificationApprovalHistory csVaHistory = new CsVerificationApprovalHistory();
+        String empId = null;
+        if (status.equals(CsStatus.VERIFIED)){
+            empId =cs.getNextVerifierId();
+        }else if(status.equals(CsStatus.APPROVED)){
+            empId = cs.getNextApproverId();
+        }
+        csVaHistory.setCs(cs);
+        csVaHistory.setEmployee(new Employee(empId));
+        csVaHistory.setCsStatus(status);
+        csVaHistoryRepository.save(csVaHistory);
+    }
+
+
+    @Async
+    private void generatePO(Employee employee, Cs cs){
+
+        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
+        if(orgOp.isEmpty()){
+            throw new RuntimeException("Sorry! Organization not found");
+        }
+
+        List<CsVendorDetailRepository.PendingItemBrandInfo> itemBrandInfos = csVendorDetailRepository.getPendingItemAndBrandInfoByCsId(cs.getId());
+        for(CsVendorDetailRepository.PendingItemBrandInfo csDetail : itemBrandInfos){
+            String itemAttributeName = (csDetail.getExtendedAttributes()!=null)? csDetail.getItemAttributeName()+" - "+csDetail.getExtendedAttributes() : csDetail.getItemAttributeName();
+            Optional<Item> itemOp = itemService.getByBrandAndAttributeName(csDetail.getBrandName(),csDetail.getSubCatId(),itemAttributeName);
+            if(itemOp.isEmpty()){
+
+                Optional<ItemCategory> subCatOp = categoryService.getItemCategory(csDetail.getSubCatId());
+                if(subCatOp.isEmpty()){
+                    throw new RuntimeException("Sorry! Sub Cat missing");
+                }
+                ItemCategory subCat = subCatOp.get();
+
+                PendingItemRequestDto pendingItemRequestDto = new PendingItemRequestDto();
+                pendingItemRequestDto.setSubCategoryCode(csDetail.getSubCategoryCode());
+                pendingItemRequestDto.setDepartment(employee.getDepartmentName());
+                pendingItemRequestDto.setDesignation(employee.getDesignationName());
+                pendingItemRequestDto.setEmployeeId(employee.getEmployeeId());
+                if(employee.getReportingManager()!=null){
+                    pendingItemRequestDto.setReportingManager(employee.getReportingManager());
+                }
+                pendingItemRequestDto.setRequestedBy(employee.getEmployeeName());
+                pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
+                pendingItemRequestDto.setWarehouseLocation(employee.getWarehouseName());
+                pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
+                pendingItemRequestDto.setBrand(csDetail.getBrandName());
+
+
+                List<PendingAttributeDto> attributes = extractAttributesFromItemAttributeName(subCat,csDetail.getItemAttributeName());
+                List<PendingAttributeDto> attributesFromItemAttributeName = extractAttributesFromItemAttributeName(subCat,csDetail.getExtendedAttributes());
+                attributes.addAll(attributesFromItemAttributeName);
+                pendingItemRequestDto.setAttributes(attributes);
+                pendingItemRequestDto.setOrganizationId(orgOp.get().getCpsVendorRegistrationId());
+                pendingItemRequestDto.setExtendedAttributes(csDetail.getExtendedAttributes());
+                sendPendingItemRequest(pendingItemRequestDto);
+            }
+
+        }
+
+
+
+        // Map<String,PurchaseOrder> poMap = new HashMap<>();
+        List<PurchaseOrder> purchaseOrders =new ArrayList<>();
+        // StringBuilder sb = new StringBuilder();
+        PoGroup poGroup = new PoGroup();
+        poGroup.setCs(cs);
+        poGroup.setPurchaseOrderStatus(PurchaseOrderStatus.PENDING);
+        poGroupRepository.save(poGroup);
+        List<CsRepository.PotentialPoListItem> poListItems = csRepository.getPotentialPoListFromCs(cs.getId());
+        int i=1;
+        for(CsRepository.PotentialPoListItem pol : poListItems){
+            if(pol.getDeliveryDate()!=null){
+                PurchaseOrder vPo = new PurchaseOrder();
+                vPo.setCs(cs);
+                vPo.setPoDate(pol.getDeliveryDate().toLocalDate());
+                vPo.setVendorId(pol.getVendorId());
+
+                vPo.setPoNo(generatePoNo(cs, i));
+                if(cs.getNextApproverId()!=null){
+                    vPo.setRequestedBy(new Employee(cs.getNextApproverId()));
+                }else{
+                    vPo.setRequestedBy(cs.getRequestedBy());
+                }
+
+                List<PurchaseOrderDetail> pods = new ArrayList<>();
+                for(String csvdId : List.of(pol.getCsVendorDetailId().split(","))){
+                    PurchaseOrderDetail pod = new PurchaseOrderDetail();
+                    pod.setCsVendorDetail(new CsVendorDetail(Long.valueOf(csvdId)));
+                    pod.setDeliveryDate(pol.getDeliveryDate().toLocalDate());
+                    pod.setPurchaseOrder(vPo);
+                    pod.setWarehouse(new Warehouse(pol.getWarehouseId()));
+                    pods.add(pod);
+                }
+                vPo.setPurchaseOrderDetails(pods);
+                vPo.setPoGroup(poGroup);
+                vPo.setStatus(PurchaseOrderStatus.PENDING);
+                purchaseOrders.add(vPo);
+
+            }else{
+                Optional<PqRepository.PriceQuotationDetailExt> pqDetailOp = pqRepository
+                        .getPriceQuotationDetailByPqIdAndItemAttr(pol.getPriceQuotationId(),pol.getItemAttribute());
+
+                if(pqDetailOp.isPresent()){
+                    PurchaseOrder vPo = new PurchaseOrder();
+                    vPo.setCs(cs);
+                    LocalDate currentDate = LocalDate.now();
+                    currentDate = currentDate.plusDays(pqDetailOp.get().getEstDeliveryDays());
+                    vPo.setPoDate(currentDate.atTime(LocalTime.now()).toLocalDate());
+                    vPo.setVendorId(pol.getVendorId());
+
+                    vPo.setPoNo(generatePoNo(cs, i));
+                    if(cs.getNextApproverId()!=null){
+                        vPo.setRequestedBy(new Employee(cs.getNextApproverId()));
+                    }else{
+                        vPo.setRequestedBy(cs.getRequestedBy());
+                    }
+
+                    List<PurchaseOrderDetail> pods = new ArrayList<>();
+                    for(String csvdId : List.of(pol.getCsVendorDetailId().split(","))){
+                        PurchaseOrderDetail pod = new PurchaseOrderDetail();
+                        pod.setCsVendorDetail(new CsVendorDetail(Long.valueOf(csvdId)));
+                        pod.setDeliveryDate(currentDate);
+                        pod.setPurchaseOrder(vPo);
+                        pod.setWarehouse(new Warehouse(pqDetailOp.get().getWarehouseId()));
+                        pods.add(pod);
+                    }
+                    vPo.setPurchaseOrderDetails(pods);
+                    vPo.setStatus(PurchaseOrderStatus.PENDING);
+                    vPo.setPoGroup(poGroup);
+                    purchaseOrders.add(vPo);
+                }
+            }
+            i++;
+        }
+        // cs.getCsDetails().stream().forEach(csd->{
+        //     sb.append(csd.getIndentDetail().getSubCategory().getId()).append(",");
+        //     csd.getVendorDetails().stream().forEach(vd->{
+
+        //         if(!poMap.containsKey(vd.getVendorId().toString())){
+        //             System.out.println(vd.getVendorId()+"_"+vd.getId());
+        //             PurchaseOrder vPo = new PurchaseOrder();
+        //             List<PurchaseOrderDetail> pods = new ArrayList<>();
+        //             vPo.setPurchaseOrderDetails(pods);
+        //             setPoDetail(cs,vPo,vd);
+        //             poMap.put(vd.getVendorId().toString(), vPo);
+        //             vPo.setRequestedBy(new Employee(cs.getNextApproverId()));
+
+        //         }else{
+        //             System.out.println(vd.getVendorId()+"_"+vd.getId());
+        //             PurchaseOrder vPo = (PurchaseOrder) poMap.get(vd.getVendorId().toString());
+        //             setPoDetail(cs,vPo, vd);
+        //         }
+        //     });
+        // });
+
+        // String categories = sb.substring(0,sb.toString().length()-1);
+        // purchaseOrders = poMap.entrySet().stream().map(et->{
+        //     return et.getValue();
+        // }).collect(Collectors.toList());
+
+
+        purchaseOrderService.createPurchaseOrder(purchaseOrders);
+
+        // setVerificationAndApproval(categories,employee,poGroup);
+
+    }
+
+    private String generatePoNo(Cs cs,Integer i){
+        return cs.getCsNo()+"-"+ ((i<10)? "0"+i.toString() : i.toString());
+    }
+
+    @Async
+    private void sendPendingItemRequest(PendingItemRequestDto payloadDto) {
+        try{
+            HttpHeaders headers = new HttpHeaders();
+            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
+            if(orgOp.isPresent()){
+                headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
+            }
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(payloadDto,headers);
+            String url = cpsServerConfig.getPendingItemReqEndpoint();
+            ResponseEntity<Void> response = (ResponseEntity<Void>)networkService.post(url, payload,Void.class);
+            if(!response.getStatusCode().equals(HttpStatus.CREATED)){
+                throw new RuntimeException("Sorry! Something wrong");
+            }
+        }catch(Exception ex){
+            throw new RuntimeException(ex.getMessage());
+        }
+    }
+
+    private List<PendingAttributeDto> extractAttributesFromItemAttributeName(ItemCategory cat, String itemAttributeName){
+
+        List<PendingAttributeDto> pendingItemAttrList = new ArrayList<>();
+        if(itemAttributeName!=null){
+
+            String[] attrs = itemAttributeName.split(" - ");
+
+
+            for(String attr : attrs){
+                String _attr="";
+                Optional<CategoryAttribute> catAttrOp = cat.getAttributes().stream().filter(c->{
+                    return attr.contains(c.getAttributeType());
+
+                }).findFirst();
+
+                if(catAttrOp.isPresent()){
+                    _attr = attr.replace(catAttrOp.get().getAttributeType(),"");
+
+                    String[] args = _attr.trim().split(" ");
+                    PendingAttributeDto pia = new PendingAttributeDto();
+                    pia.setAttributeType(catAttrOp.get().getAttributeType());
+                    pia.setAttributeValue(args[0].trim());
+                    pia.setAttributeUnit(catAttrOp.get().getAttributeUnit());
+                    pendingItemAttrList.add(pia);
+                }
+            }
+        }
+        return pendingItemAttrList;
     }
 }
