@@ -7,5 +7,5 @@ public enum PurchaseOrderStatus {
     VERIFIED,
     REVIEW,
     REJECTED,
-    COMPLETED
+    PENDING, COMPLETED
 }

@@ -23,6 +23,20 @@ public interface PqRepository extends JpaRepository<PriceQuotation,Long>,PqQuery
 
     List<PriceQuotation> findByRfqIdAndVendorId(Long id, Long vendorId);
 
+    @Query(value = """
+        select pqd.est_delivery_days as estDeliveryDays, pqdd.warehouse_id as warehouseId
+        from price_quotation_details pqd 
+        LEFT JOIN price_quotation_delivery_details pqdd ON pqdd.price_quotation_detail_id = pqd.id
+        WHERE pqd.price_quotation_id = :pqId
+        and pqd.item_attribute = :itemAttribute
+            """,nativeQuery = true)
+    Optional<PriceQuotationDetailExt> getPriceQuotationDetailByPqIdAndItemAttr(Long pqId, String itemAttribute);
+
+    interface PriceQuotationDetailExt{
+        Integer getEstDeliveryDays();
+        Long getWarehouseId();
+    }
+
     interface PriceQuotationInfo {
         Long getId();
         Long getVendorId();

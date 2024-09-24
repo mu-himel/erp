@@ -34,6 +34,8 @@ public class PurchaseOrder {
     @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL)
     private List<PurchaseOrderDetail> purchaseOrderDetails;
 
+    private Long vendorId;
+
     @ManyToOne
     private Employee requestedBy;
 }

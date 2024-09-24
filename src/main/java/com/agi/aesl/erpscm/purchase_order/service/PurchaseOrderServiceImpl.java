@@ -85,6 +85,12 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
 
     @Override
+    @Transactional
+    public void createPurchaseOrder(List<PurchaseOrder> purchaseOrders) {
+        purchaseOrderRepository.saveAll(purchaseOrders);
+    }
+
+    @Override
     public Page<?> getPendingPOs(Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
         return purchaseOrderRepository.findAllPendingPOs(pageable);
@@ -445,12 +451,23 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     @Override
     @Transactional
     public void sendForReview(Long domainId, RefDto reviewer, String comment) {
-
+        Optional<PoGroup> poOp  = poGroupRepository.findById(domainId);
+        if(poOp.isPresent()){
+            PoGroup po = poOp.get();
+            po.setReviewerId(reviewer.getId());
+            po.setPurchaseOrderStatus(PurchaseOrderStatus.REVIEW);
+            po.setReviewDate(LocalDateTime.now());
+        }
     }
 
     @Override
     @Transactional
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
-
+        Optional<PurchaseOrder> poOp = purchaseOrderRepository.findById(domainId);
+        if(poOp.isEmpty()){
+            throw new RuntimeException("Sorry! PO not found");
+        }
+        PurchaseOrder po = poOp.get();
+        po.setStatus(PurchaseOrderStatus.REJECTED);
     }
 }
