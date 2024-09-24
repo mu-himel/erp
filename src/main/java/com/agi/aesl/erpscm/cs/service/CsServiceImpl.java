@@ -623,7 +623,7 @@ public class CsServiceImpl implements CsService{
 
                 cs.setCsStatus(CsStatus.VERIFIED);
                 setVAHistory(cs,CsStatus.VERIFIED);
-                generatePO(cs.getRequestedBy(),cs);
+                generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
             }
 
         }
@@ -638,7 +638,7 @@ public class CsServiceImpl implements CsService{
             cs.setCsStatus(CsStatus.APPROVED);
             setVAHistory(cs,CsStatus.APPROVED);
 
-            generatePO(cs.getRequestedBy(),cs);
+            generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
         }
     }
 
@@ -678,7 +678,7 @@ public class CsServiceImpl implements CsService{
 
 
     @Async
-    private void generatePO(Employee employee, Cs cs){
+    private void generatePO(Employee employee, Cs cs,PurchaseOrderStatus status){
 
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
         if(orgOp.isEmpty()){
@@ -730,7 +730,7 @@ public class CsServiceImpl implements CsService{
         // StringBuilder sb = new StringBuilder();
         PoGroup poGroup = new PoGroup();
         poGroup.setCs(cs);
-        poGroup.setPurchaseOrderStatus(PurchaseOrderStatus.PENDING);
+        poGroup.setPurchaseOrderStatus(status);
         poGroupRepository.save(poGroup);
         List<CsRepository.PotentialPoListItem> poListItems = csRepository.getPotentialPoListFromCs(cs.getId());
         int i=1;
@@ -738,7 +738,7 @@ public class CsServiceImpl implements CsService{
             if(pol.getDeliveryDate()!=null){
                 PurchaseOrder vPo = new PurchaseOrder();
                 vPo.setCs(cs);
-                vPo.setPoDate(pol.getDeliveryDate().toLocalDate());
+                vPo.setPoDate(pol.getDeliveryDate());
                 vPo.setVendorId(pol.getVendorId());
 
                 vPo.setPoNo(generatePoNo(cs, i));
@@ -752,7 +752,7 @@ public class CsServiceImpl implements CsService{
                 for(String csvdId : List.of(pol.getCsVendorDetailId().split(","))){
                     PurchaseOrderDetail pod = new PurchaseOrderDetail();
                     pod.setCsVendorDetail(new CsVendorDetail(Long.valueOf(csvdId)));
-                    pod.setDeliveryDate(pol.getDeliveryDate().toLocalDate());
+                    pod.setDeliveryDate(pol.getDeliveryDate());
                     pod.setPurchaseOrder(vPo);
                     pod.setWarehouse(new Warehouse(pol.getWarehouseId()));
                     pods.add(pod);

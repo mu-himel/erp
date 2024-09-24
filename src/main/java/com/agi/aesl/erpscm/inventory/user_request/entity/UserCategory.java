@@ -59,6 +59,8 @@ public class UserCategory extends VerifyableEntity implements CategoryInterface 
     @ManyToOne
     private WarehouseStore store;
 
+    private BigDecimal vat;
+
     @Enumerated(EnumType.STRING)
     private UserCategoryStatus categoryStatus;
 
@@ -90,11 +92,6 @@ public class UserCategory extends VerifyableEntity implements CategoryInterface 
 
     public UserCategory(Long id) {
         this.id = id;
-    }
-
-    @Override
-    public BigDecimal getVat() {
-        return null;
     }
 
     @Override

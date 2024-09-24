@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -63,7 +64,7 @@ public interface CsRepository extends JpaRepository<Cs,Long>, CsQuery {
         Long getIndentDetailId();
         Long getVendorId();
         Long getCsDetailId();
-        LocalDateTime getDeliveryDate();
+        LocalDate getDeliveryDate();
         BigDecimal getDeliveryQty();
         Long getWarehouseId();
 

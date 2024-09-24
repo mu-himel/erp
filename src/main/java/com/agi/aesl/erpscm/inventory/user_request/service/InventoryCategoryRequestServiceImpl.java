@@ -109,6 +109,8 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
                 _catOp.ifPresent(userCategory::setActiveParentCategory);
             }
 
+            userCategory.setVat(categoryRequestDto.getVat());
+
             userCategory.setAttributes(categoryRequestDto.getAttributes().stream()
                     .map(ca-> new UserCategoryAttribute(ca,userCategory))
                     .collect(Collectors.toList()));

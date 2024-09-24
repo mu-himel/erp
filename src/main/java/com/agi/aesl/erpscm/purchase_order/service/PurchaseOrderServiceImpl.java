@@ -139,19 +139,24 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             List<PurchaseOrderRepository.PurchaseOrderDetailInfo> purchaseOrders = purchaseOrderRepository.findAllByPoGroupId(poGroup.getId());
             List<Map<String,Object>> polist = new ArrayList<>();
 
-            List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
-            List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
-            List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
-                    .getVerificationsByDomainTypeAndDomainId(DomainType.PO, poGroup.getId());
-            vrs.stream().forEach(verifier->{
-                if(verifier.getIsApproval()==false){
-                    verifiers.add(verifier);
-                }else{
-                    approvers.add(verifier);
-                }
-            });
+            if(!poGroup.getPurchaseOrderStatus().equals(PurchaseOrderStatus.PENDING)) {
+                List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
+                List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
+                List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
+                        .getVerificationsByDomainTypeAndDomainId(DomainType.PO, poGroup.getId());
+                vrs.stream().forEach(verifier -> {
+                    if (verifier.getIsApproval() == false) {
+                        verifiers.add(verifier);
+                    } else {
+                        approvers.add(verifier);
+                    }
+                });
+                List<?> comments = commentService.getCommentsByDomain(DomainType.PO, poGroup.getId());
+                map.put("verifiers", verifiers);
+                map.put("approvers", approvers);
+                map.put("comments", comments);
+            }
 
-            List<?> comments = commentService.getCommentsByDomain(DomainType.PO, poGroup.getId());
             Cs cs = poGroup.getCs();
             Indent indent = cs.getIndent();
             map.put("nextVerifierId", poGroup.getNextApproverId());
@@ -159,15 +164,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             map.put("reviewerId", poGroup.getReviewerId());
             map.put("declineNote", poGroup.getDeclineNote());
             map.put("reviewDate",poGroup.getReviewDate());
-            map.put("status", poGroup.getStatus());
+            map.put("status", poGroup.getPurchaseOrderStatus());
             map.put("csNo",cs.getCsNo());
             map.put("csId",cs.getId());
             map.put("poGroupId",poGroup.getId());
             map.put("indentId",indent.getId());
 
-            map.put("verifiers", verifiers);
-            map.put("approvers", approvers);
-            map.put("comments", comments);
+
 
             // Indent indent = poGroup.getCs().getIndent();
             map.put("categories",indent.getCategory().getId()+","+indent.getSubCategory().getId());
@@ -193,6 +196,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     Optional<Item> itemOp = itemService.getByBrandAndAttributeName(summary[11].trim(),indent.getSubCategory().getId(), itemAttributeToMatch);
                     // detailMap.put("extendedAttributes",pqDetail.get)
                     detailMap.put("orderQty",pqDetail.getOrderQty());
+                    detailMap.put("deliveryOrderQty",pqDetail.getDeliveryOrderQty());
+                    detailMap.put("deliveryDate",pqDetail.getDeliveryDate());
+                    detailMap.put("warehouseId",pqDetail.getWarehouseId());
                     detailMap.put("totalPrice",pqDetail.getTotalPrice());
                     detailMap.put("transactionType",pqDetail.getTransactionType());
 
