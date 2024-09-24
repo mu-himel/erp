@@ -186,6 +186,11 @@ public class GrnServiceImpl implements GrnService{
     }
 
     @Override
+    public void createAutoGrn(Jwt token, GrnManualRequestDto grnManualDto) {
+        createManualGrn(token,grnManualDto);
+    }
+
+    @Override
     public Page<?> getAllGrn(Jwt token, Optional<Integer> page,
                              Optional<Integer> size, Optional<String> grnNo,
                              Optional<Integer> qty,Optional<Integer> receivedQty,

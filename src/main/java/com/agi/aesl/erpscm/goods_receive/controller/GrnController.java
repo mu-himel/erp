@@ -38,9 +38,9 @@ public class GrnController extends BaseController {
     @PostMapping
     public ResponseEntity<?> createGrn(
             @AuthenticationPrincipal Jwt token,
-            @RequestBody @Valid GoodReceiveNoteDto goodReceiveNoteDto
+            @RequestBody @Valid GrnManualRequestDto goodReceiveNoteDto
             ){
-        grnService.addGrn(token,goodReceiveNoteDto);
+        grnService.createAutoGrn(token,goodReceiveNoteDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

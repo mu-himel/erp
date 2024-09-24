@@ -30,6 +30,7 @@ public interface GrnService {
 
 
     void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto);
+    void createAutoGrn(Jwt token, GrnManualRequestDto grnManualDto);
 
 
     Page<?> getAllGrnPendingQC(Jwt token, Optional<Integer> page, Optional<Integer> size,
