@@ -40,9 +40,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -182,51 +184,79 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 List<PurchaseOrderRepository.PqDetailInfo> pqDetailInfo = purchaseOrderRepository.getPurchaseOrderDetail(po.getId());
                 poItem.put("poNo", po.getPoNo());
                 poItem.put("date", po.getPoDate());
+                poItem.put("vendorPartialVatAmount", po.getPoDate());
+                AtomicReference<BigDecimal> vendorPartialVatAmount = new AtomicReference<>();
+                AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(new BigDecimal(0));
+                for (PurchaseOrderRepository.PqDetailInfo pqDetail : pqDetailInfo){
 
-                pqDetailInfo.stream().forEach(pqDetail->{
                     // System.out.println(indent.getSubCategory().getCode());
                     // System.out.println(indent.getSubCategory().getId());
-
+                    totalPrice.set(pqDetail.getTotalPrice());
+                    vendorPartialVatAmount.set(pqDetail.getVendorPartialVatAmount());
                     Map<String,Object> detailMap = new HashMap<>();
                     String[] summary = pqDetail.getSummary().split(",");
 
                     termsAndConditions = pqTermAndConditionRepository.findAllByVendorIdAndPriceQuotationId(Long.parseLong(summary[1]),Long.parseLong(summary[16]));
 
                     String itemAttributeToMatch = (summary[12].trim()!="")? summary[10].trim()+" - "+ summary[12].trim() : summary[10].trim();
-                    Optional<Item> itemOp = itemService.getByBrandAndAttributeName(summary[11].trim(),indent.getSubCategory().getId(), itemAttributeToMatch);
+                    Optional<Item> itemOp = itemService
+                            .getByBrandAndAttributeName(summary[11].trim(),
+                                    indent.getSubCategory().getId(),
+                                    itemAttributeToMatch);
                     // detailMap.put("extendedAttributes",pqDetail.get)
-                    detailMap.put("orderQty",pqDetail.getOrderQty());
-                    detailMap.put("deliveryOrderQty",pqDetail.getDeliveryOrderQty());
-                    detailMap.put("deliveryDate",pqDetail.getDeliveryDate());
-                    detailMap.put("warehouseId",pqDetail.getWarehouseId());
-                    detailMap.put("totalPrice",pqDetail.getTotalPrice());
-                    detailMap.put("transactionType",pqDetail.getTransactionType());
+                    poItem.put("orderQty",pqDetail.getOrderQty());
+//                    poItem.put("deliveryOrderQty",pqDetail.getDeliveryOrderQty());
+                    if(po.getPoDate().equals(pqDetail.getDeliveryDate())) {
+                        poItem.put("deliveryOrderQty", pqDetail.getDeliveryOrderQty());
+                        poItem.put("deliveryDate", pqDetail.getDeliveryDate());
+                        poItem.put("warehouseId", pqDetail.getWarehouseId());
+                    }
+//                    poItem.put("deliveryDate",pqDetail.getDeliveryDate());
+//                    detailMap.put("warehouseId",pqDetail.getWarehouseId());
+
+//                    detailMap.put("transactionType",pqDetail.getTransactionType());
+                    poItem.put("transactionType",pqDetail.getTransactionType());
 
                     // detailMap.put("vendorName",summary[0]);
                     poItem.put("vendorName",summary[0]);
-                    detailMap.put("vendorId",summary[1]);
-                    detailMap.put("creditDays",summary[2]);
-                    detailMap.put("unitPrice",summary[3]);
-                    detailMap.put("estDeliveryDays",summary[4]);
+//                    detailMap.put("vendorId",summary[1]);
+                    poItem.put("vendorId",summary[1]);
+//                    detailMap.put("creditDays",summary[2]);
+                    poItem.put("creditDays",summary[2]);
+
+//                    detailMap.put("unitPrice",summary[3]);
+                    poItem.put("unitPrice",summary[3]);
+//                    detailMap.put("estDeliveryDays",summary[4]);
+                    poItem.put("estDeliveryDays",summary[4]);
                     poItem.put("deliveryCharge",summary[6].equals("1")? DeliveryCharge.INCLUDED.toString():
                             DeliveryCharge.EXCLUDED.toString());
                     poItem.put("deliveryChargeAmount",summary[7]);
                     poItem.put("vatPercent",summary[8]);
                     poItem.put("vatAmount",summary[9]);
-                    detailMap.put("itemName",summary[10]);
-                    detailMap.put("brandName",summary[11]);
-                    detailMap.put("extendedAttribute",summary[12]);
-                    detailMap.put("isItemExist",itemOp.isPresent());
-                    detailMap.put("warrantyDuration",summary[13]);
-                    detailMap.put("warrantyUnit",summary[14]);
-                    detailMap.put("vendorType",summary[15]);
-                    detailMap.put("pqId",summary[16]);
+//                    detailMap.put("itemName",summary[10]);
+                    poItem.put("itemName",summary[10]);
+//                    detailMap.put("brandName",summary[11]);
+                    poItem.put("brandName",summary[11]);
+//                    detailMap.put("extendedAttribute",summary[12]);
+                    poItem.put("extendedAttribute",summary[12]);
+//                    detailMap.put("isItemExist",itemOp.isPresent());
+                    poItem.put("isItemExist",itemOp.isPresent());
+//                    detailMap.put("warrantyDuration",summary[13]);
+                    poItem.put("warrantyDuration",summary[13]);
+//                    detailMap.put("warrantyUnit",summary[14]);
+                    poItem.put("warrantyUnit",summary[14]);
+//                    detailMap.put("vendorType",summary[15]);
+                    poItem.put("vendorType",summary[15]);
+//                    detailMap.put("pqId",summary[16]);
+                    poItem.put("pqId",summary[16]);
                     poDetailList.add(detailMap);
-                });
+                }
                 // poItem.put("vendor",po.get)
                 map.put("requestedBy",po.getRequestedBy());
-                poItem.put("details",poDetailList);
+//                poItem.put("details",poDetailList);
                 poItem.put("termsAndConditions", termsAndConditions);
+                poItem.put("totalPrice",totalPrice.get());
+                poItem.put("vendorPartialVatAmount",vendorPartialVatAmount);
                 return poItem;
             }).collect(Collectors.toList());
 

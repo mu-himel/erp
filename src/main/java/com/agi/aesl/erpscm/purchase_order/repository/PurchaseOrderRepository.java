@@ -152,6 +152,7 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
 
     interface PqDetailInfo {
         Long getPoId();
+        BigDecimal getVendorPartialVatAmount();
         String getItemAttribute();
         String getTransactionType();
         BigDecimal getTotalPrice();

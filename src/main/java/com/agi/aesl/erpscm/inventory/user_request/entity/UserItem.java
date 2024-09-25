@@ -2,6 +2,8 @@ package com.agi.aesl.erpscm.inventory.user_request.entity;
 
 import com.agi.aesl.erpscm.common.ItemAttributeInterface;
 import com.agi.aesl.erpscm.common.ItemInterface;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
@@ -65,6 +67,12 @@ public class UserItem extends VerifyableEntity implements ItemInterface {
 
     @ManyToOne
     private Employee createdBy;
+
+    @ManyToOne
+    private Warehouse warehouse;
+
+    @ManyToOne
+    private WarehouseStore warehouseStore;
 
     @Enumerated(EnumType.STRING)
     private UserCategoryStatus itemStatus;

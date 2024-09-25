@@ -2,6 +2,8 @@ package com.agi.aesl.erpscm.inventory.user_request.service;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
@@ -132,7 +134,8 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     public void createProduct(Jwt token, String uri, ItemRequestDto itemRequestDto) {
         UserItem userItem = new UserItem(itemRequestDto);
         userItem.setActive(true);
-
+        userItem.setWarehouse(new Warehouse(itemRequestDto.getWarehouse().getId()));
+        userItem.setWarehouseStore(new WarehouseStore(itemRequestDto.getWarehouseStore().getId()));
         Optional<UserCategory> catOp = userCategoryRepository.findById(itemRequestDto.getItemParentCategory().getId());
         if(catOp.isEmpty()) {
             throw new RuntimeException("Sorry! User Category not found");
@@ -153,6 +156,7 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
         if(itemExistByAttr.size()>0){
             throw new RuntimeException("Sorry! Item Already exist with same attributes for this brand");
         }
+
         userItemRepository.save(userItem);
 
         verificationService.applyVerifyApprovalProcess(

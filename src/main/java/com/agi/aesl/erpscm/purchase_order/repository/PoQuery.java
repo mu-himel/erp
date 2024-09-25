@@ -148,6 +148,7 @@ public interface PoQuery {
                 cvdd.delivery_date as deliveryDate,
                 cvdd.warehouse_id as warehouseId,
                 cvd.price_quotation_id as priceQuotationId,
+                cvd.vat_amount as vendorPartialVatAmount,
                 (select CONCAT(vendor_name,',',vendor_id,',',credit_payment_duration,',',pqd.unit_price,',',pqd.est_delivery_days,',',pq.remote_offer_id,
                 ',',pqs.delivery_charge,',',pqs.delivery_charge_amount,',',pqs.vat_percent,',',pqs.vat_amount,',',
                     pqd.item_attribute,',',

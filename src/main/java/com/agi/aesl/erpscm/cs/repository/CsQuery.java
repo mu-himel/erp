@@ -137,7 +137,7 @@ public interface CsQuery {
     LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id  
     LEFT JOIN scm_item_categories c ON c.id = i.category_id
     LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
-    WHERE csheet.cs_status IN ('REJECTED', 'APPROVED')
+    WHERE csheet.cs_status IN ('REJECTED', 'APPROVED','VERIFIED','COMPLETED')
     GROUP BY csheet.id
         """;
     String countClosedCs="SELECT COUNT(*) FROM ("+closedCs+") as total";
