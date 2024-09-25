@@ -89,9 +89,10 @@ public class PurchaseController extends BaseController {
     @PutMapping("/submit-for-verification/{csId}")
     public ResponseEntity<?> submitForVerification(
             @AuthenticationPrincipal Jwt token,
+            @RequestHeader("uri") String uri,
             @PathVariable("csId") Long csId
     ){
-        purchaseOrderService.setVerificationAndApproval(token, csId);
+        purchaseOrderService.setVerificationAndApproval(token, uri, csId);
         return new ResponseEntity<>(
                 HttpStatus.NO_CONTENT
         );

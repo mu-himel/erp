@@ -23,7 +23,7 @@ public interface PurchaseOrderService extends VerificationDomainService {
     Page<?> getClosedPOs(Jwt token, Optional<Integer> page, Optional<Integer> size);
     Map<String, Object> getPurchaseOrderDetail(Long csId);
 
-    void setVerificationAndApproval(Jwt token, Long csId);
+    void setVerificationAndApproval(Jwt token, String uri, Long csId);
 
     void reviewPo(Jwt token, Long id, NoteDto noteDto);
 

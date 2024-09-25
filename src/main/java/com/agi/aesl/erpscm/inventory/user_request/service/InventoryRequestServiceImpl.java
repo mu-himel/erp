@@ -8,6 +8,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseServ
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
+import com.agi.aesl.erpscm.inventory.dto.request.UserItemRequestDto;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
@@ -131,7 +132,7 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
 
     @Override
     @Transactional
-    public void createProduct(Jwt token, String uri, ItemRequestDto itemRequestDto) {
+    public void createProduct(Jwt token, String uri, UserItemRequestDto itemRequestDto) {
         UserItem userItem = new UserItem(itemRequestDto);
         userItem.setActive(true);
         userItem.setWarehouse(new Warehouse(itemRequestDto.getWarehouse().getId()));

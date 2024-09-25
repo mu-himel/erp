@@ -35,7 +35,9 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
             ) as subCategoryCount, 0 as productCount,
             category_status as status
             FROM user_categories uc
-            WHERE uc.next_verifier_id=:userId AND uc.parent_category_id IS NULL
+            WHERE uc.next_verifier_id=:userId 
+            AND uc.category_status IN ('PENDING_VERIFICATION','REVIEW','VERIFIED')
+            AND uc.parent_category_id IS NULL
             """, nativeQuery = true)
     Page<UserCategory> findAllCategoryByNextVerifierId(String userId, Pageable pageable);
 
@@ -45,6 +47,7 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
              FROM user_categories uc
              LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
              WHERE uc.next_verifier_id=:userId 
+             AND uc.category_status IN ('PENDING_VERIFICATION','REVIEW','VERIFIED')
              AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId)
             """, nativeQuery = true)
     Page<UserSubCategory> findAllSubCategoryByNextVerifierId(String userId,Long categoryId, Pageable pageable);
@@ -56,7 +59,9 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
             ) as subCategoryCount, 0 as productCount,
             category_status as status
             FROM user_categories uc
-            WHERE uc.next_approver_id=:userId AND uc.parent_category_id IS NULL
+            WHERE uc.next_approver_id=:userId 
+            AND uc.category_status IN ('PENDING_APPROVAL','REVIEW','VERIFIED')
+            AND uc.parent_category_id IS NULL
             """, nativeQuery = true)
     Page<UserCategory> findAllCategoryByNextApproverId(String userId, Pageable pageable);
 
@@ -66,6 +71,7 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
              FROM user_categories uc
              LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
              WHERE uc.next_approver_id=:userId 
+             AND uc.category_status IN ('PENDING_APPROVAL','REVIEW','VERIFIED')
              AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId)
             """, nativeQuery = true)
     Page<UserSubCategory> findAllSubCategoryByNextApproverId(String userId, Long categoryId, Pageable pageable);

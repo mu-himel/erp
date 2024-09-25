@@ -59,7 +59,7 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
     interface PoListItem{
         Long getPoGroupId();
         Long getId();
-        LocalDateTime getPoDate();
+        String getPoDate();
         String getIndentNo();
         String getCategoryName();
         Long getItemQty();

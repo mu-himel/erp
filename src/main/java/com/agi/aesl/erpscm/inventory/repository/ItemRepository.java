@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.inventory.repository;
 
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
+import com.agi.aesl.erpscm.inventory.entity.ItemFunctionalUnit;
 import com.agi.aesl.erpscm.inventory.entity.ItemStock;
 import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
 import org.springframework.data.domain.Page;
@@ -164,10 +165,11 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
         CatInfo getItemParentCategory();
         String getSku();
         String getManufacturer();
-        ItemUnit getItemUnit();
+        String getItemUnit();
         Integer getStockThresholdQty();
         Integer getReorderPercentage();
         List<ItemAttribute> getAttributes();
+        List<ItemFunctionalUnit> getFunctionalUnits();
         Boolean getActive();
 
         LocalDateTime getCreatedAt();

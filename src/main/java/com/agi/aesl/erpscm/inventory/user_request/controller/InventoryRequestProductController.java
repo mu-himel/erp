@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.inventory.user_request.controller;
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
+import com.agi.aesl.erpscm.inventory.dto.request.UserItemRequestDto;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,7 +25,7 @@ public class InventoryRequestProductController extends BaseController {
     public ResponseEntity<?> createProduct(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
-            @RequestBody ItemRequestDto itemRequestDto
+            @RequestBody UserItemRequestDto itemRequestDto
             ){
         inventoryRequestService.createProduct(token,uri,itemRequestDto);
         return new ResponseEntity<>(HttpStatus.CREATED);

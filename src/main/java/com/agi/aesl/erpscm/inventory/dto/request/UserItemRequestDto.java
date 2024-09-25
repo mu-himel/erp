@@ -4,15 +4,11 @@ package com.agi.aesl.erpscm.inventory.dto.request;
 import com.agi.aesl.erpscm.common.EntityConvertable;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.inventory.entity.*;
-import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
-
 import jakarta.validation.constraints.NotBlank;
-// import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.BeanUtils;
-
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -21,7 +17,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemRequestDto implements EntityConvertable<Item> {
+public class UserItemRequestDto implements EntityConvertable<Item> {
 
     private Long id;
 
@@ -41,7 +37,7 @@ public class ItemRequestDto implements EntityConvertable<Item> {
 
     private String itemUnit;
 
-    private List<ItemFunctionalUnit> functionalUnits = new ArrayList<>();
+    private List<UserItemFunctionalUnit> functionalUnits = new ArrayList<>();
 
     private Integer stockThresholdQty;
 

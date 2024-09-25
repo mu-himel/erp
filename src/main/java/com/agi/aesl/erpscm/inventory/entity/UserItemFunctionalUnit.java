@@ -5,13 +5,15 @@ import com.agi.aesl.erpscm.inventory.user_request.entity.UserItem;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name="user_item_functional_units")
 @Data
-public class UserItemFunctionalUnit {
+@NoArgsConstructor
+public class UserItemFunctionalUnit implements FunctionalUnitInterface{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

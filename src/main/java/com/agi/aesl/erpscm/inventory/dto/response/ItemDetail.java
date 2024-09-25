@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.inventory.dto.response;
 
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
+import com.agi.aesl.erpscm.inventory.entity.ItemFunctionalUnit;
 import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
 import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
 import lombok.AllArgsConstructor;
@@ -19,13 +20,14 @@ public class ItemDetail {
     String itemAttributeName;
     String code;
     Boolean active;
-    ItemUnit itemUnit;
+    String itemUnit;
     ItemRepository.RefInfo brand;
     ItemRepository.RefInfo itemCategory;
     ItemRepository.RefInfo itemParentCategory;
     Integer stockThresholdQty;
     Integer reorderPercentage;
     List<ItemAttribute> attributes;
+    List<ItemFunctionalUnit> functionalUnits;
 //    List<ItemStock> stocks;
     Map<String,List<Map<String,Object>>> warehouses;
 }

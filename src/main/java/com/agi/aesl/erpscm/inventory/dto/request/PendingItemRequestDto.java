@@ -25,5 +25,5 @@ public class PendingItemRequestDto {
     private String extendedAttributes;
     private String itemUnit;
     private String code;
-    private List<PendingAttributeDto> attributes;
+    private List<PendingItemAttributeDto> attributes;
 }

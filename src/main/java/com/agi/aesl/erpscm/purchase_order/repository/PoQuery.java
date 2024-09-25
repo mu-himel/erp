@@ -88,7 +88,7 @@ public interface PoQuery {
             SELECT 
         po.id as id,
         po.po_date                       as poDate,
-        i.indent_no                      as indentNo,
+        po.po_no                      as indentNo,
         CONCAT(c.name,'-',sc.name)       as categoryName,
         COUNT(ide.id)                    as itemQty,
         COALESCE(COUNT(pod.id), 0)       as totalOrderQty,
@@ -97,6 +97,7 @@ public interface PoQuery {
         po.status as status,
         pq.vendor_name as vendorName
         FROM purchase_orders po
+        LEFT JOIN cs_po pogroup on pogroup.id = po.po_group_id
         LEFT JOIN purchase_order_details pod ON pod.purchase_order_id = po.id
         LEFT JOIN cs_vendor_details csd ON csd.id=pod.cs_vendor_detail_id
         LEFT JOIN price_quotations pq ON pq.id = csd.price_quotation_id
@@ -105,7 +106,7 @@ public interface PoQuery {
         LEFT JOIN indent_details ide ON  ide.indent_id = i.id
         LEFT JOIN scm_item_categories c ON i.category_id = c.id
         LEFT JOIN scm_item_categories sc ON i.sub_category_id = sc.id
-        WHERE  po.status IN ('REJECTED','COMPLETED')
+        WHERE  pogroup.purchase_order_status IN ('REJECTED','COMPLETED','APPROVED','VERIFIED')
         GROUP BY po.id
             """;
 

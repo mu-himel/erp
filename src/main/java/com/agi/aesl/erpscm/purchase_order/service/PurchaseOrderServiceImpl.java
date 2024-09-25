@@ -266,14 +266,15 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     }
 
     @Override
-    public void setVerificationAndApproval(Jwt token, Long csId) {
+    public void setVerificationAndApproval(Jwt token, String uri, Long csId) {
+        claimResolver.setToken(token);
         Optional<PoGroup> poGroupOp = poGroupRepository.findByCsId(csId);
         if(poGroupOp.isEmpty()){
             throw new RuntimeException("Sorry! Po not found");
         }
 
         PoGroup po = poGroupOp.get();
-
+        po.setPurchaseOrderStatus(PurchaseOrderStatus.PENDING_VERIFICATION);
         Indent indent = po.getCs().getIndent();
         List<String> ids =new ArrayList<>();
         ids.add(indent.getCategory().getId().toString());
@@ -283,8 +284,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 //
 //        String categories = sb.toString();
 
-
-        String uri = "scm/po";
 
 //        @SuppressWarnings("unchecked")
 //        Optional<Map<String, Object>> verifierOp = (Optional<Map<String, Object>>) verificationService.getVerifiers(loggedInUser, uri, categories);
@@ -443,7 +442,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             List<PurchaseOrderRepository.PqDetailInfo> pqDetailInfos = purchaseOrderRepository.getPurchaseOrderDetail(po.getId());
             poRemoteReqDto.setId(po.getId());
             poRemoteReqDto.setPoNo(po.getPoNo());
-            System.out.println(po.getCreatedAt().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
+//            System.out.println(po.getCreatedAt().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
             poRemoteReqDto.setPoDate(po.getCreatedAt().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
             poRemoteReqDto.setCategoryCode(po.getCs().getIndent().getSubCategory().getCode());
             poRemoteReqDto.setTenderNo(po.getCs().getIndent().getIndentNo());

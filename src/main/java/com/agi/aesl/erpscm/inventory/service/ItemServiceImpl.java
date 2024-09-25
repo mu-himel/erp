@@ -126,6 +126,9 @@ public class ItemServiceImpl implements ItemService {
     @Autowired
     private IntegrationReaderService integrationReaderService;
 
+    @Autowired
+    private ItemFuncationalUnitRepository itemFuncationalUnitRepository;
+
     @Value("${upload.dir}")
     private String uploadDir;
 
@@ -140,9 +143,12 @@ public class ItemServiceImpl implements ItemService {
         if(itemDetailOptional.isEmpty()){
             throw new AesException("Sorry! Item not found");
         }
+
         ItemRepository.ItemDetail detail = itemDetailOptional.get();
+        List<ItemFunctionalUnit> functionalUnits = itemFuncationalUnitRepository.findAllByItemId(detail.getId());
         ItemDetail itemDetail = new ItemDetail();
         itemDetail.setId(detail.getId());
+        itemDetail.setFunctionalUnits(functionalUnits);
         itemDetail.setName(detail.getName());
         itemDetail.setCode(detail.getCode());
         itemDetail.setActive(detail.getActive());
@@ -591,7 +597,7 @@ public class ItemServiceImpl implements ItemService {
         pendingItemRequestDto.setReportingManager(employee.getReportingManager());
         pendingItemRequestDto.setEmployeeId(employee.getId());
         pendingItemRequestDto.setAttributes(attributes.stream().map(attr->{
-            PendingAttributeDto attribute = new PendingAttributeDto();
+            PendingItemAttributeDto attribute = new PendingItemAttributeDto();
             attribute.setAttributeType(attr.getAttributeType());
             attribute.setAttributeUnit(attr.getAttributeUnit());
             attribute.setAttributeValue(attr.getAttributeValue());
@@ -767,7 +773,10 @@ public class ItemServiceImpl implements ItemService {
 
         if(itemRequestDto.getFunctionalUnits()!=null&& itemRequestDto.getFunctionalUnits().size()>0){
             item.setItemFunctionalUnits(itemRequestDto.getFunctionalUnits().stream().map(itemFunctionalUnit -> {
-                ItemFunctionalUnit _functionalUnit = (ItemFunctionalUnit) itemFunctionalUnit;
+                ItemFunctionalUnit _functionalUnit = new ItemFunctionalUnit();
+                _functionalUnit.setId(itemFunctionalUnit.getId());
+                _functionalUnit.setValue(itemFunctionalUnit.getValue());
+                _functionalUnit.setUnit(itemFunctionalUnit.getUnit());
                 _functionalUnit.setItem(item);
                 return _functionalUnit;
             }).collect(Collectors.toList()));

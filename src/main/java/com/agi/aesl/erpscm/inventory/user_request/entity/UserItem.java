@@ -6,6 +6,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
+import com.agi.aesl.erpscm.inventory.dto.request.UserItemRequestDto;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import com.agi.aesl.erpscm.inventory.entity.UserItemFunctionalUnit;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
@@ -85,7 +86,7 @@ public class UserItem extends VerifyableEntity implements ItemInterface {
         this.itemStatus = UserCategoryStatus.valueOf(status);
     }
 
-    public UserItem(ItemRequestDto itemRequestDto) {
+    public UserItem(UserItemRequestDto itemRequestDto) {
         this.name = itemRequestDto.getName();
         this.code = itemRequestDto.getCode();
         this.itemUnit = itemRequestDto.getItemUnit();

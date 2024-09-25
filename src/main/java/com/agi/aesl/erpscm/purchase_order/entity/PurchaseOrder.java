@@ -5,6 +5,8 @@ import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.purchase_order.enums.PurchaseOrderStatus;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -38,4 +40,16 @@ public class PurchaseOrder {
 
     @ManyToOne
     private Employee requestedBy;
+
+    private Long remotePoId;
+
+    @Column(length = 500)
+    private String invoicePath;
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDate createdAt;
+
+    @UpdateTimestamp
+    private LocalDate updatedAt;
 }

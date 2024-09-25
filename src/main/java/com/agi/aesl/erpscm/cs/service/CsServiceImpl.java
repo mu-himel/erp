@@ -20,6 +20,7 @@ import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.indent.entity.IndentDetail;
 import com.agi.aesl.erpscm.indent.repository.IndentDetailRepository;
 import com.agi.aesl.erpscm.indent.repository.IndentRepository;
+import com.agi.aesl.erpscm.inventory.dto.request.PendingItemAttributeDto;
 import com.agi.aesl.erpscm.inventory.dto.request.PendingItemRequestDto;
 import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
 import com.agi.aesl.erpscm.inventory.entity.Item;
@@ -712,8 +713,8 @@ public class CsServiceImpl implements CsService{
                 pendingItemRequestDto.setBrand(csDetail.getBrandName());
 
 
-                List<PendingAttributeDto> attributes = extractAttributesFromItemAttributeName(subCat,csDetail.getItemAttributeName());
-                List<PendingAttributeDto> attributesFromItemAttributeName = extractAttributesFromItemAttributeName(subCat,csDetail.getExtendedAttributes());
+                List<PendingItemAttributeDto> attributes = extractAttributesFromItemAttributeName(subCat,csDetail.getItemAttributeName());
+                List<PendingItemAttributeDto> attributesFromItemAttributeName = extractAttributesFromItemAttributeName(subCat,csDetail.getExtendedAttributes());
                 attributes.addAll(attributesFromItemAttributeName);
                 pendingItemRequestDto.setAttributes(attributes);
                 pendingItemRequestDto.setOrganizationId(orgOp.get().getCpsVendorRegistrationId());
@@ -856,9 +857,9 @@ public class CsServiceImpl implements CsService{
         }
     }
 
-    private List<PendingAttributeDto> extractAttributesFromItemAttributeName(ItemCategory cat, String itemAttributeName){
+    private List<PendingItemAttributeDto> extractAttributesFromItemAttributeName(ItemCategory cat, String itemAttributeName){
 
-        List<PendingAttributeDto> pendingItemAttrList = new ArrayList<>();
+        List<PendingItemAttributeDto> pendingItemAttrList = new ArrayList<>();
         if(itemAttributeName!=null){
 
             String[] attrs = itemAttributeName.split(" - ");
@@ -875,7 +876,7 @@ public class CsServiceImpl implements CsService{
                     _attr = attr.replace(catAttrOp.get().getAttributeType(),"");
 
                     String[] args = _attr.trim().split(" ");
-                    PendingAttributeDto pia = new PendingAttributeDto();
+                    PendingItemAttributeDto pia = new PendingItemAttributeDto();
                     pia.setAttributeType(catAttrOp.get().getAttributeType());
                     pia.setAttributeValue(args[0].trim());
                     pia.setAttributeUnit(catAttrOp.get().getAttributeUnit());
