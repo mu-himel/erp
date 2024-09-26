@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.purchase_order.service;
 
+import com.agi.aesl.erpscm.purchase_order.entity.PoGroup;
 import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomainService;
@@ -30,4 +31,5 @@ public interface PurchaseOrderService extends VerificationDomainService {
     void rejectPo(Jwt loggedInUser, Long id, NoteDto noteDto);
 
     void createPurchaseOrder(List<PurchaseOrder> purchaseOrders);
+    public void sentPoToVendors(PoGroup poGroup);
 }

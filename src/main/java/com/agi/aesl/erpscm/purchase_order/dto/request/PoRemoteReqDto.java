@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.purchase_order.dto.request;
 
+import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import lombok.Data;
 
 import java.util.List;
@@ -14,5 +15,6 @@ public class PoRemoteReqDto {
     private String categoryCode;
     private Long deliveryDate;
     private Long offerId;
+    private ReferenceObjectDto warehouse;
     private List<PoRemoteDetailReqDto> orderDetails;
 }

@@ -20,6 +20,7 @@ import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryReposit
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserItemRepository;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
@@ -133,6 +134,11 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     @Override
     @Transactional
     public void createProduct(Jwt token, String uri, UserItemRequestDto itemRequestDto) {
+        claimResolver.setToken(token);
+        Optional<Employee> empOp = claimResolver.getEmployee();
+        if(empOp.isEmpty()){
+            throw new RuntimeException("Sorry! Only Employee Can Create");
+        }
         UserItem userItem = new UserItem(itemRequestDto);
         userItem.setActive(true);
         userItem.setWarehouse(new Warehouse(itemRequestDto.getWarehouse().getId()));
@@ -157,13 +163,26 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
         if(itemExistByAttr.size()>0){
             throw new RuntimeException("Sorry! Item Already exist with same attributes for this brand");
         }
-
+        userItem.setCreatedBy(empOp.get());
         userItemRepository.save(userItem);
 
-        verificationService.applyVerifyApprovalProcess(
+        AppliedVADto appliedVADto = verificationService.applyVerifyApprovalProcess(
                 userItem, DomainType.INVENTORY_REQ_PRODUCT, UserCategoryStatus.COMPLETED.toString(),
-                uri,DomainType.INVENTORY_REQ_PRODUCT.toString(), List.of("-1"),
+                uri, DomainType.INVENTORY_REQ_PRODUCT.toString(), List.of("-1"),
                 null);
+
+        if(appliedVADto.getVerifiers().isEmpty() && appliedVADto.getPanels().isEmpty()){
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                String employee = mapper.writeValueAsString(userItem.getCreatedBy());
+                /**
+                 * Here may be need something more todo
+                 */
+                itemService.sendItemToCps(claimResolver,employee,userItem,userItem.getItemAttributes(),null);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private String generateItemAttribute(List<UserItemAttribute> attributes){

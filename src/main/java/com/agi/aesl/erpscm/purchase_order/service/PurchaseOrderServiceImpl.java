@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.purchase_order.service;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.common.enums.DeliveryCharge;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.cs.entity.Cs;
@@ -137,7 +138,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         if(poGroupOp.isPresent()){
             PoGroup poGroup = poGroupOp.get();
             // then get list of PO and its child using pogroup id
-
             List<PurchaseOrderRepository.PurchaseOrderDetailInfo> purchaseOrders = purchaseOrderRepository.findAllByPoGroupId(poGroup.getId());
             List<Map<String,Object>> polist = new ArrayList<>();
 
@@ -189,8 +189,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(new BigDecimal(0));
                 for (PurchaseOrderRepository.PqDetailInfo pqDetail : pqDetailInfo){
 
-                    // System.out.println(indent.getSubCategory().getCode());
-                    // System.out.println(indent.getSubCategory().getId());
+
                     totalPrice.set(pqDetail.getTotalPrice());
                     vendorPartialVatAmount.set(pqDetail.getVendorPartialVatAmount());
                     Map<String,Object> detailMap = new HashMap<>();
@@ -203,51 +202,35 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                             .getByBrandAndAttributeName(summary[11].trim(),
                                     indent.getSubCategory().getId(),
                                     itemAttributeToMatch);
-                    // detailMap.put("extendedAttributes",pqDetail.get)
                     poItem.put("orderQty",pqDetail.getOrderQty());
-//                    poItem.put("deliveryOrderQty",pqDetail.getDeliveryOrderQty());
                     if(po.getPoDate().equals(pqDetail.getDeliveryDate())) {
                         poItem.put("deliveryOrderQty", pqDetail.getDeliveryOrderQty());
                         poItem.put("deliveryDate", pqDetail.getDeliveryDate());
                         poItem.put("warehouseId", pqDetail.getWarehouseId());
                     }
-//                    poItem.put("deliveryDate",pqDetail.getDeliveryDate());
-//                    detailMap.put("warehouseId",pqDetail.getWarehouseId());
-
+                    poItem.put("isAitAdded",pqDetail.getIsAitAdded());
+                    poItem.put("isVatAdded",pqDetail.getIsVatAdded());
 //                    detailMap.put("transactionType",pqDetail.getTransactionType());
                     poItem.put("transactionType",pqDetail.getTransactionType());
 
-                    // detailMap.put("vendorName",summary[0]);
                     poItem.put("vendorName",summary[0]);
-//                    detailMap.put("vendorId",summary[1]);
                     poItem.put("vendorId",summary[1]);
-//                    detailMap.put("creditDays",summary[2]);
                     poItem.put("creditDays",summary[2]);
 
-//                    detailMap.put("unitPrice",summary[3]);
                     poItem.put("unitPrice",summary[3]);
-//                    detailMap.put("estDeliveryDays",summary[4]);
                     poItem.put("estDeliveryDays",summary[4]);
                     poItem.put("deliveryCharge",summary[6].equals("1")? DeliveryCharge.INCLUDED.toString():
                             DeliveryCharge.EXCLUDED.toString());
                     poItem.put("deliveryChargeAmount",summary[7]);
                     poItem.put("vatPercent",summary[8]);
                     poItem.put("vatAmount",summary[9]);
-//                    detailMap.put("itemName",summary[10]);
                     poItem.put("itemName",summary[10]);
-//                    detailMap.put("brandName",summary[11]);
                     poItem.put("brandName",summary[11]);
-//                    detailMap.put("extendedAttribute",summary[12]);
                     poItem.put("extendedAttribute",summary[12]);
-//                    detailMap.put("isItemExist",itemOp.isPresent());
                     poItem.put("isItemExist",itemOp.isPresent());
-//                    detailMap.put("warrantyDuration",summary[13]);
                     poItem.put("warrantyDuration",summary[13]);
-//                    detailMap.put("warrantyUnit",summary[14]);
                     poItem.put("warrantyUnit",summary[14]);
-//                    detailMap.put("vendorType",summary[15]);
                     poItem.put("vendorType",summary[15]);
-//                    detailMap.put("pqId",summary[16]);
                     poItem.put("pqId",summary[16]);
                     poDetailList.add(detailMap);
                 }
@@ -428,7 +411,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     }
 
     @Async
-    private void sentPoToVendors(PoGroup poGroup) {
+    public void sentPoToVendors(PoGroup poGroup) {
         // Replace Purchase Order Reference with Po group for this method
         // Get List of Purchase Orders and process sent po to vendor for that collection of po items
         List<PoRemoteReqDto> remotePos = new ArrayList<>();
@@ -439,7 +422,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         for(PurchaseOrderRepository.PurchaseOrderDetailInfo po : purchaseOrders){
             PoRemoteReqDto poRemoteReqDto = new PoRemoteReqDto();
             List<PoRemoteDetailReqDto> orderDetails = new ArrayList<>();
-            List<PurchaseOrderRepository.PqDetailInfo> pqDetailInfos = purchaseOrderRepository.getPurchaseOrderDetail(po.getId());
+//          List<PurchaseOrderRepository.PqDetailInfo> pqDetailInfos = purchaseOrderRepository.getPurchaseOrderDetail(po.getId());
             poRemoteReqDto.setId(po.getId());
             poRemoteReqDto.setPoNo(po.getPoNo());
 //            System.out.println(po.getCreatedAt().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
@@ -447,16 +430,23 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             poRemoteReqDto.setCategoryCode(po.getCs().getIndent().getSubCategory().getCode());
             poRemoteReqDto.setTenderNo(po.getCs().getIndent().getIndentNo());
             poRemoteReqDto.setDeliveryDate(po.getPoDate().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
-            pqDetailInfos.stream().forEach(pqdi->{
-                if(po.getId().equals(pqdi.getPoId())){
+            po.getPurchaseOrderDetails().stream().forEach(pqdi->{
+//                if(po.getId().equals(pqdi.get)){
                     PoRemoteDetailReqDto prdr = new PoRemoteDetailReqDto();
-                    prdr.setItemQty(pqdi.getOrderQty());
-                    String[] summary = pqdi.getSummary().split(",");
-                    prdr.setItemName(summary[10]+" - "+summary[12]);
-                    poRemoteReqDto.setVendorId(Long.valueOf(summary[1]));
-                    poRemoteReqDto.setOfferId(Long.valueOf(summary[5]));
+
+                    prdr.setItemQty(pqdi.getDeliveryQty());
+//                    List<ItemInfo> items = pqdi.getCsVendorDetail().getPriceQuotation().getQuotationDetails().stream().map(
+//                            q->{
+//                               return new ItemInfo(q.getBrandName(),q.getItemAttribute(),q.getExtendedAttributes());
+//                            }).collect(Collectors.toList());
+//                    String[] summary = pqdi.getSummary().split(",");
+                    prdr.setItemName(pqdi.getCsVendorDetail().getCsDetail().getIndentDetail().getItemAttribute());
+                    poRemoteReqDto.setWarehouse(new ReferenceObjectDto(pqdi.getWarehouse().getId()));
+
+                    poRemoteReqDto.setVendorId(pqdi.getCsVendorDetail().getVendorId());
+                    poRemoteReqDto.setOfferId(pqdi.getCsVendorDetail().getPriceQuotation().getRemoteOfferId());
                     orderDetails.add(prdr);
-                }
+//                }
 
             });
             poRemoteReqDto.setOrderDetails(orderDetails);

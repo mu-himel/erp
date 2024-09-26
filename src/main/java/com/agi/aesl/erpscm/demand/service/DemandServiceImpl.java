@@ -9,9 +9,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.demand.dto.request.*;
 import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
+import com.agi.aesl.erpscm.inventory.service.CategoryService;
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
@@ -116,6 +118,9 @@ public class DemandServiceImpl implements DemandService{
 
     @Autowired
     private OrgService orgService;
+
+    @Autowired
+    private CategoryService categoryService;
 
     @Override
     @Transactional
@@ -256,8 +261,9 @@ public class DemandServiceImpl implements DemandService{
             if(demandDetailDto.getItem()!=null && demandDetailDto.getItem().getId()!=null) {
                 demandDetail.setItem(new Item(demandDetailDto.getItem().getId()));
             }
-            if(demandDetailDto.getSubCategory()!=null) {
-                demandDetail.setItemCategory(new ItemCategory(demandDetailDto.getSubCategory().getId()));
+            Optional<ItemCategory> catOp = categoryService.getItemCategory(demandDetailDto.getSubCategory().getId());
+            if(demandDetailDto.getSubCategory()!=null && catOp.isPresent()) {
+                demandDetail.setItemCategory(catOp.get());
             }
             if(demandDetailDto.getCategory()!=null) {
                 demandDetail.setItemParentCategory(new ItemCategory(demandDetailDto.getCategory().getId()));
@@ -275,6 +281,10 @@ public class DemandServiceImpl implements DemandService{
                     .stream().map(demandDetailAttribute -> {
                         if(demandDetailAttribute.getIsCustom()) {
                             PendingAttributeDto pendingAttributeDto = new PendingAttributeDto();
+                            if(catOp.isPresent()) {
+                                ItemCategory categoryOp = catOp.get();
+                                pendingAttributeDto.setSubCategory(new ReferenceObjectDto(categoryOp.getCpsCategoryId()));
+                            }
                             pendingAttributeDto.setAttributeType(demandDetailAttribute.getAttributeType());
                             pendingAttributeDto.setAttributeUnit(demandDetailAttribute.getAttributeUnit());
                             pendingAttributeDto.setAttributeValue(demandDetailAttribute.getAttributeValue());

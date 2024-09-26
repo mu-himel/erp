@@ -16,7 +16,7 @@ public interface UserItemRepository extends JpaRepository<UserItem,Long>, UserIt
             SELECT * FROM (SELECT i.id, i.brand_id ,i.active,
                     GROUP_CONCAT(DISTINCT  ia.attribute_type,' ',ia.attribute_value , ' ',ia.attribute_unit ORDER BY ia.id ASC separator ' - ') itemAttributes
             FROM user_item_attributes ia
-            LEFT JOIN user_items i on i.id=ia.item_id
+            LEFT JOIN user_items i on i.id=ia.user_item_id
             GROUP BY i.id) p
             WHERE p.brand_id=:brandId AND itemAttributes = :attribute
             """,nativeQuery = true)

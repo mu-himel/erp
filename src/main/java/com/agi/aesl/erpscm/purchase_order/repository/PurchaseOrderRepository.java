@@ -106,6 +106,8 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
         Long getId();
         String getPoNo();
         LocalDate getDeliveryDate();
+
+        BigDecimal getDeliveryQty();
         Warehouse getWarehouse();
         CsVendorDetailInfo getCsVendorDetail();
     }
@@ -162,5 +164,7 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
         Long getPriceQuotationId();
         Long getWarehouseId();
         String getSummary();
+        Boolean getIsAitAdded();
+        Boolean getIsVatAdded();
     }
 }

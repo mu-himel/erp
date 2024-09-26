@@ -6,6 +6,7 @@ import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
 
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
+import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -29,7 +30,7 @@ public interface GrnService {
 
 
 
-    void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto);
+    void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto, GrnMode mode);
     void createAutoGrn(Jwt token, GrnManualRequestDto grnManualDto);
 
 

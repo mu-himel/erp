@@ -1,12 +1,14 @@
 package com.agi.aesl.erpscm.purchase_order.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
+import com.agi.aesl.erpscm.purchase_order.entity.PoGroup;
 import com.agi.aesl.erpscm.purchase_order.service.PurchaseOrderService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
@@ -115,6 +117,14 @@ public class PurchaseController extends BaseController {
             @RequestBody NoteDto noteDto
     ){
         purchaseOrderService.rejectPo(loggedInUser, id, noteDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<?> test(){
+        PoGroup poGroup = new PoGroup();
+        poGroup.setId(5L);
+        purchaseOrderService.sentPoToVendors(poGroup);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

@@ -4,7 +4,7 @@ public interface PoQuery {
     String getPendingPOs= """
             SELECT 
             csheet.id as id,
-            (select cvah.verification_date 
+            (select MAX(cvah.verification_date) 
                 FROM cs_verification_approval_histories cvah 
                 WHERE cvah.cs_id=csheet.id 
                 AND cvah.cs_status IN ('APPROVED','VERIFIED')
@@ -32,7 +32,7 @@ public interface PoQuery {
         SELECT 
         cpo.id as poGroupId,
         csheet.id as id,
-        (select cvah.verification_date 
+        (select MAX(cvah.verification_date) 
             FROM cs_verification_approval_histories cvah 
             WHERE cvah.cs_id=csheet.id 
             AND cvah.cs_status IN ('APPROVED','VERIFIED')
@@ -60,7 +60,7 @@ public interface PoQuery {
             SELECT 
         cpo.id as poGroupId,
         csheet.id as id,
-        (select cvah.verification_date 
+        (select MAX(cvah.verification_date) 
             FROM cs_verification_approval_histories cvah 
             WHERE cvah.cs_id=csheet.id 
             AND cvah.cs_status IN ('APPROVED','VERIFIED')
@@ -150,6 +150,8 @@ public interface PoQuery {
                 cvdd.warehouse_id as warehouseId,
                 cvd.price_quotation_id as priceQuotationId,
                 cvd.vat_amount as vendorPartialVatAmount,
+                pqs2.is_ait_added as isAitAdded,
+                pqs2.is_vat_added as isVatAdded,
                 (select CONCAT(vendor_name,',',vendor_id,',',credit_payment_duration,',',pqd.unit_price,',',pqd.est_delivery_days,',',pq.remote_offer_id,
                 ',',pqs.delivery_charge,',',pqs.delivery_charge_amount,',',pqs.vat_percent,',',pqs.vat_amount,',',
                     pqd.item_attribute,',',
@@ -165,6 +167,7 @@ public interface PoQuery {
             left join cs_vendor_details cvd ON pod.cs_vendor_detail_id = cvd.id
             left join cs_vendor_delivery_details cvdd ON cvdd.vendor_delivery_detail_id  = cvd.id
             left join cs_details cd  ON cd.id = cvd.cs_detail_id
+            left join price_quotation_summary pqs2 ON pqs2.price_quotation_id = cvd.price_quotation_id
             left join indent_details ide ON cd.indent_detail_id = ide.id
             where po1.id= :poId
                 """;

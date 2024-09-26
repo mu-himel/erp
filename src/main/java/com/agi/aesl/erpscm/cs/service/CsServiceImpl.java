@@ -752,8 +752,10 @@ public class CsServiceImpl implements CsService{
                 List<PurchaseOrderDetail> pods = new ArrayList<>();
                 for(String csvdId : List.of(pol.getCsVendorDetailId().split(","))){
                     PurchaseOrderDetail pod = new PurchaseOrderDetail();
+                    pod.setItemName(null);
                     pod.setCsVendorDetail(new CsVendorDetail(Long.valueOf(csvdId)));
                     pod.setDeliveryDate(pol.getDeliveryDate());
+                    pod.setDeliveryQty(pol.getDeliveryQty());
                     pod.setPurchaseOrder(vPo);
                     pod.setWarehouse(new Warehouse(pol.getWarehouseId()));
                     pods.add(pod);

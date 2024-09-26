@@ -25,7 +25,10 @@ public class PurchaseOrderDetail {
     @ManyToOne
     private CsVendorDetail csVendorDetail;
 
+    private String itemName;
+
     private BigDecimal unitPrice;
+    private BigDecimal deliveryQty;
 
     private LocalDate deliveryDate;
 

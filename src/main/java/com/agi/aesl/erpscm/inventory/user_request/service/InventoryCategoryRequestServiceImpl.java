@@ -120,10 +120,20 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
 
         userCategoryRepository.save(userCategory);
 
-        verificationService.applyVerifyApprovalProcess(
+        AppliedVADto appliedVADto = verificationService.applyVerifyApprovalProcess(
                 userCategory, domainType, UserCategoryStatus.COMPLETED.toString(),
-                uri,domainType.toString(), List.of("-1"),
+                uri, domainType.toString(), List.of("-1"),
                 null);
+
+        if(appliedVADto.getVerifiers().isEmpty() && appliedVADto.getPanels().isEmpty()){
+            ObjectMapper mapper = new ObjectMapper();
+            try {
+                String employee = mapper.writeValueAsString(userCategory.getCreatedBy());
+                categoryService.sendToCps(token, userCategory, employee);
+            }catch (Exception ex){
+                throw new RuntimeException(ex.getMessage());
+            }
+        }
     }
 
     @Override

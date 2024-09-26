@@ -14,6 +14,7 @@ import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
+@NoArgsConstructor
 @Table(name = "user_items")
 public class UserItem extends VerifyableEntity implements ItemInterface {
 
@@ -33,10 +35,10 @@ public class UserItem extends VerifyableEntity implements ItemInterface {
     @Column(updatable = false)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private UserCategory category;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private UserCategory subCategory;
 
     @Column(name = "code")

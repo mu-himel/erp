@@ -16,6 +16,7 @@ public class GrnManualRequestDto {
     private String grnNo;
     private String deliveryCharge;
     private String mushak;
+    private Long poId;
     private BigDecimal deliveryChargeAmount;
     private Integer days;
     private String vatOption;
