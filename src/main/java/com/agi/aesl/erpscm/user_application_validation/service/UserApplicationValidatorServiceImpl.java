@@ -309,7 +309,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
         List<VerifierInfo> verifiers = new ArrayList<>();
         if(verifierOp.isPresent()){
             VerifierConfig verification = verifierOp.get();
-            if(verification.getVerifiers().isEmpty()) {
+            if(!verification.getVerifiers().isEmpty()) {
                 verifiers = verification.getVerifiers();
             }
             Boolean verificationRequired = verification.getVerificationRequired();
