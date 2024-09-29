@@ -10,4 +10,6 @@ public interface FileUploadService {
     FileUploadResponse uploadFile(Path path, MultipartFile multipartFile);
 
     Boolean validFileSize(Long fileSize, Long limit);
+
+    Boolean checkMimeType(String contentType, String... mimes);
 }

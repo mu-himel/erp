@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/pq")
@@ -88,5 +89,13 @@ public class PriceQuotationController extends BaseController {
     ){
         pqService.sendPq(token,pqDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PostMapping("/upload/{id}")
+    public ResponseEntity<?> uploadDoc(@RequestPart MultipartFile file, @PathVariable("id") Long id) {
+        return new ResponseEntity<>(
+                pqService.uploadDoc(id,file),
+                HttpStatus.CREATED
+        );
     }
 }

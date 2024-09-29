@@ -3,6 +3,8 @@ package com.agi.aesl.erpscm.price_quotation.service;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
+import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
+import com.agi.aesl.erpscm.fileupload.service.FileUploadService;
 import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.indent.service.IndentService;
 import com.agi.aesl.erpscm.integration.tender.TenderService;
@@ -27,8 +29,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.parameters.P;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,6 +65,9 @@ public class PqServiceImpl implements PqService{
 
     @Autowired
     private OrgService orgService;
+
+    @Autowired
+    private FileUploadService fileUploadService;
 
     @Override
     @Transactional
@@ -556,5 +563,21 @@ public class PqServiceImpl implements PqService{
     public void onReceiveCounterPq(Jwt token, PriceQuotationReqDto pqDto) {
         Optional<Indent> indentOp = indentService.getIndentFactory(pqDto);
         this._savePq(indentOp,pqDto,PriceQuotationStatus.COUNTER_TO_COMPANY,PriceQuotationStateStatus.RECEIVED);
+    }
+
+    @Override
+    public FileUploadResponse uploadDoc(Long rfqId, MultipartFile file) {
+        if(!fileUploadService.checkMimeType(file.getContentType(),
+                "application/pdf",
+                "image/jpeg","image/png",
+                "application/vnd.oasis.opendocument.text",
+                "application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "text/csv")){
+            throw new RuntimeException("Sorry! not file not a valid type (pdf,odt,doc,docx,xls,xlsx,csv)");
+        }
+        Path path = Path.of("./upload/"+rfqId+"/pq/", file.getOriginalFilename());
+        return fileUploadService.uploadFile(path, file);
     }
 }

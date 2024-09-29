@@ -1018,15 +1018,17 @@ public class ItemServiceImpl implements ItemService {
 
         // Get Category Brand
         CategoryBrand catBrand = null;
-        Optional<CategoryBrand> catBrandOp = categoryBrandRepository.findByCategoryIdAndName(subCat.getId(),syncItemDetail.getBrand().name());
-        if(catBrandOp.isEmpty()){
-            catBrand = new CategoryBrand();
-            catBrand.setCategory(subCat);
-            catBrand.setName(syncItemDetail.getBrand().name());
-            categoryBrandRepository.save(catBrand);
-            // throw new AesException("Sorry! Brand not found");
-        }else{
-            catBrand = catBrandOp.get();
+        if(syncItemDetail.getBrand()!=null) {
+            Optional<CategoryBrand> catBrandOp = categoryBrandRepository.findByCategoryIdAndName(subCat.getId(), syncItemDetail.getBrand().name());
+            if (catBrandOp.isEmpty()) {
+                catBrand = new CategoryBrand();
+                catBrand.setCategory(subCat);
+                catBrand.setName(syncItemDetail.getBrand().name());
+                categoryBrandRepository.save(catBrand);
+                // throw new AesException("Sorry! Brand not found");
+            } else {
+                catBrand = catBrandOp.get();
+            }
         }
 
         item.setItemCategory(subCat);

@@ -211,7 +211,7 @@ public interface ProductRequirementQuery {
             SELECT d.id as id,
                    d.demand_no as demandNo,
                    d.demand_date as demandDate,
-                   sum(dd.request_quantity) itemQty,
+                   sum(dd.pr_qty) itemQty,
                    sum(dd.approved_quantity) approvedQty,
                    e.employee_name as employeeName,
                    e.department_name as departmentName,

@@ -74,6 +74,8 @@ public class DemandDetail {
     @Enumerated(EnumType.STRING)
     private DemandStatus status;
 
+    private BigDecimal prQty;
+
 
     private LocalDateTime sendToUserDate;
 

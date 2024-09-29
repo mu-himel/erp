@@ -1,10 +1,12 @@
 package com.agi.aesl.erpscm.price_quotation.service;
 
+import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
 import com.agi.aesl.erpscm.price_quotation.dto.request.PriceQuotationReqDto;
 import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStateStatus;
 import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStatus;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,4 +35,6 @@ public interface PqService {
     void onLockPq(Jwt token, Long id);
 
     void onReceiveCounterPq(Jwt token, PriceQuotationReqDto pqDto);
+
+    FileUploadResponse uploadDoc(Long id, MultipartFile file);
 }

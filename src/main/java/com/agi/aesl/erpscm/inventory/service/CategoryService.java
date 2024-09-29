@@ -6,12 +6,15 @@ import com.agi.aesl.erpscm.common.CategoryInterface;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDtoCustom;
+import com.agi.aesl.erpscm.inventory.entity.CategoryBudget;
 import com.agi.aesl.erpscm.inventory.entity.CategoryWarehouseStore;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.enums.BudgetType;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -99,4 +102,7 @@ public interface CategoryService {
     void validateCategorySubCategoryRelation(ItemCategory category, ItemCategory subCategory);
 
     void sendToCps(Jwt token, CategoryInterface category, String employee);
+
+    void setYearlyBudget(Integer year,ItemCategory category);
+
 }

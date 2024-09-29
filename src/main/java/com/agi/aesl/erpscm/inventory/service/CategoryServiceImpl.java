@@ -761,6 +761,8 @@ public class CategoryServiceImpl implements CategoryService {
         MergePendingCategoryDto mergePendingCategoryDto = categoryApproveRequestDto.getMergePendingCategoryDto();
         if(catOp.isPresent()) {
             ItemCategory category = catOp.get();
+            setYearlyBudget(LocalDate.now().getYear(),category);
+
             if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
                 approvedWithBody(token, categoryApproveRequestDto,mergePendingCategoryDto);
                 category.setActive(true);
@@ -905,5 +907,15 @@ public class CategoryServiceImpl implements CategoryService {
         if(!subCategory.getParentCategory().getId().equals(category.getId())){
             throw new AesException("Sorry! " + subCategory.getName()+ " is not under category "+category.getName());
         }
+    }
+
+    @Override
+    public void setYearlyBudget(Integer year, ItemCategory category) {
+        CategoryBudget cb = new CategoryBudget();
+        cb.setCategory(category);
+        cb.setAmount(new BigDecimal(0));
+        cb.setBudgetType(BudgetType.REGULAR);
+        cb.setCurrentYear(year);
+        categoryBudgetRepository.save(cb);
     }
 }
