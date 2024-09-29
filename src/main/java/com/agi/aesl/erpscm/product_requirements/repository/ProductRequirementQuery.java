@@ -166,9 +166,9 @@ public interface ProductRequirementQuery {
                 name as name,
                 SUM(stock_qty) as stockQty,
                 (
-                        SELECT SUM(prtbl.request_quantity) as prQty
+                        SELECT SUM(prtbl.pr_qty) as prQty
                         FROM (
-                                SELECT pr.id as pr_id,dd.request_quantity,dd.id,
+                                SELECT pr.id as pr_id,dd.request_quantity,COALESCE(dd.pr_qty,0) as pr_qty,dd.id,
                                 d.warehouse_id ,
                                         GROUP_CONCAT(TRIM(dda.attribute_type),' ',TRIM(dda.attribute_value) , ' ',TRIM(dda.attribute_unit) separator ' - ') demand_attributes 
                                 FROM product_requirements pr 
@@ -180,7 +180,7 @@ public interface ProductRequirementQuery {
                                 GROUP BY dd.id
                         ) prtbl
                         WHERE prtbl.warehouse_id = i2.warehouse_id
-                        AND prtbl.demand_attributes LIKE CONCAT('%',:attribute,'%')
+                        AND  (prtbl.demand_attributes IS NULL OR prtbl.demand_attributes LIKE CONCAT('%',:attribute,'%'))
                 ) as prQty,
                 0 as inTransit 
 

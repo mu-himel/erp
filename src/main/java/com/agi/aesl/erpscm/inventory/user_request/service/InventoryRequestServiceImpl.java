@@ -289,7 +289,7 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
                 /**
                  * Here may be need something more todo
                  */
-                itemService.sendItemToCps(claimResolver,employee,userItem,userItem.getItemAttributes(),null);
+                itemService.sendItemToCps(claimResolver,employee,userItem,userItem.getItemAttributes(),userItem.getWarehouseStore());
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             }

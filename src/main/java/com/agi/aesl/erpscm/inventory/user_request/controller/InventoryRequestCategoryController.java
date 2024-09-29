@@ -151,7 +151,7 @@ public class InventoryRequestCategoryController extends BaseController {
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                categoryRequestService.getClosed(token,Optional.empty(),page,size,false),
+                categoryRequestService.getClosed(token,Optional.empty(),page,size,true),
                 HttpStatus.OK);
     }
 

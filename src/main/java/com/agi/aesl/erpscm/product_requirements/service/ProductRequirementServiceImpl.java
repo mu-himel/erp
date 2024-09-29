@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import com.agi.aesl.erpscm.demand.entity.DemandDetail;
+import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 import com.agi.aesl.erpscm.demand.service.DemandService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -36,6 +38,9 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
     @Autowired
     private ProductRequirementRepository productRequirementRepository;
 
+    @Autowired
+    private DemandDetailRepository demandDetailRepository;
+
 
     @Override
     @Transactional
@@ -45,7 +50,11 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
         if(empOp.isEmpty()){
             throw new RuntimeException("sorry! employee not found");
         }
-
+        Optional<DemandDetail> ddOp = demandDetailRepository.findById(productRequirementRequestDto.getDemandDetail().getId());
+        if(ddOp.isPresent()){
+            DemandDetail demandDetail = ddOp.get();
+            demandDetail.setPrQty(productRequirementRequestDto.getDemandDetail().getPrQty());
+        }
         ProductRequirement productRequirement = productRequirementRequestDto.getEntity();
 //        productRequirement.setDemandDeadline(getPRDeadline(
 //            productRequirementRequestDto.getDemandDate(),
