@@ -478,7 +478,6 @@ public class DemandServiceImpl implements DemandService{
     @Override
     public Page<?> getAllPendingVerificationDemands(Jwt token, Optional<Integer> page, Optional<Integer> size,
             Optional<String> fromDateStr, Optional<String> toDateStr) {
-//        ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
         
         String moduleUri = "demand/pending-verification";
@@ -1033,7 +1032,7 @@ public class DemandServiceImpl implements DemandService{
                 );
             }else {
 
-                if(!demand.getIsCanceled()) {
+                if(demand.getIsCanceled()==null || !demand.getIsCanceled()) {
                     demandMailService.setClaimResolver(claimResolver);
                     demandMailService.setDemand(demand);
                     demandMailService.getStoreUsers("demand/pending");
