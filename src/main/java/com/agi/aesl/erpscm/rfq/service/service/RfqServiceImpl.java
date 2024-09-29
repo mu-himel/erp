@@ -219,6 +219,37 @@ public class RfqServiceImpl implements RfqService{
     }
 
     @Override
+    public Page<?> getAllClosedRFQs(Jwt token, Optional<String> indentNo, Optional<String> category,
+                                    Optional<String> subCategory, Optional<String> priority,
+                                    Optional<Integer> daysRemain, Optional<String> fromDateOp,
+                                    Optional<String> toDateOp, Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+        String uri="";
+
+        if((fromDateOp.isPresent() && toDateOp.isEmpty()) ||
+                (fromDateOp.isEmpty() && toDateOp.isPresent())){
+            throw new RuntimeException("Please select both date filter");
+        }
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate = null;
+        if(fromDateOp.isPresent() && toDateOp.isPresent()){
+            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
+            toDate   = LocalDateTime.parse(fromDateOp.get()+"T23:59:59");
+        }
+        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
+        return indentRepository.getAllIndentsWithCloseRfqStatus(
+                indentNo.orElse(null),
+                category.orElse(null),
+                subCategory.orElse(null),
+                priority.orElse(null),
+                daysRemain.orElse(null),
+                fromDate,
+                toDate,
+                pageable);
+    }
+
+    @Override
     public Optional<?> getAvailableVendorsCount(Jwt token, Long id) {
         Optional<Indent> indentOp = indentRepository.findById(id);
 
@@ -253,5 +284,12 @@ public class RfqServiceImpl implements RfqService{
             return Optional.ofNullable(resposne.getBody());
         }
         return Optional.empty();
+    }
+
+    @Override
+    @Transactional
+    public void expire(Jwt token, Long id) {
+        Optional<Indent> indentOp = indentRepository.findById(id);
+        indentOp.ifPresent(indent-> indent.setExpireDateTime(LocalDateTime.now()));
     }
 }

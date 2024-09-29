@@ -12,6 +12,7 @@ import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.demand.dto.request.DemandRequestDto;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
@@ -26,6 +27,7 @@ import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.entity.ItemImportLog;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import com.agi.aesl.erpscm.inventory.repository.ItemImportLogRepository;
+import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
@@ -84,6 +86,14 @@ public class AccountServiceImpl implements AccountService{
 
     @Autowired
     private ItemImportLogRepository itemImportLogRepository;
+
+
+    private ItemService itemService;
+
+    @Override
+    public void setItemService(ItemService itemService) {
+        this.itemService = itemService;
+    }
 
     @Override
     public String getNextAccountNo() {
@@ -306,6 +316,8 @@ public class AccountServiceImpl implements AccountService{
             ledgerAccount.setOpeningCreditAmount(ledgerAccountRequestDto.getOpeningCreditAmount());
             ledgerAccount.setOpeningDebitAmount(ledgerAccountRequestDto.getOpeningDebitAmount());
             ledgerAccount.setRequestedBy(employee);
+            ledgerAccount.setOpeningStock(ledgerAccountRequestDto.getOpeningStock());
+            ledgerAccount.setUnit(ledgerAccountRequestDto.getUnit());
             ledgerAccount.setAccountStatus(AccountType.PENDING_VERIFICATION);
             accountRepository.save(ledgerAccount);
 
@@ -400,6 +412,10 @@ public class AccountServiceImpl implements AccountService{
                 Warehouse warehouse = ledgerAccount.getWarehouse();
                 Item item = ledgerAccount.getItem();
                 item.setActive(true);
+                if(itemService!=null) {
+                    itemService.stockIn(item, ledgerAccount.getOpeningStock(), ledgerAccount.getWarehouse().getId(),
+                            ledgerAccount.getWarehouseStore().getId());
+                }
                 Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouse.getId());
                 if(iilOp.isPresent()){
                     ItemImportLog iil = iilOp.get();
@@ -443,6 +459,11 @@ public class AccountServiceImpl implements AccountService{
             Warehouse warehouse = ledgerAccount.getWarehouse();
             Item item = ledgerAccount.getItem();
             item.setActive(true);
+            if(itemService!=null) {
+                itemService.stockIn(item, ledgerAccount.getOpeningStock(), ledgerAccount.getWarehouse().getId(),
+                        ledgerAccount.getWarehouseStore().getId());
+            }
+
             Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouse.getId());
             if(iilOp.isPresent()){
                 ItemImportLog iil = iilOp.get();
@@ -466,12 +487,13 @@ public class AccountServiceImpl implements AccountService{
 
     @Override
     @Transactional
-    public void createItemLedger(Item item, Warehouse warehouse) {
+    public void createItemLedger(Item item, Warehouse warehouse, WarehouseStore warehouseStore) {
         LedgerAccount ledgerAccount = new LedgerAccount();
         ledgerAccount.setItem(item);
         ledgerAccount.setAccountNo(getNextAccountNo());
         ledgerAccount.setAccountStatus(AccountType.PENDING);
         ledgerAccount.setWarehouse(warehouse);
+        ledgerAccount.setWarehouseStore(warehouseStore);
         accountRepository.save(ledgerAccount);
     }
 

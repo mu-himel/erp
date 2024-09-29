@@ -21,6 +21,7 @@ public class CpsServerConfig {
     private String counterOfferEndpoint;
     private String lockOfferEndpoint;
     private String declineOfferEndpoint;
+    private String awardedOfferEndpoint;
 
     private String sentPoEndpoint;
 
@@ -66,6 +67,14 @@ public class CpsServerConfig {
         sb.append(this.host).append(this.declineOfferEndpoint
             .replace("{remoteOfferId}", offerId.toString())
             .replace("{vendorId}",vendorId.toString()));
+        return sb.toString();
+    }
+
+    public String getAwardedOfferEndpoint(Long offerId, Long vendorId){
+        StringBuilder sb =  new StringBuilder();
+        sb.append(this.host).append(this.awardedOfferEndpoint
+                .replace("{remoteOfferId}", offerId.toString())
+                .replace("{vendorId}",vendorId.toString()));
         return sb.toString();
     }
 

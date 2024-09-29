@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.user_application_validation.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -18,6 +19,7 @@ public abstract class VerifyableEntity {
     public LocalDateTime reviewDate;
 
     @Transient
+    @JsonIgnore
     private String status;
 
     public void setStatus(String status){

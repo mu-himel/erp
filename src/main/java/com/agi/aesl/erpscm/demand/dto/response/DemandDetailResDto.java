@@ -23,6 +23,7 @@ public class DemandDetailResDto {
         Long demandId;
         LocalDateTime demandDate;
         DemandStatus demandStatus;
+        Boolean isCanceled;
         Long warehouseId;
         String warehouseName;
         String warehouseLocation;

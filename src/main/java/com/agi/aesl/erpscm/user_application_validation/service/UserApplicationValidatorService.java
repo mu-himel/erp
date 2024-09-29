@@ -22,9 +22,9 @@ import org.springframework.security.oauth2.jwt.Jwt;
 public interface UserApplicationValidatorService<T> {
     Optional<VerifierConfig> prepareLogicForVerifiers(ClaimResolver claimResolver, String uri, String criteriaGroup, String categories);
     UserApplicationValidatorService<T> setVerifiers(T t, List<VerifierInfo> verifiers, DomainType domainType,
-                                                    VerifierMailService verifierMailService);
+                                                    VerifierMailService<T> verifierMailService);
     void setApprovers(T t, List<VerifierInfo> verifiers,List<ApprovalPanel> approvalPanels, DomainType domainType,
-                      VerifierMailService verifierMailService);
+                      VerifierMailService<T> verifierMailService);
 
     void addVerification(UserApplicationValidation verification);
     void addVerification(List<UserApplicationValidation> verifications);

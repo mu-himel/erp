@@ -66,7 +66,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Override
     @Transactional
     public void setApprovers(T t, List<VerifierInfo> verifiers,List<ApprovalPanel> approvalPanels, DomainType domainType,
-                             VerifierMailService verifierMailService) {
+                             VerifierMailService<T> verifierMailService) {
         if(verifiers.size()==0 && approvalPanels.size()>0){
             Optional<ApprovalPanel> firstPanel = approvalPanels.stream().findFirst();
             if(firstPanel.isPresent()){
@@ -101,7 +101,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Override
     @Transactional
     public UserApplicationValidatorService<T> setVerifiers(T t, List<VerifierInfo> verifiers,
-                                       DomainType domainType, VerifierMailService verifierMailService) {
+                                       DomainType domainType, VerifierMailService<T> verifierMailService) {
         if (verifiers.size() > 0) {
             Optional<VerifierInfo> firstOp = verifiers.stream().findFirst();
             VerifierInfo _verifier = firstOp.get();
@@ -344,8 +344,8 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
         List<VerifierInfo> verifiers = this.prepareLogicForVerifiers(t, verifierOp,status);
         List<ApprovalPanel> panels = this.getApprovalPanels(claimResolver, uri, String.join(",", ids));
         this.setVerifiers(t, verifiers, domainType,
-                        null)
-                .setApprovers(t,verifiers,panels,domainType,null);
+                        mailService)
+                .setApprovers(t,verifiers,panels,domainType,mailService);
 
         return new AppliedVADto(verifiers,panels);
     }

@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class FileUploadServiceImpl implements FileUploadService{
@@ -36,5 +38,12 @@ public class FileUploadServiceImpl implements FileUploadService{
     @Override
     public Boolean validFileSize(Long fileSize, Long limit) {
         return fileSize.equals(limit) || fileSize < limit;
+    }
+
+    @Override
+    public Boolean checkMimeType(String contentType, String... mimes) {
+        List<String> mimeList = List.of(mimes);
+        Optional<String> mimeOp = mimeList.stream().filter(mime-> mime.equals(contentType)).findAny();
+        return mimeOp.isPresent();
     }
 }

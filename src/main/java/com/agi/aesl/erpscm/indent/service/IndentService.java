@@ -5,6 +5,7 @@ import com.agi.aesl.erpscm.indent.dto.request.IndentRejectDto;
 import com.agi.aesl.erpscm.indent.dto.request.IndentRequestDto;
 import com.agi.aesl.erpscm.indent.dto.request.MoveIndentRequestDto;
 import com.agi.aesl.erpscm.indent.entity.Indent;
+import com.agi.aesl.erpscm.price_quotation.dto.request.PriceQuotationReqDto;
 import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomainService;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -59,4 +60,6 @@ public interface IndentService extends VerificationDomainService {
     Page<?> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<String> priority);
 
     void reviewIndent(Jwt token, Long id, ReviewDto reviewDto);
+
+    Optional<Indent> getIndentFactory(PriceQuotationReqDto pqDto);
 }

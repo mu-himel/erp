@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.network;
 
+import com.agi.aesl.erpscm.organization.entity.Organization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -22,6 +23,15 @@ public class NetworkService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         return headers;
     }
+
+    public HttpHeaders setHttpHeaders(Organization organization){
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("OrgId",organization.getCpsVendorRegistrationId().toString());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
+    }
+
+
 
     public HttpHeaders setHttpHeaders(String token){
         HttpHeaders headers = new HttpHeaders();

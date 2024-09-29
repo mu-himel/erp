@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.demand.service;
 
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -8,22 +9,30 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.agi.aesl.erpscm.common.ReferenceObjectDto;
+import com.agi.aesl.erpscm.config.CpsServerConfig;
+import com.agi.aesl.erpscm.demand.dto.request.*;
 import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
+import com.agi.aesl.erpscm.inventory.service.CategoryService;
+import com.agi.aesl.erpscm.network.NetworkService;
+import com.agi.aesl.erpscm.organization.entity.Organization;
+import com.agi.aesl.erpscm.organization.service.OrgService;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
-import com.agi.aesl.erpscm.demand.dto.request.DemandReceiveDto;
-import com.agi.aesl.erpscm.demand.dto.request.DemandRequestDto;
-import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.demand.dto.response.DemandDetailItemResDto;
 import com.agi.aesl.erpscm.demand.dto.response.DemandDetailResDto;
 import com.agi.aesl.erpscm.demand.entity.Demand;
@@ -100,7 +109,18 @@ public class DemandServiceImpl implements DemandService{
 
     @Autowired
     private ModuleService moduleService;
-    
+
+    @Autowired
+    private NetworkService networkService;
+
+    @Autowired
+    private CpsServerConfig cpsServerConfig;
+
+    @Autowired
+    private OrgService orgService;
+
+    @Autowired
+    private CategoryService categoryService;
 
     @Override
     @Transactional
@@ -202,10 +222,11 @@ public class DemandServiceImpl implements DemandService{
         if(claimResolver.getEmployee().isPresent() && claimResolver.getEmployee().get().getWarehouseId()!=null){
             demand.setWarehouse(new Warehouse(claimResolver.getEmployee().get().getWarehouseId()));
         }
-        setDemandDetail(demandRequestDto, demand);
+        List<PendingAttributeDto> pendingAttributes = new ArrayList<>();
+        setDemandDetail(demandRequestDto, demand,pendingAttributes);
         demandRepository.save(demand);
         setVerifiers(demand, verifiers);
-        List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, demandRequestDto);
+        List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, demandRequestDto.getCategories());
         if(verifiers.size()==0 && panels.size()>0){
             demand.setStatus(DemandStatus.PENDING_APPROVAL);
             Optional<ApprovalPanel> firstPanel = panels.stream().findFirst();
@@ -217,12 +238,21 @@ public class DemandServiceImpl implements DemandService{
             }
         }
         setApprovers(demand, panels);
+        if(!pendingAttributes.isEmpty()) {
+            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
+            if (orgOp.isPresent()) {
+                HttpHeaders httpHeaders = networkService.setHttpHeaders(orgOp.get());
+                PendingAttributeRemoteDto pendingAttributeRemoteDto = new PendingAttributeRemoteDto(pendingAttributes);
+                HttpEntity<PendingAttributeRemoteDto> payload = new HttpEntity<>(pendingAttributeRemoteDto, httpHeaders);
+                networkService.post(cpsServerConfig.getPendingItemReqEndpoint() + "/pending-attributes", payload, Void.class);
+            }
+        }
 
         return this.getDemandDetail(demand.getId());
     }
 
     @Transactional
-    private void setDemandDetail(DemandRequestDto demandRequestDto, Demand demand) {
+    private void setDemandDetail(DemandRequestDto demandRequestDto, Demand demand, List<PendingAttributeDto> pendingAttributes) {
         demand.setDemandDetails(demandRequestDto.getDemandDetails().stream().map(demandDetailDto -> {
             DemandDetail demandDetail = new DemandDetail();
             if(demandDetailDto.getId()!=null){
@@ -231,8 +261,9 @@ public class DemandServiceImpl implements DemandService{
             if(demandDetailDto.getItem()!=null && demandDetailDto.getItem().getId()!=null) {
                 demandDetail.setItem(new Item(demandDetailDto.getItem().getId()));
             }
-            if(demandDetailDto.getSubCategory()!=null) {
-                demandDetail.setItemCategory(new ItemCategory(demandDetailDto.getSubCategory().getId()));
+            Optional<ItemCategory> catOp = categoryService.getItemCategory(demandDetailDto.getSubCategory().getId());
+            if(demandDetailDto.getSubCategory()!=null && catOp.isPresent()) {
+                demandDetail.setItemCategory(catOp.get());
             }
             if(demandDetailDto.getCategory()!=null) {
                 demandDetail.setItemParentCategory(new ItemCategory(demandDetailDto.getCategory().getId()));
@@ -248,6 +279,17 @@ public class DemandServiceImpl implements DemandService{
 
             demandDetail.setAttributes(demandDetailDto.getAttributes()
                     .stream().map(demandDetailAttribute -> {
+                        if(demandDetailAttribute.getIsCustom()) {
+                            PendingAttributeDto pendingAttributeDto = new PendingAttributeDto();
+                            if(catOp.isPresent()) {
+                                ItemCategory categoryOp = catOp.get();
+                                pendingAttributeDto.setSubCategory(new ReferenceObjectDto(categoryOp.getCpsCategoryId()));
+                            }
+                            pendingAttributeDto.setAttributeType(demandDetailAttribute.getAttributeType());
+                            pendingAttributeDto.setAttributeUnit(demandDetailAttribute.getAttributeUnit());
+                            pendingAttributeDto.setAttributeValue(demandDetailAttribute.getAttributeValue());
+                            pendingAttributes.add(pendingAttributeDto);
+                        }
                         demandDetailAttribute.setDemandDetail(demandDetail);
                         return demandDetailAttribute;
                     }).collect(Collectors.toList()));
@@ -261,9 +303,9 @@ public class DemandServiceImpl implements DemandService{
         }).collect(Collectors.toList()));
     }
 
-    private List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, DemandRequestDto demandRequestDto) {
+    private List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories) {
         List<ApprovalPanel> approvalPanels = moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
-                Optional.ofNullable(demandRequestDto.getCategories()),Optional.empty());
+                Optional.ofNullable(categories),Optional.empty());
         return approvalPanels;
     }
 
@@ -436,7 +478,6 @@ public class DemandServiceImpl implements DemandService{
     @Override
     public Page<?> getAllPendingVerificationDemands(Jwt token, Optional<Integer> page, Optional<Integer> size,
             Optional<String> fromDateStr, Optional<String> toDateStr) {
-//        ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
         
         String moduleUri = "demand/pending-verification";
@@ -488,8 +529,10 @@ public class DemandServiceImpl implements DemandService{
         DemandDetailResDto resDto = DemandDetailResDto.builder().build();
         for(DemandRepository.DemandDetailItem demandDetailItem: demandList){
 
+
+
             List<DemandDetailAttribute> demandDetailAttrs= demandDetailAttributeRepository.findByDemandDetailId(demandDetailItem.getDemandDetailId());
-            
+            resDto.setIsCanceled(demandDetailItem.getIsCanceled());
             resDto.setDaysRemain(demandDetailItem.getDaysRemain());
             resDto.setDeliveryDate(demandDetailItem.getDeliveryDate());
             resDto.setDemandNo(demandDetailItem.getDemandNo());
@@ -836,7 +879,7 @@ public class DemandServiceImpl implements DemandService{
 
                 demand.setDeliveryDate(LocalDate.parse(demandRequestDto.getDeliveryDate()));
             }
-            setDemandDetail(demandRequestDto, demand);
+            setDemandDetail(demandRequestDto, demand, new ArrayList<>());
             demand.setReviewerId(null);
             demandRepository.save(demand);
             // TODO following code needs to modify to maintain same behavior
@@ -848,9 +891,32 @@ public class DemandServiceImpl implements DemandService{
                 .prepareLogicForVerifiers(claimResolver,uri,"CATEGORY",demandRequestDto.getCategories());
 
             setVerifiers(demand, getVerifiers(demand, verifierOp));
-            setApprovers(demand, getApprovalPanels(claimResolver,uri, demandRequestDto));
+            setApprovers(demand, getApprovalPanels(claimResolver,uri, demandRequestDto.getCategories()));
 
         return this.getDemandDetail(demand.getId());
+    }
+
+    @Override
+    @Transactional
+    public void cancelDemand(Jwt token, Long id, String uri, String categories, NoteDto noteDto) {
+        claimResolver.setToken(token);
+        Optional<Demand> demandOp = demandRepository.findById(id);
+        if(demandOp.isEmpty()){
+            throw new RuntimeException("Sorry! Demand not found");
+        }
+
+        Demand demand = demandOp.get();
+        demand.setIsCanceled(true);
+        verificationService.removeVerification(demand.getId(), DomainType.DEMAND);
+        dvahistoryRepository.deleteAllByDemandId(demand.getId());
+        Optional<VerifierConfig> verifierOp = verificationService
+                .prepareLogicForVerifiers(claimResolver,uri,"CATEGORY",categories);
+
+        setVerifiers(demand, getVerifiers(demand, verifierOp));
+        setApprovers(demand, getApprovalPanels(claimResolver,uri, categories));
+
+        commentService.addComment(commentService.prepareComment(claimResolver.getEmployee().get(),DomainType.DEMAND,demand.getId(),noteDto.getNote(),
+                noteDto.getAttachments()));
     }
 
     @Override
@@ -859,19 +925,22 @@ public class DemandServiceImpl implements DemandService{
         Optional<Demand> demandOp  = demandRepository.findById(id);
         if(demandOp.isPresent()){
             Demand demand = demandOp.get();
+            if(!demand.getIsCanceled()) {
+                demandMailService.setClaimResolver(claimResolver);
+                demandMailService.setDemand(demand);
+                demandMailService.getStoreUsers("demand/pending");
+                demandMailService.sentMail(null, "Pending Demand");
 
-            demandMailService.setClaimResolver(claimResolver);
-            demandMailService.setDemand(demand);
-            demandMailService.getStoreUsers("demand/pending");
-            demandMailService.sentMail(null,"Pending Demand");
-
-            demand.setStatus(DemandStatus.PENDING);
-            demand.setDemandDetails(
-                    demand.getDemandDetails().stream().map(demandDetail -> {
-                        demandDetail.setStatus(DemandStatus.PENDING);
-                        return demandDetail;
-                    }).collect(Collectors.toList())
-            );
+                demand.setStatus(DemandStatus.PENDING);
+                demand.setDemandDetails(
+                        demand.getDemandDetails().stream().map(demandDetail -> {
+                            demandDetail.setStatus(DemandStatus.PENDING);
+                            return demandDetail;
+                        }).collect(Collectors.toList())
+                );
+            }else{
+                demand.setStatus(DemandStatus.CANCELED);
+            }
             DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
             demandVAHistory.setDemand(demand);
             demandVAHistory.setEmployee(new Employee(demand.getNextApproverId()));
@@ -963,19 +1032,22 @@ public class DemandServiceImpl implements DemandService{
                 );
             }else {
 
-                demandMailService.setClaimResolver(claimResolver);
-                demandMailService.setDemand(demand);
-                demandMailService.getStoreUsers("demand/pending");
-                demandMailService.sentMail(null,"Pending Demand");
+                if(demand.getIsCanceled()==null || !demand.getIsCanceled()) {
+                    demandMailService.setClaimResolver(claimResolver);
+                    demandMailService.setDemand(demand);
+                    demandMailService.getStoreUsers("demand/pending");
+                    demandMailService.sentMail(null, "Pending Demand");
 
-                demand.setStatus(DemandStatus.PENDING);
-                demand.setDemandDetails(
-                        demand.getDemandDetails().stream().map(demandDetail -> {
-                            demandDetail.setStatus(DemandStatus.PENDING);
-                            return demandDetail;
-                        }).collect(Collectors.toList())
-                );
-
+                    demand.setStatus(DemandStatus.PENDING);
+                    demand.setDemandDetails(
+                            demand.getDemandDetails().stream().map(demandDetail -> {
+                                demandDetail.setStatus(DemandStatus.PENDING);
+                                return demandDetail;
+                            }).collect(Collectors.toList())
+                    );
+                }else{
+                    demand.setStatus(DemandStatus.CANCELED);
+                }
                 
             }
 

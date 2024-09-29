@@ -66,6 +66,8 @@ public interface AccountQuery {
         la.opening_credit_amount as openingCreditAmount,
         la.opening_date as openingDate,
         la.opening_debit_amount as openingDebitAmount,
+        la.opening_stock as openingStock,
+        la.unit as unit,
         ws.store_name as store,
         ipc.id as categoryId,
         ipc.name as category,
@@ -305,6 +307,9 @@ public interface AccountQuery {
 
         String getReviewerId();
         String getReviewDate();
+
+        BigDecimal getOpeningStock();
+        String getUnit();
 
         default String setInitiatorWarehouseName(String location){
             return this.getInitiatorWarehouseName() + " " + location;

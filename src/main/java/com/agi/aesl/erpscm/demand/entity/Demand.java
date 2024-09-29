@@ -86,4 +86,6 @@ public class Demand {
 
     @ManyToOne
     private Employee requestedBy;
+
+    private Boolean isCanceled =false;
 }

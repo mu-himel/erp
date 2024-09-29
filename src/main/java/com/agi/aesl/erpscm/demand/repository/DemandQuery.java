@@ -19,6 +19,7 @@ interface DemandQuery {
                 d.demand_date as demandDate,
                 d.demand_no as demandNo,
                 d.status as demandStatus,
+                d.is_canceled as isCanceled,
                 dd.approved_quantity as approvedQuantity,
                 dd.request_quantity as requestQuantity,
                 dd.status as demandDetailStatus,
@@ -222,8 +223,8 @@ interface DemandQuery {
         LEFT JOIN acl_users e ON e.id = d.requested_by_id
         LEFT JOIN scm_warehouses w ON w.id = d.warehouse_id
         LEFT JOIN scm_demand_details dd ON dd.demand_id = d.id
-        LEFT JOIN scm_item_categories ic ON d.sub_category_id
-        LEFT JOIN scm_item_categories pc ON d.category_id
+        LEFT JOIN scm_item_categories ic ON ic.id = d.sub_category_id
+        LEFT JOIN scm_item_categories pc ON pc.id = d.category_id
         LEFT JOIN scm_demand_verification_approval_histories dvah ON dvah.demand_id = d.id
         WHERE ((d.next_verifier_id = :nextVerifierId AND d.status IN (:pendingVerification)) 
             OR (dvah.employee_id = :nextVerifierId AND dvah.demand_status='VERIFIED'))
@@ -344,8 +345,8 @@ interface DemandQuery {
         LEFT JOIN employees e ON e.id = d.requested_by_id
         LEFT JOIN warehouses w ON w.id = d.warehouse_id
         LEFT JOIN demand_details dd ON dd.demand_id = d.id
-        LEFT JOIN item_categories ic ON d.item_category_id
-        LEFT JOIN item_categories pc ON d.item_parent_category_id
+        LEFT JOIN item_categories ic ON ic.id = d.item_category_id
+        LEFT JOIN item_categories pc ON pc.id = d.item_parent_category_id
         LEFT JOIN demand_verification_approval_histories dvah ON dvah.demand_id = d.id
         WHERE (ic.id IN (:categories) OR pc.id IN (:categories)) 
         AND ((d.next_verifier_id = :nextVerifierId AND d.status IN (:pendingVerification)) 

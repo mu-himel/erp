@@ -3,9 +3,7 @@ package com.agi.aesl.erpscm.inventory.dto.request;
 
 import com.agi.aesl.erpscm.common.EntityConvertable;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
-import com.agi.aesl.erpscm.inventory.entity.Item;
-import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
-import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.entity.*;
 import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
 
 import jakarta.validation.constraints.NotBlank;
@@ -17,6 +15,7 @@ import org.springframework.beans.BeanUtils;
 
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -42,6 +41,8 @@ public class ItemRequestDto implements EntityConvertable<Item> {
 
     private String itemUnit;
 
+    private List<ItemFunctionalUnit> functionalUnits = new ArrayList<>();
+
     private Integer stockThresholdQty;
 
     private BigDecimal currentStockQty;
@@ -49,6 +50,8 @@ public class ItemRequestDto implements EntityConvertable<Item> {
     private BigDecimal reorderPercentage;
 
     private List<ItemAttribute> attributes;
+
+
 
     private ReferenceObjectDto brand;
 

@@ -1,6 +1,9 @@
 package com.agi.aesl.erpscm.inventory.entity;
 
 
+import com.agi.aesl.erpscm.common.CategoryInterface;
+import com.agi.aesl.erpscm.common.ItemAttributeInterface;
+import com.agi.aesl.erpscm.common.ItemInterface;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
 
@@ -27,6 +30,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Data
@@ -34,7 +38,7 @@ import java.util.List;
 @Table(name = "scm_items")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Item {
+public class Item implements ItemInterface {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -63,6 +67,9 @@ public class Item {
     private List<ItemStock> stocks;
 
     private String itemUnit;
+
+    @OneToMany(mappedBy="item",cascade=CascadeType.ALL)
+    private List<ItemFunctionalUnit>itemFunctionalUnits;
 
     private Integer stockThresholdQty;
     private BigDecimal reorderPercentage;
@@ -102,4 +109,20 @@ public class Item {
         return name;
     }
 
+    @Override
+    public CategoryInterface getCategory() {
+        return this.itemCategory;
+    }
+
+    public List<ItemAttributeInterface> getItemAttributes(){
+        return this.getAttributes().stream().map(
+                attr->{
+                    ItemAttributeInterface iatr = new ItemAttribute();
+                    iatr.setAttributeType(attr.getAttributeType());
+                    iatr.setAttributeUnit(attr.getAttributeUnit());
+                    iatr.setAttributeValue(attr.getAttributeValue());
+                    return iatr;
+                }
+        ).collect(Collectors.toList());
+    }
 }

@@ -277,7 +277,8 @@ public interface IndentQuery {
                                 COALESCE(SUM(idd.rfq_qty), 0)           as rfqQty,
                                 i.priority_date_time                    as priority,
                                 i.indent_status                                as status,
-                                0 as receivedQty,
+                                (select count(id) as total from price_quotations pq
+                                where rfq_id = i.id AND status = 'RECEIVED') as receivedQty,
                                 0 as totalReceivedPq,
                                 CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
                                 DATEDIFF(i.priority_date_time , CURRENT_DATE) as daysRemain
@@ -290,6 +291,7 @@ public interface IndentQuery {
                                         LEFT JOIN acl_users e ON e.id = i.requested_by_id
                                 
                         WHERE  i.indent_status IN ('APPROVED','VERIFIED') AND i.rfq_status = 'OPEN'
+                                AND i.expire_date_time > SYSDATE()
                                 AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo))
                                 AND (:category IS NULL OR LOWER(c.name) LIKE  CONCAT(LOWER(:category),'%'))
                                 AND (:subCategory IS NULL OR LOWER(sc.name) LIKE CONCAT(LOWER(:subCategory),'%'))
@@ -301,4 +303,85 @@ public interface IndentQuery {
             """;
 
     String countApprovedIndentWithOpenRfq="SELECT COUNT(*) FROM ("+getApprovedIndentWithOpenRfq+") as total";
+
+    String getAllIndentsByExpireDateTimeWithSearch= """
+            SELECT * FROM (SELECT  i.id                                    as id,
+                        csheet.id                               as csId,
+                        i.indent_no                             as indentNo,
+                        i.sent_date                             as sentDate,
+                        i.indent_date                           as indentDate,
+                        i.category_id                           as categoryId,
+                        CONCAT(c.name,'-',sc.name)              as categoryName,
+                        COUNT(ide.id)                           as itemsCount,
+                        COALESCE(SUM(idd.order_qty), 0)         as orderQty,
+                        COALESCE(SUM(idd.rfq_qty), 0)           as rfqQty,
+                        i.priority                              as priority,
+                        CASE WHEN csheet.id IS NULL THEN
+                                'PENDING'
+                        ELSE
+                                csheet.cs_status
+                        END                                as status,
+                        CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
+                        (SELECT count(*) FROM price_quotations pq 
+                                WHERE status='LOCKED' AND rfq_id = i.id) as lockedVendor
+                        
+                FROM indents i
+                        LEFT JOIN indent_details ide on i.id = ide.indent_id
+                        LEFT JOIN cs csheet ON csheet.indent_id = i.id
+                        LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
+                        LEFT JOIN scm_item_categories c on i.category_id = c.id
+                        LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
+                        LEFT JOIN acl_users e ON e.id = i.requested_by_id
+                        
+                WHERE  (i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.expire_date_time < :expiredDateTime)
+                GROUP BY i.id) r WHERE r.status IN ('PENDING','PENDING_VERIFICATION', 'PENDING_APPROVAL','REVIEW')
+            """;
+
+    String countAllIndentsByExpireDateTimeWithSearch = "SELECT COUNT(*) FROM ("+
+            getAllIndentsByExpireDateTimeWithSearch+") as total";
+
+    String getAllClosedRfq= """
+            SELECT i.id                                    as id,
+                                i.indent_no                             as indentNo,
+                                i.indent_date                           as indentDate,
+                                i.sent_date                             as sentDate,
+                                i.category_id                           as categoryId,
+                                c.name                                  as categoryName,
+                                sc.name                                 as subCategoryName,
+                                COUNT(ide.id)                           as itemsCount,
+                                COALESCE(SUM(idd.order_qty), 0)         as orderQty,
+                                COALESCE(SUM(idd.rfq_qty), 0)           as rfqQty,
+                                i.priority                              as priority,
+                                CASE WHEN ((i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.rfq_status = 'OPEN' AND i.expire_date_time < SYSDATE())) THEN
+                                        'CLOSED'
+                                ELSE
+                                        i.indent_status
+                                END as status,
+                                COALESCE((SELECT count(pq.id) FROM price_quotations pq 
+                                        WHERE pq.status = 'RECEIVED' AND pq.rfq_id = i.id),0) as receivedQty,
+                                COALESCE((SELECT count(pq.id) FROM price_quotations pq 
+                                        WHERE pq.rfq_id = i.id),0) as totalReceivedPq,
+                                CONCAT(e.employee_id,'-',e.employee_name)        as employeeName
+                                
+                        FROM indents i
+                                        LEFT JOIN indent_details ide on i.id = ide.indent_id
+                                        LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
+                                        LEFT JOIN scm_item_categories c on i.category_id = c.id
+                                        LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
+                                        LEFT JOIN acl_users e ON e.id = i.requested_by_id
+                                
+                        WHERE   (
+                                        (i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.rfq_status = 'OPEN' AND i.expire_date_time < SYSDATE()) 
+                                        OR i.rfq_status = 'REJECTED'
+                                )
+                                AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo))
+                                AND (:category IS NULL OR LOWER(c.name) LIKE  CONCAT(LOWER(:category),'%'))
+                                AND (:subCategory IS NULL OR LOWER(sc.name) LIKE CONCAT(LOWER(:subCategory),'%'))
+                                AND (:priority IS NULL OR i.priority = :priority)
+                                AND (:daysRemain IS NULL OR DATEDIFF(i.priority_date_time , CURRENT_DATE) = :daysRemain)
+                                AND (:fromDate IS NULL OR (i.sent_date BETWEEN :fromDate AND :toDate))
+                                
+                        GROUP BY i.id
+            """;
+    String countAllClosedRfq="SELECT COUNT(*) FROM ("+getAllClosedRfq+") as total";
 }

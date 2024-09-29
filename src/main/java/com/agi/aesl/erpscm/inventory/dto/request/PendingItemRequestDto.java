@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.inventory.dto.request;
 
+import com.agi.aesl.erpscm.demand.dto.request.PendingAttributeDto;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import lombok.Data;
 
@@ -16,6 +17,7 @@ public class PendingItemRequestDto {
     private String designation;
     private String department;
     private Long warehouseId;
+    private Long warehouseStoreId;
     private String warehouseName;
     private Long organizationId;
     private String warehouseLocation;
@@ -23,5 +25,5 @@ public class PendingItemRequestDto {
     private String extendedAttributes;
     private String itemUnit;
     private String code;
-    private List<ItemAttribute> attributes;
+    private List<PendingItemAttributeDto> attributes;
 }

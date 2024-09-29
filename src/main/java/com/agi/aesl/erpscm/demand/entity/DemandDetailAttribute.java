@@ -30,4 +30,6 @@ public class DemandDetailAttribute {
 
     @Column(length = 500)
     private String attributeValue;
+
+    private Boolean isCustom;
 }

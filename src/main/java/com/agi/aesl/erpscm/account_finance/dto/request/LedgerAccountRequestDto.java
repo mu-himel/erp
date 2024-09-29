@@ -19,4 +19,6 @@ public class LedgerAccountRequestDto {
     private Long categoryId;
     private Long subCategoryId;
     private String store;
+    private String unit;
+    private BigDecimal openingStock;
 }

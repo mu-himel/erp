@@ -34,6 +34,7 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
     interface DemandDetailItem{
         Long getId();
         Long getDemandId();
+        Boolean getIsCanceled();
         Long getDemandDetailId();
         Long getItemCategoryId();
         Long getItemParentCategoryId();

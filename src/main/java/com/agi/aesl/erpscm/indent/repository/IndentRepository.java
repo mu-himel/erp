@@ -60,6 +60,23 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
     Page<SentRfqListItem> getAllIndentsWithOpenRfqStatus(String indentNo, String category, String subCategory,
                                                          String priority, Integer daysRemain, LocalDateTime fromDate,
                                                          LocalDateTime toDate, Pageable pageable);
+
+
+    @Query(value = getAllIndentsByExpireDateTimeWithSearch,
+            countQuery = countAllIndentsByExpireDateTimeWithSearch,
+            nativeQuery = true
+    )
+    Page<CsListInfo> getAllIndentsByExpireDateTime(@Param("expiredDateTime") LocalDateTime currentDateTime,
+                                                   Pageable pageable);
+
+    @Query(value = getAllClosedRfq,
+            countQuery = countAllClosedRfq,
+            nativeQuery = true
+    )
+    Page<CsListInfo> getAllIndentsWithCloseRfqStatus(String indentNo, String category, String subCategory,
+                                                     String priority, Integer daysRemain,
+                                                     LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
+
     interface SentRfqListItem extends IndentInfo {
         LocalDateTime getSentDate();
         Integer getReceivedQty();
@@ -85,6 +102,21 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
         LocalDate getIndentDate();
         @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDateTime getSentDate();
+    }
+
+    interface CsListInfo {
+        Long getId();
+        Long getCsId();
+        String getIndentNo();
+        String getCategoryName();
+        Long getItemsCount();
+        Long getRfqQty();
+        String getStatus();
+        Long getLockedVendor();
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDate getIndentDate();
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDate getSentDate();
     }
 
 

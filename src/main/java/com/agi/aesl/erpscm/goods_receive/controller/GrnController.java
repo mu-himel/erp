@@ -5,6 +5,7 @@ import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
 
 import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
 
+import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,9 +39,9 @@ public class GrnController extends BaseController {
     @PostMapping
     public ResponseEntity<?> createGrn(
             @AuthenticationPrincipal Jwt token,
-            @RequestBody @Valid GoodReceiveNoteDto goodReceiveNoteDto
+            @RequestBody @Valid GrnManualRequestDto goodReceiveNoteDto
             ){
-        grnService.addGrn(token,goodReceiveNoteDto);
+        grnService.createAutoGrn(token,goodReceiveNoteDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
@@ -50,7 +51,7 @@ public class GrnController extends BaseController {
             @AuthenticationPrincipal Jwt token,
             @RequestBody @Valid GrnManualRequestDto grnManualDto
     ){
-        grnService.createManualGrn(token, grnManualDto);
+        grnService.createManualGrn(token, grnManualDto, GrnMode.MANUAL);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

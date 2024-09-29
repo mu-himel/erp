@@ -21,6 +21,7 @@ import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.pr_indent.repository.PrIndentRepository;
+import com.agi.aesl.erpscm.price_quotation.dto.request.PriceQuotationReqDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
@@ -607,5 +608,22 @@ public class IndentServiceImpl implements IndentService{
         indentOp.ifPresent(indent -> {
             indent.setIndentStatus(IndentVerificationStatus.REJECTED);
         });
+    }
+
+    @Override
+    public Optional<Indent> getIndentFactory(PriceQuotationReqDto pqDto) {
+        Optional<Indent> indentOp = Optional.empty();
+        if(pqDto.getRfqId() != null && pqDto.getCode() == null){
+            indentOp = this.getIndentById(pqDto.getRfqId());
+        }
+
+        if(pqDto.getCode() != null && pqDto.getRfqId() == null){
+            indentOp = this.getIndentByCode(pqDto.getCode());
+        }
+
+        if(indentOp.isEmpty()){
+            throw new RuntimeException("Sorry! Rfq not found");
+        }
+        return indentOp;
     }
 }

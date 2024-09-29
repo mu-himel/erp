@@ -117,7 +117,7 @@ public class GrnServiceImpl implements GrnService{
 
     @Override
     @Transactional
-    public void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto) {
+    public void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto, GrnMode mode) {
         claimResolver.setToken(token);
         String uri = "";
         if(claimResolver.getEmployee()==null){
@@ -125,13 +125,16 @@ public class GrnServiceImpl implements GrnService{
         }
         GoodReceiveNote grn = new GoodReceiveNote();
         grn.setGrnDate(LocalDate.now());
+        if(mode.equals(GrnMode.AUTO)) {
+            grn.setRemotePoId(grnManualDto.getPoId());
+        }
         grn.setGrnNo(grnManualDto.getGrnNo());
         grn.setIndentNo(grnManualDto.getIndentNo() );
-        grn.setGrnMode(GrnMode.MANUAL);
+        grn.setGrnMode(mode);
         grn.setGrnStatus(GrnStatus.PENDING_QC);
 
         grn.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
-        if(token != null){
+        if(token != null && claimResolver.getEmployee().isPresent()){
             grn.setCreatedBy(claimResolver.getEmployee().get());
         }
 
@@ -183,6 +186,12 @@ public class GrnServiceImpl implements GrnService{
         qcMailService.getAuthorizedUsers(uri);
         qcMailService.sentMail(null,"Pending Demand");
 
+    }
+
+    @Override
+    public void createAutoGrn(Jwt token, GrnManualRequestDto grnManualDto) {
+        grnManualDto.setGrnNo(getNextGrnNumber());
+        createManualGrn(token,grnManualDto,GrnMode.AUTO);
     }
 
     @Override

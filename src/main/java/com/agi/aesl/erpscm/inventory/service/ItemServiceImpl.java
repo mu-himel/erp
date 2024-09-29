@@ -4,11 +4,15 @@ package com.agi.aesl.erpscm.inventory.service;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
 import com.agi.aesl.erpscm.account_finance.service.AccountService;
 import com.agi.aesl.erpscm.common.DataFilter;
+import com.agi.aesl.erpscm.common.ItemAttributeInterface;
+import com.agi.aesl.erpscm.common.ItemInterface;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseStoreRepository;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
+import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseStoreService;
+import com.agi.aesl.erpscm.demand.dto.request.PendingAttributeDto;
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 //import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
@@ -98,6 +102,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private WarehouseService warehouseService;
+
+    @Autowired
+    private WarehouseStoreService warehouseStoreService;
     @Autowired
     private CategoryBrandRepository categoryBrandRepository;
 
@@ -119,6 +126,9 @@ public class ItemServiceImpl implements ItemService {
     @Autowired
     private IntegrationReaderService integrationReaderService;
 
+    @Autowired
+    private ItemFuncationalUnitRepository itemFuncationalUnitRepository;
+
     @Value("${upload.dir}")
     private String uploadDir;
 
@@ -133,9 +143,12 @@ public class ItemServiceImpl implements ItemService {
         if(itemDetailOptional.isEmpty()){
             throw new AesException("Sorry! Item not found");
         }
+
         ItemRepository.ItemDetail detail = itemDetailOptional.get();
+        List<ItemFunctionalUnit> functionalUnits = itemFuncationalUnitRepository.findAllByItemId(detail.getId());
         ItemDetail itemDetail = new ItemDetail();
         itemDetail.setId(detail.getId());
+        itemDetail.setFunctionalUnits(functionalUnits);
         itemDetail.setName(detail.getName());
         itemDetail.setCode(detail.getCode());
         itemDetail.setActive(detail.getActive());
@@ -544,51 +557,69 @@ public class ItemServiceImpl implements ItemService {
 
 
         if(item.getId()!=null){
+            sendItemToCps(claimResolver,itemRequestDto.getEmployee(),item, item.getItemAttributes(),warehouseStore);
 
-            PendingItemRequestDto pendingItemRequestDto = new PendingItemRequestDto();
-            Employee employee = claimResolver.getEmployee().orElse(null);
-            pendingItemRequestDto.setItemAttributeName(itemAttributeName);
-            if(employee!=null) {
-                pendingItemRequestDto.setRequestedBy(itemRequestDto.getEmployee());
-                pendingItemRequestDto.setDesignation(employee.getDesignationName());
-                pendingItemRequestDto.setDepartment(employee.getDepartmentName());
-                pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
-                pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
-            }else{
-                throw new RuntimeException("Sorry! Employee Info missing");
-            }
-            Optional<ItemCategory> catOp = categoryService.getAnyItemCategory(item.getItemCategory().getId());
-
-
-            pendingItemRequestDto.setSubCategoryCode(catOp.get().getCode());
-            if(item.getBrand()!=null) {
-                Optional<CategoryBrand> brandOp = categoryBrandRepository.findById(item.getBrand().getId());
-                pendingItemRequestDto.setBrand(brandOp.get().getName());
-            }
-            pendingItemRequestDto.setReportingManager(employee.getReportingManager());
-            pendingItemRequestDto.setEmployeeId(employee.getId());
-            pendingItemRequestDto.setAttributes(itemRequestDto.getAttributes());
-            pendingItemRequestDto.setItemUnit(item.getItemUnit());
-            pendingItemRequestDto.setScmItemId(item.getId());
-            pendingItemRequestDto.setCode(item.getCode());
-
-            HttpHeaders headers =  new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(loggedInUser.getTokenValue());
-            if(orgOp.isPresent()){
-                pendingItemRequestDto.setOrganizationId(orgOp.get().getCpsVendorRegistrationId());
-                headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
-                itemRequestDto.setOrgId(orgOp.get().getId());
-            }
-            HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(pendingItemRequestDto,headers);
-            String url = cpsConfig.getPendingItemReqEndpoint();
-            ResponseEntity<?> response = networkService.post(url,payload,Void.class);
-            System.out.println("STATUS CODE: "+response.getStatusCode());
         }
 
     }
 
-    
+
+
+    @Override
+    public  <T extends ItemInterface> void sendItemToCps(ClaimResolver claimResolver, String _employee, T item,
+                                                         List<ItemAttributeInterface> attributes,
+                                                         WarehouseStore warehouseStore
+                                                         ) {
+        PendingItemRequestDto pendingItemRequestDto = new PendingItemRequestDto();
+        Employee employee = claimResolver.getEmployee().orElse(null);
+        pendingItemRequestDto.setItemAttributeName(item.getItemAttributeName());
+        if(employee!=null) {
+            pendingItemRequestDto.setRequestedBy(_employee);
+            pendingItemRequestDto.setDesignation(employee.getDesignationName());
+            pendingItemRequestDto.setDepartment(employee.getDepartmentName());
+            pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
+            if(warehouseStore!=null){
+                pendingItemRequestDto.setWarehouseStoreId(warehouseStore.getId());
+            }
+
+            pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
+        }else{
+            throw new RuntimeException("Sorry! Employee Info missing");
+        }
+        Optional<ItemCategory> catOp = categoryService.getAnyItemCategory(item.getCategory().getId());
+
+
+        pendingItemRequestDto.setSubCategoryCode(catOp.get().getCode());
+        if(item.getBrand()!=null) {
+            Optional<CategoryBrand> brandOp = categoryBrandRepository.findById(item.getBrand().getId());
+            pendingItemRequestDto.setBrand(brandOp.get().getName());
+        }
+        pendingItemRequestDto.setReportingManager(employee.getReportingManager());
+        pendingItemRequestDto.setEmployeeId(employee.getId());
+        pendingItemRequestDto.setAttributes(attributes.stream().map(attr->{
+            PendingItemAttributeDto attribute = new PendingItemAttributeDto();
+            attribute.setAttributeType(attr.getAttributeType());
+            attribute.setAttributeUnit(attr.getAttributeUnit());
+            attribute.setAttributeValue(attr.getAttributeValue());
+            return attribute;
+        }).collect(Collectors.toList()));
+        pendingItemRequestDto.setItemUnit(item.getItemUnit());
+        pendingItemRequestDto.setScmItemId(item.getId());
+        pendingItemRequestDto.setCode(item.getCode());
+
+        HttpHeaders headers =  new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
+        if(orgOp.isPresent()){
+            pendingItemRequestDto.setOrganizationId(orgOp.get().getCpsVendorRegistrationId());
+            headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
+//            itemRequestDto.setOrgId(orgOp.get().getId());
+        }
+        HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(pendingItemRequestDto,headers);
+        String url = cpsConfig.getPendingItemReqEndpoint();
+        ResponseEntity<?> response = networkService.post(url,payload,Void.class);
+        System.out.println("STATUS CODE: "+response.getStatusCode());
+    }
 
     @Override
     public void createItem(Jwt loggedInUser, RemoteItemRequestDto itemRequestDto) {
@@ -737,6 +768,17 @@ public class ItemServiceImpl implements ItemService {
                 itemAttribute.setAttributeValue(itemAttribute.getAttributeValue().trim());
                 itemAttribute.setAttributeUnit(itemAttribute.getAttributeUnit().trim());
                 return itemAttribute;
+            }).collect(Collectors.toList()));
+        }
+
+        if(itemRequestDto.getFunctionalUnits()!=null&& itemRequestDto.getFunctionalUnits().size()>0){
+            item.setItemFunctionalUnits(itemRequestDto.getFunctionalUnits().stream().map(itemFunctionalUnit -> {
+                ItemFunctionalUnit _functionalUnit = new ItemFunctionalUnit();
+                _functionalUnit.setId(itemFunctionalUnit.getId());
+                _functionalUnit.setValue(itemFunctionalUnit.getValue());
+                _functionalUnit.setUnit(itemFunctionalUnit.getUnit());
+                _functionalUnit.setItem(item);
+                return _functionalUnit;
             }).collect(Collectors.toList()));
         }
         itemRepository.save(item);
@@ -976,15 +1018,17 @@ public class ItemServiceImpl implements ItemService {
 
         // Get Category Brand
         CategoryBrand catBrand = null;
-        Optional<CategoryBrand> catBrandOp = categoryBrandRepository.findByCategoryIdAndName(subCat.getId(),syncItemDetail.getBrand().name());
-        if(catBrandOp.isEmpty()){
-            catBrand = new CategoryBrand();
-            catBrand.setCategory(subCat);
-            catBrand.setName(syncItemDetail.getBrand().name());
-            categoryBrandRepository.save(catBrand);
-            // throw new AesException("Sorry! Brand not found");
-        }else{
-            catBrand = catBrandOp.get();
+        if(syncItemDetail.getBrand()!=null) {
+            Optional<CategoryBrand> catBrandOp = categoryBrandRepository.findByCategoryIdAndName(subCat.getId(), syncItemDetail.getBrand().name());
+            if (catBrandOp.isEmpty()) {
+                catBrand = new CategoryBrand();
+                catBrand.setCategory(subCat);
+                catBrand.setName(syncItemDetail.getBrand().name());
+                categoryBrandRepository.save(catBrand);
+                // throw new AesException("Sorry! Brand not found");
+            } else {
+                catBrand = catBrandOp.get();
+            }
         }
 
         item.setItemCategory(subCat);
@@ -1008,14 +1052,16 @@ public class ItemServiceImpl implements ItemService {
             if(itemExistByCode.isPresent()){
                 item = itemExistByCode.get();
                 List<ItemStock> stocks = item.getStocks();
-                stocks.add(new ItemStock(
-                        new BigDecimal(0l),
-                        item,
-                        StockType.STOCK_IN,
-                        new Warehouse(warehouseId),
-                        new WarehouseStore(warehouseStoreId)
-                ));
-                item.setStocks(stocks);
+                if(stocks.isEmpty()) {
+                    stocks.add(new ItemStock(
+                            new BigDecimal(0l),
+                            item,
+                            StockType.STOCK_IN,
+                            new Warehouse(warehouseId),
+                            new WarehouseStore(warehouseStoreId)
+                    ));
+                    item.setStocks(stocks);
+                }
             }else{
                 item.setItemUnit(syncItemDetail.getItemUnit());
                 item.setManufacturer(syncItemDetail.getManufacturer());
@@ -1045,6 +1091,15 @@ public class ItemServiceImpl implements ItemService {
                 }).collect(Collectors.toList()));
             }
 
+            if(itemExistByCode.isEmpty() && syncItemDetail.getFunctionalUnits()!=null && syncItemDetail.getFunctionalUnits().size()>0) {
+                Item finalItem = item;
+                item.setItemFunctionalUnits(syncItemDetail.getFunctionalUnits().stream().map(itemFunctionalUnit -> {
+                    itemFunctionalUnit.setId(null);
+                    itemFunctionalUnit.setItem(finalItem);
+                    return itemFunctionalUnit;
+                }).collect(Collectors.toList()));
+            }
+
             itemRepository.save(item);
 
             Optional<ItemImportLog> importLogExist = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseId);
@@ -1055,7 +1110,8 @@ public class ItemServiceImpl implements ItemService {
                 iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
                 itemImportLogRepository.save(iil);
             }
-            accountService.createItemLedger(item,new Warehouse(warehouseId));
+            accountService.setItemService(this);
+            accountService.createItemLedger(item,new Warehouse(warehouseId),new WarehouseStore(warehouseStoreId));
         }
         return item;
     }
@@ -1099,6 +1155,10 @@ public class ItemServiceImpl implements ItemService {
         if(warehouseOp.isEmpty()){
             throw new RuntimeException("Warehouse Missing");
         }
+        Optional<WarehouseStore> warehouseStoreOp = warehouseStoreService.getStoreById(approveRequestDto.getWarehouseStoreId());
+        if(warehouseStoreOp.isEmpty()){
+            throw new RuntimeException("Warehouse Store Missing");
+        }
         Optional<Item> itemOp = itemRepository.findById(id);
         if(itemOp.isPresent()){
             Item item = itemOp.get();
@@ -1110,7 +1170,8 @@ public class ItemServiceImpl implements ItemService {
                         ItemImportLog iil = iilOp.get();
                         iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
                     }
-                    accountService.createItemLedger(item, warehouseOp.get());
+                    accountService.setItemService(this);
+                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
                 }
                 if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()!=null){
                     item.setItemInactiveStatus(null);
@@ -1121,7 +1182,8 @@ public class ItemServiceImpl implements ItemService {
 
                     }
                     mergeItem(item, itemMergeRequestDto);
-                    accountService.createItemLedger(item, warehouseOp.get());
+                    accountService.setItemService(this);
+                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
 
                 }
             }else if(approveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)){

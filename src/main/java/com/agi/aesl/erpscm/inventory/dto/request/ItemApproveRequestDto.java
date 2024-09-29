@@ -7,6 +7,7 @@ import lombok.Data;
 public class ItemApproveRequestDto {
     private String code;
     private Long warehouseId;
+    private Long warehouseStoreId;
     private ApproveStatus approveStatus;
     private ItemMergeRequestDto itemMergeRequestDto;
 

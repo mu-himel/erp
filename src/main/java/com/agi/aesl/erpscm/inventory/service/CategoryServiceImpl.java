@@ -1,5 +1,7 @@
 package com.agi.aesl.erpscm.inventory.service;
 
+import com.agi.aesl.erpscm.common.BrandInterface;
+import com.agi.aesl.erpscm.common.CategoryInterface;
 import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
@@ -247,48 +249,52 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         if(category.getId()!=null && categoryRequestDto.getIsForCps()){
-            RemoteCategoryRequestDto remoteCategoryRequestDto = new RemoteCategoryRequestDto();
-            remoteCategoryRequestDto.setName(categoryRequestDto.getName());
-            remoteCategoryRequestDto.setCode(category.getCode());
-
-            if(categoryRequestDto.getParentCategory()!=null) {
-                Optional<ItemCategory> parentCategoryOp = categoryRepository.findById(category.getParentCategory().getId());
-
-                if (parentCategoryOp.isPresent()) {
-                    remoteCategoryRequestDto.setParentCategory(new ReferenceObjectDto(parentCategoryOp.get().getCpsCategoryId()));
-                }
-
-                remoteCategoryRequestDto.setAttributes(categoryRequestDto.getAttributes().stream().map(attr->{
-                    CategoryAttribute ca = new CategoryAttribute();
-                    ca.setAttributeType(attr.getAttributeType());
-                    ca.setAttributeUnit(attr.getAttributeUnit());
-                    ca.setAttributeValue(attr.getAttributeValue());
-                    return ca;
-                }).collect(Collectors.toList()));
-                remoteCategoryRequestDto.setBrands(categoryRequestDto.getBrands());
-                remoteCategoryRequestDto.setVat(categoryRequestDto.getVat());
-            }
-            remoteCategoryRequestDto.setScmCategoryId(category.getId());
-            remoteCategoryRequestDto.setCreatedBy(categoryRequestDto.getEmployee());
-            remoteCategoryRequestDto.setCategoryStatus("PENDING");
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
-            if(orgOp.isPresent()){
-                headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
-            }
-            HttpEntity<RemoteCategoryRequestDto> payload = new HttpEntity<>(remoteCategoryRequestDto,headers);
-            String url = cpsServerConfig.getItemCategoriesEndpoint();
-            ResponseEntity<?> response = networkService.post(url,payload,Void.class);
-            HttpHeaders httpHeaders = response.getHeaders();
-            List<String> headerId = httpHeaders.get("id");
-            if(headerId.size()>0){
-                category.setCpsCategoryId(Long.parseLong(headerId.get(0)));
-            }
-
+            this.sendToCps(token,category,categoryRequestDto.getEmployee());
         }
         return categoryRepository.findById(category.getId());
 
+    }
+
+    public void sendToCps(Jwt token, CategoryInterface category, String employee){
+        RemoteCategoryRequestDto remoteCategoryRequestDto = new RemoteCategoryRequestDto();
+        remoteCategoryRequestDto.setName(category.getName());
+        remoteCategoryRequestDto.setCode(category.getCode());
+
+        if(category.getParentCategory()!=null) {
+            Optional<ItemCategory> parentCategoryOp = categoryRepository.findById(category.getParentCategory().getId());
+
+            if (parentCategoryOp.isPresent()) {
+                remoteCategoryRequestDto.setParentCategory(new ReferenceObjectDto(parentCategoryOp.get().getCpsCategoryId()));
+            }
+
+            remoteCategoryRequestDto.setAttributes(category.getAttributeInterfaces().stream().map(attr->{
+                CategoryAttribute ca = new CategoryAttribute();
+                ca.setAttributeType(attr.getAttributeType());
+                ca.setAttributeUnit(attr.getAttributeUnit());
+                ca.setAttributeValue(attr.getAttributeValue());
+                return ca;
+            }).collect(Collectors.toList()));
+            remoteCategoryRequestDto.setBrands(category.getBrandInterfaces().stream().map((BrandInterface::getName)).collect(Collectors.toList()));
+            remoteCategoryRequestDto.setVat(category.getVat());
+        }
+        remoteCategoryRequestDto.setScmCategoryId(category.getId());
+
+        remoteCategoryRequestDto.setCreatedBy(employee);
+        remoteCategoryRequestDto.setCategoryStatus("PENDING");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
+        if(orgOp.isPresent()){
+            headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
+        }
+        HttpEntity<RemoteCategoryRequestDto> payload = new HttpEntity<>(remoteCategoryRequestDto,headers);
+        String url = cpsServerConfig.getItemCategoriesEndpoint();
+        ResponseEntity<?> response = networkService.post(url,payload,Void.class);
+        HttpHeaders httpHeaders = response.getHeaders();
+        List<String> headerId = httpHeaders.get("id");
+        if(headerId.size()>0){
+            category.setCpsCategoryId(Long.parseLong(headerId.get(0)));
+        }
     }
 
     @Override
@@ -750,10 +756,13 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void approveItemCategory(Jwt token, Long id, CategoryApproveRequestDto categoryApproveRequestDto) {
+        claimResolver.setToken(token);
         Optional<ItemCategory> catOp = categoryRepository.findById(id);
         MergePendingCategoryDto mergePendingCategoryDto = categoryApproveRequestDto.getMergePendingCategoryDto();
         if(catOp.isPresent()) {
             ItemCategory category = catOp.get();
+            setYearlyBudget(LocalDate.now().getYear(),category);
+
             if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
                 approvedWithBody(token, categoryApproveRequestDto,mergePendingCategoryDto);
                 category.setActive(true);
@@ -882,12 +891,13 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void validateCategorySubCategoryRelation(ItemCategory _category, ItemCategory _subCategory) {
-        Optional<ItemCategory> itemCatOp = getItemCategory(_category.getId());
+
+        Optional<ItemCategory> itemCatOp = getAnyItemCategory(_category.getId());
         if(itemCatOp.isEmpty()){
             throw new AesException("Sorry! Category not found");
         }
 
-        Optional<ItemCategory> itemSubCatOp = getItemCategory(_subCategory.getId());
+        Optional<ItemCategory> itemSubCatOp = getAnyItemCategory(_subCategory.getId());
         if(itemSubCatOp.isEmpty()){
             throw new AesException("Sorry! SubCategory not found");
         }
@@ -897,5 +907,15 @@ public class CategoryServiceImpl implements CategoryService {
         if(!subCategory.getParentCategory().getId().equals(category.getId())){
             throw new AesException("Sorry! " + subCategory.getName()+ " is not under category "+category.getName());
         }
+    }
+
+    @Override
+    public void setYearlyBudget(Integer year, ItemCategory category) {
+        CategoryBudget cb = new CategoryBudget();
+        cb.setCategory(category);
+        cb.setAmount(new BigDecimal(0));
+        cb.setBudgetType(BudgetType.REGULAR);
+        cb.setCurrentYear(year);
+        categoryBudgetRepository.save(cb);
     }
 }

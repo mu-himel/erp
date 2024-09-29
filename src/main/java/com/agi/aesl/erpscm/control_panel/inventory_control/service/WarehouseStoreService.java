@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.control_panel.inventory_control.service;
 // import com.agi.aesl.erpscm.control_panel.inventory_control.dto.CopyToStoreDto;
 import com.agi.aesl.erpscm.control_panel.inventory_control.dto.StoreDto;
 
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -17,7 +18,8 @@ public interface WarehouseStoreService {
 
     List<?> getStoresByWarehouse(Jwt token, Optional<Long> warehouseId);
 
-    Optional<?> getStore(Long warehouseId);
+    Optional<?> getStore(Long warehouseStoreId);
+    Optional<WarehouseStore> getStoreById(Long warehouseStoreId);
 
     // void copyToStore(Long wId, CopyToStoreDto copyToStoreDto);
 
