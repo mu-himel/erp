@@ -17,7 +17,10 @@ public interface ItemQuery {
             "LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id " +
             "LEFT JOIN scm_warehouse_stores ws ON ws.id = s.warehouse_store_id " +
             "LEFT JOIN scm_warehouses w ON w.id = s.warehouse_id " +
-            "WHERE i.active=1 AND (:name IS NULL OR i.name LIKE concat(:name,'%')) " +
+            "LEFT JOIN scm_item_import_logs siil ON siil.item_id = i.id " +
+            "WHERE siil.warehouse_id IN (:warehouseId) " +
+            " AND siil.item_inactive_status IN ('APPROVED') " +
+            "AND i.active=1 AND (:name IS NULL OR i.name LIKE concat(:name,'%')) " +
             "   AND (:code IS NULL OR i.code LIKE concat(:code,'%')) " +
             "   AND ((:subCategoryId IS NULL OR ic.id = :subCategoryId)  " +
             "       OR (COALESCE(:categoryId) IS NULL OR ic.id IN (:categoryId)))" +
@@ -76,7 +79,7 @@ public interface ItemQuery {
             "LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id " +
             "LEFT JOIN scm_item_stocks s ON s.item_id = i.id " +
             " WHERE i.active=0 " +
-            "AND s.warehouse_id = :warehouseId "+
+            "AND s.warehouse_id IN (:warehouseId) "+
             "AND s.warehouse_store_id = :warehouseStoreId "+
 //            "   AND i.item_inactive_status IN ('PENDING_VERIFICATION') " +
             "   AND (:name IS NULL OR i.name LIKE concat(:name,'%')) " +

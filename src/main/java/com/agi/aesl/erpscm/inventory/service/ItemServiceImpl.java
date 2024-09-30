@@ -225,12 +225,13 @@ public class ItemServiceImpl implements ItemService {
 
         DataFilter dataFilter = new DataFilter(uri,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
-        List<Long> filterBy = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+
         List<Long> warehouseIds = new ArrayList<>();
         List<Long> categoryIds = new ArrayList<>();
         if(warehouseId.isPresent()){
             warehouseIds.add(warehouseId.get());
         }else{
+            List<Long> filterBy = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
             warehouseIds = filterBy;
         }
 
@@ -1061,6 +1062,23 @@ public class ItemServiceImpl implements ItemService {
                             new WarehouseStore(warehouseStoreId)
                     ));
                     item.setStocks(stocks);
+                }else{
+                    Boolean warehouseExist=false;
+                    for(ItemStock s : stocks){
+                        if(s.getWarehouse().getId().equals(warehouseId)){
+                            warehouseExist=true;
+                        }
+                    }
+                    if(!warehouseExist){
+                        stocks.add(new ItemStock(
+                                new BigDecimal(0l),
+                                item,
+                                StockType.STOCK_IN,
+                                new Warehouse(warehouseId),
+                                new WarehouseStore(warehouseStoreId)
+                        ));
+                        item.setStocks(stocks);
+                    }
                 }
             }else{
                 item.setItemUnit(syncItemDetail.getItemUnit());
