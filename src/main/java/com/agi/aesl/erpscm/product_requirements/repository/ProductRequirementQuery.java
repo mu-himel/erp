@@ -219,8 +219,7 @@ public interface ProductRequirementQuery {
             FROM scm_demand_details dd 
             LEFT JOIN scm_demands d on d.id = dd.demand_id
             LEFT JOIN scm_warehouses w on w.id = d.warehouse_id
-            LEFT JOIN acl_users e on e.id = d.requested_by_id
-                        
+            LEFT JOIN acl_users e on e.id = d.requested_by_id    
             WHERE  dd.id IN (
                 SELECT demand_detail_id
                     FROM product_requirements pr

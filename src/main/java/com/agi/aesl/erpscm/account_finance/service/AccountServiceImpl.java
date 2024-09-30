@@ -118,11 +118,13 @@ public class AccountServiceImpl implements AccountService{
         DataFilter dataFilter = new DataFilter(uri,claimResolver,pageable);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> ids = new ArrayList<>();
-        if(warehouseId.isPresent()){
-            ids.add(warehouseId.get());
-        }else{
-            ids = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
-        }
+        // code commented after Demo 30 Sep, 2024
+        // pending item requests of ledger should not be warehouse specific to account user
+//        if(warehouseId.isPresent()){
+//            ids.add(warehouseId.get());
+//        }else{
+//            ids = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+//        }
         return accountRepository.getPendingLedgerAccounts(ids,pageable);
     }
 
@@ -137,11 +139,11 @@ public class AccountServiceImpl implements AccountService{
         DataFilter dataFilter = new DataFilter(uri,claimResolver,pageable);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> ids = new ArrayList<>();
-        if(warehouseId.isPresent()){
-            ids.add(warehouseId.get());
-        }else{
-            ids = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
-        }
+//        if(warehouseId.isPresent()){
+//            ids.add(warehouseId.get());
+//        }else{
+//            ids = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+//        }
         return accountRepository.getClosedLedgerAccounts(ids,pageable);
     }
 
