@@ -247,7 +247,7 @@ public interface IndentQuery {
                                     LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                                     LEFT JOIN acl_users e ON e.id = i.requested_by_id
                             
-                    WHERE  i.indent_status IN ('APPROVED','VERIFIED') AND i.rfq_status = 'INIT'
+                    WHERE  i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.rfq_status = 'INIT'
                             AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo))
                             AND (:category IS NULL OR  LOWER(c.name) LIKE  CONCAT(LOWER(:category),'%'))
                             AND (:subCategory IS NULL OR LOWER(sc.name) LIKE CONCAT(LOWER(:subCategory),'%'))

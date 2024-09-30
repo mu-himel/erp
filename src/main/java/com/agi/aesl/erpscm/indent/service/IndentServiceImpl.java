@@ -162,7 +162,7 @@ public class IndentServiceImpl implements IndentService{
 
         if(appliedVa.getVerifiers().isEmpty() && appliedVa.getPanels().isEmpty()){
             indent.setRfqStatus(RfqStatus.INIT);
-            indent.setIndentStatus(IndentVerificationStatus.APPROVED);
+            indent.setIndentStatus(IndentVerificationStatus.COMPLETED);
         }
 
         indentVARepository.deleteAllByIndentId(indent.getId());

@@ -45,7 +45,7 @@ public interface ProductRequirementQuery {
 
     String getProductRequirementViewWithSearch =
     """
-                SELECT * FROM (SELECT p.id                                                             as productRequirementsIds,
+                SELECT * FROM (SELECT GROUP_CONCAT(p.id)                                                             as productRequirementsIds,
                                 c.id                                                                   as categoryId,
                                 c.name                                                                 as categoryName,
                                 sc.id                                                                  as subCategoryId,
