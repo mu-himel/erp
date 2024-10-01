@@ -157,6 +157,17 @@ public interface ProductRequirementQuery {
             """;
 
     String getWarehouseRequirements = """
+        SELECT p.id as id,
+               p.stockThresholdQty as stockThresholdQty,
+               p.itemAttribute as itemAttribute,
+               p.warehouseId as warehouseId,
+               p.warehouseName as warehouseName,
+               p.warehouseStoreId as warehouseStoreId,
+               p.name as name,
+               p.stockQty as stockQty,
+               p.prQty as prQty,
+               p.inTransit as inTransit
+            FROM    (
                 SELECT  i1.id, 
                 sum(stock_threshold_qty) stockThresholdQty, 
                 iattrs as itemAttribute, 
@@ -205,6 +216,8 @@ public interface ProductRequirementQuery {
         ) i2 ON i1.id = i2.id
         WHERE iattrs LIKE CONCAT('%',:attribute,'%')
         GROUP BY warehouse_id
+        ) as p
+        WHERE p.prQty>0
             """;
 
     String getDemandWithSearch = """
