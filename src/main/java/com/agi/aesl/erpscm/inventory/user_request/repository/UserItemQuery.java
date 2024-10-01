@@ -18,11 +18,20 @@ public interface UserItemQuery {
     String getPendingVerifications = """
             select ui.id as id, cat.name as categoryName, subCat.name as subCategoryName,
              ui.item_attribute_name as productName,
-             ui.item_status as status
+             CASE WHEN ui.item_status != 'REVIEW' AND (uih.id IS NOT NULL AND uih.employee_id = :userId) THEN
+                    uih.item_status
+                ELSE
+                    ui.item_status
+            END  as status,
              FROM user_items ui
              LEFT JOIN user_categories subCat ON ui.sub_category_id = subCat.id
              LEFT JOIN user_categories cat ON ui.category_id = cat.id
-             WHERE ui.next_verifier_id=:userId
+             LEFT JOIN user_item_histories uih ON uih.user_item_id = ui.id
+             WHERE (
+                (ui.next_verifier_id=:userId AND ui.item_status IN ('PENDING_VERIFICATION','REVIEW','VERIFIED'))
+                    OR
+                (uih.employee_id = :userId AND uih.item_status = 'VERIFIED')
+                )
              AND (:categoryId IS NULL OR ui.category_id = :categoryId)
              AND (:subCategoryId IS NULL OR ui.sub_category_id = :subCategoryId)
             """;
@@ -32,11 +41,20 @@ public interface UserItemQuery {
     String getPendingApprovals = """
             select ui.id as id, cat.name as categoryName, subCat.name as subCategoryName,
              ui.item_attribute_name as productName,
-             ui.item_status as status
+             CASE WHEN ui.item_status != 'REVIEW' AND (uih.id IS NOT NULL AND uih.employee_id = :userId) THEN
+                    uih.item_status
+                ELSE
+                    ui.item_status
+             END  as status,
              FROM user_items ui
              LEFT JOIN user_categories subCat ON ui.sub_category_id = subCat.id
              LEFT JOIN user_categories cat ON ui.category_id = cat.id
-             WHERE ui.next_approver_id=:userId
+             LEFT JOIN user_item_histories uih ON uih.user_item_id = ui.id
+             WHERE (
+                (ui.next_approver_id=:userId AND ui.item_status IN ('PENDING_APPROVAL','REVIEW','APPROVED'))
+                    OR 
+                (uih.employee_id = :userId AND uih.item_status = 'APPROVED')
+                )
              AND (:categoryId IS NULL OR ui.category_id = :categoryId)
              AND (:subCategoryId IS NULL OR ui.sub_category_id = :subCategoryId)
             """;

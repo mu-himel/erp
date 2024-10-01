@@ -10,13 +10,11 @@ import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.UserItemRequestDto;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
-import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
-import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
-import com.agi.aesl.erpscm.inventory.user_request.entity.UserItem;
-import com.agi.aesl.erpscm.inventory.user_request.entity.UserItemAttribute;
+import com.agi.aesl.erpscm.inventory.user_request.entity.*;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryBrandRepository;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryRepository;
+import com.agi.aesl.erpscm.inventory.user_request.repository.UserItemHistoryRepository;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserItemRepository;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
@@ -53,6 +51,9 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     private UserItemRepository userItemRepository;
 
     @Autowired
+    private UserItemHistoryRepository userItemHistoryRepository;
+
+    @Autowired
     private UserApplicationValidatorService<UserItem> verificationService;
 
     @Autowired
@@ -67,25 +68,6 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     record MyCategory(Long id, String categoryName, Integer subCategoryCount, Integer productCount, String status){}
     record MySubCategory(Long id, String categoryName,String subCategoryName, Integer productCount, String status){}
     record MyProduct(Long id, String categoryName,String subCategoryName, String productName, String status){}
-    @Override
-    public Page<?> getMyCategories(Jwt token, Optional<Integer> page, Optional<Integer> size) {
-        claimResolver.setToken(token);
-        List<MyCategory> lists = new ArrayList<>();
-        lists.add(new MyCategory(1L,"R#4920-Civil",5,10,"PENDING"));
-        lists.add(new MyCategory(2L,"R#4920-Civil",5,10,"PENDING"));
-        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(1));
-        return new PageImpl<>(lists,pageable,lists.size());
-    }
-
-    @Override
-    public Page<?> getMySubCategories(Jwt token, Optional<Integer> page, Optional<Integer> size) {
-        claimResolver.setToken(token);
-        List<MySubCategory> lists = new ArrayList<>();
-        lists.add(new MySubCategory(1L,"R#4920-Civil","01AbHF- Mouse",10,"PENDING"));
-        lists.add(new MySubCategory(2L,"R#4920-Civil","01AbHF- Keyboard",8,"PENDING"));
-        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(1));
-        return new PageImpl<>(lists,pageable,lists.size());
-    }
 
     @Override
     public Page<?> getMyProducts(Jwt token,
@@ -238,6 +220,8 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
         if(itemOp.isPresent()){
             UserItem item = itemOp.get();
             item.setNextVerifierId(nextVerifier.getVerifier().getId());
+            saveHistory(item,verification.getVerifier(),UserCategoryStatus.VERIFIED);
+
         }
     }
 
@@ -248,6 +232,7 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
         if(itemOp.isPresent()){
             UserItem item = itemOp.get();
             item.setNextApproverId(nextApprover.getVerifier().getId());
+            saveHistory(item,verification.getVerifier(),UserCategoryStatus.APPROVED);
         }
     }
 
@@ -262,17 +247,18 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
                 userItem.setItemStatus(UserCategoryStatus.PENDING_APPROVAL);
             }else {
                 userItem.setItemStatus(UserCategoryStatus.VERIFIED);
-                ObjectMapper mapper = new ObjectMapper();
-                try {
-                    String employee = mapper.writeValueAsString(userItem.getCreatedBy());
-                    /**
-                     * Here may be need something more todo
-                     */
-                    itemService.sendItemToCps(claimResolver,employee,userItem,userItem.getItemAttributes(),null);
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
+//                ObjectMapper mapper = new ObjectMapper();
+//                try {
+//                    String employee = mapper.writeValueAsString(userItem.getCreatedBy());
+//                    /**
+//                     * Here may be need something more todo
+//                     */
+//                    itemService.sendItemToCps(claimResolver,employee,userItem,userItem.getItemAttributes(),null);
+//                } catch (JsonProcessingException e) {
+//                    throw new RuntimeException(e);
+//                }
             }
+            saveHistory(userItem,new Employee(userItem.getNextVerifierId()),UserCategoryStatus.VERIFIED);
         }
     }
 
@@ -283,18 +269,26 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
         if(itemOp.isPresent()){
             UserItem userItem = itemOp.get();
             userItem.setItemStatus(UserCategoryStatus.APPROVED);
-            ObjectMapper mapper = new ObjectMapper();
-            try {
-                String employee = mapper.writeValueAsString(userItem.getCreatedBy());
-                /**
-                 * Here may be need something more todo
-                 */
-                itemService.sendItemToCps(claimResolver,employee,userItem,userItem.getItemAttributes(),userItem.getWarehouseStore());
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-
+//            ObjectMapper mapper = new ObjectMapper();
+//            try {
+//                String employee = mapper.writeValueAsString(userItem.getCreatedBy());
+//                /**
+//                 * Here may be need something more todo
+//                 */
+//                itemService.sendItemToCps(claimResolver,employee,userItem,userItem.getItemAttributes(),userItem.getWarehouseStore());
+//            } catch (JsonProcessingException e) {
+//                throw new RuntimeException(e);
+//            }
+            saveHistory(userItem,new Employee(userItem.getNextApproverId()),UserCategoryStatus.APPROVED);
         }
+    }
+
+    private void saveHistory(UserItem userItem,Employee employee,UserCategoryStatus status){
+        UserItemHistory userItemHistory = new UserItemHistory();
+        userItemHistory.setEmployee(employee);
+        userItemHistory.setUserItem(userItem);
+        userItemHistory.setItemStatus(status);
+        userItemHistoryRepository.save(userItemHistory);
     }
 
     @Override

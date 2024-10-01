@@ -22,7 +22,9 @@ import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryAttribute;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
+import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryHistory;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
+import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryHistoryRepository;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryRepository;
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
@@ -84,6 +86,9 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private UserCategoryHistoryRepository userCategoryHistoryRepository;
 
     @Override
     @Transactional
@@ -254,6 +259,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         if(catOp.isPresent()){
             UserCategory category = catOp.get();
             category.setNextVerifierId(nextVerifier.getVerifier().getId());
+            saveHistory(category,verification.getVerifier(),UserCategoryStatus.VERIFIED);
         }
     }
 
@@ -264,6 +270,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         if(catOp.isPresent()){
             UserCategory category = catOp.get();
             category.setNextApproverId(nextApprover.getVerifier().getId());
+            saveHistory(category,verification.getVerifier(),UserCategoryStatus.APPROVED);
         }
     }
 
@@ -274,11 +281,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         if(catOp.isPresent()) {
             UserCategory category = catOp.get();
             if (firstApprover.isPresent()) {
-//                IndentVerificationApprovalHistory indentVAHistory = new IndentVerificationApprovalHistory();
-//                indentVAHistory.setIndent(indent);
-//                indentVAHistory.setEmployee(new Employee(indent.getNextVerifierId()));
-//                indentVAHistory.setIndentStatus(IndentVerificationStatus.VERIFIED);
-//                indentVARepository.save(indentVAHistory);
+
 
                 category.setNextApproverId(firstApprover.get().getVerifier().getId());
                 category.setCategoryStatus(UserCategoryStatus.PENDING_APPROVAL);
@@ -286,20 +289,30 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
             } else {
 
                 category.setCategoryStatus(UserCategoryStatus.VERIFIED);
-                ObjectMapper mapper = new ObjectMapper();
-                try {
-                    String employee = mapper.writeValueAsString(category.getCreatedBy());
-                    categoryService.sendToCps(claimResolver.getToken(),category,employee);
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
-//                IndentVerificationApprovalHistory indentVAHistory = new IndentVerificationApprovalHistory();
-//                indentVAHistory.setIndent(indent);
-//                indentVAHistory.setEmployee(new Employee(indent.getNextVerifierId()));
-//                indentVAHistory.setIndentStatus(IndentVerificationStatus.VERIFIED);
-//                indentVARepository.save(indentVAHistory);
+//                ObjectMapper mapper = new ObjectMapper();
+//                try {
+//                    String employee = mapper.writeValueAsString(category.getCreatedBy());
+//                    categoryService.sendToCps(claimResolver.getToken(),category,employee);
+//                } catch (JsonProcessingException e) {
+//                    throw new RuntimeException(e);
+//                }
+//                IndentVerificationApprovalHistory userCatHistory = new IndentVerificationApprovalHistory();
+//                userCatHistory.setIndent(indent);
+//                userCatHistory.setEmployee(new Employee(indent.getNextVerifierId()));
+//                userCatHistory.setIndentStatus(IndentVerificationStatus.VERIFIED);
+//                indentVARepository.save(userCatHistory);
             }
+            saveHistory(category, new Employee(category.getNextVerifierId()),UserCategoryStatus.VERIFIED);
         }
+    }
+
+    @Transactional
+    private void saveHistory(UserCategory userCategory,Employee employee,UserCategoryStatus status){
+        UserCategoryHistory userCatHistory = new UserCategoryHistory();
+        userCatHistory.setUserCategory(userCategory);
+        userCatHistory.setEmployee(employee);
+        userCatHistory.setCategoryStatus(status);
+        userCategoryHistoryRepository.save(userCatHistory);
     }
 
     @Override
@@ -309,14 +322,16 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         if(catOp.isPresent()){
             UserCategory category = catOp.get();
             category.setStatus(String.valueOf(IndentVerificationStatus.APPROVED));
-            ObjectMapper mapper = new ObjectMapper();
 
-            try {
-                String employee = mapper.writeValueAsString(category.getCreatedBy());
-                categoryService.sendToCps(claimResolver.getToken(),category,employee);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+            saveHistory(category,new Employee(category.getNextApproverId()),UserCategoryStatus.APPROVED);
+//            ObjectMapper mapper = new ObjectMapper();
+
+//            try {
+//                String employee = mapper.writeValueAsString(category.getCreatedBy());
+//                categoryService.sendToCps(claimResolver.getToken(),category,employee);
+//            } catch (JsonProcessingException e) {
+//                throw new RuntimeException(e);
+//            }
 
 
         }

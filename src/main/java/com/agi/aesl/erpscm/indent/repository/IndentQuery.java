@@ -42,7 +42,7 @@ public interface IndentQuery {
                            GROUP_CONCAT(DISTINCT sc.name)          as subCategoryName,
                            COUNT(ide.id)                           as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
-                           i.priority_date_time                              as priority,
+                           i.priority_date_time                    as priority,
                            CASE WHEN i.indent_status != 'REVIEW' AND (ivah.id IS NOT NULL AND ivah.employee_id = :nextVerifierId) THEN
                                     ivah.indent_status
                                 ELSE
