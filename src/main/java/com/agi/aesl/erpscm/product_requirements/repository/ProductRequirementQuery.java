@@ -11,11 +11,14 @@ public interface ProductRequirementQuery {
                 MIN(demand_deadline)                               as demandDeadline,
                 DATEDIFF(MIN(demand_deadline), CURRENT_DATE)       as daysRemain,
 
-                (SELECT COUNT(distinct ddsq1.item_category_id)
-                FROM scm_demand_details ddsq1
-                where ddsq1.id = p.demand_detail_id 
-                AND ddsq1.item_parent_category_id = p.category_id
-                and ddsq1.item_category_id = p.sub_category_id) AS itemsQty
+                (SELECT COUNT(attr) FROM(
+                    SELECT GROUP_CONCAT(DISTINCT attribute_type,' ',attribute_value , ' ',attribute_unit order by sdda.id asc separator ' - ') attr
+                    FROM scm_demand_details ddsq1
+                    LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = ddsq1.id
+                    where ddsq1.id IN (p.demand_detail_id) 
+                    AND ddsq1.item_parent_category_id = p.category_id
+                    and ddsq1.item_category_id = p.sub_category_id) as p
+                ) AS itemsQty
 
         FROM product_requirements AS p
                 LEFT JOIN scm_item_categories c ON p.category_id = c.id

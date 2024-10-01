@@ -1,10 +1,8 @@
 package com.agi.aesl.erpscm.indent.service;
 
-import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.common.DataFilter;
-import com.agi.aesl.erpscm.common.enums.IndentPriority;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
@@ -18,14 +16,11 @@ import com.agi.aesl.erpscm.indent.enums.RfqStatus;
 import com.agi.aesl.erpscm.indent.repository.IndentRepository;
 import com.agi.aesl.erpscm.indent.repository.IndentVerificationApprovalRepository;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
-import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
-import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.pr_indent.repository.PrIndentRepository;
 import com.agi.aesl.erpscm.price_quotation.dto.request.PriceQuotationReqDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
-import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
@@ -43,6 +38,7 @@ import org.springframework.util.CollectionUtils;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -327,7 +323,7 @@ public class IndentServiceImpl implements IndentService{
 
     private List<?> getProcessedResult(List<IndentRepository.IndentViewInfo> result){
         List<Map<String,Object>> items = new ArrayList<>();
-
+        AtomicReference<Long> prQty= new AtomicReference<>(0L);
         result.stream().forEach(indentViewInfo->{
             Map<String,Object> item = new HashMap<>();
             String warehouseKey = indentViewInfo.getItemName()+"_"+indentViewInfo.getWarehouseId();
@@ -340,7 +336,11 @@ public class IndentServiceImpl implements IndentService{
                 item.put("id", indentViewInfo.getDetailId());
                 item.put("productRequirementsIds",indentViewInfo.getProductRequirementIds());
                 item.put("prDetailId",indentViewInfo.getDetailId());
-                item.put("prQty",indentViewInfo.getPrQty());
+
+
+                prQty.getAndUpdate(v -> v + indentViewInfo.getPrQty());
+
+                item.put("prQty",prQty);
 
                 item.put("itemName",indentViewInfo.getItemName());
                 item.put("categoryName", indentViewInfo.getCategoryName());
@@ -382,6 +382,8 @@ public class IndentServiceImpl implements IndentService{
                 items.add(item);
             }else{
                 Map<String,Object> existItem = (Map<String,Object>)anyItemOp.get();
+                prQty.getAndUpdate(v -> v + indentViewInfo.getPrQty());
+                existItem.put("prQty",prQty);
                 if(existItem.containsKey("warehouses")){
                     Map<String,Object> existWarehouseProp = (Map<String,Object>)existItem.get("warehouses");
 
@@ -396,9 +398,9 @@ public class IndentServiceImpl implements IndentService{
                             BigDecimal orderQty = (BigDecimal)warehousKeyMap.get("orderQty");
                             orderQty =indentViewInfo.getOrderQty().add(orderQty);
                             warehousKeyMap.replace("orderQty",orderQty);
-                            Long prQty = (Long) warehousKeyMap.get("prQty");
-                            prQty += indentViewInfo.getPrQty();
-                            warehousKeyMap.replace("prQty",prQty);
+                            Long _prQty = (Long) warehousKeyMap.get("prQty");
+                            _prQty += indentViewInfo.getPrQty();
+                            warehousKeyMap.replace("prQty",_prQty);
 
                             warehousKeyMap.replace("key", currentkey);
                         }
