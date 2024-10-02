@@ -53,7 +53,7 @@ public interface PrIndentQuery {
                            c.name                                             as categoryName,
                            pri.sub_category_id                                as subCategoryId,
                            sc.name                                            as subCategoryName,
-                           pri.product_requirements_ids                       as productRequirementsIds,  
+                           prid.product_requirements_ids                       as productRequirementsIds,  
                            COALESCE(SUM(piw.order_qty), 0)                    as orderQty,
                            COALESCE(SUM(piw.pr_qty), 0)                       as prQty,
                            pri.priority                                       as priority,

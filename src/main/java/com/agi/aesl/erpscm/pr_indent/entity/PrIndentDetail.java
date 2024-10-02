@@ -27,6 +27,8 @@ public class PrIndentDetail {
     @ManyToOne
     private PrIndent prIndent;
 
+    private String productRequirementsIds;
+
     @OneToMany(mappedBy = "prIndentDetail",cascade = CascadeType.ALL)
     List<PrIndentWarehouseDetail> warehouses;
 }

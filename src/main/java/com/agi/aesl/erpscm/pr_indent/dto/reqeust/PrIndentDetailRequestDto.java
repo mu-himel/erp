@@ -17,6 +17,7 @@ public class PrIndentDetailRequestDto {
     private String attribute;
     private Long brandId;
     private List<PrWarehouseQtyDto> warehouses;
+    private String productRequirementsIds;
 
 
 }
