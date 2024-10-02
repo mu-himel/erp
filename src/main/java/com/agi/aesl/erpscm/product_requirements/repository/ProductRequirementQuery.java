@@ -48,7 +48,38 @@ public interface ProductRequirementQuery {
 
     String getProductRequirementViewWithSearch =
     """
-                SELECT * FROM (SELECT GROUP_CONCAT(p.id)                                                             as productRequirementsIds,
+                SELECT 
+                
+                        CASE WHEN count(r.itemName)>1 THEN
+                			GROUP_CONCAT(r.pid)
+                			ELSE
+                			  r.pid
+                			END as productRequirementsIds,
+                		count(r.itemName) as itemCount,
+                		r.categoryId,
+                		r.categoryName,
+                		r.subCategoryId,
+                		r.subCategoryName,
+                		r.itemId,
+                		r.demandPriority,
+                		r.warehouses,
+                		r.warehouseIds,
+                		r.approvedQty,
+                		r.itemName,
+                		r.prQty,
+                		r.itemsQty,
+                		r.currentStock,
+                		r.safetytStock,
+                		r.transitQty,
+                		r.demandDeadline,
+                		r.daysRemain,
+                		r.brandId,
+                		r.brandName
+                
+                
+                FROM (SELECT 
+                            
+                                p.id                     as pid,
                                 c.id                                                                   as categoryId,
                                 c.name                                                                 as categoryName,
                                 sc.id                                                                  as subCategoryId,
@@ -160,68 +191,72 @@ public interface ProductRequirementQuery {
             """;
 
     String getWarehouseRequirements = """
-        SELECT p.id as id,
-               p.stockThresholdQty as stockThresholdQty,
-               p.itemAttribute as itemAttribute,
-               p.warehouseId as warehouseId,
-               p.warehouseName as warehouseName,
-               p.warehouseStoreId as warehouseStoreId,
-               p.name as name,
-               p.stockQty as stockQty,
-               p.prQty as prQty,
-               p.inTransit as inTransit
-            FROM    (
-                SELECT  i1.id, 
-                sum(stock_threshold_qty) stockThresholdQty, 
-                iattrs as itemAttribute, 
-                warehouse_id as warehouseId,
-                warehouseName as warehouseName,
-                warehouse_store_id as warehouseStoreId,
-                name as name,
-                SUM(stock_qty) as stockQty,
-                (
-                        SELECT SUM(prtbl.pr_qty) as prQty
-                        FROM (
-                                SELECT pr.id as pr_id,dd.request_quantity,COALESCE(dd.pr_qty,0) as pr_qty,dd.id,
-                                d.warehouse_id ,
-                                        GROUP_CONCAT(TRIM(dda.attribute_type),' ',TRIM(dda.attribute_value) , ' ',TRIM(dda.attribute_unit) separator ' - ') demand_attributes 
-                                FROM product_requirements pr 
-                                LEFT JOIN scm_demand_details dd ON dd.id = pr.demand_detail_id 
-                                LEFT JOIN scm_demands d ON d.id = dd.demand_id 
-                                LEFT JOIN scm_category_brands cb ON cb.id=dd.brand_id 
-                                LEFT JOIN scm_demand_detail_attributes dda ON dda.demand_detail_id  = dd.id
-                                WHERE pr.status = 'OPEN' AND dd.status IN ('PENDING','PENDING_QC')
-                                GROUP BY dd.id
-                        ) prtbl
-                        WHERE prtbl.warehouse_id = i2.warehouse_id
-                        AND  (prtbl.demand_attributes IS NULL OR prtbl.demand_attributes LIKE CONCAT('%',:attribute,'%'))
-                ) as prQty,
-                0 as inTransit 
+            SELECT p.id as id,
+                   p.stockThresholdQty as stockThresholdQty,
+                   p.itemAttribute as itemAttribute,
+                   p.warehouseId as warehouseId,
+                   p.warehouseName as warehouseName,
+                   p.warehouseStoreId as warehouseStoreId,
+                   p.name as name,
+                   p.stockQty as stockQty,
+                   p.prQty as prQty,
+                   p.inTransit as inTransit
+                FROM    (
+                    SELECT  i1.id, 
+                    sum(stock_threshold_qty) stockThresholdQty, 
+                    iattrs as itemAttribute, 
+                    warehouse_id as warehouseId,
+                    warehouseName as warehouseName,
+                    warehouse_store_id as warehouseStoreId,
+                    name as name,
+                    SUM(stock_qty) as stockQty,
+                    (
+                            SELECT SUM(prtbl.pr_qty) as prQty
+                            FROM (
+                                    SELECT pr.id as pr_id,dd.request_quantity,COALESCE(dd.pr_qty,0) as pr_qty,dd.id,
+                                    d.warehouse_id ,
+                                           CASE WHEN cb.id IS NOT NULL THEN
+                                              GROUP_CONCAT(cb.name,' ',TRIM(dda.attribute_type),' ',TRIM(dda.attribute_value) , ' ',TRIM(dda.attribute_unit) separator ' - ')
+                                           ELSE
+                                              GROUP_CONCAT(TRIM(dda.attribute_type),' ',TRIM(dda.attribute_value) , ' ',TRIM(dda.attribute_unit) separator ' - ')
+                                           END as demand_attributes
+                                    FROM product_requirements pr 
+                                    LEFT JOIN scm_demand_details dd ON dd.id = pr.demand_detail_id 
+                                    LEFT JOIN scm_demands d ON d.id = dd.demand_id 
+                                    LEFT JOIN scm_category_brands cb ON cb.id=dd.brand_id 
+                                    LEFT JOIN scm_demand_detail_attributes dda ON dda.demand_detail_id  = dd.id
+                                    WHERE pr.status = 'OPEN' AND dd.status IN ('PENDING','PENDING_QC')
+                                    GROUP BY dd.id
+                            ) prtbl
+                            WHERE prtbl.warehouse_id = i2.warehouse_id
+                            AND  (prtbl.demand_attributes IS NULL OR prtbl.demand_attributes LIKE CONCAT('%',:attribute,'%'))
+                    ) as prQty,
+                    0 as inTransit 
 
-        FROM (
-                SELECT i.id,i.stock_threshold_qty,
-                CONCAT(TRIM(cb2.name),' ',GROUP_CONCAT(TRIM(ia.attribute_type),' ',TRIM(ia.attribute_value) , ' ',TRIM(ia.attribute_unit) ORDER BY ia.id separator ' - ')) iattrs
-                FROM scm_item_attributes ia 
-                LEFT JOIN scm_items i ON i.id = ia.item_id 
-                LEFT JOIN scm_category_brands cb2 ON cb2.id = i.brand_id 
-                WHERE i.active=true
-                GROUP BY i.id
-        ) i1
-        LEFT JOIN (
-                SELECT i.id,is2.warehouse_id,
-                w.name as warehouseName,
-                is2.warehouse_store_id, i.name,sum(is2.stock_qty) stock_qty
-                FROM scm_item_stocks is2
-                LEFT JOIN scm_items i ON i.id = is2.item_id 
-                LEFT JOIN scm_warehouses w ON w.id = is2.warehouse_id 
-                WHERE i.active = true
-                GROUP BY is2.warehouse_id,warehouse_store_id,i.id
-        ) i2 ON i1.id = i2.id
-        WHERE iattrs LIKE CONCAT('%',:attribute,'%')
-        GROUP BY warehouse_id
-        ) as p
-        WHERE p.prQty>0
-            """;
+            FROM (
+                    SELECT i.id,i.stock_threshold_qty,
+                    CONCAT(TRIM(cb2.name),' ',GROUP_CONCAT(TRIM(ia.attribute_type),' ',TRIM(ia.attribute_value) , ' ',TRIM(ia.attribute_unit) ORDER BY ia.id separator ' - ')) iattrs
+                    FROM scm_item_attributes ia 
+                    LEFT JOIN scm_items i ON i.id = ia.item_id 
+                    LEFT JOIN scm_category_brands cb2 ON cb2.id = i.brand_id 
+                    WHERE i.active=true
+                    GROUP BY i.id
+            ) i1
+            LEFT JOIN (
+                    SELECT i.id,is2.warehouse_id,
+                    w.name as warehouseName,
+                    is2.warehouse_store_id, i.name,sum(is2.stock_qty) stock_qty
+                    FROM scm_item_stocks is2
+                    LEFT JOIN scm_items i ON i.id = is2.item_id 
+                    LEFT JOIN scm_warehouses w ON w.id = is2.warehouse_id 
+                    WHERE i.active = true
+                    GROUP BY is2.warehouse_id,warehouse_store_id,i.id
+            ) i2 ON i1.id = i2.id
+            WHERE iattrs LIKE CONCAT('%',:attribute,'%')
+            GROUP BY warehouse_id
+            ) as p
+            WHERE p.prQty>0
+                """;
 
     String getDemandWithSearch = """
             SELECT d.id as id,
