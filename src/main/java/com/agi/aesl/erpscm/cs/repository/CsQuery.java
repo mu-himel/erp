@@ -70,13 +70,16 @@ public interface CsQuery {
             SELECT
             i.id as id,
             csheet.id as csId,
-            csheet.cs_status as status,
+            CASE WHEN csheet.cs_status != 'REVIEW' AND (cvah.id IS NOT NULL AND cvah.employee_id = :nextVerifierId) THEN
+                    cvah.cs_status
+                ELSE
+                    csheet.cs_status
+            END  as status,
             csheet.created_at               as csDate,
             csheet.cs_no                     as csNo,
              CONCAT(c.name ,'-', sc.name) as categoryName,
              count(csd.id)                as items,
              COALESCE(sum(idd.rfq_qty),0) as rfqQty,
-
              COALESCE((SELECT count(*) FROM price_quotations pq 
                                 WHERE status='LOCKED' AND rfq_id = csheet.indent_id),0) as lockedVendor
             FROM cs csheet
@@ -86,8 +89,14 @@ public interface CsQuery {
             LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id  
             LEFT JOIN scm_item_categories c ON c.id = i.category_id
             LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
-            WHERE csheet.cs_status IN ('PENDING_VERIFICATION','REVIEW')
-            AND csheet.next_verifier_id = :nextVerifierId
+            LEFT JOIN cs_verification_approval_histories cvah ON cvah.cs_id = csheet.id
+            WHERE  (
+                    (csheet.next_verifier_id = :nextVerifierId AND 
+                    csheet.cs_status IN ('PENDING_VERIFICATION','REVIEW','VERIFIED'))
+                    OR 
+                    (cvah.employee_id = :nextVerifierId AND cvah.cs_status = 'VERIFIED')
+                )
+            
             GROUP BY csheet.id
             """;
     String countPendingVerifications="SELECT COUNT(*) FROM ("+pendingVerifications+") as total";
@@ -96,7 +105,11 @@ public interface CsQuery {
             SELECT
             i.id as id,
             csheet.id as csId,
-            csheet.cs_status as status,
+            CASE WHEN csheet.cs_status != 'REVIEW' AND (cvah.id IS NOT NULL AND cvah.employee_id = :nextVerifierId) THEN
+                    cvah.cs_status
+                ELSE
+                    csheet.cs_status
+            END  as status,
             csheet.created_at    as csDate,
             csheet.cs_no                      as csNo,
             CONCAT(c.name ,'-', sc.name) as categoryName,
@@ -111,8 +124,14 @@ public interface CsQuery {
         LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id  
         LEFT JOIN scm_item_categories c ON c.id = i.category_id
         LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
-        WHERE csheet.cs_status IN ('PENDING_APPROVAL','REVIEW')
-            AND csheet.next_approver_id = :nextApproverId
+        LEFT JOIN cs_verification_approval_histories cvah ON cvah.cs_id = csheet.id
+        WHERE  (
+                (csheet.next_approver_id = :nextApproverId AND 
+                csheet.cs_status IN ('PENDING_APPROVAL','REVIEW','APPROVED'))
+                OR
+                (cvah.employee_id = :nextVerifierId AND cvah.cs_status = 'APPROVED')
+            )
+            
             GROUP BY csheet.id
             """;
 

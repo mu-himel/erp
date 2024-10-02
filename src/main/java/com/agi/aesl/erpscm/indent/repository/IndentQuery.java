@@ -8,7 +8,7 @@ public interface IndentQuery {
                            i.indent_no                             as indentNo,
                            i.category_id                           as categoryId,
                            c.name                                  as categoryName,
-                           COUNT(ide.id)                           as itemsCount,
+                           (SELECT count(ide1.id) FROM indent_details ide1 WHERE ide1.indent_id =i.id )                         as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
                            i.priority_date_time                    as priority,
                            i.indent_status                                as status
@@ -42,7 +42,7 @@ public interface IndentQuery {
                            GROUP_CONCAT(DISTINCT sc.name)          as subCategoryName,
                            COUNT(ide.id)                           as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
-                           i.priority_date_time                              as priority,
+                           i.priority_date_time                    as priority,
                            CASE WHEN i.indent_status != 'REVIEW' AND (ivah.id IS NOT NULL AND ivah.employee_id = :nextVerifierId) THEN
                                     ivah.indent_status
                                 ELSE
@@ -121,7 +121,7 @@ public interface IndentQuery {
                            i.category_id                           as categoryId,
                            c.name                                  as categoryName,
                            sc.name                                 as subCategoryName,
-                           COUNT(ide.id)                           as itemsCount,
+                           COALESCE(SUM(idd.pr_qty), 0)                         as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
                            i.priority_date_time                              as priority,
                            i.indent_status                                as status,
@@ -233,7 +233,7 @@ public interface IndentQuery {
                             i.category_id                           as categoryId,
                             c.name                                  as categoryName,
                             sc.name                                 as subCategoryName,
-                            COUNT(ide.id)                           as itemsCount,
+                            (SELECT count(ide1.id) FROM indent_details ide1 WHERE ide1.indent_id =i.id ) as itemsCount,
                             COALESCE(SUM(idd.order_qty), 0)         as orderQty,
                             i.priority_date_time                    as priority,
                             i.rfq_status                            as status,
@@ -247,7 +247,7 @@ public interface IndentQuery {
                                     LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                                     LEFT JOIN acl_users e ON e.id = i.requested_by_id
                             
-                    WHERE  i.indent_status IN ('APPROVED','VERIFIED') AND i.rfq_status = 'INIT'
+                    WHERE  i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.rfq_status = 'INIT'
                             AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo))
                             AND (:category IS NULL OR  LOWER(c.name) LIKE  CONCAT(LOWER(:category),'%'))
                             AND (:subCategory IS NULL OR LOWER(sc.name) LIKE CONCAT(LOWER(:subCategory),'%'))

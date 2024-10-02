@@ -1,0 +1,40 @@
+package com.agi.aesl.erpscm.inventory.user_request.entity;
+
+import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import jakarta.persistence.*;
+import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
+
+@Data
+@Entity
+@Table(name = "user_item_histories")
+public class UserItemHistory {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JsonIgnore
+    private UserItem userItem;
+
+    @ManyToOne
+    @JsonIgnore
+    private Employee employee;
+
+    @Enumerated(EnumType.STRING)
+    private UserCategoryStatus itemStatus;
+
+    @CreationTimestamp
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    private LocalDateTime verificationDate;
+}

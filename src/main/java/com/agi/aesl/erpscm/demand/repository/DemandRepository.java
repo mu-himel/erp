@@ -68,7 +68,7 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
         DemandStatus getDemandStatus();
         DemandPriority getDemandPriority();
         DemandStatus getDemandDetailStatus();
-        ItemUnit getItemUnit();
+        String getItemUnit();
         Integer getTotalStockInCurrentMonth();
         Integer getTotalConsumeInCurrentMonth();
         BigDecimal getAvgTotalConsumeInCurrentMonth();

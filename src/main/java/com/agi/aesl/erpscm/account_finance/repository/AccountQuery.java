@@ -46,6 +46,7 @@ public interface AccountQuery {
             LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id
             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
+            AND cws.warehouse_id = la.warehouse_id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
             WHERE 
             (COALESCE(:warehouseId) IS NULL OR ws.warehouse_id IN (:warehouseId)) AND 
