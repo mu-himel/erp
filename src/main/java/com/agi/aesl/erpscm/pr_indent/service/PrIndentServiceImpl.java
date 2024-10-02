@@ -22,6 +22,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -102,8 +103,9 @@ public class PrIndentServiceImpl implements PrIndentService {
     private List<?> getProcessedResult(List<PrIndentRepository.PrIndentViewInfo> result){
         List<Map<String,Object>> items = new ArrayList<>();
         Map<String,Object> warehousKeyMap = new HashMap<>();
-        AtomicReference<Long> prQty= new AtomicReference<>(0L);
+//        AtomicReference<Long> prQty= new AtomicReference<>(0L);
         for(PrIndentRepository.PrIndentViewInfo prIndentViewInfo: result){
+
             Map<String,Object> item = new HashMap<>();
             String warehouseKey = prIndentViewInfo.getPrAttribute()+"_"+prIndentViewInfo.getWarehouseId();
             System.out.println("HHHHHHHHHHHH "+warehouseKey);
@@ -133,7 +135,8 @@ public class PrIndentServiceImpl implements PrIndentService {
                 warehouseInfo.put("warehouseId",prIndentViewInfo.getWarehouseId());
                 warehouseInfo.put("orderQty", prIndentViewInfo.getOrderQty());
                 warehouseInfo.put("prQty", prIndentViewInfo.getPrQty());
-                prQty.getAndUpdate(v->v+prIndentViewInfo.getPrQty());
+
+
                 List<Map<String,Object>> pdList = new ArrayList<>();
                 
                 Map<String,Object> pd = new HashMap<>();
@@ -150,12 +153,16 @@ public class PrIndentServiceImpl implements PrIndentService {
 
                 warehousKeyMap.put(warehouseKey, warehouseInfo);
                 item.put("warehouses",warehousKeyMap);
-                item.put("prQty",prQty);
+                item.put("prQty",prIndentViewInfo.getPrQty());
                 items.add(item);
             }else{
                 Map<String,Object> existItem = anyItemOp.get();
-                prQty.getAndUpdate(v->v+prIndentViewInfo.getPrQty());
-                existItem.put("prQty",prQty);
+                Long prDetailId=(Long)existItem.get("prDetailId");
+                Long existingPrQty=(Long)existItem.get("prQty");
+                if(prDetailId.equals(prIndentViewInfo.getPrDetailId())) {
+//                    prQty.getAndUpdate(v -> v + prIndentViewInfo.getPrQty());
+                    existItem.put("prQty", existingPrQty+prIndentViewInfo.getPrQty());
+                }
                 if(existItem.containsKey("warehouses")){
                     Map<String,Object> existWarehouseProp = (Map<String,Object>)existItem.get("warehouses");
 
@@ -192,12 +199,8 @@ public class PrIndentServiceImpl implements PrIndentService {
                         warehouseInfo.put("warehouseId",prIndentViewInfo.getWarehouseId());
                         warehouseInfo.put("orderQty", prIndentViewInfo.getOrderQty());
                         warehouseInfo.put("prQty", prIndentViewInfo.getPrQty());
-//                        prQty+=prIndentViewInfo.getPrQty();
-//                        Long existingVal = (item.get("prQty")!=null)? (long) item.get("prQty") : 0L;
-//                        prQty.getAndUpdate(v->v+prIndentViewInfo.getPrQty());
-//                        existItem.put("prQty",prQty);
-                        List<Map<String,Object>> pdList = new ArrayList<>();
 
+                        List<Map<String,Object>> pdList = new ArrayList<>();
                         Map<String,Object> pd = new HashMap<>();
                         pd.put("id",prIndentViewInfo.getPdId());
                         pd.put("pdDate",prIndentViewInfo.getPdDate());
