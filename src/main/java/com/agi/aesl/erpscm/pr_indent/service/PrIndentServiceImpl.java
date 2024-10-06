@@ -22,17 +22,15 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
 public class PrIndentServiceImpl implements PrIndentService {
-    
+
     @Autowired
     private ProductRequirementService productRequirementService;
-    
+
     @Autowired
     private PrIndentRepository prIndentRepository;
 
@@ -51,10 +49,10 @@ public class PrIndentServiceImpl implements PrIndentService {
         prIndent.setStatus(PrIndentStatus.OPEN);
 
         categoryService.validateCategorySubCategoryRelation(
-                            prIndent.getCategory(),
-                            prIndent.getSubCategory()
-                        );
-        
+                prIndent.getCategory(),
+                prIndent.getSubCategory()
+        );
+
         //Save PrIndent
         prIndentRepository.save(prIndent);
 
@@ -97,123 +95,125 @@ public class PrIndentServiceImpl implements PrIndentService {
                 prIndentIds.orElseThrow(() -> new RuntimeException("PrIndent id should not empty"))
         );
 
-        return getProcessedResult(result);
+//        return result;
+        return getProcessedResults(result);
     }
 
-    private List<?> getProcessedResult(List<PrIndentRepository.PrIndentViewInfo> result){
-        List<Map<String,Object>> items = new ArrayList<>();
-        Map<String,Object> warehousKeyMap = new HashMap<>();
+    private List<?> getProcessedResult(List<PrIndentRepository.PrIndentViewInfo> result) {
+        List<Map<String, Object>> items = new ArrayList<>();
+        Map<String, Object> warehousKeyMap = new HashMap<>();
 //        AtomicReference<Long> prQty= new AtomicReference<>(0L);
-        for(PrIndentRepository.PrIndentViewInfo prIndentViewInfo: result){
+        for (PrIndentRepository.PrIndentViewInfo prIndentViewInfo : result) {
 
-            Map<String,Object> item = new HashMap<>();
-            String warehouseKey = prIndentViewInfo.getPrAttribute()+"_"+prIndentViewInfo.getWarehouseId();
-            System.out.println("HHHHHHHHHHHH "+warehouseKey);
-            Optional<Map<String,Object>> anyItemOp = items.stream().filter(_item->{
-               return  _item.get("itemName").equals(prIndentViewInfo.getPrAttribute());
+            Map<String, Object> item = new HashMap<>();
+            String warehouseKey = prIndentViewInfo.getPrAttribute() + "_" + prIndentViewInfo.getWarehouseId();
+            System.out.println("HHHHHHHHHHHH " + warehouseKey);
+            Optional<Map<String, Object>> anyItemOp = items.stream().filter(_item -> {
+                return _item.get("itemName").equals(prIndentViewInfo.getPrAttribute());
             }).findAny();
 
-            if(anyItemOp.isEmpty()){
+            if (anyItemOp.isEmpty()) {
                 item.put("id", prIndentViewInfo.getId());
-                item.put("productRequirementsIds",prIndentViewInfo.getProductRequirementsIds());
-                item.put("prDetailId",prIndentViewInfo.getPrDetailId());
+                item.put("productRequirementsIds", prIndentViewInfo.getProductRequirementsIds());
+                item.put("prDetailId", prIndentViewInfo.getPrDetailId());
 
-                item.put("itemName",prIndentViewInfo.getPrAttribute());
+                item.put("itemName", prIndentViewInfo.getPrAttribute());
                 item.put("categoryName", prIndentViewInfo.getCategoryName());
                 item.put("subCategoryName", prIndentViewInfo.getSubCategoryName());
                 item.put("categoryId", prIndentViewInfo.getCategoryId());
                 item.put("subCategoryId", prIndentViewInfo.getSubCategoryId());
                 item.put("daysRemain", prIndentViewInfo.getDaysRemain());
-                item.put("priority",prIndentViewInfo.getPriority());
-                item.put("priorityDate",prIndentViewInfo.getPriorityDate());
-                item.put("brandId",prIndentViewInfo.getBrandId());
-                item.put("brandName",prIndentViewInfo.getBrandName());
-                Map<String,Object> warehouseInfo = new HashMap<>();
+                item.put("priority", prIndentViewInfo.getPriority());
+                item.put("priorityDate", prIndentViewInfo.getPriorityDate());
+                item.put("brandId", prIndentViewInfo.getBrandId());
+                item.put("brandName", prIndentViewInfo.getBrandName());
+                Map<String, Object> warehouseInfo = new HashMap<>();
                 warehouseInfo.put("id", prIndentViewInfo.getPiwId());
-                warehouseInfo.put("warehouseName",prIndentViewInfo.getWarehouseName());
-                warehouseInfo.put("key",prIndentViewInfo.getPrDetailId()+"_"+prIndentViewInfo.getPiwId());
-                warehouseInfo.put("warehouseId",prIndentViewInfo.getWarehouseId());
+                warehouseInfo.put("warehouseName", prIndentViewInfo.getWarehouseName());
+                warehouseInfo.put("key", prIndentViewInfo.getPrDetailId() + "_" + prIndentViewInfo.getPiwId());
+                warehouseInfo.put("warehouseId", prIndentViewInfo.getWarehouseId());
                 warehouseInfo.put("orderQty", prIndentViewInfo.getOrderQty());
                 warehouseInfo.put("prQty", prIndentViewInfo.getPrQty());
 
 
-                List<Map<String,Object>> pdList = new ArrayList<>();
-                
-                Map<String,Object> pd = new HashMap<>();
-                pd.put("id",prIndentViewInfo.getPdId());
-                pd.put("pdDate",prIndentViewInfo.getPdDate());
-                pd.put("qty",prIndentViewInfo.getPdQty());
+                List<Map<String, Object>> pdList = new ArrayList<>();
+
+                Map<String, Object> pd = new HashMap<>();
+                pd.put("id", prIndentViewInfo.getPdId());
+                pd.put("pdDate", prIndentViewInfo.getPdDate());
+                pd.put("qty", prIndentViewInfo.getPdQty());
 
                 pdList.add(pd);
-                if(prIndentViewInfo.getPdDate()!= null && prIndentViewInfo.getPdQty()!=null){
-                    warehouseInfo.put("partialDeliveries",pdList);
-                }else{
+                if (prIndentViewInfo.getPdDate() != null && prIndentViewInfo.getPdQty() != null) {
+                    warehouseInfo.put("partialDeliveries", pdList);
+                } else {
                     warehouseInfo.put("partialDeliveries", new ArrayList<>());
                 }
 
                 warehousKeyMap.put(warehouseKey, warehouseInfo);
-                item.put("warehouses",warehousKeyMap);
-                item.put("prQty",prIndentViewInfo.getPrQty());
+                item.put("warehouses", warehousKeyMap);
+                item.put("prQty", prIndentViewInfo.getPrQty());
                 items.add(item);
-            }else{
-                Map<String,Object> existItem = anyItemOp.get();
-                Long prDetailId=(Long)existItem.get("prDetailId");
-                Long existingPrQty=(Long)existItem.get("prQty");
-                if(prDetailId.equals(prIndentViewInfo.getPrDetailId())) {
-//                    prQty.getAndUpdate(v -> v + prIndentViewInfo.getPrQty());
-                    existItem.put("prQty", existingPrQty+prIndentViewInfo.getPrQty());
-                }
-                if(existItem.containsKey("warehouses")){
-                    Map<String,Object> existWarehouseProp = (Map<String,Object>)existItem.get("warehouses");
+            } else {
+                Map<String, Object> existItem = anyItemOp.get();
+                Long prDetailId = (Long) existItem.get("prDetailId");
+                Long existingPrQty = (Long) existItem.get("prQty");
 
-                    if(existWarehouseProp.containsKey(warehouseKey)){
-                        warehousKeyMap = (Map<String,Object>)existWarehouseProp.get(warehouseKey);
-                        String key = (String)warehousKeyMap.get("key");
-                        String currentkey = prIndentViewInfo.getPrDetailId()+"_"+prIndentViewInfo.getPiwId();
+                if (prDetailId.equals(prIndentViewInfo.getPrDetailId())) {
+//                    prQty.getAndUpdate(v -> v + prIndentViewInfo.getPrQty());
+                    existItem.put("prQty", existingPrQty + prIndentViewInfo.getPrQty());
+
+                }
+                if (existItem.containsKey("warehouses")) {
+                    Map<String, Object> existWarehouseProp = (Map<String, Object>) existItem.get("warehouses");
+
+                    if (existWarehouseProp.containsKey(warehouseKey)) {
+                        warehousKeyMap = (Map<String, Object>) existWarehouseProp.get(warehouseKey);
+                        String key = (String) warehousKeyMap.get("key");
+                        String currentkey = prIndentViewInfo.getPrDetailId() + "_" + prIndentViewInfo.getPiwId();
                         System.out.println(String.valueOf(!key.contains(currentkey)));
-                        if(!key.contains(currentkey))
-                        {
-                            Long orderQty = (Long)warehousKeyMap.get("orderQty");
-                                orderQty +=prIndentViewInfo.getOrderQty();
-                                warehousKeyMap.replace("orderQty",orderQty);
+                        if (!key.contains(currentkey)) {
+                            Long orderQty = (Long) warehousKeyMap.get("orderQty");
+                            orderQty += prIndentViewInfo.getOrderQty();
+                            warehousKeyMap.replace("orderQty", orderQty);
                             Long _prQty = (Long) warehousKeyMap.get("prQty");
-                            Long existingVal = (item.get("prQty")!=null)? (long) item.get("prQty") : 0L;
-                            existItem.put("prQty",((item.get("prQty")!=null)?(long)item.get("prQty"):0)+_prQty);
+                            Long existingVal = (item.get("prQty") != null) ? (long) item.get("prQty") : 0L;
+                            existItem.put("prQty", ((item.get("prQty") != null) ? (long) item.get("prQty") : 0) + _prQty);
                             _prQty += prIndentViewInfo.getPrQty();
-                            warehousKeyMap.replace("prQty",_prQty);
+                            warehousKeyMap.replace("prQty", _prQty);
 
                             warehousKeyMap.replace("key", currentkey);
                         }
-                        
-                        List<Map<String,Object>> pdList = (List<Map<String,Object>>)warehousKeyMap.get("partialDeliveries");
-                        Map<String,Object> pd = new HashMap<>();
-                        pd.put("id",prIndentViewInfo.getPdId());
-                        pd.put("pdDate",prIndentViewInfo.getPdDate());
-                        pd.put("qty",prIndentViewInfo.getPdQty());
+
+                        List<Map<String, Object>> pdList = (List<Map<String, Object>>) warehousKeyMap.get("partialDeliveries");
+                        Map<String, Object> pd = new HashMap<>();
+                        pd.put("id", prIndentViewInfo.getPdId());
+                        pd.put("pdDate", prIndentViewInfo.getPdDate());
+                        pd.put("qty", prIndentViewInfo.getPdQty());
                         pdList.add(pd);
-                    }else{
-                        Map<String,Object> warehouseInfo = new HashMap<>();
+                    } else {
+                        Map<String, Object> warehouseInfo = new HashMap<>();
                         warehouseInfo.put("id", prIndentViewInfo.getPiwId());
-                        warehouseInfo.put("warehouseName",prIndentViewInfo.getWarehouseName());
-                        warehouseInfo.put("key",prIndentViewInfo.getPrDetailId()+"_"+prIndentViewInfo.getPiwId());
-                        warehouseInfo.put("warehouseId",prIndentViewInfo.getWarehouseId());
+                        warehouseInfo.put("warehouseName", prIndentViewInfo.getWarehouseName());
+                        warehouseInfo.put("key", prIndentViewInfo.getPrDetailId() + "_" + prIndentViewInfo.getPiwId());
+                        warehouseInfo.put("warehouseId", prIndentViewInfo.getWarehouseId());
                         warehouseInfo.put("orderQty", prIndentViewInfo.getOrderQty());
                         warehouseInfo.put("prQty", prIndentViewInfo.getPrQty());
 
-                        List<Map<String,Object>> pdList = new ArrayList<>();
-                        Map<String,Object> pd = new HashMap<>();
-                        pd.put("id",prIndentViewInfo.getPdId());
-                        pd.put("pdDate",prIndentViewInfo.getPdDate());
-                        pd.put("qty",prIndentViewInfo.getPdQty());
+                        List<Map<String, Object>> pdList = new ArrayList<>();
+                        Map<String, Object> pd = new HashMap<>();
+                        pd.put("id", prIndentViewInfo.getPdId());
+                        pd.put("pdDate", prIndentViewInfo.getPdDate());
+                        pd.put("qty", prIndentViewInfo.getPdQty());
                         pdList.add(pd);
-                        if(prIndentViewInfo.getPdDate()!= null && prIndentViewInfo.getPdQty()!=null){
-                            warehouseInfo.put("partialDeliveries",pdList);
-                        }else{
+                        if (prIndentViewInfo.getPdDate() != null && prIndentViewInfo.getPdQty() != null) {
+                            warehouseInfo.put("partialDeliveries", pdList);
+                        } else {
                             warehouseInfo.put("partialDeliveries", new ArrayList<>());
                         }
-                        existWarehouseProp.put(warehouseKey,warehouseInfo);
+                        existWarehouseProp.put(warehouseKey, warehouseInfo);
                     }
-                }else{
+                } else {
                     // add missing warehouse info
 
                 }
@@ -222,8 +222,152 @@ public class PrIndentServiceImpl implements PrIndentService {
 
         }
 
-        List<?> fitems = items.stream().map(_item->{
-            Map<String,Object> warehouses = (Map<String,Object>)_item.get("warehouses");
+        List<?> fitems = items.stream().map(_item -> {
+            Map<String, Object> warehouses = (Map<String, Object>) _item.get("warehouses");
+            _item.replace("warehouses", warehouses.values());
+            return _item;
+        }).collect(Collectors.toList());
+
+        return fitems;
+    }
+
+    private List<?> getProcessedResults(List<PrIndentRepository.PrIndentViewInfo> result) {
+        List<Map<String, Object>> items = new ArrayList<>();
+        Map<String, Object> warehousKeyMap = new HashMap<>();
+//        AtomicReference<Long> prQty= new AtomicReference<>(0L);
+        for (PrIndentRepository.PrIndentViewInfo prIndentViewInfo : result) {
+
+            Map<String, Object> item = new HashMap<>();
+            String warehouseKey = prIndentViewInfo.getBrandName() + "_" + prIndentViewInfo.getPrAttribute() + "_" + prIndentViewInfo.getWarehouseId();
+            System.out.println("HHHHHHHHHHHH " + warehouseKey);
+            Optional<Map<String, Object>> anyItemOp = items.stream().filter(_item -> {
+                String itemName = (String) _item.get("itemName");
+                String prAttribute = prIndentViewInfo.getPrAttribute();
+                return itemName.equals(prAttribute);
+            }).findAny();
+
+            if (anyItemOp.isEmpty()) {
+                item.put("id", prIndentViewInfo.getId());
+                item.put("productRequirementsIds", prIndentViewInfo.getProductRequirementsIds());
+                item.put("prDetailId", prIndentViewInfo.getPrDetailId());
+
+                item.put("itemName", prIndentViewInfo.getPrAttribute());
+                item.put("categoryName", prIndentViewInfo.getCategoryName());
+                item.put("subCategoryName", prIndentViewInfo.getSubCategoryName());
+                item.put("categoryId", prIndentViewInfo.getCategoryId());
+                item.put("subCategoryId", prIndentViewInfo.getSubCategoryId());
+                item.put("daysRemain", prIndentViewInfo.getDaysRemain());
+                item.put("priority", prIndentViewInfo.getPriority());
+                item.put("priorityDate", prIndentViewInfo.getPriorityDate());
+                item.put("brandId", prIndentViewInfo.getBrandId());
+                item.put("brandName", prIndentViewInfo.getBrandName());
+                Map<String, Object> warehouseInfo = new HashMap<>();
+                warehouseInfo.put("id", prIndentViewInfo.getPiwId());
+                warehouseInfo.put("warehouseName", prIndentViewInfo.getWarehouseName());
+                warehouseInfo.put("key", prIndentViewInfo.getBrandName() + " " + prIndentViewInfo.getPrAttribute());
+                warehouseInfo.put("warehouseId", prIndentViewInfo.getWarehouseId());
+                warehouseInfo.put("orderQty", prIndentViewInfo.getOrderQty());
+                warehouseInfo.put("prQty", prIndentViewInfo.getPrQty());
+
+
+                List<Map<String, Object>> pdList = new ArrayList<>();
+
+                Map<String, Object> pd = new HashMap<>();
+                pd.put("id", prIndentViewInfo.getPdId());
+                pd.put("pdDate", prIndentViewInfo.getPdDate());
+                pd.put("qty", prIndentViewInfo.getPdQty());
+                if (prIndentViewInfo.getPdId() != null) {
+                    pdList.add(pd);
+                }
+                if (prIndentViewInfo.getPdDate() != null && prIndentViewInfo.getPdQty() != null) {
+                    warehouseInfo.put("partialDeliveries", pdList);
+                } else {
+                    warehouseInfo.put("partialDeliveries", new ArrayList<>());
+                }
+
+                warehousKeyMap.put(warehouseKey, warehouseInfo);
+                item.put("warehouses", warehousKeyMap);
+                item.put("prQty", prIndentViewInfo.getPrQty());
+                item.put("orderQty", prIndentViewInfo.getOrderQty());
+
+                items.add(item);
+            } else {
+                Map<String, Object> existItem = anyItemOp.get();
+                Long prDetailId = (Long) existItem.get("prDetailId");
+                Long existingPrQty = (Long) existItem.get("prQty");
+                Long existingOrderQty = (Long) existItem.get("orderQty");
+                String _prIds = (String) existItem.get("productRequirementsIds");
+                String brandName = (String) existItem.get("brandName");
+                String prAttribute = (String) existItem.get("itemName");
+                if (brandName.equals(prIndentViewInfo.getBrandName()) && prAttribute.equals(prIndentViewInfo.getPrAttribute())) {
+                    existItem.put("prQty", existingPrQty + prIndentViewInfo.getPrQty());
+                    existItem.put("orderQty", existingOrderQty + prIndentViewInfo.getOrderQty());
+
+                    List<String> prIds = new ArrayList<>();
+                    prIds.add(_prIds);
+                    prIds.add(prIndentViewInfo.getProductRequirementsIds());
+                    existItem.put("productRequirementsIds", String.join(",", prIds));
+                }
+                if (existItem.containsKey("warehouses")) {
+                    Map<String, Object> existWarehouseProp = (Map<String, Object>) existItem.get("warehouses");
+
+                    if (existWarehouseProp.containsKey(warehouseKey)) {
+                        warehousKeyMap = (Map<String, Object>) existWarehouseProp.get(warehouseKey);
+                        String key = (String) warehousKeyMap.get("key");
+                        String currentkey = prIndentViewInfo.getBrandName() + " " + prIndentViewInfo.getPrAttribute();
+                        System.out.println(String.valueOf(!key.contains(currentkey)));
+                        if (!key.contains(currentkey)) {
+                            Long orderQty = (Long) warehousKeyMap.get("orderQty");
+                            orderQty += prIndentViewInfo.getOrderQty();
+                            warehousKeyMap.replace("orderQty", orderQty);
+                            Long _prQty = (Long) warehousKeyMap.get("prQty");
+                            Long existingVal = (item.get("prQty") != null) ? (long) item.get("prQty") : 0L;
+                            existItem.put("prQty", ((item.get("prQty") != null) ? (long) item.get("prQty") : 0) + _prQty);
+                            _prQty += prIndentViewInfo.getPrQty();
+                            warehousKeyMap.replace("prQty", _prQty);
+
+                            warehousKeyMap.replace("key", currentkey);
+                        }
+
+                        List<Map<String, Object>> pdList = (List<Map<String, Object>>) warehousKeyMap.get("partialDeliveries");
+                        Map<String, Object> pd = new HashMap<>();
+                        pd.put("id", prIndentViewInfo.getPdId());
+                        pd.put("pdDate", prIndentViewInfo.getPdDate());
+                        pd.put("qty", prIndentViewInfo.getPdQty());
+                        pdList.add(pd);
+                    } else {
+                        Map<String, Object> warehouseInfo = new HashMap<>();
+                        warehouseInfo.put("id", prIndentViewInfo.getPiwId());
+                        warehouseInfo.put("warehouseName", prIndentViewInfo.getWarehouseName());
+                        warehouseInfo.put("key", prIndentViewInfo.getBrandName() + " " + prIndentViewInfo.getPrAttribute());
+                        warehouseInfo.put("warehouseId", prIndentViewInfo.getWarehouseId());
+                        warehouseInfo.put("orderQty", prIndentViewInfo.getOrderQty());
+                        warehouseInfo.put("prQty", prIndentViewInfo.getPrQty());
+
+                        List<Map<String, Object>> pdList = new ArrayList<>();
+                        Map<String, Object> pd = new HashMap<>();
+                        pd.put("id", prIndentViewInfo.getPdId());
+                        pd.put("pdDate", prIndentViewInfo.getPdDate());
+                        pd.put("qty", prIndentViewInfo.getPdQty());
+                        pdList.add(pd);
+                        if (prIndentViewInfo.getPdDate() != null && prIndentViewInfo.getPdQty() != null) {
+                            warehouseInfo.put("partialDeliveries", pdList);
+                        } else {
+                            warehouseInfo.put("partialDeliveries", new ArrayList<>());
+                        }
+                        existWarehouseProp.put(warehouseKey, warehouseInfo);
+                    }
+                } else {
+                    // add missing warehouse info
+
+                }
+            }
+
+
+        }
+
+        List<?> fitems = items.stream().map(_item -> {
+            Map<String, Object> warehouses = (Map<String, Object>) _item.get("warehouses");
             _item.replace("warehouses", warehouses.values());
             return _item;
         }).collect(Collectors.toList());
@@ -236,20 +380,20 @@ public class PrIndentServiceImpl implements PrIndentService {
     @Transactional
     public void updateOrderDetailsOrderQty(UpdatePrIndentDetailRequestDto updatePrIndentDetailRequestDto) {
 
-        if (updatePrIndentDetailRequestDto.getPrIndentDetails()!=null && updatePrIndentDetailRequestDto
-                .getPrIndentDetails().size()==0) {
+        if (updatePrIndentDetailRequestDto.getPrIndentDetails() != null && updatePrIndentDetailRequestDto
+                .getPrIndentDetails().size() == 0) {
             throw new RuntimeException("Pr Indent details should not empty");
         }
 
-        updatePrIndentDetailRequestDto.getPrIndentDetails().stream().forEach(prd->{
-            Optional<PrIndentWarehouseDetail> piwdOp =  prIndentWarehouseDetailRepository.findById(prd.getId());
-            if(piwdOp.isPresent()){
+        updatePrIndentDetailRequestDto.getPrIndentDetails().stream().forEach(prd -> {
+            Optional<PrIndentWarehouseDetail> piwdOp = prIndentWarehouseDetailRepository.findById(prd.getId());
+            if (piwdOp.isPresent()) {
                 PrIndentWarehouseDetail piwd = piwdOp.get();
                 piwd.setOrderQty(prd.getOrderQty());
 
-                prd.getPartialDeliveries().stream().forEach(pd->{
+                prd.getPartialDeliveries().stream().forEach(pd -> {
                     PrIndentPartialDelivery pipd = new PrIndentPartialDelivery();
-                    if(pd.getId()!=null){
+                    if (pd.getId() != null) {
                         pipd.setId(pd.getId());
                     }
                     pipd.setPdDate(pd.getPdDate());
@@ -259,7 +403,7 @@ public class PrIndentServiceImpl implements PrIndentService {
                 });
             }
         });
-  
+
     }
 
 }
