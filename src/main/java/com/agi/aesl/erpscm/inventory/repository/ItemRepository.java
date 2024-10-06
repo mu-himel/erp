@@ -116,27 +116,37 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
     Optional<Item> findByItemAttributeName(String itemAttribute);
 
     @Query(value = """
-            SELECT DISTINCT ws.id as storeId, ws.storeName as storeName, ipc.name as category,
-                             ipc.code as categoryCode, ic.name as subCategory, ic.code as subCategoryCode,
-                             i.itemAttributeName as itemAttributeName, '' as unitMeasurement, '' as currentStock, '' as safetyStock, '' as reorderPercent
-                        FROM Item i
-                        LEFT JOIN i.itemParentCategory ipc
-                        LEFT JOIN i.itemCategory ic
-                        LEFT JOIN i.stocks s
-                        LEFT JOIN s.warehouse w
-                        LEFT JOIN s.warehouseStore ws
-                        WHERE (:categoryId IS NULL OR ipc.id = :categoryId)
-                            AND (:subCategoryId IS NULL OR ic.id = :subCategoryId)
-                            AND (:warehouseId IS NULL OR w.id = :warehouseId)
-                            AND (:warehouseStoreId IS NULL OR ws.id = :warehouseStoreId)
-            """)
+            SELECT w.id as wId, w.name as warehouseName, ws.id as storeId, ws.store_name as storeName, ipc.name as category,
+                  ipc.code as categoryCode, ic.name as subCategory, ic.code as subCategoryCode,
+                  i.active,
+                  i.name as brandName, i.item_attribute_name  as itemAttributeName, i.item_unit as unitMeasurement,
+                  (SELECT SUM(stock_qty) from scm_item_stocks sis WHERE sis.item_id=i.id
+                  AND (:warehouseId IS NULL OR sis.warehouse_id = :warehouseId)
+                  AND (:warehouseStoreId IS NULL OR sis.warehouse_store_id = :warehouseStoreId)
+                  ) as currentStock, '' as safetyStock, '' as reorderPercent
+                FROM scm_items i
+             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
+             LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id
+             LEFT JOIN scm_item_stocks is1 ON is1.item_id = i.id
+             LEFT JOIN scm_warehouses w ON w.id = is1.warehouse_id
+             LEFT JOIN scm_warehouse_stores ws ON ws.id = is1.warehouse_store_id
+             WHERE (:categoryId IS NULL OR ipc.id = :categoryId)
+                 AND (:subCategoryId IS NULL OR ic.id = :subCategoryId)
+                 AND (:warehouseId IS NULL OR w.id = :warehouseId)
+                 AND (:warehouseStoreId IS NULL OR ws.id = :warehouseStoreId)
+                 AND i.active = true
+                 GROUP BY i.name, i.item_attribute_name
+            """,nativeQuery = true)
     List<ItemTemplateInfo> fetchTemplateData(Long categoryId, Long subCategoryId,
                                              Long warehouseId, Long warehouseStoreId);
 
     interface ItemTemplateInfo {
 
+        Long getWId();
+        String getWarehouseName();
         Long getStoreId();
         String getStoreName();
+        String getBrandName();
         String getCategory();
         String getCategoryCode();
         String getSubCategory();
