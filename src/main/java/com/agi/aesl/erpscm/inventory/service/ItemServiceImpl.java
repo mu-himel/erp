@@ -1262,4 +1262,11 @@ public class ItemServiceImpl implements ItemService {
         }
         item.setCode(itemMergeRequestDto.getCode());
     }
+
+    @Override
+    public List<?> getTemplateData(Long categoryId, Long subCategoryId,
+                                   Long warehouseId, Long warehouseStoreId) {
+        return itemRepository.fetchTemplateData(categoryId,subCategoryId,
+                warehouseId,warehouseStoreId);
+    }
 }

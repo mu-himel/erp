@@ -4,7 +4,6 @@ import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import com.agi.aesl.erpscm.inventory.entity.ItemFunctionalUnit;
 import com.agi.aesl.erpscm.inventory.entity.ItemStock;
-import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -115,6 +114,39 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
                                                @Param("warehouseId") Long warehouseId);
 
     Optional<Item> findByItemAttributeName(String itemAttribute);
+
+    @Query(value = """
+            SELECT DISTINCT ws.id as storeId, ws.storeName as storeName, ipc.name as category,
+                             ipc.code as categoryCode, ic.name as subCategory, ic.code as subCategoryCode,
+                             i.itemAttributeName as itemAttributeName, '' as unitMeasurement, '' as currentStock, '' as safetyStock, '' as reorderPercent
+                        FROM Item i
+                        LEFT JOIN i.itemParentCategory ipc
+                        LEFT JOIN i.itemCategory ic
+                        LEFT JOIN i.stocks s
+                        LEFT JOIN s.warehouse w
+                        LEFT JOIN s.warehouseStore ws
+                        WHERE (:categoryId IS NULL OR ipc.id = :categoryId)
+                            AND (:subCategoryId IS NULL OR ic.id = :subCategoryId)
+                            AND (:warehouseId IS NULL OR w.id = :warehouseId)
+                            AND (:warehouseStoreId IS NULL OR ws.id = :warehouseStoreId)
+            """)
+    List<ItemTemplateInfo> fetchTemplateData(Long categoryId, Long subCategoryId,
+                                             Long warehouseId, Long warehouseStoreId);
+
+    interface ItemTemplateInfo {
+
+        Long getStoreId();
+        String getStoreName();
+        String getCategory();
+        String getCategoryCode();
+        String getSubCategory();
+        String getSubCategoryCode();
+        String getitemAttributeName();
+        String getUnitMeasurement();
+        String getCurrentStock();
+        String getSafetyStock();
+        String getReorderPercent();
+    }
 
     interface ItemInfoByAttribute{
         Long getBrandId();
