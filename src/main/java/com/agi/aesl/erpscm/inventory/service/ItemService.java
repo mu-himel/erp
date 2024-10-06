@@ -109,4 +109,7 @@ public interface ItemService {
     Optional<Item> getByBrandAndAttributeName(String string,Long subCatId, String string2);
 
     void approveItemFromCps(Long id, ItemApproveRequestDto approveRequestDto);
+
+    List<?> getTemplateData(Long categoryId, Long subCategoryId,
+                            Long warehouseId, Long warehouseStoreId);
 }

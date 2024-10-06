@@ -1,13 +1,18 @@
 package com.agi.aesl.erpscm.inventory.enums;
 
 public enum ItemHeader {
+    WID,
+    WAREHOUSE_NAME,
+    STORE_ID,
     STORE_TYPE,
-    CATEGORY_NAME,
-    SUB_CATEGORY_NAME,
-    ITEM_NAME,
-    VAT,
-    ATTRIBUTE_TYPE,
-    ATTRIBUTE_VALUE,
-    ATTRIBUTE_UNIT,
-    BRANDS
+    CATEGORY,
+    SUB_CATEGORY,
+    SUB_CATEGORY_CODE,
+    CATEGORY_CODE,
+    BRAND_NAME,
+    ITEM_ATTRIBUTE_NAME,
+    UNIT_MEASUREMENT,
+    CURRENT_STOCK,
+    SAFETY_STOCK,
+    REORDER_PERCENTAGE
 }

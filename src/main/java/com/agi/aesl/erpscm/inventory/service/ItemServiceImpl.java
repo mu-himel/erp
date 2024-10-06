@@ -874,6 +874,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public void importItems(Optional<MultipartFile> fileOp) {
         Path path = Path.of(uploadDir+"/inventory-mgm/items");
         FileUploadResponse fileUploadResponse = null;
@@ -883,8 +884,8 @@ public class ItemServiceImpl implements ItemService {
                 Iterable<CSVRecord> records = getItemRecords(fileUploadResponse);
                 Map<String,Object> _item = new HashMap<>();
                 for(CSVRecord r : records){
-//                    String catName = r.get("CATEGORY_NAME");
-//                    String subCatName = r.get("SUB_CATEGORY_NAME");
+                    String catName = r.get("CATEGORY");
+                    String subCatName = r.get("SUB_CATEGORY");
 //                    String itemName = r.get("ITEM_NAME");
 //                    String vat = r.get("VAT");
 //                    String attrType = r.get("ATTRIBUTE_TYPE");
@@ -894,28 +895,29 @@ public class ItemServiceImpl implements ItemService {
 //                    String _key = subCatName.replaceAll(" ","_").toLowerCase();
 
                     System.out.println(r);
+                    String brandName = r.get("BRAND_NAME");
                     String itemAttribute = r.get("ITEM_ATTRIBUTE_NAME");
                     String storeId = r.get("STORE_ID");
                     String currentStock = r.get("CURRENT_STOCK");
                     String safetyStock = r.get("SAFETY_STOCK");
                     String unitMeasurement = r.get("UNIT_MEASUREMENT");
-                    String reorderPercent = r.get("REORDER_PERCENT");
+                    String reorderPercent = r.get("REORDER_PERCENTAGE");
 
 //                    Optional<ItemCategory> icOp = categoryService.getItemCategoryByName(catName);
 //                    if(icOp.isEmpty()){
 //                        throw new AesException("Item Category Not found");
 //                    }
-//                    Optional<ItemCategory> subCatOp = categoryService.getItemCategoryByName(subCatName);
-//                    if(subCatOp.isEmpty()){
-//                        throw new AesException("Item Sub Category Not found");
-//                    }
+                    Optional<ItemCategory> subCatOp = categoryService.getItemCategoryByName(subCatName);
+                    if(subCatOp.isEmpty()){
+                        throw new AesException("Item Sub Category Not found");
+                    }
                    
 //                    ItemCategory ic = icOp.get();
-//                    ItemCategory subCat = subCatOp.get();
-//                    Optional<CategoryBrand> catBrandOp = catBrandRepo.findByCategoryIdAndName(subCat.getId(),brands);
-//                    if(catBrandOp.isEmpty()){
-//                        throw new AesException("Brand not found");
-//                    }
+                    ItemCategory subCat = subCatOp.get();
+                    Optional<CategoryBrand> catBrandOp = catBrandRepo.findByCategoryIdAndName(subCat.getId(),brandName);
+                    if(catBrandOp.isEmpty()){
+                        throw new AesException("Brand not found");
+                    }
 //
 //                    StringBuilder itemCode = new StringBuilder();
 //                    itemCode.append(ic.getName().substring(0,1)).append(ic.getId());
@@ -928,8 +930,10 @@ public class ItemServiceImpl implements ItemService {
 //                        itemProps.put("name",itemName);
 //                    }
 
+
                     if(!itemAttribute.isEmpty()){
-                        Optional<Item> itemOp = itemRepository.findByItemAttributeName(itemAttribute);
+                        CategoryBrand catBrand = catBrandOp.get();
+                        Optional<Item> itemOp = itemRepository.findByBrandIdAndItemAttributeName(catBrand.getId(),itemAttribute);
                         if(itemOp.isPresent() && storeId !=null){
                             Optional<WarehouseStore> wsOp = warehouseStoreRepository.findById(Long.parseLong(storeId));
                             if(wsOp.isPresent()){
@@ -942,12 +946,13 @@ public class ItemServiceImpl implements ItemService {
                                 if(stockQty.compareTo(new BigDecimal(0)) == 0){
                                     stockIn(itemOp.get(), new BigDecimal(Double.parseDouble(currentStock)), ws.getWarehouse().getId(), ws.getId());
                                 }
-
                                 if(!safetyStock.isEmpty()){
                                     item.setStockThresholdQty(Integer.parseInt(safetyStock));
                                 }
+                                if(!unitMeasurement.isEmpty()){
+                                    item.setItemUnit(unitMeasurement);
+                                }
 
-                                item.setItemUnit(unitMeasurement);
                                 if(!reorderPercent.isEmpty()){
                                     item.setReorderPercentage(new BigDecimal(Double.parseDouble(reorderPercent)));
                                 }
@@ -1261,5 +1266,12 @@ public class ItemServiceImpl implements ItemService {
            item.setBrand(categoryBrandOp.get());
         }
         item.setCode(itemMergeRequestDto.getCode());
+    }
+
+    @Override
+    public List<?> getTemplateData(Long categoryId, Long subCategoryId,
+                                   Long warehouseId, Long warehouseStoreId) {
+        return itemRepository.fetchTemplateData(categoryId,subCategoryId,
+                warehouseId,warehouseStoreId);
     }
 }

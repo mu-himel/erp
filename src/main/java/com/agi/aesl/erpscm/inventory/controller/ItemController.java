@@ -226,4 +226,22 @@ public class ItemController extends BaseController{
         itemService.approveItemFromCps(id, approveRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+    @GetMapping("/download-template")
+    public ResponseEntity<?> downloadTemplate(
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+            @RequestParam("warehouseId") Optional<Long> warehouseId,
+            @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId
+    ){
+
+        return new ResponseEntity<>(itemService.getTemplateData(
+                categoryId.orElse(null),
+                subCategoryId.orElse(null),
+                warehouseId.orElse(null),
+                warehouseStoreId.orElse(null)
+                ),
+                HttpStatus.OK
+        );
+    }
 }
