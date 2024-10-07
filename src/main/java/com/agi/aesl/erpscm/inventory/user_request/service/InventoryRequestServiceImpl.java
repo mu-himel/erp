@@ -114,6 +114,16 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     }
 
     @Override
+    public Page<?> getPendingApprovalItemsByStore(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                                  Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
+        return userItemRepository.findAllPendingApprovalItemsByStore(claimResolver.getUserId(),
+                categoryId.orElse(null),subCategoryId.orElse(null),pageable);
+    }
+
+    @Override
     @Transactional
     public void createProduct(Jwt token, String uri, UserItemRequestDto itemRequestDto) {
         claimResolver.setToken(token);
@@ -338,6 +348,25 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
         Optional<UserItem> itemOp = userItemRepository.findById(domainId);
         itemOp.ifPresent((item)->{
+            item.setItemStatus(UserCategoryStatus.REJECTED);
+        });
+    }
+
+    @Override
+    @Transactional
+    public void approveByStore(Long id) {
+        Optional<UserItem> itemOp = userItemRepository.findById(id);
+        itemOp.ifPresent((item)->{
+            item.setIsApprovedByStore(true);
+        });
+    }
+
+    @Override
+    @Transactional
+    public void rejectByStore(Long id) {
+        Optional<UserItem> itemOp = userItemRepository.findById(id);
+        itemOp.ifPresent((item)->{
+            item.setIsApprovedByStore(false);
             item.setItemStatus(UserCategoryStatus.REJECTED);
         });
     }

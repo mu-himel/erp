@@ -222,6 +222,31 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
+    public Page<?> getPendingApprovalCategoriesFromStore(Jwt token, Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+        claimResolver.setToken(token);
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
+        if(isCategory){
+            return userCategoryRepository.findAllPendingApprovalByStore(claimResolver.getUserId(),null,pageable);
+        }
+        return userCategoryRepository.findAllClosedSubCategory(
+                claimResolver.getUserId(),
+                categoryId.orElse(null),
+                pageable
+        );
+    }
+
+    @Override
+    public Page<?> getPendingApprovalSubCategoriesFromStore(Jwt token, Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+        claimResolver.setToken(token);
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
+
+        return userCategoryRepository.findAllPendingApprovalByStore(claimResolver.getUserId(),categoryId.orElse(null),pageable);
+
+    }
+
+    @Override
     public Map<String, Object> getDetail(Long id) {
         Optional<UserCategory> catOp = userCategoryRepository.findById(id);
         if(catOp.isEmpty()){
@@ -387,7 +412,28 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         });
     }
 
-//    private void sentToCps(Jwt token, UserCategory category){
+    @Override
+    @Transactional
+    public void approveByStore(Long domainId) {
+        Optional<UserCategory> catOp = userCategoryRepository.findById(domainId);
+        catOp.ifPresent((cat)->{
+            cat.setIsApprovedByStore(true);
+            // prepare inventory category and send to cps
+
+        });
+    }
+
+    @Override
+    @Transactional
+    public void rejectByStore(Long domainId) {
+        Optional<UserCategory> catOp = userCategoryRepository.findById(domainId);
+        catOp.ifPresent((cat)->{
+            cat.setIsApprovedByStore(false);
+            cat.setCategoryStatus(UserCategoryStatus.REJECTED);
+        });
+    }
+
+    //    private void sentToCps(Jwt token, UserCategory category){
 //        RemoteCategoryRequestDto remoteCategoryRequestDto = new RemoteCategoryRequestDto();
 //        remoteCategoryRequestDto.setName(category.getName());
 //        remoteCategoryRequestDto.setCode(category.getCode());

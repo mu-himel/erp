@@ -35,6 +35,8 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
 
     @Query(value = closedCategories,countQuery = countClosedCategories, nativeQuery = true)
     Page<UserCategory> findAllClosed(String userId, Pageable pageable);
+    @Query(value = pendingApprovalFromStoreCategories,countQuery = countPendingApprovalByStoreCategories, nativeQuery = true)
+    Page<UserCategory> findAllPendingApprovalByStore(String userId,Long categoryId, Pageable pageable);
 
     @Query(value = closedSubCategories,countQuery = countClosedSubCategories, nativeQuery = true)
     Page<UserSubCategory> findAllClosedSubCategory(String userId,Long categoryId, Pageable pageable);

@@ -58,6 +58,8 @@ public class UserItem extends VerifyableEntity implements ItemInterface {
 
     private Boolean active=true;
 
+    private Boolean isApprovedByStore;
+
     @ManyToOne
     private UserCategoryBrand brand;
 

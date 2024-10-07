@@ -29,5 +29,11 @@ public interface InventoryRequestService extends VerificationDomainService {
     Page<?> getClosed(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
                       Optional<Integer> page, Optional<Integer> size);
 
+    Page<?> getPendingApprovalItemsByStore(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                      Optional<Integer> page, Optional<Integer> size);
+
     void review(Jwt token, Long id, ReviewDto reviewDto);
+
+    void approveByStore(Long id);
+    void rejectByStore(Long id);
 }

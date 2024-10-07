@@ -155,6 +155,29 @@ public class InventoryRequestCategoryController extends BaseController {
                 HttpStatus.OK);
     }
 
+    @GetMapping("/categories/pending-approvals-store")
+    public ResponseEntity<?> getPendingApprovalCategoriesByStore(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                categoryRequestService.getPendingApprovalCategoriesFromStore(token,Optional.empty(),page,size,true),
+                HttpStatus.OK);
+    }
+
+    @GetMapping("/subcategories/pending-approvals-store")
+    public ResponseEntity<?> getPendingApprovalSubCategoriesByStore(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                categoryRequestService.getPendingApprovalSubCategoriesFromStore(token,categoryId,page,size,false),
+                HttpStatus.OK);
+    }
+
     @GetMapping("/subcategories/closed")
     public ResponseEntity<?> getClosedSubCategories(
             @AuthenticationPrincipal Jwt token,
@@ -184,6 +207,18 @@ public class InventoryRequestCategoryController extends BaseController {
             @RequestBody ReviewDto reviewDto
     ){
         categoryRequestService.review(token,id,reviewDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/{id}/approved-by-store")
+    public ResponseEntity<?> approveByStore(@PathVariable("id") Long id){
+        categoryRequestService.approveByStore(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/{id}/reject-by-store")
+    public ResponseEntity<?> rejectByStore(@PathVariable("id") Long id){
+        categoryRequestService.rejectByStore(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

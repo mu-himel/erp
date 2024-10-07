@@ -123,6 +123,24 @@ public interface UserCategoryQuery {
             """;
     String countClosedCategories = "SELECT COUNT(*) FROM ("+closedCategories+") as total";
 
+    String pendingApprovalFromStoreCategories="""
+            select id as id, name as categoryName, (
+                SELECT COUNT(*) FROM user_categories uc1
+                WHERE uc1.parent_category_id=uc.id
+            ) as subCategoryCount, 0 as productCount,
+            category_status as status
+            FROM user_categories uc
+            WHERE uc.created_by_id=:userId AND 
+            (
+            (:categoryId IS NULL AND uc.parent_category_id IS NULL)
+            OR
+            (:categoryId IS NOT NULL AND uc.parent_category_id = :categoryId)
+            )
+            AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED')
+            AND (uc.is_approved_by_store IS NULL OR uc.is_approved_by_store=false)
+            """;
+    String countPendingApprovalByStoreCategories = "SELECT COUNT(*) FROM ("+pendingApprovalFromStoreCategories+") as total";
+
     String closedSubCategories="""
             select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
             uc.category_status as status

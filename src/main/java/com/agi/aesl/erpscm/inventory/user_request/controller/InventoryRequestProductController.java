@@ -97,6 +97,21 @@ public class InventoryRequestProductController extends BaseController {
         );
     }
 
+    @GetMapping("/products/pending-approvals-store")
+    public ResponseEntity<?> getPendingApprovalsByStore(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                inventoryRequestService.getPendingApprovalItemsByStore(token,categoryId,subCategoryId,page,size),
+                HttpStatus.OK
+        );
+    }
+
+
     @PutMapping("/products/review/{id}")
     public ResponseEntity<?> reviewProduct(
             @AuthenticationPrincipal Jwt token,
@@ -104,6 +119,18 @@ public class InventoryRequestProductController extends BaseController {
             @RequestBody ReviewDto reviewDto
             ){
         inventoryRequestService.review(token, id, reviewDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/products/approve-by-store/{id}")
+    public ResponseEntity<?> approveByStore(@PathVariable("id") Long id){
+        inventoryRequestService.approveByStore(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/products/reject-by-store/{id}")
+    public ResponseEntity<?> rejectByStore(@PathVariable("id") Long id){
+        inventoryRequestService.rejectByStore(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

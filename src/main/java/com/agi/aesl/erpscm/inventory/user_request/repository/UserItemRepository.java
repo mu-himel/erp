@@ -39,6 +39,9 @@ public interface UserItemRepository extends JpaRepository<UserItem,Long>, UserIt
     Page<UserItem> findAllClosed(String userId, Long categoryId,
                                  Long subCategoryId,Pageable pageable);
 
+    @Query(value = getPendingApprovalsByStore, countQuery =  countPendingApprovalsByStore, nativeQuery = true)
+    Page<UserItem> findAllPendingApprovalItemsByStore(String userId, Long categoryId, Long subCategoryId, Pageable pageable);
+
     interface UserItem{
         Long getId();
         String getCategoryName();
