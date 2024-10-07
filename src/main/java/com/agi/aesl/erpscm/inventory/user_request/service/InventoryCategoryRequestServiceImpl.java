@@ -132,13 +132,14 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
                 null);
 
         if(appliedVADto.getVerifiers().isEmpty() && appliedVADto.getPanels().isEmpty()){
-            ObjectMapper mapper = new ObjectMapper();
-            try {
-                String employee = mapper.writeValueAsString(userCategory.getCreatedBy());
-                categoryService.sendToCps(token, userCategory, employee);
-            }catch (Exception ex){
-                throw new RuntimeException(ex.getMessage());
-            }
+              userCategory.setCategoryStatus(UserCategoryStatus.COMPLETED);
+//            ObjectMapper mapper = new ObjectMapper();
+//            try {
+//                String employee = mapper.writeValueAsString(userCategory.getCreatedBy());
+//                categoryService.sendToCps(token, userCategory, employee);
+//            }catch (Exception ex){
+//                throw new RuntimeException(ex.getMessage());
+//            }
         }
     }
 

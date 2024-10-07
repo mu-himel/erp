@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.inventory.user_request.service;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
@@ -9,6 +10,12 @@ import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.UserItemRequestDto;
+import com.agi.aesl.erpscm.inventory.entity.CategoryBrand;
+import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
+import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.entity.ItemFunctionalUnit;
+import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
+import com.agi.aesl.erpscm.inventory.repository.CategoryRepository;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.inventory.user_request.entity.*;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
@@ -33,6 +40,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class InventoryRequestServiceImpl implements InventoryRequestService{
@@ -42,10 +50,10 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     private ClaimResolver claimResolver;
 
     @Autowired
-    private UserCategoryRepository userCategoryRepository;
+    private CategoryRepository categoryRepository;
 
     @Autowired
-    private UserCategoryBrandRepository userCategoryBrandRepository;
+    private CategoryBrandRepository categoryBrandRepository;
 
     @Autowired
     private UserItemRepository userItemRepository;
@@ -135,15 +143,15 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
         userItem.setActive(true);
         userItem.setWarehouse(new Warehouse(itemRequestDto.getWarehouse().getId()));
         userItem.setWarehouseStore(new WarehouseStore(itemRequestDto.getWarehouseStore().getId()));
-        Optional<UserCategory> catOp = userCategoryRepository.findById(itemRequestDto.getItemParentCategory().getId());
+        Optional<ItemCategory> catOp = categoryRepository.findById(itemRequestDto.getItemParentCategory().getId());
         if(catOp.isEmpty()) {
             throw new RuntimeException("Sorry! User Category not found");
         }
-        Optional<UserCategory> subCatOp = userCategoryRepository.findById(itemRequestDto.getItemCategory().getId());
+        Optional<ItemCategory> subCatOp = categoryRepository.findById(itemRequestDto.getItemCategory().getId());
         if(subCatOp.isEmpty()){
             throw new RuntimeException("Sorry! User Sub Category not found");
         }
-        Optional<UserCategoryBrand> cbOp = userCategoryBrandRepository.findById(itemRequestDto.getBrand().getId());
+        Optional<CategoryBrand> cbOp = categoryBrandRepository.findById(itemRequestDto.getBrand().getId());
         if(cbOp.isEmpty()) {
             throw new RuntimeException("Sorry! User Product not found");
         }
@@ -164,16 +172,17 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
                 null);
 
         if(appliedVADto.getVerifiers().isEmpty() && appliedVADto.getPanels().isEmpty()){
-            try {
-                ObjectMapper mapper = new ObjectMapper();
-                String employee = mapper.writeValueAsString(userItem.getCreatedBy());
-                /**
-                 * Here may be need something more todo
-                 */
-                itemService.sendItemToCps(claimResolver,employee,userItem,userItem.getItemAttributes(),null);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+              userItem.setItemStatus(UserCategoryStatus.COMPLETED);
+//            try {
+//                ObjectMapper mapper = new ObjectMapper();
+//                String employee = mapper.writeValueAsString(userItem.getCreatedBy());
+//                /**
+//                 * Here may be need something more todo
+//                 */
+//                itemService.sendItemToCps(claimResolver,employee,userItem,userItem.getItemAttributes(),null);
+//            } catch (JsonProcessingException e) {
+//                throw new RuntimeException(e);
+//            }
         }
     }
 
@@ -354,10 +363,35 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
 
     @Override
     @Transactional
-    public void approveByStore(Long id) {
+    public void approveByStore(Jwt token, Long id) {
         Optional<UserItem> itemOp = userItemRepository.findById(id);
         itemOp.ifPresent((item)->{
             item.setIsApprovedByStore(true);
+            ItemRequestDto itemRequestDto = new ItemRequestDto();
+            itemRequestDto.setBrand(new ReferenceObjectDto(item.getBrand().getId()));
+            itemRequestDto.setName(item.getName());
+            itemRequestDto.setCode(item.getCode());
+            itemRequestDto.setItemCategory(item.getSubCategory());
+            itemRequestDto.setItemParentCategory(item.getCategory());
+            itemRequestDto.setItemUnit(item.getItemUnit());
+            if(item.getAttributes()!=null && !item.getAttributes().isEmpty()) {
+                itemRequestDto.setAttributes(item.getAttributes().stream().map(_attr -> {
+                    ItemAttribute attr = new ItemAttribute();
+                    attr.setAttributeType(_attr.getAttributeType());
+                    attr.setAttributeUnit(_attr.getAttributeUnit());
+                    attr.setAttributeValue(_attr.getAttributeValue());
+                    return attr;
+                }).collect(Collectors.toList()));
+            }
+            if(item.getFunctionalUnits()!=null && !item.getFunctionalUnits().isEmpty()) {
+                itemRequestDto.setFunctionalUnits(item.getFunctionalUnits().stream().map(_fu -> {
+                    ItemFunctionalUnit ifu = new ItemFunctionalUnit();
+                    ifu.setUnit(_fu.getUnit());
+                    ifu.setValue(_fu.getValue());
+                    return ifu;
+                }).collect(Collectors.toList()));
+            }
+            itemService.createItem(token,itemRequestDto);
         });
     }
 

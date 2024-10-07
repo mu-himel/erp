@@ -123,8 +123,10 @@ public class InventoryRequestProductController extends BaseController {
     }
 
     @PutMapping("/products/approve-by-store/{id}")
-    public ResponseEntity<?> approveByStore(@PathVariable("id") Long id){
-        inventoryRequestService.approveByStore(id);
+    public ResponseEntity<?> approveByStore(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id){
+        inventoryRequestService.approveByStore(token,id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
