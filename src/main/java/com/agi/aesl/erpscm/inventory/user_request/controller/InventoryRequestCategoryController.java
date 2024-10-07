@@ -211,8 +211,10 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @PutMapping("/{id}/approved-by-store")
-    public ResponseEntity<?> approveByStore(@PathVariable("id") Long id){
-        categoryRequestService.approveByStore(id);
+    public ResponseEntity<?> approveByStore(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id){
+        categoryRequestService.approveByStore(token,id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

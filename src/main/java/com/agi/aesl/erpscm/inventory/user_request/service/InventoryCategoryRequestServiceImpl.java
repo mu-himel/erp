@@ -52,6 +52,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -414,11 +415,23 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
 
     @Override
     @Transactional
-    public void approveByStore(Long domainId) {
+    public void approveByStore(Jwt token, Long domainId) {
         Optional<UserCategory> catOp = userCategoryRepository.findById(domainId);
         catOp.ifPresent((cat)->{
             cat.setIsApprovedByStore(true);
-            // prepare inventory category and send to cps
+            CategoryRequestDto categoryRequestDto = new CategoryRequestDto();
+            categoryRequestDto.setName(cat.getName());
+            categoryRequestDto.setCode(cat.getCode());
+            if(cat.getParentCategory()!=null){
+                ItemCategory category = new ItemCategory(cat.getParentCategory().getId());
+                categoryRequestDto.setParentCategory(category);
+                categoryRequestDto.setCurrentYearBudget(new BigDecimal(0));
+            }
+            categoryRequestDto.setWarehouse(new ReferenceObjectDto(cat.getStore().getWarehouse().getId()));
+            categoryRequestDto.setWarehouse(new ReferenceObjectDto(cat.getStore().getId()));
+            categoryRequestDto.setIsForCps(true);
+            categoryService.addCategory(token, categoryRequestDto);
+
 
         });
     }
