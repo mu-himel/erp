@@ -23,12 +23,12 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             ir.internal_requisition_no as irNo,
             c.name as categoryName,
             count(ird.id) as itemsQty,
-            ir.status as status,
+            ir.ir_status as status,
             ir.created_at as createdAt
         FROM internal_requisitions ir 
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN scm_item_categories c ON c.id = ir.category_id
-        WHERE ir.status IN ('PENDING','PENDING_VERIFICATION','PENDING_APPROVAL', 'REVIEW','PROCESSING')
+        WHERE ir.ir_status IN ('PENDING','PENDING_VERIFICATION','PENDING_APPROVAL', 'REVIEW','PROCESSING')
         GROUP BY ir.id
         """;
 
@@ -38,12 +38,12 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
                 ir.internal_requisition_no as irNo,
                 c.name as categoryName,
                 count(ird.id) as itemsQty,
-                ir.status as status,
+                ir.ir_status as status,
                 ir.created_at as createdAt
             FROM internal_requisitions ir 
             LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
             LEFT JOIN scm_item_categories c ON c.id = ir.category_id
-            WHERE ir.status IN ('RECEIVED', 'REJECTED')
+            WHERE ir.ir_status IN ('RECEIVED', 'REJECTED')
             GROUP BY ir.id
             """;//    Page<IrListInfo> findAllClosedIr(Pageable pageable);
 //
@@ -62,13 +62,13 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             CONCAT(e.employee_id, '-' , e.employee_name) as employeeName,
             c.name as categoryName,
             count(ird.id) as itemsQty,
-            ir.status as status,
+            ir.ir_status as status,
             ir.created_at as createdAt
         FROM internal_requisitions ir 
         LEFT JOIN acl_users e ON e.id = ir.requested_by_id
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN scm_item_categories c ON c.id = ir.category_id
-        WHERE ir.status IN ('PENDING_VERIFICATION', 'REVIEW','VERIFIED')
+        WHERE ir.ir_status IN ('PENDING_VERIFICATION', 'REVIEW','VERIFIED')
         AND ir.next_verifier_id = :nextVerifierId
         GROUP BY ir.id
         """;
@@ -80,13 +80,13 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             CONCAT(e.employee_id, '-' , e.employee_name) as employeeName,
             c.name as categoryName,
             count(ird.id) as itemsQty,
-            ir.status as status,
+            ir.ir_status as status,
             ir.created_at as createdAt
         FROM internal_requisitions ir 
         LEFT JOIN acl_users e ON e.id = ir.requested_by_id
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN scm_item_categories c ON c.id = ir.category_id
-        WHERE ir.status IN ('PENDING_APPROVAL', 'REVIEW','APPROVED')
+        WHERE ir.ir_status IN ('PENDING_APPROVAL', 'REVIEW','APPROVED')
         AND ir.next_approver_id = :nextApproverId
         GROUP BY ir.id
         """;
@@ -98,7 +98,7 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             CONCAT(e.employee_id, '-' , e.employee_name) as employeeName,
             c.name as categoryName,
             count(ird.id) as itemsQty,
-            ir.status as status,
+            ir.ir_status as status,
             ir.created_at as createdAt,
             w.name as warehouse
         FROM internal_requisitions ir 
@@ -106,7 +106,7 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
         LEFT JOIN warehouses w ON w.id = ir.warehouse_id
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN scm_item_categories c ON c.id = ir.category_id
-        WHERE ir.status IN ('VERIFIED','APPROVED') AND (ir.is_processed IS NULL OR ir.is_processed=0)
+        WHERE ir.ir_status IN ('VERIFIED','APPROVED') AND (ir.is_processed IS NULL OR ir.is_processed=0)
         GROUP BY ir.id
         """;
 
@@ -117,7 +117,7 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             CONCAT(e.employee_id, '-' , e.employee_name) as employeeName,
             c.name as categoryName,
             count(ird.id) as itemsQty,
-            ir.status as status,
+            ir.ir_status as status,
             ir.created_at as createdAt,
             w.name as warehouse
         FROM internal_requisitions ir 
@@ -125,7 +125,7 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
         LEFT JOIN acl_users e ON e.id = ir.requested_by_id
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN scm_item_categories c ON c.id = ir.category_id
-        WHERE ir.status IN ('VERIFIED','APPROVED') AND ir.is_processed=1
+        WHERE ir.ir_status IN ('VERIFIED','APPROVED') AND ir.is_processed=1
         GROUP BY ir.id
         """;
 

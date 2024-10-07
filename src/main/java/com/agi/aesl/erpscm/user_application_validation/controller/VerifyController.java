@@ -3,6 +3,8 @@ package com.agi.aesl.erpscm.user_application_validation.controller;
 import com.agi.aesl.erpscm.account_finance.service.AccountService;
 import com.agi.aesl.erpscm.cs.service.CsService;
 import com.agi.aesl.erpscm.indent.service.IndentService;
+import com.agi.aesl.erpscm.internal_requisition.service.IrService;
+import com.agi.aesl.erpscm.internal_requisition.service.IrStoreService;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryCategoryRequestService;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryRequestService;
 import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
@@ -59,6 +61,13 @@ public class VerifyController extends BaseController{
     @Autowired
     private InventoryRequestService inventoryRequestService;
 
+    @Autowired
+    private IrService irService;
+
+    @Autowired
+    private IrStoreService irStoreService;
+
+
     @PutMapping("/approve")
     public ResponseEntity<?> approve(
             @AuthenticationPrincipal Jwt token,
@@ -100,6 +109,16 @@ public class VerifyController extends BaseController{
 
         if(approveDto.getDomainType().equals(DomainType.INVENTORY_REQ_PRODUCT)){
             verificationService.setVerificationDomainService(inventoryRequestService);
+            verificationService.approve(token, approveDto);
+        }
+
+        if(approveDto.getDomainType().equals(DomainType.IR)){
+            verificationService.setVerificationDomainService(irService);
+            verificationService.approve(token, approveDto);
+        }
+
+        if(approveDto.getDomainType().equals(DomainType.PSIR)){
+            verificationService.setVerificationDomainService(irStoreService);
             verificationService.approve(token, approveDto);
         }
 
@@ -153,6 +172,17 @@ public class VerifyController extends BaseController{
             verificationService.setVerificationDomainService(inventoryRequestService);
             verificationService.verify(token, verifyDto);
         }
+
+        if(verifyDto.getDomainType().equals(DomainType.IR)){
+            verificationService.setVerificationDomainService(irService);
+            verificationService.verify(token, verifyDto);
+        }
+
+        if(verifyDto.getDomainType().equals(DomainType.PSIR)){
+            verificationService.setVerificationDomainService(irStoreService);
+            verificationService.verify(token, verifyDto);
+        }
+
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -200,6 +230,16 @@ public class VerifyController extends BaseController{
             verificationService.setVerificationDomainService(inventoryRequestService);
             verificationService.review(verifyDto);
         }
+
+        if(verifyDto.getDomainType().equals(DomainType.IR)){
+            verificationService.setVerificationDomainService(irService);
+            verificationService.review(verifyDto);
+        }
+
+        if(verifyDto.getDomainType().equals(DomainType.PSIR)){
+            verificationService.setVerificationDomainService(irStoreService);
+            verificationService.review(verifyDto);
+        }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -244,6 +284,16 @@ public class VerifyController extends BaseController{
         if(rejectDto.getDomainType().equals(DomainType.INVENTORY_REQ_PRODUCT)
         ){
             verificationService.setVerificationDomainService(inventoryRequestService);
+            verificationService.reject(token, rejectDto);
+        }
+
+        if(rejectDto.getDomainType().equals(DomainType.IR)){
+            verificationService.setVerificationDomainService(irService);
+            verificationService.reject(token, rejectDto);
+        }
+
+        if(rejectDto.getDomainType().equals(DomainType.PSIR)){
+            verificationService.setVerificationDomainService(irStoreService);
             verificationService.reject(token, rejectDto);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
