@@ -124,12 +124,14 @@ public interface UserCategoryQuery {
     String countClosedCategories = "SELECT COUNT(*) FROM ("+closedCategories+") as total";
 
     String pendingApprovalFromStoreCategories="""
-            select id as id, name as categoryName, (
+            select id as id, e.employee_name as employeeName, name as categoryName, (
                 SELECT COUNT(*) FROM user_categories uc1
                 WHERE uc1.parent_category_id=uc.id
-            ) as subCategoryCount, 0 as productCount,
+            ) as subCategoryCount, 
+            0 as productCount,
             category_status as status
             FROM user_categories uc
+            LEFT JOIN acl_users e ON uc.created_by_id=e.id
             WHERE uc.created_by_id=:userId AND 
             (
             (:categoryId IS NULL AND uc.parent_category_id IS NULL)

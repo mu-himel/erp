@@ -77,12 +77,13 @@ public interface UserItemQuery {
     String countClosed = "SELECT COUNT(*) FROM ("+ getClosed+") as total";
 
     String getPendingApprovalsByStore = """
-            select ui.id as id, cat.name as categoryName, subCat.name as subCategoryName,
+            select ui.id as id, e.employee_name as employeeName, cat.name as categoryName, subCat.name as subCategoryName,
              ui.item_attribute_name as productName,
              ui.item_status as status
              FROM user_items ui
              LEFT JOIN user_categories subCat ON ui.sub_category_id = subCat.id
              LEFT JOIN user_categories cat ON ui.category_id = cat.id
+             LEFT JOIN acl_users e ON ui.created_by_id = e.id
              WHERE ui.created_by_id=:userId 
              AND (:categoryId IS NULL OR ui.category_id = :categoryId)
              AND (:subCategoryId IS NULL OR ui.sub_category_id = :subCategoryId)

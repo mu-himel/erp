@@ -1015,6 +1015,22 @@ public class ItemServiceImpl implements ItemService {
     private Item createItem(Long warehouseId, Long warehouseStoreId, SyncItemDetail syncItemDetail){
         Item item = syncItemDetail.getEntity();
         String itemAttributeName = generateItemAttribute(syncItemDetail.getAttributes());
+
+        Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(warehouseId);
+        if(warehouseOp.isEmpty()){
+            throw new RuntimeException("Sorry! Warehouse not found");
+        }
+
+        Optional<WarehouseStore> warehouseStoreOp = warehouseStoreService.getStoreById(warehouseStoreId);
+        if(warehouseStoreOp.isEmpty()){
+            throw new RuntimeException("Sorry! Warehouse Store not found");
+        }
+
+        Warehouse warehouse = warehouseOp.get();
+        WarehouseStore warehouseStore = warehouseStoreOp.get();
+
+        item.setCode(warehouseStore.getStoreName().substring(0,1)+"-"+item.getCode());
+
         // Get Subcategory By Code
         Optional<ItemCategory> subCatOp = categoryService.getCategoryByCode(syncItemDetail.getItemCategory().code());
         if(subCatOp.isEmpty()){
@@ -1063,8 +1079,8 @@ public class ItemServiceImpl implements ItemService {
                             new BigDecimal(0l),
                             item,
                             StockType.STOCK_IN,
-                            new Warehouse(warehouseId),
-                            new WarehouseStore(warehouseStoreId)
+                            warehouse,
+                            warehouseStore
                     ));
                     item.setStocks(stocks);
                 }else{
@@ -1079,8 +1095,8 @@ public class ItemServiceImpl implements ItemService {
                                 new BigDecimal(0l),
                                 item,
                                 StockType.STOCK_IN,
-                                new Warehouse(warehouseId),
-                                new WarehouseStore(warehouseStoreId)
+                                warehouse,
+                                warehouseStore
                         ));
                         item.setStocks(stocks);
                     }
@@ -1095,8 +1111,8 @@ public class ItemServiceImpl implements ItemService {
                         new BigDecimal(0l),
                         item,
                         StockType.STOCK_IN,
-                        new Warehouse(warehouseId),
-                        new WarehouseStore(warehouseStoreId)
+                        warehouse,
+                        warehouseStore
                 )));
 //                item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
             }
@@ -1129,12 +1145,12 @@ public class ItemServiceImpl implements ItemService {
             if(importLogExist.isEmpty()) {
                 ItemImportLog iil = new ItemImportLog();
                 iil.setItem(item);
-                iil.setWarehouse(new Warehouse(warehouseId));
+                iil.setWarehouse(warehouse);
                 iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
                 itemImportLogRepository.save(iil);
             }
             accountService.setItemService(this);
-            accountService.createItemLedger(item,new Warehouse(warehouseId),new WarehouseStore(warehouseStoreId));
+            accountService.createItemLedger(item,warehouse,warehouseStore);
         }
         return item;
     }
