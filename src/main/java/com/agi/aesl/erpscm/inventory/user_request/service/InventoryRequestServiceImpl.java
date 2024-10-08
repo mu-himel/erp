@@ -123,12 +123,15 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
 
     @Override
     public Page<?> getPendingApprovalItemsByStore(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                                  Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
                                                   Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
-        return userItemRepository.findAllPendingApprovalItemsByStore(claimResolver.getUserId(),
-                categoryId.orElse(null),subCategoryId.orElse(null),pageable);
+        return userItemRepository.findAllPendingApprovalItemsByStore(
+                categoryId.orElse(null),subCategoryId.orElse(null),
+                warehouseId.orElse(null),warehouseStoreId.orElse(null),
+                pageable);
     }
 
     @Override

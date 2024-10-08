@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 @RestController
 @RequestMapping("/api/v1/inventory-requests")
@@ -159,10 +160,15 @@ public class InventoryRequestCategoryController extends BaseController {
     public ResponseEntity<?> getPendingApprovalCategoriesByStore(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
-            @RequestParam("size") Optional<Integer> size
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("warehouseId") Optional<Long> warehouseId,
+            @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId
+
     ){
         return new ResponseEntity<>(
-                categoryRequestService.getPendingApprovalCategoriesFromStore(token,Optional.empty(),page,size,true),
+                categoryRequestService.getPendingApprovalCategoriesFromStore(token,Optional.empty(),
+                        warehouseId,warehouseStoreId
+                        ,page,size,true),
                 HttpStatus.OK);
     }
 
@@ -171,10 +177,14 @@ public class InventoryRequestCategoryController extends BaseController {
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("page") Optional<Integer> page,
-            @RequestParam("size") Optional<Integer> size
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("warehouseId") Optional<Long> warehouseId,
+            @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId
     ){
         return new ResponseEntity<>(
-                categoryRequestService.getPendingApprovalSubCategoriesFromStore(token,categoryId,page,size,false),
+                categoryRequestService.getPendingApprovalSubCategoriesFromStore(token,categoryId,
+                        warehouseId,warehouseStoreId,
+                        page,size,false),
                 HttpStatus.OK);
     }
 

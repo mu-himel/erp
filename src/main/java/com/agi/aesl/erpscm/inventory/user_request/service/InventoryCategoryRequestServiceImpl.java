@@ -146,13 +146,13 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     @Override
     public List<?> getCategories(Jwt token, Optional<String> name, Optional<String> code) {
         claimResolver.setToken(token);
-        return userCategoryRepository.getAllCategories(claimResolver.getUserId(),name.orElse(null),code.orElse(null));
+        return userCategoryRepository.getAllCategories(name.orElse(null),code.orElse(null));
     }
 
     @Override
     public List<?> getSubCategories(Jwt token, Long categoryId, Optional<String> name, Optional<String> code) {
         claimResolver.setToken(token);
-        return userCategoryRepository.getAllSubCategories(claimResolver.getUserId(),categoryId,
+        return userCategoryRepository.getAllSubCategories(categoryId,
                 name.orElse(null),code.orElse(null));
     }
 
@@ -224,27 +224,30 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
-    public Page<?> getPendingApprovalCategoriesFromStore(Jwt token, Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+    public Page<?> getPendingApprovalCategoriesFromStore(Jwt token, Optional<Long> categoryId,
+        Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
+        Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
-        if(isCategory){
-            return userCategoryRepository.findAllPendingApprovalByStore(claimResolver.getUserId(),null,pageable);
-        }
-        return userCategoryRepository.findAllClosedSubCategory(
-                claimResolver.getUserId(),
-                categoryId.orElse(null),
-                pageable
-        );
+
+        return userCategoryRepository.findAllPendingApprovalByStore(null,
+                warehouseId.orElse(null),warehouseStoreId.orElse(null),pageable);
+
     }
 
     @Override
-    public Page<?> getPendingApprovalSubCategoriesFromStore(Jwt token, Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+    public Page<?> getPendingApprovalSubCategoriesFromStore(Jwt token, Optional<Long> categoryId,
+                                Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
+                                Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
 
-        return userCategoryRepository.findAllPendingApprovalByStore(claimResolver.getUserId(),categoryId.orElse(null),pageable);
+        return userCategoryRepository
+                .findAllPendingApprovalByStore(categoryId.orElse(null),
+                        warehouseId.orElse(null),warehouseStoreId.orElse(null),
+                        pageable);
 
     }
 

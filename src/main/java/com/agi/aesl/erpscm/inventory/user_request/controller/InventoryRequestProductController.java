@@ -102,11 +102,15 @@ public class InventoryRequestProductController extends BaseController {
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+            @RequestParam("warehouseId") Optional<Long> warehouseId,
+            @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                inventoryRequestService.getPendingApprovalItemsByStore(token,categoryId,subCategoryId,page,size),
+                inventoryRequestService.getPendingApprovalItemsByStore(token,categoryId,subCategoryId,
+                        warehouseId,warehouseStoreId,
+                        page,size),
                 HttpStatus.OK
         );
     }
