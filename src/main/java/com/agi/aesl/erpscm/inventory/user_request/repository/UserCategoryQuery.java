@@ -129,6 +129,9 @@ public interface UserCategoryQuery {
                 WHERE uc1.parent_category_id=uc.id
             ) as subCategoryCount, 
             0 as productCount,
+            CASE WHEN :categoryId IS NOT NULL THEN
+            (select name from scm_item_categories sic WHERE sic.id = :categoryId)
+            ELSE '' END as parentCategoryName,
             category_status as status
             FROM user_categories uc
             LEFT JOIN scm_warehouse_stores sws ON sws.id = uc.store_id
@@ -139,9 +142,9 @@ public interface UserCategoryQuery {
             (:warehouseStoreId IS NULL OR sws.id = :warehouseStoreId)
             AND
             (
-            (:categoryId IS NULL AND uc.parent_category_id IS NULL)
+            (:categoryId IS NULL AND uc.active_parent_category_id IS NULL)
             OR
-            (:categoryId IS NOT NULL AND uc.parent_category_id = :categoryId)
+            (:categoryId IS NOT NULL AND uc.active_parent_category_id = :categoryId)
             )
             AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED')
             AND (uc.is_approved_by_store IS NULL OR uc.is_approved_by_store=false)

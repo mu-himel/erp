@@ -61,6 +61,7 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
 
     interface PendingApprovalStore extends UserCategory{
         String getEmployeeName();
+        String getParentCategoryName();
     }
 
     interface UserCategory{
