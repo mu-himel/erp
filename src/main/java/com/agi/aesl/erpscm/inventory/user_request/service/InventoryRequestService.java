@@ -3,6 +3,8 @@ package com.agi.aesl.erpscm.inventory.user_request.service;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.UserItemRequestDto;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryApproveDto;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryRejectDto;
 import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomainService;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -35,6 +37,6 @@ public interface InventoryRequestService extends VerificationDomainService {
 
     void review(Jwt token, Long id, ReviewDto reviewDto);
 
-    void approveByStore(Jwt token, Long id);
-    void rejectByStore(Long id);
+    void approveByStore(Jwt token, Long id, CategoryApproveDto itemApproveDto);
+    void rejectByStore(Long id, CategoryRejectDto rejectDto);
 }

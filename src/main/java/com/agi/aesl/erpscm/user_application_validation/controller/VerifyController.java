@@ -80,6 +80,11 @@ public class VerifyController extends BaseController{
         verificationService.addVerificationDomainService(DomainType.INVENTORY_REQ_PRODUCT,inventoryRequestService);
         verificationService.addVerificationDomainService(DomainType.IR,irService);
         verificationService.addVerificationDomainService(DomainType.PSIR,irStoreService);
+        verificationService.addVerificationDomainService(DomainType.BANK_ACCOUNT,null);
+        verificationService.addVerificationDomainService(DomainType.LEDGER_SETUP,null);
+        verificationService.addVerificationDomainService(DomainType.PURCHASE_RECEIPT,null);
+        verificationService.addVerificationDomainService(DomainType.PURCHASE_VOUCHER,null);
+        verificationService.addVerificationDomainService(DomainType.PAYMENT_VOUCHER,null);
     }
     @PutMapping("/approve")
     public ResponseEntity<?> approve(

@@ -17,6 +17,8 @@ import com.agi.aesl.erpscm.inventory.entity.ItemFunctionalUnit;
 import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
 import com.agi.aesl.erpscm.inventory.repository.CategoryRepository;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryApproveDto;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryRejectDto;
 import com.agi.aesl.erpscm.inventory.user_request.entity.*;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryBrandRepository;
@@ -366,14 +368,17 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
 
     @Override
     @Transactional
-    public void approveByStore(Jwt token, Long id) {
+    public void approveByStore(Jwt token, Long id, CategoryApproveDto approveDto) {
+        if(approveDto.getCode()==null){
+            throw new RuntimeException("Sorry! prefix and code required");
+        }
         Optional<UserItem> itemOp = userItemRepository.findById(id);
         itemOp.ifPresent((item)->{
             item.setIsApprovedByStore(true);
             ItemRequestDto itemRequestDto = new ItemRequestDto();
             itemRequestDto.setBrand(new ReferenceObjectDto(item.getBrand().getId()));
             itemRequestDto.setName(item.getName());
-            itemRequestDto.setCode(item.getCode());
+            itemRequestDto.setCode(approveDto.getCode());
             itemRequestDto.setItemCategory(item.getSubCategory());
             itemRequestDto.setItemParentCategory(item.getCategory());
             itemRequestDto.setItemUnit(item.getItemUnit());
@@ -400,10 +405,11 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
 
     @Override
     @Transactional
-    public void rejectByStore(Long id) {
+    public void rejectByStore(Long id, CategoryRejectDto rejectDto) {
         Optional<UserItem> itemOp = userItemRepository.findById(id);
         itemOp.ifPresent((item)->{
             item.setIsApprovedByStore(false);
+            item.setRejectNoteFromStore(rejectDto.getNote());
             item.setItemStatus(UserCategoryStatus.REJECTED);
         });
     }

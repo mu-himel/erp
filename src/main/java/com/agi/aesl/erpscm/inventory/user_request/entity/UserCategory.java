@@ -69,6 +69,9 @@ public class UserCategory extends VerifyableEntity implements CategoryInterface 
     @Enumerated(EnumType.STRING)
     private UserCategoryStatus reviewPrevStatus;
 
+    @Column(length = 500)
+    private String rejectNoteFromStore;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

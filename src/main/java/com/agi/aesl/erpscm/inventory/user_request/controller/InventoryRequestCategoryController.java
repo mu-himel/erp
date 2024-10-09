@@ -3,8 +3,12 @@ package com.agi.aesl.erpscm.inventory.user_request.controller;
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryApproveDto;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryRejectDto;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryCategoryRequestService;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryRequestService;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -220,17 +224,20 @@ public class InventoryRequestCategoryController extends BaseController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PutMapping("/{id}/approved-by-store")
+    @PutMapping("/{id}/approve-by-store")
     public ResponseEntity<?> approveByStore(
             @AuthenticationPrincipal Jwt token,
-            @PathVariable("id") Long id){
-        categoryRequestService.approveByStore(token,id);
+            @PathVariable("id") Long id,
+            @RequestBody CategoryApproveDto approveDto){
+        categoryRequestService.approveByStore(token,id,approveDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/{id}/reject-by-store")
-    public ResponseEntity<?> rejectByStore(@PathVariable("id") Long id){
-        categoryRequestService.rejectByStore(id);
+    public ResponseEntity<?> rejectByStore(@PathVariable("id") Long id,
+                                           @RequestBody CategoryRejectDto rejectDto
+                                           ){
+        categoryRequestService.rejectByStore(id, rejectDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

@@ -62,6 +62,9 @@ public class UserItem extends VerifyableEntity implements ItemInterface {
 
     private Boolean isApprovedByStore;
 
+    @Column(length = 500)
+    private String rejectNoteFromStore;
+
     @ManyToOne
     private CategoryBrand brand;
 

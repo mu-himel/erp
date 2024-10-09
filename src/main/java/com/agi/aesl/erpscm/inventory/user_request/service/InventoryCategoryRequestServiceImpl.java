@@ -19,6 +19,8 @@ import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.service.CategoryService;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryApproveDto;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryRejectDto;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryAttribute;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
@@ -29,6 +31,7 @@ import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryReposit
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
@@ -419,20 +422,23 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
 
     @Override
     @Transactional
-    public void approveByStore(Jwt token, Long domainId) {
+    public void approveByStore(Jwt token, Long domainId, CategoryApproveDto categoryApproveDto) {
+        if(categoryApproveDto.getCode()==null){
+            throw new RuntimeException("Sorry! prefix and code required");
+        }
         Optional<UserCategory> catOp = userCategoryRepository.findById(domainId);
         catOp.ifPresent((cat)->{
             cat.setIsApprovedByStore(true);
             CategoryRequestDto categoryRequestDto = new CategoryRequestDto();
             categoryRequestDto.setName(cat.getName());
-            categoryRequestDto.setCode(cat.getCode());
+            categoryRequestDto.setCode(categoryApproveDto.getCode());
             if(cat.getParentCategory()!=null){
                 ItemCategory category = new ItemCategory(cat.getParentCategory().getId());
                 categoryRequestDto.setParentCategory(category);
                 categoryRequestDto.setCurrentYearBudget(new BigDecimal(0));
             }
             categoryRequestDto.setWarehouse(new ReferenceObjectDto(cat.getStore().getWarehouse().getId()));
-            categoryRequestDto.setWarehouse(new ReferenceObjectDto(cat.getStore().getId()));
+            categoryRequestDto.setWarehouseStore(new ReferenceObjectDto(cat.getStore().getId()));
             categoryRequestDto.setIsForCps(true);
             categoryService.addCategory(token, categoryRequestDto);
 
@@ -442,10 +448,11 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
 
     @Override
     @Transactional
-    public void rejectByStore(Long domainId) {
+    public void rejectByStore(Long domainId, CategoryRejectDto noteDto) {
         Optional<UserCategory> catOp = userCategoryRepository.findById(domainId);
         catOp.ifPresent((cat)->{
             cat.setIsApprovedByStore(false);
+            cat.setRejectNoteFromStore(noteDto.getNote());
             cat.setCategoryStatus(UserCategoryStatus.REJECTED);
         });
     }

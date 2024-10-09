@@ -4,6 +4,8 @@ import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.UserItemRequestDto;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryApproveDto;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryRejectDto;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -129,14 +131,16 @@ public class InventoryRequestProductController extends BaseController {
     @PutMapping("/products/approve-by-store/{id}")
     public ResponseEntity<?> approveByStore(
             @AuthenticationPrincipal Jwt token,
-            @PathVariable("id") Long id){
-        inventoryRequestService.approveByStore(token,id);
+            @PathVariable("id") Long id,
+            @RequestBody CategoryApproveDto itemApproveDto){
+        inventoryRequestService.approveByStore(token,id,itemApproveDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/products/reject-by-store/{id}")
-    public ResponseEntity<?> rejectByStore(@PathVariable("id") Long id){
-        inventoryRequestService.rejectByStore(id);
+    public ResponseEntity<?> rejectByStore(@PathVariable("id") Long id,
+                                           @RequestBody CategoryRejectDto rejectDto){
+        inventoryRequestService.rejectByStore(id,rejectDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
