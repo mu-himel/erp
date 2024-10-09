@@ -120,10 +120,11 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
                   ipc.code as categoryCode, ic.name as subCategory, ic.code as subCategoryCode,
                   i.active,
                   i.name as brandName, i.item_attribute_name  as itemAttributeName, i.item_unit as unitMeasurement,
-                  (SELECT SUM(stock_qty) from scm_item_stocks sis WHERE sis.item_id=i.id
+                  COALESCE((SELECT SUM(stock_qty) from scm_item_stocks sis WHERE sis.item_id=i.id
                   AND (:warehouseId IS NULL OR sis.warehouse_id = :warehouseId)
                   AND (:warehouseStoreId IS NULL OR sis.warehouse_store_id = :warehouseStoreId)
-                  ) as currentStock, '' as safetyStock, '' as reorderPercent
+                  ),0) as currentStock, COALESCE(i.stock_threshold_qty,0) as safetyStock, 
+                  COALESCE(i.reorder_percentage,0) as reorderPercent
                 FROM scm_items i
              LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
              LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id
