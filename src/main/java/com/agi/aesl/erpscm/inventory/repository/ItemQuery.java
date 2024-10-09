@@ -29,7 +29,7 @@ public interface ItemQuery {
             "   AND (:stockThresholdQty IS NULL OR i.stock_threshold_qty = :stockThresholdQty) " +
             "   AND (COALESCE(:warehouseId) IS NULL OR w.id IN (:warehouseId)) " +
             "   AND (:warehouseStoreId IS NULL OR ws.id = :warehouseStoreId) " +
-            "GROUP BY i.id";
+            "GROUP BY i.id ORDER BY i.name, i.item_attribute_name ASC";
 
     String countItemsWithSearch = "SELECT count(*) FROM ("+getItemsWithSearch+") as p";
 

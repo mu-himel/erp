@@ -137,6 +137,7 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
                  AND (:warehouseStoreId IS NULL OR ws.id = :warehouseStoreId)
                  AND i.active = true
                  GROUP BY i.name, i.item_attribute_name
+                 ORDER BY i.name, i.item_attribute_name ASC
             """,nativeQuery = true)
     List<ItemTemplateInfo> fetchTemplateData(Long categoryId, Long subCategoryId,
                                              Long warehouseId, Long warehouseStoreId);
