@@ -67,61 +67,26 @@ public class VerifyController extends BaseController{
     @Autowired
     private IrStoreService irStoreService;
 
-
+    private void setVerifiableServices(){
+        verificationService.addVerificationDomainService(DomainType.DEMAND,demandService);
+        verificationService.addVerificationDomainService(DomainType.ACCOUNT_LEDGER,accountService);
+        verificationService.addVerificationDomainService(DomainType.INDENT,indentService);
+        verificationService.addVerificationDomainService(DomainType.CS,csService);
+        verificationService.addVerificationDomainService(DomainType.PO,purchaseOrderService);
+        verificationService.addVerificationDomainService(DomainType.QC,qcService);
+        verificationService.addVerificationDomainService(DomainType.SRN,srnService);
+        verificationService.addVerificationDomainService(DomainType.INVENTORY_REQ_CATEGORY,categoryRequestService);
+        verificationService.addVerificationDomainService(DomainType.INVENTORY_REQ_SUB_CATEGORY,categoryRequestService);
+        verificationService.addVerificationDomainService(DomainType.INVENTORY_REQ_PRODUCT,inventoryRequestService);
+        verificationService.addVerificationDomainService(DomainType.IR,irService);
+        verificationService.addVerificationDomainService(DomainType.PSIR,irStoreService);
+    }
     @PutMapping("/approve")
     public ResponseEntity<?> approve(
             @AuthenticationPrincipal Jwt token,
             @RequestBody ApproveDto approveDto){
-        if(approveDto.getDomainType().equals(DomainType.DEMAND)){
-            verificationService.setVerificationDomainService(demandService);
-            verificationService.approve(token, approveDto);
-        }
-        if(approveDto.getDomainType().equals(DomainType.ACCOUNT_LEDGER)){
-            verificationService.setVerificationDomainService(accountService);
-            verificationService.approve(token, approveDto);
-        }
-        if(approveDto.getDomainType().equals(DomainType.INDENT)){
-            verificationService.setVerificationDomainService(indentService);
-            verificationService.approve(token, approveDto);
-        }
-        if(approveDto.getDomainType().equals(DomainType.CS)){
-            verificationService.setVerificationDomainService(csService);
-            verificationService.approve(token, approveDto);
-        }
-        if(approveDto.getDomainType().equals(DomainType.PO)){
-            verificationService.setVerificationDomainService(purchaseOrderService);
-            verificationService.approve(token, approveDto);
-        }
-        if(approveDto.getDomainType().equals(DomainType.QC)){
-            verificationService.setVerificationDomainService(qcService);
-            verificationService.approve(token, approveDto);
-        }
-        if(approveDto.getDomainType().equals(DomainType.SRN)){
-            verificationService.setVerificationDomainService(srnService);
-            verificationService.approve(token, approveDto);
-        }
-
-        if(approveDto.getDomainType().equals(DomainType.INVENTORY_REQ_CATEGORY) ||
-        approveDto.getDomainType().equals(DomainType.INVENTORY_REQ_SUB_CATEGORY)){
-            verificationService.setVerificationDomainService(categoryRequestService);
-            verificationService.approve(token, approveDto);
-        }
-
-        if(approveDto.getDomainType().equals(DomainType.INVENTORY_REQ_PRODUCT)){
-            verificationService.setVerificationDomainService(inventoryRequestService);
-            verificationService.approve(token, approveDto);
-        }
-
-        if(approveDto.getDomainType().equals(DomainType.IR)){
-            verificationService.setVerificationDomainService(irService);
-            verificationService.approve(token, approveDto);
-        }
-
-        if(approveDto.getDomainType().equals(DomainType.PSIR)){
-            verificationService.setVerificationDomainService(irStoreService);
-            verificationService.approve(token, approveDto);
-        }
-
+        setVerifiableServices();
+        verificationService.approve(token, approveDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -129,117 +94,15 @@ public class VerifyController extends BaseController{
     public ResponseEntity<?> verify(
             @AuthenticationPrincipal Jwt token,
             @RequestBody VerifyDto verifyDto){
-        if(verifyDto.getDomainType().equals(DomainType.DEMAND)){
-            verificationService.setVerificationDomainService(demandService);
-            verificationService.verify(token, verifyDto);
-        }
-        if(verifyDto.getDomainType().equals(DomainType.ACCOUNT_LEDGER)){
-            verificationService.setVerificationDomainService(accountService);
-            verificationService.verify(token, verifyDto);
-        }
-        if(verifyDto.getDomainType().equals(DomainType.INDENT)){
-            verificationService.setVerificationDomainService(indentService);
-            verificationService.verify(token, verifyDto);
-        }
-
-        if(verifyDto.getDomainType().equals(DomainType.CS)){
-            verificationService.setVerificationDomainService(csService);
-            verificationService.verify(token, verifyDto);
-        }
-
-        if(verifyDto.getDomainType().equals(DomainType.PO)){
-            verificationService.setVerificationDomainService(purchaseOrderService);
-            verificationService.verify(token, verifyDto);
-        }
-
-        if(verifyDto.getDomainType().equals(DomainType.QC)){
-            verificationService.setVerificationDomainService(qcService);
-            verificationService.verify(token, verifyDto);
-        }
-        if(verifyDto.getDomainType().equals(DomainType.SRN)){
-            verificationService.setVerificationDomainService(srnService);
-            verificationService.verify(token, verifyDto);
-        }
-        if(verifyDto.getDomainType().equals(DomainType.INVENTORY_REQ_CATEGORY)||
-                verifyDto.getDomainType().equals(DomainType.INVENTORY_REQ_SUB_CATEGORY)
-        ){
-            verificationService.setVerificationDomainService(categoryRequestService);
-            verificationService.verify(token, verifyDto);
-        }
-
-        if(verifyDto.getDomainType().equals(DomainType.INVENTORY_REQ_PRODUCT)
-        ){
-            verificationService.setVerificationDomainService(inventoryRequestService);
-            verificationService.verify(token, verifyDto);
-        }
-
-        if(verifyDto.getDomainType().equals(DomainType.IR)){
-            verificationService.setVerificationDomainService(irService);
-            verificationService.verify(token, verifyDto);
-        }
-
-        if(verifyDto.getDomainType().equals(DomainType.PSIR)){
-            verificationService.setVerificationDomainService(irStoreService);
-            verificationService.verify(token, verifyDto);
-        }
-
+        setVerifiableServices();
+        verificationService.verify(token, verifyDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/review")
     public ResponseEntity<?> review(@RequestBody VerifyDto verifyDto){
-        if(verifyDto.getDomainType().equals(DomainType.DEMAND)){
-            verificationService.setVerificationDomainService(demandService);
-            verificationService.review(verifyDto);
-        }
-        if(verifyDto.getDomainType().equals(DomainType.ACCOUNT_LEDGER)){
-            verificationService.setVerificationDomainService(accountService);
-            verificationService.review(verifyDto);
-        }
-        if(verifyDto.getDomainType().equals(DomainType.INDENT)){
-            verificationService.setVerificationDomainService(indentService);
-            verificationService.review(verifyDto);
-        }
-
-        if(verifyDto.getDomainType().equals(DomainType.CS)){
-            verificationService.setVerificationDomainService(csService);
-            verificationService.review(verifyDto);
-        }
-
-        if(verifyDto.getDomainType().equals(DomainType.PO)){
-            verificationService.setVerificationDomainService(purchaseOrderService);
-            verificationService.review(verifyDto);
-        }
-
-        if(verifyDto.getDomainType().equals(DomainType.QC)){
-            verificationService.setVerificationDomainService(qcService);
-            verificationService.review(verifyDto);
-        }
-        if(verifyDto.getDomainType().equals(DomainType.SRN)){
-            verificationService.setVerificationDomainService(srnService);
-            verificationService.review(verifyDto);
-        }
-        if(verifyDto.getDomainType().equals(DomainType.INVENTORY_REQ_CATEGORY)||
-            verifyDto.getDomainType().equals(DomainType.INVENTORY_REQ_SUB_CATEGORY)
-        ){
-            verificationService.setVerificationDomainService(categoryRequestService);
-            verificationService.review(verifyDto);
-        }
-        if(verifyDto.getDomainType().equals(DomainType.INVENTORY_REQ_PRODUCT)
-        ){
-            verificationService.setVerificationDomainService(inventoryRequestService);
-            verificationService.review(verifyDto);
-        }
-
-        if(verifyDto.getDomainType().equals(DomainType.IR)){
-            verificationService.setVerificationDomainService(irService);
-            verificationService.review(verifyDto);
-        }
-
-        if(verifyDto.getDomainType().equals(DomainType.PSIR)){
-            verificationService.setVerificationDomainService(irStoreService);
-            verificationService.review(verifyDto);
-        }
+        setVerifiableServices();
+        verificationService.review(verifyDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -247,55 +110,8 @@ public class VerifyController extends BaseController{
     public ResponseEntity<?> reject(
             @AuthenticationPrincipal Jwt token,
             @RequestBody RejectDto rejectDto){
-
-        if(rejectDto.getDomainType().equals(DomainType.ACCOUNT_LEDGER)){
-            verificationService.setVerificationDomainService(accountService);
-            verificationService.reject(token, rejectDto);
-        }
-        if(rejectDto.getDomainType().equals(DomainType.INDENT)){
-            verificationService.setVerificationDomainService(indentService);
-            verificationService.reject(token, rejectDto);
-        }
-
-        if(rejectDto.getDomainType().equals(DomainType.CS)){
-            verificationService.setVerificationDomainService(csService);
-            verificationService.reject(token, rejectDto);
-        }
-
-        if(rejectDto.getDomainType().equals(DomainType.PO)){
-            verificationService.setVerificationDomainService(purchaseOrderService);
-            verificationService.reject(token, rejectDto);
-        }
-        if(rejectDto.getDomainType().equals(DomainType.QC)){
-            verificationService.setVerificationDomainService(qcService);
-            verificationService.reject(token, rejectDto);
-        }
-        if(rejectDto.getDomainType().equals(DomainType.SRN)){
-            verificationService.setVerificationDomainService(srnService);
-            verificationService.reject(token, rejectDto);
-        }
-        if(rejectDto.getDomainType().equals(DomainType.INVENTORY_REQ_CATEGORY)||
-                rejectDto.getDomainType().equals(DomainType.INVENTORY_REQ_SUB_CATEGORY)
-        ){
-            verificationService.setVerificationDomainService(categoryRequestService);
-            verificationService.reject(token, rejectDto);
-        }
-
-        if(rejectDto.getDomainType().equals(DomainType.INVENTORY_REQ_PRODUCT)
-        ){
-            verificationService.setVerificationDomainService(inventoryRequestService);
-            verificationService.reject(token, rejectDto);
-        }
-
-        if(rejectDto.getDomainType().equals(DomainType.IR)){
-            verificationService.setVerificationDomainService(irService);
-            verificationService.reject(token, rejectDto);
-        }
-
-        if(rejectDto.getDomainType().equals(DomainType.PSIR)){
-            verificationService.setVerificationDomainService(irStoreService);
-            verificationService.reject(token, rejectDto);
-        }
+        setVerifiableServices();
+        verificationService.reject(token, rejectDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

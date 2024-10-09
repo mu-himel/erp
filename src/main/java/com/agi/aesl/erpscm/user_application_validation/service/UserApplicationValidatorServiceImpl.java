@@ -1,9 +1,7 @@
 package com.agi.aesl.erpscm.user_application_validation.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
@@ -43,6 +41,8 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     private UserApplicationValidationRepository verificationRepository;
 
     private VerificationDomainService verificationDomainService;
+
+    private Map<DomainType, VerificationDomainService> verificationDomainServiceMap=new HashMap<>();
 
     @Autowired
     private CommentService commentService;
@@ -164,6 +164,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Transactional
     public void verify(Jwt token, VerifyDto verifyDto) {
         claimResolver.setToken(token);
+        verificationDomainService = this.verificationDomainServiceMap.get(verifyDto.getDomainType());
         Employee verifier = new Employee(verifyDto.getVerifier().getId());
         DomainType domainType = verifyDto.getDomainType();
         Long domainId = verifyDto.getDomainId();
@@ -210,6 +211,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Transactional
     public void approve(Jwt token, ApproveDto verifyDto) {
         claimResolver.setToken(token);
+        verificationDomainService = this.verificationDomainServiceMap.get(verifyDto.getDomainType());
         Employee verifier = new Employee(verifyDto.getVerifier().getId());
         DomainType domainType = verifyDto.getDomainType();
         Long domainId = verifyDto.getDomainId();
@@ -246,6 +248,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Override
     @Transactional
     public void review(VerifyDto verifyDto) {
+        verificationDomainService = this.verificationDomainServiceMap.get(verifyDto.getDomainType());
         if(verificationDomainService!=null){
             if((verifyDto.getComment()==null || verifyDto.getComment().isEmpty())){
                 throw new RuntimeException("Message Required");
@@ -277,6 +280,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Transactional
     public void reject(Jwt token, RejectDto rejectDto) {
         claimResolver.setToken(token);
+        verificationDomainService = this.verificationDomainServiceMap.get(rejectDto.getDomainType());
         if(verificationDomainService!=null){
             if((rejectDto.getComment()==null || rejectDto.getComment().isEmpty())){
                 throw new RuntimeException("Message Required");
@@ -295,6 +299,12 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
         this.verificationDomainService = verificationDomainService;
     }
 
+    @Override
+    public void addVerificationDomainService(DomainType domainType, VerificationDomainService verificationDomainService) {
+        if(!this.verificationDomainServiceMap.containsKey(domainType)){
+            this.verificationDomainServiceMap.put(domainType,verificationDomainService);
+        }
+    }
 
     @Override
     public Optional<UserApplicationValidation> getVerificationsByDomainTypeAndDomainIdAndVerifierId(DomainType accountLedger, Long domainId, Employee verifier) {
