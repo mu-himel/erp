@@ -42,10 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -917,5 +914,35 @@ public class CategoryServiceImpl implements CategoryService {
         cb.setBudgetType(BudgetType.REGULAR);
         cb.setCurrentYear(year);
         categoryBudgetRepository.save(cb);
+    }
+
+    @Override
+    public Optional<?> getItemCategoryDetail(Long id) {
+        record CategoryWarehouse(Long id, String warehouseName,String storeName){};
+        Optional<ItemCategory> catOp = categoryRepository.findAnyCategoryById(id);
+        if(catOp.isPresent()) {
+
+            ItemCategory category = catOp.get();
+            List<CategoryWarehouseStore> cws = categoryWarehouseStoreRepository.findByCategoryId(category.getId());
+            List<CategoryWarehouse> cwses = cws.stream().map(_cws->{
+                Warehouse warehouse = _cws.getWarehouse();
+                return new CategoryWarehouse(warehouse.getId(), _cws.getWarehouse().getName(),_cws.getWarehouseStore().getStoreName());
+            }).collect(Collectors.toList());
+            Map<String, Object> detailMap = new HashMap<>();
+            detailMap.put("id",category.getId());
+            detailMap.put("categoryStatus",category.getCategoryStatus());
+            detailMap.put("cpsCategoryId",category.getCpsCategoryId());
+            detailMap.put("name",category.getName());
+            detailMap.put("parentCategory",category.getParentCategory());
+            detailMap.put("code",category.getCode());
+            detailMap.put("active",category.getActive());
+            detailMap.put("attributes",category.getAttributes());
+            detailMap.put("brands",category.getBrands());
+            detailMap.put("budgets",category.getBudgets());
+            detailMap.put("vat",category.getVat());
+            detailMap.put("cws",cwses);
+            return Optional.ofNullable(detailMap);
+        }
+        return Optional.empty();
     }
 }
