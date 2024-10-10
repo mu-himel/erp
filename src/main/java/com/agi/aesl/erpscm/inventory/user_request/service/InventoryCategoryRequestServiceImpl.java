@@ -258,7 +258,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     public Map<String, Object> getDetail(Long id) {
         Optional<UserCategory> catOp = userCategoryRepository.findById(id);
         if(catOp.isEmpty()){
-            throw new RuntimeException("Sorry! not found");
+            throw new RuntimeException("Sorry! Category not found");
         }
         Map<String,Object> detail = new HashMap<>();
         UserCategory category = catOp.get();
