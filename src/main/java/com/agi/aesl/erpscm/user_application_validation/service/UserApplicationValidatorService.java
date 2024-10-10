@@ -33,7 +33,8 @@ public interface UserApplicationValidatorService<T> {
 
     List<UserApplicationValidation> getVerifyersByDomainId(DomainType cs, Long id);
     void removeVerification(Long id, DomainType demand);
-    void setVerificationDomainService(VerificationDomainService verificationDonainService);
+    void setVerificationDomainService(VerificationDomainService verificationDomainService);
+    void addVerificationDomainService(DomainType domainType, VerificationDomainService verificationDomainService);
     void approve(Jwt token, ApproveDto approveDto);
     void verify(Jwt token, VerifyDto verifyDto);
     void review(VerifyDto verifyDto);

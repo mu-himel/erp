@@ -7,7 +7,9 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.UserItemRequestDto;
+import com.agi.aesl.erpscm.inventory.entity.CategoryBrand;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
+import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.entity.UserItemFunctionalUnit;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
 import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
@@ -36,10 +38,10 @@ public class UserItem extends VerifyableEntity implements ItemInterface {
     private Long id;
 
     @ManyToOne
-    private UserCategory category;
+    private ItemCategory category;
 
     @ManyToOne
-    private UserCategory subCategory;
+    private ItemCategory subCategory;
 
     @Column(name = "code")
     private String code;
@@ -58,8 +60,13 @@ public class UserItem extends VerifyableEntity implements ItemInterface {
 
     private Boolean active=true;
 
+    private Boolean isApprovedByStore;
+
+    @Column(length = 500)
+    private String rejectNoteFromStore;
+
     @ManyToOne
-    private UserCategoryBrand brand;
+    private CategoryBrand brand;
 
     @CreationTimestamp
     @Column(updatable = false)

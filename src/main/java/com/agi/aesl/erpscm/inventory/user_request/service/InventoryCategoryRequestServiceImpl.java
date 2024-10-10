@@ -19,6 +19,8 @@ import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.service.CategoryService;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryApproveDto;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryRejectDto;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryAttribute;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
@@ -29,6 +31,7 @@ import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryReposit
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
@@ -52,6 +55,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -131,26 +135,27 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
                 null);
 
         if(appliedVADto.getVerifiers().isEmpty() && appliedVADto.getPanels().isEmpty()){
-            ObjectMapper mapper = new ObjectMapper();
-            try {
-                String employee = mapper.writeValueAsString(userCategory.getCreatedBy());
-                categoryService.sendToCps(token, userCategory, employee);
-            }catch (Exception ex){
-                throw new RuntimeException(ex.getMessage());
-            }
+              userCategory.setCategoryStatus(UserCategoryStatus.COMPLETED);
+//            ObjectMapper mapper = new ObjectMapper();
+//            try {
+//                String employee = mapper.writeValueAsString(userCategory.getCreatedBy());
+//                categoryService.sendToCps(token, userCategory, employee);
+//            }catch (Exception ex){
+//                throw new RuntimeException(ex.getMessage());
+//            }
         }
     }
 
     @Override
     public List<?> getCategories(Jwt token, Optional<String> name, Optional<String> code) {
         claimResolver.setToken(token);
-        return userCategoryRepository.getAllCategories(claimResolver.getUserId(),name.orElse(null),code.orElse(null));
+        return userCategoryRepository.getAllCategories(name.orElse(null),code.orElse(null));
     }
 
     @Override
     public List<?> getSubCategories(Jwt token, Long categoryId, Optional<String> name, Optional<String> code) {
         claimResolver.setToken(token);
-        return userCategoryRepository.getAllSubCategories(claimResolver.getUserId(),categoryId,
+        return userCategoryRepository.getAllSubCategories(categoryId,
                 name.orElse(null),code.orElse(null));
     }
 
@@ -222,10 +227,38 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
+    public Page<?> getPendingApprovalCategoriesFromStore(Jwt token, Optional<Long> categoryId,
+        Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
+        Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+        claimResolver.setToken(token);
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
+
+        return userCategoryRepository.findAllPendingApprovalByStore(null,
+                warehouseId.orElse(null),warehouseStoreId.orElse(null),pageable);
+
+    }
+
+    @Override
+    public Page<?> getPendingApprovalSubCategoriesFromStore(Jwt token, Optional<Long> categoryId,
+                                Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
+                                Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+        claimResolver.setToken(token);
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
+
+        return userCategoryRepository
+                .findAllPendingApprovalByStore(categoryId.orElse(null),
+                        warehouseId.orElse(null),warehouseStoreId.orElse(null),
+                        pageable);
+
+    }
+
+    @Override
     public Map<String, Object> getDetail(Long id) {
         Optional<UserCategory> catOp = userCategoryRepository.findById(id);
         if(catOp.isEmpty()){
-            throw new RuntimeException("Sorry! not found");
+            throw new RuntimeException("Sorry! Category not found");
         }
         Map<String,Object> detail = new HashMap<>();
         UserCategory category = catOp.get();
@@ -387,7 +420,44 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         });
     }
 
-//    private void sentToCps(Jwt token, UserCategory category){
+    @Override
+    @Transactional
+    public void approveByStore(Jwt token, Long domainId, CategoryApproveDto categoryApproveDto) {
+        if(categoryApproveDto.getCode()==null){
+            throw new RuntimeException("Sorry! prefix and code required");
+        }
+        Optional<UserCategory> catOp = userCategoryRepository.findById(domainId);
+        catOp.ifPresent((cat)->{
+            cat.setIsApprovedByStore(true);
+            CategoryRequestDto categoryRequestDto = new CategoryRequestDto();
+            categoryRequestDto.setName(cat.getName());
+            categoryRequestDto.setCode(categoryApproveDto.getCode());
+            if(cat.getParentCategory()!=null){
+                ItemCategory category = new ItemCategory(cat.getParentCategory().getId());
+                categoryRequestDto.setParentCategory(category);
+                categoryRequestDto.setCurrentYearBudget(new BigDecimal(0));
+            }
+            categoryRequestDto.setWarehouse(new ReferenceObjectDto(cat.getStore().getWarehouse().getId()));
+            categoryRequestDto.setWarehouseStore(new ReferenceObjectDto(cat.getStore().getId()));
+            categoryRequestDto.setIsForCps(true);
+            categoryService.addCategory(token, categoryRequestDto);
+
+
+        });
+    }
+
+    @Override
+    @Transactional
+    public void rejectByStore(Long domainId, CategoryRejectDto noteDto) {
+        Optional<UserCategory> catOp = userCategoryRepository.findById(domainId);
+        catOp.ifPresent((cat)->{
+            cat.setIsApprovedByStore(false);
+            cat.setRejectNoteFromStore(noteDto.getNote());
+            cat.setCategoryStatus(UserCategoryStatus.REJECTED);
+        });
+    }
+
+    //    private void sentToCps(Jwt token, UserCategory category){
 //        RemoteCategoryRequestDto remoteCategoryRequestDto = new RemoteCategoryRequestDto();
 //        remoteCategoryRequestDto.setName(category.getName());
 //        remoteCategoryRequestDto.setCode(category.getCode());

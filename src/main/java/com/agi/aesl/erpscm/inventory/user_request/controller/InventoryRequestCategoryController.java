@@ -3,8 +3,12 @@ package com.agi.aesl.erpscm.inventory.user_request.controller;
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryApproveDto;
+import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryRejectDto;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryCategoryRequestService;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryRequestService;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +17,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 @RestController
 @RequestMapping("/api/v1/inventory-requests")
@@ -155,6 +160,38 @@ public class InventoryRequestCategoryController extends BaseController {
                 HttpStatus.OK);
     }
 
+    @GetMapping("/categories/pending-approvals-store")
+    public ResponseEntity<?> getPendingApprovalCategoriesByStore(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("warehouseId") Optional<Long> warehouseId,
+            @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId
+
+    ){
+        return new ResponseEntity<>(
+                categoryRequestService.getPendingApprovalCategoriesFromStore(token,Optional.empty(),
+                        warehouseId,warehouseStoreId
+                        ,page,size,true),
+                HttpStatus.OK);
+    }
+
+    @GetMapping("/subcategories/pending-approvals-store")
+    public ResponseEntity<?> getPendingApprovalSubCategoriesByStore(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("warehouseId") Optional<Long> warehouseId,
+            @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId
+    ){
+        return new ResponseEntity<>(
+                categoryRequestService.getPendingApprovalSubCategoriesFromStore(token,categoryId,
+                        warehouseId,warehouseStoreId,
+                        page,size,false),
+                HttpStatus.OK);
+    }
+
     @GetMapping("/subcategories/closed")
     public ResponseEntity<?> getClosedSubCategories(
             @AuthenticationPrincipal Jwt token,
@@ -184,6 +221,23 @@ public class InventoryRequestCategoryController extends BaseController {
             @RequestBody ReviewDto reviewDto
     ){
         categoryRequestService.review(token,id,reviewDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/{id}/approve-by-store")
+    public ResponseEntity<?> approveByStore(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id,
+            @RequestBody CategoryApproveDto approveDto){
+        categoryRequestService.approveByStore(token,id,approveDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/{id}/reject-by-store")
+    public ResponseEntity<?> rejectByStore(@PathVariable("id") Long id,
+                                           @RequestBody CategoryRejectDto rejectDto
+                                           ){
+        categoryRequestService.rejectByStore(id, rejectDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

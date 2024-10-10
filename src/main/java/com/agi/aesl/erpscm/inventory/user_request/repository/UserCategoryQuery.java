@@ -123,6 +123,34 @@ public interface UserCategoryQuery {
             """;
     String countClosedCategories = "SELECT COUNT(*) FROM ("+closedCategories+") as total";
 
+    String pendingApprovalFromStoreCategories="""
+            select uc.id as id, e.employee_name as employeeName, name as categoryName, (
+                SELECT COUNT(*) FROM user_categories uc1
+                WHERE uc1.parent_category_id=uc.id
+            ) as subCategoryCount, 
+            0 as productCount,
+            CASE WHEN :categoryId IS NOT NULL THEN
+            (select name from scm_item_categories sic WHERE sic.id = :categoryId)
+            ELSE '' END as parentCategoryName,
+            category_status as status
+            FROM user_categories uc
+            LEFT JOIN scm_warehouse_stores sws ON sws.id = uc.store_id
+            LEFT JOIN acl_users e ON uc.created_by_id=e.id
+            WHERE 
+            (:warehouseId IS NULL OR sws.warehouse_id = :warehouseId)
+            AND 
+            (:warehouseStoreId IS NULL OR sws.id = :warehouseStoreId)
+            AND
+            (
+            (:categoryId IS NULL AND uc.active_parent_category_id IS NULL)
+            OR
+            (:categoryId IS NOT NULL AND uc.active_parent_category_id = :categoryId)
+            )
+            AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED')
+            AND (uc.is_approved_by_store IS NULL OR uc.is_approved_by_store=false)
+            """;
+    String countPendingApprovalByStoreCategories = "SELECT COUNT(*) FROM ("+pendingApprovalFromStoreCategories+") as total";
+
     String closedSubCategories="""
             select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
             uc.category_status as status
@@ -134,24 +162,25 @@ public interface UserCategoryQuery {
             """;
     String countClosedSubCategories = "SELECT COUNT(*) FROM ("+closedSubCategories+") as total";
 
+//    SELECT 'USER_MANAGED' as `type`, ua.id, ua.name, ua.code FROM user_categories ua
+    //            WHERE (:name IS NULL OR LOWER(ua.name) LIKE LOWER(CONCAT('%',:name,'%')))
+//            AND (:code IS NULL OR LOWER(ua.code) LIKE LOWER(CONCAT('%',:code,'%')))
+//            AND ua.created_by_id = :userId
+//            UNION
     String getListCategories="""
-            SELECT 'USER_MANAGED' as `type`, ua.id, ua.name, ua.code FROM user_categories ua
-            WHERE (:name IS NULL OR LOWER(ua.name) LIKE LOWER(CONCAT('%',:name,'%')))
-            AND (:code IS NULL OR LOWER(ua.code) LIKE LOWER(CONCAT('%',:code,'%')))
-            AND ua.created_by_id = :userId
-            UNION
             SELECT 'STORE_MANAGED' as `type`, ic.id,ic.name,ic.code from scm_item_categories ic
             WHERE (:name IS NULL OR LOWER(ic.name) LIKE LOWER(CONCAT('%',:name,'%')))
             AND (:code IS NULL OR LOWER(ic.code) LIKE LOWER(CONCAT('%',:code,'%')))
+            AND ic.parent_category_id IS NULL
             """;
 
+//    SELECT 'USER_MANAGED' as `type`, ua.id, ua.name, ua.code FROM user_categories ua
+//    WHERE (:name IS NULL OR LOWER(ua.name) LIKE LOWER(CONCAT('%',:name,'%')))
+//    AND (:code IS NULL OR LOWER(ua.code) LIKE LOWER(CONCAT('%',:code,'%')))
+//    AND ua.parent_category_id = :categoryId
+//    AND ua.created_by_id = :userId
+//            UNION
     String getListSubCategories="""
-            SELECT 'USER_MANAGED' as `type`, ua.id, ua.name, ua.code FROM user_categories ua
-            WHERE (:name IS NULL OR LOWER(ua.name) LIKE LOWER(CONCAT('%',:name,'%')))
-            AND (:code IS NULL OR LOWER(ua.code) LIKE LOWER(CONCAT('%',:code,'%')))
-            AND ua.parent_category_id = :categoryId
-            AND ua.created_by_id = :userId
-            UNION
             SELECT 'STORE_MANAGED' as `type`, ic.id,ic.name,ic.code from scm_item_categories ic
             WHERE (:name IS NULL OR LOWER(ic.name) LIKE LOWER(CONCAT('%',:name,'%')))
             AND (:code IS NULL OR LOWER(ic.code) LIKE LOWER(CONCAT('%',:code,'%')))

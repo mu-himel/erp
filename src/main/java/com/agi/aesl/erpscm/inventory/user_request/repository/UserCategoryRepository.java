@@ -35,15 +35,19 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
 
     @Query(value = closedCategories,countQuery = countClosedCategories, nativeQuery = true)
     Page<UserCategory> findAllClosed(String userId, Pageable pageable);
+    @Query(value = pendingApprovalFromStoreCategories,countQuery = countPendingApprovalByStoreCategories, nativeQuery = true)
+    Page<PendingApprovalStore> findAllPendingApprovalByStore(Long categoryId,
+                                                             Long warehouseId,Long warehouseStoreId,
+                                                             Pageable pageable);
 
     @Query(value = closedSubCategories,countQuery = countClosedSubCategories, nativeQuery = true)
     Page<UserSubCategory> findAllClosedSubCategory(String userId,Long categoryId, Pageable pageable);
 
     @Query(value = getListCategories,nativeQuery = true)
-    List<UserCategoryInfo> getAllCategories(String userId, String name, String code);
+    List<UserCategoryInfo> getAllCategories(String name, String code);
 
     @Query(value = getListSubCategories ,nativeQuery = true)
-    List<UserCategoryInfo> getAllSubCategories(String userId, Long categoryId, String name, String code);
+    List<UserCategoryInfo> getAllSubCategories(Long categoryId, String name, String code);
 
     interface UserCategoryInfo{
 
@@ -54,6 +58,12 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
 
 
     }
+
+    interface PendingApprovalStore extends UserCategory{
+        String getEmployeeName();
+        String getParentCategoryName();
+    }
+
     interface UserCategory{
         Long getId();
         String getCategoryName();

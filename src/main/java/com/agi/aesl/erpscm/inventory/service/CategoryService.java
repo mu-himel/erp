@@ -105,4 +105,5 @@ public interface CategoryService {
 
     void setYearlyBudget(Integer year,ItemCategory category);
 
+    Optional<?> getItemCategoryDetail(Long id);
 }

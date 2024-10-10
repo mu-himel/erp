@@ -36,4 +36,9 @@ public class StoreIR extends VerifyableEntity {
 
     @ManyToOne
     private Employee requestedBy;
+
+    @Override
+    public void setStatus(String status) {
+        this.irStatus = IrStatus.valueOf(status);
+    }
 }

@@ -61,11 +61,16 @@ public class UserCategory extends VerifyableEntity implements CategoryInterface 
 
     private BigDecimal vat;
 
+    private Boolean isApprovedByStore;
+
     @Enumerated(EnumType.STRING)
     private UserCategoryStatus categoryStatus;
 
     @Enumerated(EnumType.STRING)
     private UserCategoryStatus reviewPrevStatus;
+
+    @Column(length = 500)
+    private String rejectNoteFromStore;
 
     @CreationTimestamp
     @Column(updatable = false)
