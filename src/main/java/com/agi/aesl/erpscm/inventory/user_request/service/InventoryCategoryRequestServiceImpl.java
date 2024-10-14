@@ -147,9 +147,10 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
-    public List<?> getCategories(Jwt token, Optional<String> name, Optional<String> code) {
+    public List<?> getCategories(Jwt token, Optional<String> name, Optional<String> code,Optional<Long>storeId) {
         claimResolver.setToken(token);
-        return userCategoryRepository.getAllCategories(name.orElse(null),code.orElse(null));
+        return userCategoryRepository.getAllCategories(name.orElse(null),code.orElse(null),
+                storeId.orElse(null));
     }
 
     @Override
