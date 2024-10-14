@@ -197,6 +197,7 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
         Integer getQty();
         Integer getStockThresholdQty();
         Integer getReorderPercentage();
+        String getStatus();
     }
 
     interface ItemDetail extends ItemInfo{
