@@ -7,5 +7,5 @@ public enum CsStatus {
     VERIFIED,
     REVIEW,
     REJECTED,
-    COMPLETED
+    PENDING, COMPLETED
 }

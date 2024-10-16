@@ -44,6 +44,7 @@ import com.agi.aesl.erpscm.purchase_order.service.PurchaseOrderService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
@@ -125,6 +126,9 @@ public class CsServiceImpl implements CsService{
     @Autowired
     private PurchaseOrderService purchaseOrderService;
 
+    @Autowired
+    private CsAccountService csAccountService;
+
 
     @Override
     public Page<?> getAllPendingCs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
@@ -154,7 +158,7 @@ public class CsServiceImpl implements CsService{
         cs.setDeliveryCharge(csRequestDto.getDeliveryCharge());
         cs.setSubTotalPrice(csRequestDto.getSubTotalPrice());
         cs.setVatAmount(csRequestDto.getVatAmount());
-
+        cs.setValidityDate(csRequestDto.getValidityDate());
         Optional<Employee> empOp = claimResolver.getEmployee();
         if(empOp.isEmpty()){
             throw new RuntimeException("Sorry! requested by information missing");
@@ -203,8 +207,14 @@ public class CsServiceImpl implements CsService{
 
         csRepository.save(cs);
 
-        verificationService.applyVerifyApprovalProcess(cs, DomainType.CS, CsStatus.COMPLETED.toString(),
-                uri,"CATEGORY",ids, null);
+        AppliedVADto verifyApproval = verificationService.applyVerifyApprovalProcess(cs, DomainType.CS, CsStatus.COMPLETED.toString(),
+                uri, "CATEGORY", ids, null);
+
+
+        if(verifyApproval.getVerifiers().isEmpty() && verifyApproval.getPanels().isEmpty()){
+            cs.setCsStatus(CsStatus.COMPLETED);
+            csAccountService.createCsAccount(cs);
+        }
 
 //        @SuppressWarnings("unchecked")
 //        Optional<Map<String, Object>> verifierOp = (Optional<Map<String, Object>>) verificationService.getVerifiers(loggedInUser, uri, categories.toString());
@@ -599,6 +609,7 @@ public class CsServiceImpl implements CsService{
     }
 
     @Override
+    @Transactional
     public void onApprove(Long id, UserApplicationValidation verification, UserApplicationValidationRepository.VerificationResponse nextApprover) {
         Optional<Cs> csOp  = csRepository.findById(id);
         if(csOp.isPresent()){
@@ -624,7 +635,8 @@ public class CsServiceImpl implements CsService{
 
                 cs.setCsStatus(CsStatus.VERIFIED);
                 setVAHistory(cs,CsStatus.VERIFIED);
-                generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
+                csAccountService.createCsAccount(cs);
+//                generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
             }
 
         }
@@ -639,7 +651,8 @@ public class CsServiceImpl implements CsService{
             cs.setCsStatus(CsStatus.APPROVED);
             setVAHistory(cs,CsStatus.APPROVED);
 
-            generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
+            csAccountService.createCsAccount(cs);
+//            generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
         }
     }
 
