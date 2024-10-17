@@ -1,9 +1,28 @@
 package com.agi.aesl.erpscm.cs.repository;
 
 import com.agi.aesl.erpscm.cs.entity.CsAccount;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
 @Repository
-public interface CsAccountRepository extends JpaRepository<CsAccount,Long> {
+public interface CsAccountRepository extends JpaRepository<CsAccount,Long>, AcsQuery {
+    @Query(value = getAllAcsByIndentNoAndStatus, countQuery = countByIndentNoAndStatusAcs, nativeQuery = true)
+    Page<AcsPendingItem> findAllAcs(Optional<String> indentNo, List<String> status, Pageable pageable);
+    interface AcsPendingItem extends CsRepository.CsPendingListInfo{
+        Long getAcsId();
+        @JsonDeserialize(using = LocalDateDeserializer.class)
+        @JsonSerialize(using = LocalDateSerializer.class)
+        LocalDate getValidityDate();
+    }
 }

@@ -1,5 +1,7 @@
 package com.agi.aesl.erpscm.cs.service;
 
+import com.agi.aesl.erpscm.comment.enums.DomainType;
+import com.agi.aesl.erpscm.cs.dto.AcsUpdateDto;
 import com.agi.aesl.erpscm.cs.entity.Cs;
 import com.agi.aesl.erpscm.cs.entity.CsAccount;
 import com.agi.aesl.erpscm.cs.enums.CsStatus;
@@ -7,19 +9,34 @@ import com.agi.aesl.erpscm.cs.repository.CsAccountRepository;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
+import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
+import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class CsAccountServiceImpl implements CsAccountService{
 
+    private static final Integer PAGE_SIZE = 20;
+    @Autowired
+    private ClaimResolver claimResolver;
     @Autowired
     private CsAccountRepository csAccountRepository;
+
+    private UserApplicationValidatorService<CsAccount> verificationService;
 
     @Override
     @Transactional
@@ -28,6 +45,27 @@ public class CsAccountServiceImpl implements CsAccountService{
         csAccount.setCs(cs);
         csAccount.setAcsStatus(CsStatus.PENDING);
         csAccountRepository.save(csAccount);
+    }
+
+    @Override
+    @Transactional
+    public void updateCsAccount(Long id, Jwt token, String uri, AcsUpdateDto acsUpdateDto) {
+        claimResolver.setToken(token);
+        Optional<CsAccount> csAccountOp = csAccountRepository.findById(id);
+        if(csAccountOp.isPresent()){
+            CsAccount csAccount = csAccountOp.get();
+            List<String> ids= new ArrayList<>();
+            csAccount.getCs().getCsDetails().forEach(csd->{
+                ids.add(csd.getIndentDetail().getSubCategory().getId().toString());
+                ids.add(csd.getIndentDetail().getSubCategory().getParentCategory().getId().toString());
+            });
+            AppliedVADto vaDto = verificationService.applyVerifyApprovalProcess(csAccount, DomainType.ACS, CsStatus.COMPLETED.toString(),
+                    uri, "CATEGORY", ids, null);
+
+            if(vaDto.getVerifiers().isEmpty() && vaDto.getPanels().isEmpty()){
+                csAccount.setAcsStatus(CsStatus.COMPLETED);
+            }
+        }
     }
 
     @Override
@@ -103,5 +141,57 @@ public class CsAccountServiceImpl implements CsAccountService{
     @Transactional
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
 
+    }
+
+    @Override
+    public Page<?> getPendingAcs(Jwt token,
+                                 Optional<String> indentNo, Optional<String> status,
+                                 Optional<Integer> page, Optional<Integer> size) {
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Integer _size = (size.get().equals(-1))? Integer.MAX_VALUE: size.orElse(PAGE_SIZE);
+        Pageable pageable = PageRequest.of(page.orElse(0),_size);
+        List<String> _status = new ArrayList<>();
+        status.ifPresent(_status::add);
+        return csAccountRepository.findAllAcs(indentNo, _status,pageable);
+    }
+
+    @Override
+    public Page<?> getApprovedAcs(Jwt token,
+                                  Optional<String> indentNo,
+                                  Optional<Integer> page,
+                                  Optional<Integer> size) {
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Integer _size = (size.get().equals(-1))? Integer.MAX_VALUE: size.orElse(PAGE_SIZE);
+        Pageable pageable = PageRequest.of(page.orElse(0),_size);
+        List<String> _status = new ArrayList<>();
+        _status.add(CsStatus.APPROVED.toString());
+        _status.add(CsStatus.VERIFIED.toString());
+        return csAccountRepository.findAllAcs(indentNo, _status,pageable);
+    }
+
+    @Override
+    public Page<?> getRejectedAcs(Jwt token, Optional<String> indentNo, Optional<Integer> page,
+                                  Optional<Integer> size) {
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Integer _size = (size.get().equals(-1))? Integer.MAX_VALUE: size.orElse(PAGE_SIZE);
+        Pageable pageable = PageRequest.of(page.orElse(0),_size);
+        List<String> _status = new ArrayList<>();
+        _status.add(CsStatus.REJECTED.toString());
+        return csAccountRepository.findAllAcs(indentNo, _status,pageable);
+    }
+
+    @Override
+    public Page<?> getClosedAcs(Jwt token, Optional<String> indentNo, Optional<String> status, Optional<Integer> page, Optional<Integer> size) {
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Integer _size = (size.get().equals(-1))? Integer.MAX_VALUE: size.orElse(PAGE_SIZE);
+        Pageable pageable = PageRequest.of(page.orElse(0),_size);
+        List<String> _status = new ArrayList<>();
+        if(status.isEmpty()) {
+            _status.add(CsStatus.APPROVED.toString());
+            _status.add(CsStatus.REJECTED.toString());
+            _status.add(CsStatus.COMPLETED.toString());
+        }
+        status.ifPresent(_status::add);
+        return csAccountRepository.findAllAcs(indentNo, _status,pageable);
     }
 }
