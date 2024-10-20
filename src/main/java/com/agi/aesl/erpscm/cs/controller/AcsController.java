@@ -103,6 +103,29 @@ public class AcsController extends BaseController {
                 indentNo,status,page,size), HttpStatus.OK);
     }
 
+    @GetMapping("/active-cs")
+    public ResponseEntity<?> getActiveAcs(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(csAccountService.getActiveCsList(token,
+                indentNo,page,size), HttpStatus.OK);
+    }
+
+    @GetMapping("/expired-cs")
+    public ResponseEntity<?> getExpiredAcs(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+
+    ){
+        return new ResponseEntity<>(csAccountService.getExpiredCsList(token,
+                indentNo,page,size), HttpStatus.OK);
+    }
+
     @PutMapping("/{id}/review")
     public ResponseEntity<?> reviewCs(
             @AuthenticationPrincipal Jwt token,

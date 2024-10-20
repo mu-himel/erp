@@ -238,11 +238,36 @@ public class CsAccountServiceImpl implements CsAccountService{
         List<String> _status = new ArrayList<>();
         if(status.isEmpty()) {
             _status.add(CsStatus.APPROVED.toString());
+            _status.add(CsStatus.VERIFIED.toString());
             _status.add(CsStatus.REJECTED.toString());
             _status.add(CsStatus.COMPLETED.toString());
         }
         status.ifPresent(_status::add);
         return csAccountRepository.findAllAcs(indentNo, _status,pageable);
+    }
+
+    @Override
+    public Page<?> getActiveCsList(Jwt token, Optional<String> indentNo, Optional<Integer> page,
+                                   Optional<Integer> size) {
+        Pageable pageable = getPageable(page, size);
+        List<String> _status = new ArrayList<>();
+
+        _status.add(CsStatus.APPROVED.toString());
+        _status.add(CsStatus.VERIFIED.toString());
+        _status.add(CsStatus.COMPLETED.toString());
+        return csAccountRepository.findAllActiveCs(indentNo.orElse(null),_status,pageable);
+    }
+
+    @Override
+    public Page<?> getExpiredCsList(Jwt token, Optional<String> indentNo,
+                                    Optional<Integer> page, Optional<Integer> size) {
+        Pageable pageable = getPageable(page, size);
+        List<String> _status = new ArrayList<>();
+
+        _status.add(CsStatus.APPROVED.toString());
+        _status.add(CsStatus.VERIFIED.toString());
+        _status.add(CsStatus.COMPLETED.toString());
+        return csAccountRepository.findAllExpiredCs(indentNo.orElse(null),_status,pageable);
     }
 
     @Override

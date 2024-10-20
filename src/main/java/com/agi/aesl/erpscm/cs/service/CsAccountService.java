@@ -30,4 +30,7 @@ public interface CsAccountService extends VerificationDomainService {
     Page<?> getPendingVerificationAcs(Jwt token, Optional<String> indentNo,  Optional<Integer> page, Optional<Integer> size);
 
     Page<?> getPendingApprovalAcs(Jwt token, Optional<String> indentNo, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getActiveCsList(Jwt token, Optional<String> indentNo, Optional<Integer> page, Optional<Integer> size);
+
+    Page<?> getExpiredCsList(Jwt token, Optional<String> indentNo, Optional<Integer> page, Optional<Integer> size);
 }
