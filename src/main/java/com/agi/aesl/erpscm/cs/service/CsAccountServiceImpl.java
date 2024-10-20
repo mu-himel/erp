@@ -1,12 +1,17 @@
 package com.agi.aesl.erpscm.cs.service;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
+import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.cs.dto.AcsUpdateDto;
 import com.agi.aesl.erpscm.cs.entity.Cs;
 import com.agi.aesl.erpscm.cs.entity.CsAccount;
+import com.agi.aesl.erpscm.cs.entity.CsAccountVAHistory;
+import com.agi.aesl.erpscm.cs.entity.CsVerificationApprovalHistory;
 import com.agi.aesl.erpscm.cs.enums.CsStatus;
 import com.agi.aesl.erpscm.cs.repository.CsAccountRepository;
+import com.agi.aesl.erpscm.cs.repository.CsAccountVAHistoryRepository;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
@@ -23,6 +28,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +42,14 @@ public class CsAccountServiceImpl implements CsAccountService{
     @Autowired
     private CsAccountRepository csAccountRepository;
 
+    @Autowired
+    private CsAccountVAHistoryRepository csAccountVAHistoryRepo;
+
+    @Autowired
     private UserApplicationValidatorService<CsAccount> verificationService;
+
+    @Autowired
+    private CommentService commentService;
 
     @Override
     @Transactional
@@ -76,8 +89,23 @@ public class CsAccountServiceImpl implements CsAccountService{
             CsAccount cs = csAccOp.get();
             cs.setNextVerifierId(nextVerifier.getVerifier().getId());
             cs.setAcsStatus(CsStatus.VERIFIED);
-//            setVAHistory(cs, CsStatus.VERIFIED);
+            setVAHistory(cs, CsStatus.VERIFIED);
         }
+    }
+
+    @Transactional
+    private void setVAHistory(CsAccount csAccount, CsStatus status){
+        CsAccountVAHistory csVaHistory = new CsAccountVAHistory();
+        String empId = null;
+        if (status.equals(CsStatus.VERIFIED)){
+            empId =csAccount.getNextVerifierId();
+        }else if(status.equals(CsStatus.APPROVED)){
+            empId = csAccount.getNextApproverId();
+        }
+        csVaHistory.setCsAccount(csAccount);
+        csVaHistory.setEmployee(new Employee(empId));
+        csVaHistory.setAcsStatus(status);
+        csAccountVAHistoryRepo.save(csVaHistory);
     }
 
     @Override
@@ -88,7 +116,7 @@ public class CsAccountServiceImpl implements CsAccountService{
             CsAccount csAccount = csAccountOp.get();
             csAccount.setNextApproverId(nextApprover.getVerifier().getId());
             csAccount.setAcsStatus(CsStatus.APPROVED);
-//            setVAHistory(cs, CsStatus.APPROVED);
+            setVAHistory(csAccount, CsStatus.APPROVED);
         }
     }
 
@@ -101,13 +129,10 @@ public class CsAccountServiceImpl implements CsAccountService{
             if(firstApprover.isPresent()){
                 csAccount.setNextApproverId(firstApprover.get().getVerifier().getId());
                 csAccount.setAcsStatus(CsStatus.PENDING_APPROVAL);
-//                setVAHistory(cs,CsStatus.VERIFIED);
-
             }else {
-
                 csAccount.setAcsStatus(CsStatus.VERIFIED);
-//                setVAHistory(cs,CsStatus.VERIFIED);
             }
+            setVAHistory(csAccount,CsStatus.VERIFIED);
 
         }
     }
@@ -119,7 +144,7 @@ public class CsAccountServiceImpl implements CsAccountService{
         if(csAccountOp.isPresent()){
             CsAccount csAccount = csAccountOp.get();
             csAccount.setAcsStatus(CsStatus.APPROVED);
-//            setVAHistory(cs,CsStatus.APPROVED);
+            setVAHistory(csAccount,CsStatus.APPROVED);
 
         }
     }
@@ -142,17 +167,35 @@ public class CsAccountServiceImpl implements CsAccountService{
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
 
     }
+    
+    
 
     @Override
     public Page<?> getPendingAcs(Jwt token,
                                  Optional<String> indentNo, Optional<String> status,
                                  Optional<Integer> page, Optional<Integer> size) {
-        Sort sort = Sort.by(Sort.Direction.DESC,"id");
-        Integer _size = (size.get().equals(-1))? Integer.MAX_VALUE: size.orElse(PAGE_SIZE);
-        Pageable pageable = PageRequest.of(page.orElse(0),_size);
+        Pageable pageable = getPageable(page, size);
         List<String> _status = new ArrayList<>();
         status.ifPresent(_status::add);
         return csAccountRepository.findAllAcs(indentNo, _status,pageable);
+    }
+
+    private static Pageable getPageable(Optional<Integer> page, Optional<Integer> size) {
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Integer _size = (size.get().equals(-1))? Integer.MAX_VALUE: size.orElse(PAGE_SIZE);
+        Pageable pageable = PageRequest.of(page.orElse(0),_size);
+        return pageable;
+    }
+
+    @Override
+    public Page<?> getPendingVerificationAcs(Jwt token, Optional<String> indentNo, Optional<Integer> page,
+                                             Optional<Integer> size) {
+        Pageable pageable = getPageable(page, size);
+        List<String> _status = new ArrayList<>();
+        _status.add(CsStatus.PENDING_VERIFICATION.toString());
+        _status.add(CsStatus.REVIEW.toString());
+        _status.add(CsStatus.VERIFIED.toString());
+        return csAccountRepository.findAllPendingVerificationAcs(indentNo, _status,pageable);
     }
 
     @Override
@@ -160,9 +203,7 @@ public class CsAccountServiceImpl implements CsAccountService{
                                   Optional<String> indentNo,
                                   Optional<Integer> page,
                                   Optional<Integer> size) {
-        Sort sort = Sort.by(Sort.Direction.DESC,"id");
-        Integer _size = (size.get().equals(-1))? Integer.MAX_VALUE: size.orElse(PAGE_SIZE);
-        Pageable pageable = PageRequest.of(page.orElse(0),_size);
+        Pageable pageable = getPageable(page, size);
         List<String> _status = new ArrayList<>();
         _status.add(CsStatus.APPROVED.toString());
         _status.add(CsStatus.VERIFIED.toString());
@@ -172,9 +213,7 @@ public class CsAccountServiceImpl implements CsAccountService{
     @Override
     public Page<?> getRejectedAcs(Jwt token, Optional<String> indentNo, Optional<Integer> page,
                                   Optional<Integer> size) {
-        Sort sort = Sort.by(Sort.Direction.DESC,"id");
-        Integer _size = (size.get().equals(-1))? Integer.MAX_VALUE: size.orElse(PAGE_SIZE);
-        Pageable pageable = PageRequest.of(page.orElse(0),_size);
+        Pageable pageable = getPageable(page, size);
         List<String> _status = new ArrayList<>();
         _status.add(CsStatus.REJECTED.toString());
         return csAccountRepository.findAllAcs(indentNo, _status,pageable);
@@ -182,9 +221,7 @@ public class CsAccountServiceImpl implements CsAccountService{
 
     @Override
     public Page<?> getClosedAcs(Jwt token, Optional<String> indentNo, Optional<String> status, Optional<Integer> page, Optional<Integer> size) {
-        Sort sort = Sort.by(Sort.Direction.DESC,"id");
-        Integer _size = (size.get().equals(-1))? Integer.MAX_VALUE: size.orElse(PAGE_SIZE);
-        Pageable pageable = PageRequest.of(page.orElse(0),_size);
+        Pageable pageable = getPageable(page, size);
         List<String> _status = new ArrayList<>();
         if(status.isEmpty()) {
             _status.add(CsStatus.APPROVED.toString());
@@ -193,5 +230,26 @@ public class CsAccountServiceImpl implements CsAccountService{
         }
         status.ifPresent(_status::add);
         return csAccountRepository.findAllAcs(indentNo, _status,pageable);
+    }
+
+    @Override
+    @Transactional
+    public void reviewAcs(Jwt token, Long id, NoteDto noteDto) {
+        claimResolver.setToken(token);
+        Optional<CsAccount> csAccountOp = csAccountRepository.findById(id);
+        if(csAccountOp.isEmpty()){
+            throw new RuntimeException("Sorry! Account Cs  not found");
+        }
+
+        CsAccount csAccount = csAccountOp.get();
+        csAccount.setReviewerId(null);
+        csAccount.setReviewDate(LocalDateTime.now());
+        csAccount.setAcsStatus(csAccount.getReviewPrevStatus());
+        csAccount.setReviewPrevStatus(null);
+
+        commentService.addComment(
+                commentService.prepareComment(claimResolver.getEmployee().get(),
+                        DomainType.ACS,csAccount.getId(),noteDto.getNote(),noteDto.getAttachments())
+        );
     }
 }

@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.cs.service;
 import com.agi.aesl.erpscm.cs.dto.AcsUpdateDto;
 import com.agi.aesl.erpscm.cs.entity.Cs;
 import com.agi.aesl.erpscm.cs.entity.CsAccount;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomainService;
 import org.springframework.data.domain.Page;
@@ -23,4 +24,8 @@ public interface CsAccountService extends VerificationDomainService {
     Page<?> getRejectedAcs(Jwt token, Optional<String> indentNo, Optional<Integer> page, Optional<Integer> size);
 
     Page<?> getClosedAcs(Jwt token, Optional<String> indentNo, Optional<String> status, Optional<Integer> page, Optional<Integer> size);
+
+    void reviewAcs(Jwt token, Long id, NoteDto noteDto);
+
+    Page<?> getPendingVerificationAcs(Jwt token, Optional<String> indentNo,  Optional<Integer> page, Optional<Integer> size);
 }

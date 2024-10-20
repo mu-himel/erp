@@ -3,6 +3,8 @@ package com.agi.aesl.erpscm.cs.controller;
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.cs.dto.AcsUpdateDto;
 import com.agi.aesl.erpscm.cs.service.CsAccountService;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +45,18 @@ public class AcsController extends BaseController {
                 page,size), HttpStatus.OK);
     }
 
+    @GetMapping("/pending-verification")
+    public ResponseEntity<?> getPendingVerificationAcs(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(csAccountService.getPendingVerificationAcs(token,
+                indentNo,
+                page,size), HttpStatus.OK);
+    }
+
     @GetMapping("/approved")
     public ResponseEntity<?> getApprovedAcs(
             @AuthenticationPrincipal Jwt token,
@@ -75,6 +89,14 @@ public class AcsController extends BaseController {
     ){
         return new ResponseEntity<>(csAccountService.getClosedAcs(token,
                 indentNo,status,page,size), HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}/review")
+    public ResponseEntity<?> reviewCs(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id, @RequestBody @Valid NoteDto noteDto){
+        csAccountService.reviewAcs(token, id, noteDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
 }
