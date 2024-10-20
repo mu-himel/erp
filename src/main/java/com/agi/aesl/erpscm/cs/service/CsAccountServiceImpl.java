@@ -190,12 +190,25 @@ public class CsAccountServiceImpl implements CsAccountService{
     @Override
     public Page<?> getPendingVerificationAcs(Jwt token, Optional<String> indentNo, Optional<Integer> page,
                                              Optional<Integer> size) {
+        claimResolver.setToken(token);
         Pageable pageable = getPageable(page, size);
         List<String> _status = new ArrayList<>();
         _status.add(CsStatus.PENDING_VERIFICATION.toString());
         _status.add(CsStatus.REVIEW.toString());
         _status.add(CsStatus.VERIFIED.toString());
-        return csAccountRepository.findAllPendingVerificationAcs(indentNo, _status,pageable);
+        return csAccountRepository.findAllPendingVerificationAcs(indentNo,
+                claimResolver.getUserId(),_status,pageable);
+    }
+
+    @Override
+    public Page<?> getPendingApprovalAcs(Jwt token, Optional<String> indentNo, Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+        Pageable pageable = getPageable(page, size);
+        List<String> _status = new ArrayList<>();
+        _status.add(CsStatus.PENDING_APPROVAL.toString());
+        _status.add(CsStatus.REVIEW.toString());
+        _status.add(CsStatus.APPROVED.toString());
+        return csAccountRepository.findAllPendingApprovalAcs(indentNo,claimResolver.getUserId(), _status,pageable);
     }
 
     @Override

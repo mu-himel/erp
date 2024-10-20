@@ -21,7 +21,12 @@ public interface CsAccountRepository extends JpaRepository<CsAccount,Long>, AcsQ
     Page<AcsPendingItem> findAllAcs(Optional<String> indentNo, List<String> status, Pageable pageable);
 
     @Query(value = getAllPVAcsByIndentNoAndStatus, countQuery = countByPVAcsIndentNoAndStatusAcs, nativeQuery = true)
-    Page<AcsPendingItem> findAllPendingVerificationAcs(Optional<String> indentNo, List<String> status, Pageable pageable);
+    Page<AcsPendingItem> findAllPendingVerificationAcs(Optional<String> indentNo,
+                                                       String nextVerifierId, List<String> status, Pageable pageable);
+
+    @Query(value = getAllPAAcsByIndentNoAndStatus, countQuery = countByPAAcsIndentNoAndStatusAcs, nativeQuery = true)
+    Page<AcsPendingItem> findAllPendingApprovalAcs(Optional<String> indentNo,String nextApproverId,
+                                                   List<String> status, Pageable pageable);
 
     interface AcsPendingItem extends CsRepository.CsPendingListInfo{
         Long getAcsId();

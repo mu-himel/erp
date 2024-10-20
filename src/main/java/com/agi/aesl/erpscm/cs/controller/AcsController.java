@@ -45,7 +45,7 @@ public class AcsController extends BaseController {
                 page,size), HttpStatus.OK);
     }
 
-    @GetMapping("/pending-verification")
+    @GetMapping("/pending-verifications")
     public ResponseEntity<?> getPendingVerificationAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
@@ -53,6 +53,18 @@ public class AcsController extends BaseController {
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(csAccountService.getPendingVerificationAcs(token,
+                indentNo,
+                page,size), HttpStatus.OK);
+    }
+
+    @GetMapping("/pending-approvals")
+    public ResponseEntity<?> getPendingApprovalAcs(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(csAccountService.getPendingApprovalAcs(token,
                 indentNo,
                 page,size), HttpStatus.OK);
     }
