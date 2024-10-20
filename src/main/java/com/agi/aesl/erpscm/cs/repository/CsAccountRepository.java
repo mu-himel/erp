@@ -19,6 +19,10 @@ import java.util.Optional;
 public interface CsAccountRepository extends JpaRepository<CsAccount,Long>, AcsQuery {
     @Query(value = getAllAcsByIndentNoAndStatus, countQuery = countByIndentNoAndStatusAcs, nativeQuery = true)
     Page<AcsPendingItem> findAllAcs(Optional<String> indentNo, List<String> status, Pageable pageable);
+
+    @Query(value = getAllPVAcsByIndentNoAndStatus, countQuery = countByPVAcsIndentNoAndStatusAcs, nativeQuery = true)
+    Page<AcsPendingItem> findAllPendingVerificationAcs(Optional<String> indentNo, List<String> status, Pageable pageable);
+
     interface AcsPendingItem extends CsRepository.CsPendingListInfo{
         Long getAcsId();
         @JsonDeserialize(using = LocalDateDeserializer.class)
