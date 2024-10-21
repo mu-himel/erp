@@ -260,6 +260,7 @@ public class CsServiceImpl implements CsService{
                     wMap.put("vendorId",w.getVendorId());
                     wMap.put("id",w.getId());
                     wMap.put("totalPrice",w.getTotalPrice());
+                    wMap.put("orderQty",w.getOrderQty());
                     wMap.put("priceQuotationId",w.getPriceQuotation().getId());
                     wMap.put("pds",w.getVendorDeliveryDetails().stream().map(pd->{
                         Map<String,Object> pdMap = new HashMap<>();
@@ -294,7 +295,9 @@ public class CsServiceImpl implements CsService{
 
             Map<String,Object> resultMap = new HashMap<>();
             resultMap.put("details",result);
+            resultMap.put("validityDate",cs.getValidityDate());
             resultMap.put("declineNote",cs.getDeclineNote());
+            resultMap.put("requestedBy",cs.getRequestedBy());
             resultMap.put("requestedBy",cs.getRequestedBy());
             resultMap.put("verifiers",verifiers);
             resultMap.put("approvers",approvers);
@@ -406,6 +409,19 @@ public class CsServiceImpl implements CsService{
 //
 //        verificationService.setVerifiers(cs, verifiers, DomainType.CS);
 //        verificationService.setApprovers(cs, approvalPanels, DomainType.CS);
+    }
+
+    @Override
+    public Optional<?> getAllItemsByVendorAndCs(Long vendorId, String csNo) {
+        List<CsDetailRepository.CsVendorItemInfo> allItemsByVendor = csDetailRepository.findAllItemsByVendor(csNo, vendorId);
+        record CsVendorItemsResult(Object result,List<?> termsConditions){}
+        List<Long> ids = new ArrayList<>();
+        allItemsByVendor.stream().forEach(i->{
+            ids.add(i.getPqId());
+        });
+        List<PqTermsAndCondition> allByVendorIdAndPriceQuotationId = pqTermAndConditionRepository.findAllByVendorIdAndPriceQuotationId(vendorId, ids);
+        var result = new CsVendorItemsResult(allItemsByVendor,allByVendorIdAndPriceQuotationId);
+        return Optional.of(result);
     }
 
     @Override

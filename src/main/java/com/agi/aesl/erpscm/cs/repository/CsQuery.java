@@ -105,7 +105,7 @@ public interface CsQuery {
             SELECT
             i.id as id,
             csheet.id as csId,
-            CASE WHEN csheet.cs_status != 'REVIEW' AND (cvah.id IS NOT NULL AND cvah.employee_id = :nextVerifierId) THEN
+            CASE WHEN csheet.cs_status != 'REVIEW' AND (cvah.id IS NOT NULL AND cvah.employee_id = :nextApproverId) THEN
                     cvah.cs_status
                 ELSE
                     csheet.cs_status
@@ -129,7 +129,7 @@ public interface CsQuery {
                 (csheet.next_approver_id = :nextApproverId AND 
                 csheet.cs_status IN ('PENDING_APPROVAL','REVIEW','APPROVED'))
                 OR
-                (cvah.employee_id = :nextVerifierId AND cvah.cs_status = 'APPROVED')
+                (cvah.employee_id = :nextApproverId AND cvah.cs_status = 'APPROVED')
             )
             
             GROUP BY csheet.id
