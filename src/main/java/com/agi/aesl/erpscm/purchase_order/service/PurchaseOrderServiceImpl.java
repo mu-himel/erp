@@ -26,6 +26,7 @@ import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.price_quotation.entity.PqTermsAndCondition;
 import com.agi.aesl.erpscm.price_quotation.repository.PqRepository;
 import com.agi.aesl.erpscm.price_quotation.repository.PqTermAndConditionRepository;
+import com.agi.aesl.erpscm.purchase_order.dto.request.PoDetailReqDto;
 import com.agi.aesl.erpscm.purchase_order.dto.request.PoRemoteDetailReqDto;
 import com.agi.aesl.erpscm.purchase_order.dto.request.PoRemoteReqDto;
 import com.agi.aesl.erpscm.purchase_order.dto.request.PurchaseRequestDto;
@@ -185,8 +186,54 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
             PoGroup poGroup = new PoGroup();
             poGroup.setCs(cs);
+            poGroup.setPhoneNo(purchaseRequestDto.getPhoneNo());
+            poGroup.setVendorName(purchaseRequestDto.getVendorName());
+            poGroup.setVendorEmail(purchaseRequestDto.getVendorEmail());
+            poGroup.setPoDate(LocalDateTime.now());
             poGroup.setPurchaseOrderStatus(PurchaseOrderStatus.PENDING);
+
             poGroupRepository.save(poGroup);
+
+            PurchaseOrder po = new PurchaseOrder();
+            po.setCs(cs);
+            po.setPoDate(poGroup.getPoDate().toLocalDate());
+            po.setVendorId(purchaseRequestDto.getVendorId());
+            po.setPoNo(generatePoNo(cs,1));
+            po.setPoGroup(poGroup);
+            po.setTermsConditions(purchaseRequestDto.getTermsConditions().stream().map(tnc->{
+                tnc.setPurchaseOrder(po);
+                return tnc;
+            }).collect(Collectors.toList()));
+            List<String> ids = new ArrayList<>();
+            List<PurchaseOrderDetail> pods = new ArrayList<>();
+            for(PoDetailReqDto poDetailReqDto: purchaseRequestDto.getDetails()){
+                PurchaseOrderDetail pod = new PurchaseOrderDetail();
+                pod.setItemName(poDetailReqDto.getItemName());
+                pod.setUnitPrice(poDetailReqDto.getUnitPrice());
+                pod.setTransactionType(poDetailReqDto.getTransactionType());
+                pod.setEstimatedDeliveryDays(poDetailReqDto.getEstimatedDeliveryDays());
+                pod.setCreditDays(poDetailReqDto.getCreditDays());
+                pod.setTotalPrice(poDetailReqDto.getTotalPrice());
+                pod.setSubTotal(poDetailReqDto.getSubTotal());
+                pod.setWarrantyUnit(poDetailReqDto.getWarrantyUnit());
+                pod.setWarrantyDuration(poDetailReqDto.getWarrantyDuration());
+                pod.setVatPercent(poDetailReqDto.getVatPercent());
+                pod.setVatAmount(poDetailReqDto.getVatAmount());
+                pod.setCsVendorDetail(new CsVendorDetail(poDetailReqDto.getCsVendorDetail().getId()));
+                pod.setDeliveryDate(poDetailReqDto.getDeliveryDate());
+                pod.setDeliveryQty(poDetailReqDto.getDeliveryQty());
+                pod.setDeliveryCharge(poDetailReqDto.getDeliveryCharge());
+                pod.setPurchaseOrder(po);
+                pod.setWarehouse(new Warehouse(poDetailReqDto.getWarehouse().getId()));
+                pods.add(pod);
+                ids.add(poDetailReqDto.getCategoryId().toString());
+                ids.add(poDetailReqDto.getSubCategoryId().toString());
+            }
+
+
+            po.setPurchaseOrderDetails(pods);
+            po.setStatus(PurchaseOrderStatus.PENDING);
+            purchaseOrders.add(po);
 //            List<CsRepository.PotentialPoListItem> poListItems = csRepository.getPotentialPoListFromCs(cs.getId());
 //            int i=1;
 //            for(CsRepository.PotentialPoListItem pol : poListItems){

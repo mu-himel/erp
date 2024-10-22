@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.purchase_order.entity;
 
 import com.agi.aesl.erpscm.cs.entity.Cs;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.purchase_order.dto.request.PoTermsCondition;
 import com.agi.aesl.erpscm.purchase_order.enums.PurchaseOrderStatus;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -42,6 +43,9 @@ public class PurchaseOrder {
     private Employee requestedBy;
 
     private Long remotePoId;
+
+    @OneToMany(mappedBy = "purchaseOrder",cascade = CascadeType.ALL)
+    private List<PoTermsCondition> termsConditions;
 
     @Column(length = 500)
     private String invoicePath;

@@ -1,37 +1,22 @@
-package com.agi.aesl.erpscm.purchase_order.entity;
+package com.agi.aesl.erpscm.purchase_order.dto.request;
 
+import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.cs.entity.CsVendorDetail;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
+import jakarta.persistence.ManyToOne;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Entity
 @Data
-@Table(name = "purchase_order_details")
-public class PurchaseOrderDetail {
+public class PoDetailReqDto {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne
-    @JsonIgnore
-    private PurchaseOrder purchaseOrder;
-
-    @ManyToOne
-    private CsVendorDetail csVendorDetail;
-
+    private ReferenceObjectDto csVendorDetail;
     private String itemName;
-
     private BigDecimal unitPrice;
     private BigDecimal deliveryQty;
-
     private LocalDate deliveryDate;
-
     private String transactionType;
     private String estimatedDeliveryDays;
     private String creditDays;
@@ -42,7 +27,8 @@ public class PurchaseOrderDetail {
     private BigDecimal vatAmount;
     private BigDecimal deliveryCharge;
     private BigDecimal subTotal;
+    private ReferenceObjectDto warehouse;
 
-    @ManyToOne
-    private Warehouse warehouse;
+    private Long categoryId;
+    private Long subCategoryId;
 }
