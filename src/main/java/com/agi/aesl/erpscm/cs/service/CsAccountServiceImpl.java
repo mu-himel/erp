@@ -67,6 +67,9 @@ public class CsAccountServiceImpl implements CsAccountService{
         Optional<CsAccount> csAccountOp = csAccountRepository.findById(id);
         if(csAccountOp.isPresent()){
             CsAccount csAccount = csAccountOp.get();
+            csAccount.setCsType(acsUpdateDto.getCsType());
+            csAccount.setVatType(acsUpdateDto.getVatType());
+            csAccount.setDeliveryValuationMethod(acsUpdateDto.getDeliveryValuationMethod());
             List<String> ids= new ArrayList<>();
             csAccount.getCs().getCsDetails().forEach(csd->{
                 ids.add(csd.getIndentDetail().getSubCategory().getId().toString());
