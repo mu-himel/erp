@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.purchase_order.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
+import com.agi.aesl.erpscm.purchase_order.dto.request.PurchaseRequestDto;
 import com.agi.aesl.erpscm.purchase_order.entity.PoGroup;
 import com.agi.aesl.erpscm.purchase_order.service.PurchaseOrderService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
@@ -20,6 +21,16 @@ public class PurchaseController extends BaseController {
 
     @Autowired
     private PurchaseOrderService purchaseOrderService;
+
+    @PostMapping
+    public ResponseEntity<?> addPurchaseOrder(
+            @AuthenticationPrincipal Jwt token,
+            @RequestHeader("uri") String uri,
+            @RequestBody PurchaseRequestDto purchaseRequestDto
+    ){
+        purchaseOrderService.generatePurchaseOrder(token,uri,purchaseRequestDto);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
 
     @GetMapping("/pending")
     public ResponseEntity<?> getPendingPurchaseOrders(

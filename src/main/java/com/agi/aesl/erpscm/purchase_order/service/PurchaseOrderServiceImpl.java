@@ -5,21 +5,34 @@ import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.common.enums.DeliveryCharge;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.cs.entity.Cs;
+import com.agi.aesl.erpscm.cs.entity.CsVendorDetail;
+import com.agi.aesl.erpscm.cs.repository.CsRepository;
+import com.agi.aesl.erpscm.cs.repository.CsVendorDetailRepository;
+import com.agi.aesl.erpscm.cs.service.CsService;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.indent.entity.Indent;
+import com.agi.aesl.erpscm.inventory.dto.request.PendingItemAttributeDto;
+import com.agi.aesl.erpscm.inventory.dto.request.PendingItemRequestDto;
+import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
 import com.agi.aesl.erpscm.inventory.entity.Item;
+import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.service.CategoryService;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.price_quotation.entity.PqTermsAndCondition;
+import com.agi.aesl.erpscm.price_quotation.repository.PqRepository;
 import com.agi.aesl.erpscm.price_quotation.repository.PqTermAndConditionRepository;
 import com.agi.aesl.erpscm.purchase_order.dto.request.PoRemoteDetailReqDto;
 import com.agi.aesl.erpscm.purchase_order.dto.request.PoRemoteReqDto;
+import com.agi.aesl.erpscm.purchase_order.dto.request.PurchaseRequestDto;
 import com.agi.aesl.erpscm.purchase_order.entity.PoGroup;
 import com.agi.aesl.erpscm.purchase_order.entity.PoVerificationApprovalHistory;
 import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
+import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrderDetail;
 import com.agi.aesl.erpscm.purchase_order.enums.PurchaseOrderStatus;
 import com.agi.aesl.erpscm.purchase_order.repository.PoGroupRepository;
 import com.agi.aesl.erpscm.purchase_order.repository.PoVaHistoryRepository;
@@ -42,7 +55,9 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -78,7 +93,16 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     private PoVaHistoryRepository poVaHistoryRepository;
 
     @Autowired
+    private CsVendorDetailRepository csVendorDetailRepository;
+
+    @Autowired
+    private CategoryService categoryService;
+
+    @Autowired
     private OrgService orgService;
+
+    @Autowired
+    private CsRepository csRepository;
     
     @Autowired
     private NetworkService networkService;
@@ -86,12 +110,210 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     @Autowired
     private CpsServerConfig cpsServerConfig;
 
+    @Autowired
+    private PqRepository pqRepository;
+
 
     @Override
     @Transactional
     public void createPurchaseOrder(List<PurchaseOrder> purchaseOrders) {
         purchaseOrderRepository.saveAll(purchaseOrders);
     }
+
+    private String generatePoNo(Cs cs,Integer i){
+        return cs.getCsNo()+"-"+ ((i<10)? "0"+i.toString() : i.toString());
+    }
+    @Override
+    @Transactional
+    public void generatePurchaseOrder(Jwt token, String uri, PurchaseRequestDto purchaseRequestDto){
+            claimResolver.setToken(token);
+            Optional<Employee> empOp = claimResolver.getEmployee();
+            Employee employee = empOp.get();
+            if(empOp.isEmpty()){
+                throw new RuntimeException("Sorry! Employee Profile required");
+            }
+            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
+            if(orgOp.isEmpty()){
+                throw new RuntimeException("Sorry! Organization not found");
+            }
+            Optional<Cs> csOp = csRepository.findById(purchaseRequestDto.getCsId());
+            if(csOp.isEmpty()){
+                throw new RuntimeException("Sorry! Cs not found");
+            }
+            Cs cs = csOp.get();
+            List<CsVendorDetailRepository.PendingItemBrandInfo> itemBrandInfos = csVendorDetailRepository.getPendingItemAndBrandInfoByCsId(purchaseRequestDto.getCsId());
+            for(CsVendorDetailRepository.PendingItemBrandInfo csDetail : itemBrandInfos){
+                String itemAttributeName = (csDetail.getExtendedAttributes()!=null)? csDetail.getItemAttributeName()+" - "+csDetail.getExtendedAttributes() : csDetail.getItemAttributeName();
+                Optional<Item> itemOp = itemService.getByBrandAndAttributeName(csDetail.getBrandName(),csDetail.getSubCatId(),itemAttributeName);
+                if(itemOp.isEmpty()){
+
+                    Optional<ItemCategory> subCatOp = categoryService.getItemCategory(csDetail.getSubCatId());
+                    if(subCatOp.isEmpty()){
+                        throw new RuntimeException("Sorry! Sub Cat missing");
+                    }
+                    ItemCategory subCat = subCatOp.get();
+
+                    PendingItemRequestDto pendingItemRequestDto = new PendingItemRequestDto();
+                    pendingItemRequestDto.setSubCategoryCode(csDetail.getSubCategoryCode());
+                    pendingItemRequestDto.setDepartment(employee.getDepartmentName());
+                    pendingItemRequestDto.setDesignation(employee.getDesignationName());
+                    pendingItemRequestDto.setEmployeeId(employee.getEmployeeId());
+                    if(employee.getReportingManager()!=null){
+                        pendingItemRequestDto.setReportingManager(employee.getReportingManager());
+                    }
+                    pendingItemRequestDto.setRequestedBy(employee.getEmployeeName());
+                    pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
+                    pendingItemRequestDto.setWarehouseLocation(employee.getWarehouseName());
+                    pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
+                    pendingItemRequestDto.setBrand(csDetail.getBrandName());
+
+
+                    List<PendingItemAttributeDto> attributes = extractAttributesFromItemAttributeName(subCat,csDetail.getItemAttributeName());
+                    List<PendingItemAttributeDto> attributesFromItemAttributeName = extractAttributesFromItemAttributeName(subCat,csDetail.getExtendedAttributes());
+                    attributes.addAll(attributesFromItemAttributeName);
+                    pendingItemRequestDto.setAttributes(attributes);
+                    pendingItemRequestDto.setOrganizationId(orgOp.get().getCpsVendorRegistrationId());
+                    pendingItemRequestDto.setExtendedAttributes(csDetail.getExtendedAttributes());
+                    sendPendingItemRequest(pendingItemRequestDto);
+                }
+
+            }
+
+
+
+            List<PurchaseOrder> purchaseOrders =new ArrayList<>();
+
+            PoGroup poGroup = new PoGroup();
+            poGroup.setCs(cs);
+            poGroup.setPurchaseOrderStatus(PurchaseOrderStatus.PENDING);
+            poGroupRepository.save(poGroup);
+//            List<CsRepository.PotentialPoListItem> poListItems = csRepository.getPotentialPoListFromCs(cs.getId());
+//            int i=1;
+//            for(CsRepository.PotentialPoListItem pol : poListItems){
+//                if(pol.getDeliveryDate()!=null){
+//                    PurchaseOrder vPo = new PurchaseOrder();
+//                    vPo.setCs(cs);
+//                    vPo.setPoDate(pol.getDeliveryDate());
+//                    vPo.setVendorId(pol.getVendorId());
+//
+//                    vPo.setPoNo(generatePoNo(cs, i));
+//                    if(cs.getNextApproverId()!=null){
+//                        vPo.setRequestedBy(new Employee(cs.getNextApproverId()));
+//                    }else{
+//                        vPo.setRequestedBy(cs.getRequestedBy());
+//                    }
+//
+//                    List<PurchaseOrderDetail> pods = new ArrayList<>();
+//                    for(String csvdId : List.of(pol.getCsVendorDetailId().split(","))){
+//                        PurchaseOrderDetail pod = new PurchaseOrderDetail();
+//                        pod.setItemName(null);
+//                        pod.setCsVendorDetail(new CsVendorDetail(Long.valueOf(csvdId)));
+//                        pod.setDeliveryDate(pol.getDeliveryDate());
+//                        pod.setDeliveryQty(pol.getDeliveryQty());
+//                        pod.setPurchaseOrder(vPo);
+//                        pod.setWarehouse(new Warehouse(pol.getWarehouseId()));
+//                        pods.add(pod);
+//                    }
+//                    vPo.setPurchaseOrderDetails(pods);
+//                    vPo.setPoGroup(poGroup);
+//                    vPo.setStatus(PurchaseOrderStatus.PENDING);
+//                    purchaseOrders.add(vPo);
+//
+//                }else{
+//                    Optional<PqRepository.PriceQuotationDetailExt> pqDetailOp = pqRepository
+//                            .getPriceQuotationDetailByPqIdAndItemAttr(pol.getPriceQuotationId(),pol.getItemAttribute());
+//
+//                    if(pqDetailOp.isPresent()){
+//                        PurchaseOrder vPo = new PurchaseOrder();
+//                        vPo.setCs(cs);
+//                        LocalDate currentDate = LocalDate.now();
+//                        currentDate = currentDate.plusDays(pqDetailOp.get().getEstDeliveryDays());
+//                        vPo.setPoDate(currentDate.atTime(LocalTime.now()).toLocalDate());
+//                        vPo.setVendorId(pol.getVendorId());
+//
+//                        vPo.setPoNo(generatePoNo(cs, i));
+//                        if(cs.getNextApproverId()!=null){
+//                            vPo.setRequestedBy(new Employee(cs.getNextApproverId()));
+//                        }else{
+//                            vPo.setRequestedBy(cs.getRequestedBy());
+//                        }
+//
+//                        List<PurchaseOrderDetail> pods = new ArrayList<>();
+//                        for(String csvdId : List.of(pol.getCsVendorDetailId().split(","))){
+//                            PurchaseOrderDetail pod = new PurchaseOrderDetail();
+//                            pod.setCsVendorDetail(new CsVendorDetail(Long.valueOf(csvdId)));
+//                            pod.setDeliveryDate(currentDate);
+//                            pod.setPurchaseOrder(vPo);
+//                            pod.setWarehouse(new Warehouse(pqDetailOp.get().getWarehouseId()));
+//                            pods.add(pod);
+//                        }
+//                        vPo.setPurchaseOrderDetails(pods);
+//                        vPo.setStatus(PurchaseOrderStatus.PENDING);
+//                        vPo.setPoGroup(poGroup);
+//                        purchaseOrders.add(vPo);
+//                    }
+//                }
+//                i++;
+//            }
+
+
+
+            createPurchaseOrder(purchaseOrders);
+
+
+    }
+
+    @Async
+    private void sendPendingItemRequest(PendingItemRequestDto payloadDto) {
+        try{
+            HttpHeaders headers = new HttpHeaders();
+            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
+            if(orgOp.isPresent()){
+                headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
+            }
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(payloadDto,headers);
+            String url = cpsServerConfig.getPendingItemReqEndpoint();
+            ResponseEntity<Void> response = (ResponseEntity<Void>)networkService.post(url, payload,Void.class);
+            if(!response.getStatusCode().equals(HttpStatus.CREATED)){
+                throw new RuntimeException("Sorry! Something wrong");
+            }
+        }catch(Exception ex){
+            throw new RuntimeException(ex.getMessage());
+        }
+    }
+
+    private List<PendingItemAttributeDto> extractAttributesFromItemAttributeName(ItemCategory cat, String itemAttributeName){
+
+        List<PendingItemAttributeDto> pendingItemAttrList = new ArrayList<>();
+        if(itemAttributeName!=null){
+
+            String[] attrs = itemAttributeName.split(" - ");
+
+
+            for(String attr : attrs){
+                String _attr="";
+                Optional<CategoryAttribute> catAttrOp = cat.getAttributes().stream().filter(c->{
+                    return attr.contains(c.getAttributeType());
+
+                }).findFirst();
+
+                if(catAttrOp.isPresent()){
+                    _attr = attr.replace(catAttrOp.get().getAttributeType(),"");
+
+                    String[] args = _attr.trim().split(" ");
+                    PendingItemAttributeDto pia = new PendingItemAttributeDto();
+                    pia.setAttributeType(catAttrOp.get().getAttributeType());
+                    pia.setAttributeValue(args[0].trim());
+                    pia.setAttributeUnit(catAttrOp.get().getAttributeUnit());
+                    pendingItemAttrList.add(pia);
+                }
+            }
+        }
+        return pendingItemAttrList;
+    }
+
 
     @Override
     public Page<?> getPendingPOs(Optional<Integer> page, Optional<Integer> size) {

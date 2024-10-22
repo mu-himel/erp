@@ -32,6 +32,16 @@ public class PurchaseOrderDetail {
 
     private LocalDate deliveryDate;
 
+    private String transactionType;
+    private String estimatedDeliveryDays;
+    private String creditDays;
+    private BigDecimal totalPrice;
+    private String warrantyUnit;
+    private String warrantyDuration;
+    private BigDecimal vatPercent;
+    private BigDecimal vatAmount;
+    private BigDecimal deliveryCharge;
+
     @ManyToOne
     private Warehouse warehouse;
 }
