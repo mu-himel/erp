@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/apiv/v1/acs")
+@RequestMapping("/api/v1/acs")
 public class AcsController extends BaseController {
 
     @Autowired

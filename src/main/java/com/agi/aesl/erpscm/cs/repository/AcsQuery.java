@@ -16,8 +16,8 @@ public interface AcsQuery {
              COALESCE(sum(idd.rfq_qty),0) as rfqQty,
              COALESCE((SELECT count(*) FROM price_quotations pq 
                                 WHERE status='LOCKED' AND rfq_id = csheet.indent_id),0) as lockedVendor
-            FROM acs 
-            LEFT cs csheet ON csheet.id = acs.cs_id
+            FROM cs_accounts acs 
+            LEFT JOIN cs csheet ON csheet.id = acs.cs_id
             LEFT JOIN indents i ON i.id = csheet.indent_id
             LEFT JOIN cs_details csd ON csd.cs_id = csheet.id
             LEFT JOIN indent_details ide ON ide.id = csd.indent_detail_id
@@ -49,8 +49,8 @@ public interface AcsQuery {
              COALESCE(sum(idd.rfq_qty),0) as rfqQty,
              COALESCE((SELECT count(*) FROM price_quotations pq 
                                 WHERE status='LOCKED' AND rfq_id = csheet.indent_id),0) as lockedVendor
-            FROM acs 
-            LEFT cs csheet ON csheet.id = acs.cs_id
+            FROM cs_accounts acs 
+            LEFT JOIN cs csheet ON csheet.id = acs.cs_id
             LEFT JOIN indents i ON i.id = csheet.indent_id
             LEFT JOIN cs_details csd ON csd.cs_id = csheet.id
             LEFT JOIN indent_details ide ON ide.id = csd.indent_detail_id
@@ -88,8 +88,8 @@ public interface AcsQuery {
              COALESCE(sum(idd.rfq_qty),0) as rfqQty,
              COALESCE((SELECT count(*) FROM price_quotations pq 
                                 WHERE status='LOCKED' AND rfq_id = csheet.indent_id),0) as lockedVendor
-            FROM acs 
-            LEFT cs csheet ON csheet.id = acs.cs_id
+            FROM cs_accounts acs 
+            LEFT JOIN cs csheet ON csheet.id = acs.cs_id
             LEFT JOIN indents i ON i.id = csheet.indent_id
             LEFT JOIN cs_details csd ON csd.cs_id = csheet.id
             LEFT JOIN indent_details ide ON ide.id = csd.indent_detail_id
@@ -123,8 +123,8 @@ public interface AcsQuery {
             COALESCE(sum(idd.rfq_qty),0) as rfqQty,
             COALESCE((SELECT count(*) FROM price_quotations pq 
                                 WHERE status='LOCKED' AND rfq_id = csheet.indent_id),0) as lockedVendor
-            FROM acs 
-            LEFT cs csheet ON csheet.id = acs.cs_id
+            FROM cs_accounts acs 
+            LEFT JOIN cs csheet ON csheet.id = acs.cs_id
             LEFT JOIN indents i ON i.id = csheet.indent_id
             LEFT JOIN cs_details csd ON csd.cs_id = csheet.id
             LEFT JOIN indent_details ide ON ide.id = csd.indent_detail_id
@@ -153,8 +153,8 @@ public interface AcsQuery {
             COALESCE(sum(idd.rfq_qty),0) as rfqQty,
             COALESCE((SELECT count(*) FROM price_quotations pq 
                                 WHERE status='LOCKED' AND rfq_id = csheet.indent_id),0) as lockedVendor
-            FROM acs 
-            LEFT cs csheet ON csheet.id = acs.cs_id
+            FROM cs_accounts acs 
+            LEFT JOIN cs csheet ON csheet.id = acs.cs_id
             LEFT JOIN indents i ON i.id = csheet.indent_id
             LEFT JOIN cs_details csd ON csd.cs_id = csheet.id
             LEFT JOIN indent_details ide ON ide.id = csd.indent_detail_id

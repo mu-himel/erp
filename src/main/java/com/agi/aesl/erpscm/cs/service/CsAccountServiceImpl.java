@@ -181,6 +181,12 @@ public class CsAccountServiceImpl implements CsAccountService{
     }
 
     private static Pageable getPageable(Optional<Integer> page, Optional<Integer> size) {
+        if(page.isEmpty()){
+            throw new RuntimeException("Sorry! Page number Required");
+        }
+        if(size.isEmpty()){
+            throw new RuntimeException("Sorry! Page Size Required");
+        }
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Integer _size = (size.get().equals(-1))? Integer.MAX_VALUE: size.orElse(PAGE_SIZE);
         Pageable pageable = PageRequest.of(page.orElse(0),_size);
