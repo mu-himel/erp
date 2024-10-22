@@ -373,11 +373,11 @@ public class CsServiceImpl implements CsService{
 
         csRepository.save(cs);
 
-        verificationService.removeVerification(cs.getId(), DomainType.CS);
-        csVaHistoryRepository.deleteAllByCsId(cs.getId());
+//        verificationService.removeVerification(cs.getId(), DomainType.CS);
+//        csVaHistoryRepository.deleteAllByCsId(cs.getId());
 
-        verificationService.applyVerifyApprovalProcess(cs, DomainType.CS, CsStatus.COMPLETED.toString(),
-                uri,"CATEGORY",ids, null);
+//        verificationService.applyVerifyApprovalProcess(cs, DomainType.CS, CsStatus.COMPLETED.toString(),
+//                uri,"CATEGORY",ids, null);
 
 //        @SuppressWarnings("unchecked")
 //        Optional<Map<String, Object>> verifierOp = (Optional<Map<String, Object>>) verificationService.getVerifiers(loggedInUser, uri, categories.toString());
@@ -602,14 +602,15 @@ public class CsServiceImpl implements CsService{
             throw new RuntimeException("Sorry! Cs not found");
         }
         Cs cs = csOp.get();
-        cs.setCsStatus(CsStatus.REJECTED);
-        cs.getIndent().getIndentDetails().stream().forEach(ide->{
-            productRequirementService.reOpen(ide.getProductRequirementsIds());
+        cs.setCsStatus(CsStatus.PENDING_VERIFICATION);
+        cs.setReviewPrevStatus(null);
+        cs.setReviewerId(null);
+        csVaHistoryRepository.removeByCsId(cs.getId());
+        List<UserApplicationValidation> verifiers = verificationService.getVerifyersByDomainId(DomainType.CS,cs.getId());
+        verifiers.stream().forEach(verifer->{
+            verifer.setVerificationDate(null);
+            verifer.setVerified(false);
         });
-        commentService.addComment(
-                commentService.prepareComment(claimResolver.getEmployee().get(),
-                        DomainType.CS,cs.getId(),"Rejected & Resent To PR",new ArrayList<>())
-        );
     }
 
     @Override

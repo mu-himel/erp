@@ -178,7 +178,7 @@ public class CsController extends BaseController {
     public ResponseEntity<?> resubmitForVerification(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id){
-        csService.resubmit(token,id);
+            csService.resubmit(token,id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
