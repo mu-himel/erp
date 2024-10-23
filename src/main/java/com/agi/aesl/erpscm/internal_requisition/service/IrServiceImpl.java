@@ -259,6 +259,7 @@ public class IrServiceImpl implements IrService {
             InternalRequisitionRepository.IrDetail irDetail =    (InternalRequisitionRepository.IrDetail) irOp.get();
             detailMap.put("priority",irDetail.getPriority());
             detailMap.put("id",irDetail.getId());
+            detailMap.put("deliveryDate",irDetail.getDeliveryDate());
             detailMap.put("internalRequisitionNo",irDetail.getInternalRequisitionNo());
             detailMap.put("category",irDetail.getCategory());
             detailMap.put("details",irDetail.getDetails());

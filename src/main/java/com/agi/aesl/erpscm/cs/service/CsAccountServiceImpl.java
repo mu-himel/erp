@@ -64,11 +64,17 @@ public class CsAccountServiceImpl implements CsAccountService{
     @Transactional
     public void updateCsAccount(Long id, Jwt token, String uri, AcsUpdateDto acsUpdateDto) {
         claimResolver.setToken(token);
+        Optional<Employee> empOp = claimResolver.getEmployee();
+        if(empOp.isEmpty()){
+            throw new RuntimeException("Sorry! no employee profile found");
+        }
+        Employee employee = empOp.get();
         Optional<CsAccount> csAccountOp = csAccountRepository.findById(id);
         if(csAccountOp.isPresent()){
             CsAccount csAccount = csAccountOp.get();
             csAccount.setCsType(acsUpdateDto.getCsType());
             csAccount.setVatType(acsUpdateDto.getVatType());
+            csAccount.setRequestedBy(employee);
             csAccount.setDeliveryValuationMethod(acsUpdateDto.getDeliveryValuationMethod());
             List<String> ids= new ArrayList<>();
             csAccount.getCs().getCsDetails().forEach(csd->{
@@ -323,6 +329,7 @@ public class CsAccountServiceImpl implements CsAccountService{
         List<?> comments = commentService.getCommentsByDomain(DomainType.ACS, csAccount.getId());
         Map<String,Object> result = new HashMap<>();
         result.put("csId",csAccount.getCs().getId());
+        result.put("requestedBy",csAccount.getRequestedBy());
         result.put("status",csAccount.getAcsStatus());
         result.put("csType",csAccount.getCsType());
         result.put("vatType",csAccount.getVatType());

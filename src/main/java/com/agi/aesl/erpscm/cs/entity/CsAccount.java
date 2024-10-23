@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.cs.entity;
 
 import com.agi.aesl.erpscm.cs.enums.CsStatus;
+import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -27,6 +28,9 @@ public class CsAccount extends VerifyableEntity {
 
     @Enumerated(EnumType.STRING)
     private CsStatus reviewPrevStatus;
+
+    @ManyToOne
+    private Employee requestedBy;
 
     @Override
     public void setStatus(String status){
