@@ -14,6 +14,4 @@ public class CreateIRDto {
     private String irNo;
     private LocalDateTime deliveryDate;
     List<CreateIRDetailDto> details;
-
-
 }

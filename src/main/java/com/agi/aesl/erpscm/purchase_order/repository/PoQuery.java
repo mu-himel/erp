@@ -35,7 +35,7 @@ public interface PoQuery {
         (select MAX(cvah.verification_date) 
             FROM cs_verification_approval_histories cvah 
             WHERE cvah.cs_id=csheet.id 
-            AND cvah.cs_status IN ('APPROVED','VERIFIED')
+            AND cvah.cs_status IN ('VERIFIED')
         ) as poDate,
         GROUP_CONCAT(DISTINCT po.id) as poIds,
         i.indent_no                      as indentNo,
@@ -50,7 +50,7 @@ public interface PoQuery {
     LEFT JOIN scm_item_categories c ON i.category_id = c.id
     LEFT JOIN scm_item_categories sc ON i.sub_category_id = sc.id
     WHERE cpo.purchase_order_status IN ('PENDING_VERIFICATION')
-    AND csheet.cs_status IN ('APPROVED','VERIFIED','COMPLETED')
+    AND csheet.cs_status IN ('VERIFIED')
     GROUP BY cpo.id
             """;
 
@@ -63,7 +63,7 @@ public interface PoQuery {
         (select MAX(cvah.verification_date) 
             FROM cs_verification_approval_histories cvah 
             WHERE cvah.cs_id=csheet.id 
-            AND cvah.cs_status IN ('APPROVED','VERIFIED')
+            AND cvah.cs_status IN ('APPROVED')
         ) as poDate,
         GROUP_CONCAT(DISTINCT po.id) as poIds,
         i.indent_no                      as indentNo,
@@ -78,7 +78,7 @@ public interface PoQuery {
     LEFT JOIN scm_item_categories c ON i.category_id = c.id
     LEFT JOIN scm_item_categories sc ON i.sub_category_id = sc.id
     WHERE cpo.purchase_order_status IN ('PENDING_APPROVAL')
-    AND csheet.cs_status IN ('APPROVED','VERIFIED','COMPLETED')
+    AND csheet.cs_status IN ('APPROVED')
     GROUP BY cpo.id
             """;
 

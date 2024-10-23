@@ -131,11 +131,11 @@ public class PurchaseController extends BaseController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @GetMapping("/test")
-    public ResponseEntity<?> test(){
-        PoGroup poGroup = new PoGroup();
-        poGroup.setId(5L);
-        purchaseOrderService.sentPoToVendors(poGroup);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
+//    @GetMapping("/test")
+//    public ResponseEntity<?> test(){
+//        PoGroup poGroup = new PoGroup();
+//        poGroup.setId(5L);
+//        purchaseOrderService.sentPoToVendors(poGroup);
+//        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+//    }
 }

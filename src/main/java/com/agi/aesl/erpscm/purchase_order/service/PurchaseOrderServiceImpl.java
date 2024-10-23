@@ -41,6 +41,7 @@ import com.agi.aesl.erpscm.purchase_order.repository.PurchaseOrderRepository;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
@@ -182,7 +183,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
 
 
-            List<PurchaseOrder> purchaseOrders =new ArrayList<>();
+            List<PurchaseOrder> purchaseOrders = new ArrayList<>();
 
             PoGroup poGroup = new PoGroup();
             poGroup.setCs(cs);
@@ -302,12 +303,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 //                }
 //                i++;
 //            }
-
-
-
             createPurchaseOrder(purchaseOrders);
 
-
+        AppliedVADto vaResult = verificationService.applyVerifyApprovalProcess(poGroup, DomainType.PO, PurchaseOrderStatus.APPROVED.toString(),
+                uri, "CATEGORY", ids, null);
+//        if(vaResult.getVerifiers().isEmpty() && vaResult.getPanels().isEmpty()){
+//
+//        }
     }
 
     @Async
