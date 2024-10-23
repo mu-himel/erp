@@ -33,4 +33,6 @@ public interface CsAccountService extends VerificationDomainService {
     Page<?> getActiveCsList(Jwt token, Optional<String> indentNo, Optional<Integer> page, Optional<Integer> size);
 
     Page<?> getExpiredCsList(Jwt token, Optional<String> indentNo, Optional<Integer> page, Optional<Integer> size);
+
+    Optional<?> getDetailById(Long id);
 }

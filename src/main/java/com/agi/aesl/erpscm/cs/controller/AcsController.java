@@ -21,6 +21,14 @@ public class AcsController extends BaseController {
     @Autowired
     private CsAccountService csAccountService;
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getDetail(@PathVariable("id") Long id){
+        return new ResponseEntity<>(
+                csAccountService.getDetailById(id),
+                HttpStatus.OK
+        );
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<?> submitForVerifyApproval(
             @PathVariable("id") Long id,

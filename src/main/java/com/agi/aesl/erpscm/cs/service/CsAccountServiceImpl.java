@@ -21,6 +21,7 @@ import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationVa
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,9 +30,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class CsAccountServiceImpl implements CsAccountService{
@@ -39,6 +38,7 @@ public class CsAccountServiceImpl implements CsAccountService{
     private static final Integer PAGE_SIZE = 20;
     @Autowired
     private ClaimResolver claimResolver;
+
     @Autowired
     private CsAccountRepository csAccountRepository;
 
@@ -298,5 +298,38 @@ public class CsAccountServiceImpl implements CsAccountService{
                 commentService.prepareComment(claimResolver.getEmployee().get(),
                         DomainType.ACS,csAccount.getId(),noteDto.getNote(),noteDto.getAttachments())
         );
+    }
+
+    @Override
+    public Optional<?> getDetailById(Long id) {
+        Optional<CsAccount> csAccountOp = csAccountRepository.findById(id);
+        if(csAccountOp.isEmpty()){
+            throw new RuntimeException("Sorry! Account Cs not found");
+        }
+
+        CsAccount csAccount = csAccountOp.get();
+        List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
+        List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
+        List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
+                .getVerificationsByDomainTypeAndDomainId(DomainType.ACS, csAccount.getId());
+        vrs.stream().forEach(verifier->{
+            if(verifier.getIsApproval()==false){
+                verifiers.add(verifier);
+            }else{
+                approvers.add(verifier);
+            }
+        });
+
+        List<?> comments = commentService.getCommentsByDomain(DomainType.ACS, csAccount.getId());
+        Map<String,Object> result = new HashMap<>();
+        result.put("csId",csAccount.getCs().getId());
+        result.put("status",csAccount.getAcsStatus());
+        result.put("csType",csAccount.getCsType());
+        result.put("vatType",csAccount.getVatType());
+        result.put("deliveryValuationMethod",csAccount.getDeliveryValuationMethod());
+        result.put("verifiers",verifiers);
+        result.put("approvers",approvers);
+        result.put("comments",comments);
+        return Optional.ofNullable(result);
     }
 }
