@@ -81,6 +81,8 @@ public class CsAccountServiceImpl implements CsAccountService{
                 ids.add(csd.getIndentDetail().getSubCategory().getId().toString());
                 ids.add(csd.getIndentDetail().getSubCategory().getParentCategory().getId().toString());
             });
+            csAccountVAHistoryRepo.deleteByCsAccountId(csAccount.getId());
+            verificationService.removeVerification(csAccount.getId(),DomainType.ACS);
             AppliedVADto vaDto = verificationService.applyVerifyApprovalProcess(csAccount, DomainType.ACS, CsStatus.COMPLETED.toString(),
                     uri, "CATEGORY", ids, null);
 

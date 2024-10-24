@@ -107,7 +107,7 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             w.name as warehouse
         FROM internal_requisitions ir 
         LEFT JOIN acl_users e ON e.id = ir.requested_by_id
-        LEFT JOIN warehouses w ON w.id = ir.warehouse_id
+        LEFT JOIN scm_warehouses w ON w.id = ir.warehouse_id
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN scm_item_categories c ON c.id = ir.category_id
         WHERE ir.ir_status IN ('VERIFIED','APPROVED') AND (ir.is_processed IS NULL OR ir.is_processed=0)
@@ -126,7 +126,7 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             ir.delivery_date as deliveryDate,
             w.name as warehouse
         FROM internal_requisitions ir 
-        LEFT JOIN warehouses w ON w.id = ir.warehouse_id
+        LEFT JOIN scm_warehouses w ON w.id = ir.warehouse_id
         LEFT JOIN acl_users e ON e.id = ir.requested_by_id
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN scm_item_categories c ON c.id = ir.category_id

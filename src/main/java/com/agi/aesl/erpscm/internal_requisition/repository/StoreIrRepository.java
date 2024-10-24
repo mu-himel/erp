@@ -23,7 +23,7 @@ public interface StoreIrRepository extends JpaRepository<StoreIR,Long> {
         w.name as warehouse
     FROM store_irs sirs
     LEFT JOIN internal_requisitions ir ON ir.id = sirs.ir_id
-    LEFT JOIN warehouses w ON w.id = ir.warehouse_id
+    LEFT JOIN scm_warehouses w ON w.id = ir.warehouse_id
     LEFT JOIN acl_users e ON e.id = ir.requested_by_id
     LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
     LEFT JOIN internal_requisition_warehouses irw ON irw.internal_requisition_detail_id = ird.id
@@ -45,7 +45,7 @@ public interface StoreIrRepository extends JpaRepository<StoreIR,Long> {
         w.name as warehouse
     FROM store_irs sirs
     LEFT JOIN internal_requisitions ir ON ir.id = sirs.ir_id
-    LEFT JOIN warehouses w ON w.id = ir.warehouse_id
+    LEFT JOIN scm_warehouses w ON w.id = ir.warehouse_id
     LEFT JOIN acl_users e ON e.id = ir.requested_by_id
     LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
     LEFT JOIN internal_requisition_warehouses irw ON irw.internal_requisition_detail_id = ird.id
@@ -67,7 +67,7 @@ public interface StoreIrRepository extends JpaRepository<StoreIR,Long> {
             w.name as warehouse
         FROM store_irs sirs
         LEFT JOIN internal_requisitions ir ON ir.id = sirs.ir_id
-        LEFT JOIN warehouses w ON w.id = ir.warehouse_id
+        LEFT JOIN scm_warehouses w ON w.id = ir.warehouse_id
         LEFT JOIN acl_users e ON e.id = ir.requested_by_id
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN internal_requisition_warehouses irw ON irw.internal_requisition_detail_id = ird.id
@@ -95,7 +95,7 @@ WHERE ird2.ir_id = ir.id) p) as status,
             w.name as warehouse
         FROM store_irs sirs
         LEFT JOIN internal_requisitions ir ON ir.id = sirs.ir_id
-        LEFT JOIN warehouses w ON w.id = ir.warehouse_id
+        LEFT JOIN scm_warehouses w ON w.id = ir.warehouse_id
         LEFT JOIN acl_users e ON e.id = ir.requested_by_id
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN internal_requisition_warehouses irw ON irw.internal_requisition_detail_id = ird.id
