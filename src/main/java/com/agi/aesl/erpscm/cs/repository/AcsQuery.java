@@ -60,6 +60,7 @@ public interface AcsQuery {
             LEFT JOIN cs_account_va_histories cavah ON cavah.cs_account_id = acs.id
             WHERE (:indentNo IS NULL OR csheet.cs_no LIKE concat('%',:indentNo))
             AND (COALESCE(:status) IS NULL OR acs.acs_status IN (:status))
+            AND
             (
                     (acs.next_verifier_id = :nextVerifierId )
                     OR 
@@ -99,6 +100,7 @@ public interface AcsQuery {
             LEFT JOIN cs_account_va_histories cavah ON cavah.cs_account_id = acs.id
             WHERE (:indentNo IS NULL OR csheet.cs_no LIKE concat('%',:indentNo))
             AND (COALESCE(:status) IS NULL OR acs.acs_status IN (:status))
+            AND
             (
                     (acs.next_approver_id = :nextApproverId )
                     OR 
