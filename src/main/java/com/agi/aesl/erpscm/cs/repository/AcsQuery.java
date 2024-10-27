@@ -64,7 +64,7 @@ public interface AcsQuery {
             (
                     (acs.next_verifier_id = :nextVerifierId )
                     OR 
-                    (cavah.employee_id = :nextVerifierId AND cavah.acs_status = 'VERIFIED')
+                    (cavah.employee_id = :nextVerifierId AND cavah.acs_status IN ('PENDING_VERIFICATION','REVIEW','VERIFIED'))
             )
             GROUP BY acs.id
             """;
@@ -77,7 +77,8 @@ public interface AcsQuery {
             csheet.validity_date as validityDate,
             i.id as id,
             csheet.id as csId,
-            CASE WHEN acs.acs_status != 'REVIEW' AND (cavah.id IS NOT NULL AND cavah.employee_id = :nextApproverId) THEN
+            CASE WHEN acs.acs_status != 'REVIEW' AND (cavah.id IS NOT NULL AND cavah.employee_id = :nextApproverId
+            AND cavah.acs_status NOT IN ('VERIFIED')) THEN
                     cavah.acs_status
                 ELSE
                     acs.acs_status
@@ -104,7 +105,7 @@ public interface AcsQuery {
             (
                     (acs.next_approver_id = :nextApproverId )
                     OR 
-                    (cavah.employee_id = :nextApproverId AND cavah.acs_status = 'APPROVED')
+                    (cavah.employee_id = :nextApproverId AND cavah.acs_status IN ('PENDING_APPROVAL','REVIEW','APPROVED'))
             )
             GROUP BY acs.id
             """;
