@@ -984,7 +984,7 @@ public class ItemServiceImpl implements ItemService {
         List<SyncItemDetail> items = this.fetchItemsBySubCat(token,subCatCode);
         List<ScmItemUpdateDto> dtos = new ArrayList<>();
         items.stream().forEach(i->{
-            ScmItemUpdateDto scmItemUpdateDto = new ScmItemUpdateDto();
+           ScmItemUpdateDto scmItemUpdateDto = new ScmItemUpdateDto();
            Item item = this.createItem(warehouseId,warehouseStoreId,i);
            scmItemUpdateDto.setItemIdCps(i.getId());
            scmItemUpdateDto.setItemIdScm(item.getId());
