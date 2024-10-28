@@ -45,6 +45,7 @@ public interface CsDetailRepository extends JpaRepository<CsDetail, Long> {
             LEFT JOIN indent_details idd ON csd.indent_detail_id = idd.id
             WHERE cst.cs_no IN (:csNo) AND cvd.vendor_id=:vendorId) csinfo ON csinfo.item_attribute=pqd.item_attribute 
             WHERE pqd.price_quotation_id = csinfo.price_quotation_id
+            GROUP BY pqd.brand_name, pqd.item_attribute ,csinfo.order_qty
               """, nativeQuery = true)
     List<CsVendorItemInfo> findAllItemsByVendor(String csNo, Long vendorId);
 
