@@ -33,6 +33,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -380,13 +382,17 @@ public class IrServiceImpl implements IrService {
             itemDetail.getWarehouses().values().stream().forEach(w->{
                 Map<String,Object> map = new HashMap<>();
                 map.put("safetyStock", itemDetail.getStockThresholdQty());
-                AtomicInteger stock = new AtomicInteger() ;
-                w.stream().forEach(wi->{
+//                AtomicBigInteger stock = new AtomicInteger() ;
+                BigDecimal bi = new BigDecimal(0L);
+                for(Map<String,Object> wi : w){
                     map.put("warehouseId",wi.get("warehouseId"));
                     map.put("warehouseName",wi.get("warehouseName"));
-                    stock.addAndGet((int)wi.get("stockQty"));
-                });
-                map.put("currentStock",  stock.get());
+                    BigDecimal stock = (BigDecimal) wi.get("stockQty");
+
+                    bi = bi.add(stock);
+//                    stock.addAndGet((int)wi.get("stockQty"));
+                };
+                map.put("currentStock",  bi);
                 wMaps.add(map);
             });
 
