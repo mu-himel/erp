@@ -2,7 +2,7 @@ package com.agi.aesl.erpscm.inventory.repository;
 
 public interface ItemQuery {
 
-    String getItemsWithSearch = "SELECT i.id as id, i.name as name, i.code as code, " +
+    String getItemsWithSearch = "SELECT i.id as id, i.name as name, i.code as code, i.item_unit as itemUnit," +
             "ic.id as subCategoryId, ic.name as subCategoryName, ic.code as subCategoryCode, " +
             "ipc.id as categoryId, ipc.name as categoryName, ipc.code as categoryCode," +
             "w.id as warehouseId, w.name as warehouseName, " +

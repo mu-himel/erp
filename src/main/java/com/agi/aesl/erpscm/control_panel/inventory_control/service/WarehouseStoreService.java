@@ -17,6 +17,7 @@ public interface WarehouseStoreService {
     Page<?> getStores(Long warehouseId, Optional<Integer> page, Optional<Integer> size);
 
     List<?> getStoresByWarehouse(Jwt token, Optional<Long> warehouseId);
+    List<WarehouseStore> getStoresByWarehouseId( Long warehouseId);
 
     Optional<?> getStore(Long warehouseStoreId);
     Optional<WarehouseStore> getStoreById(Long warehouseStoreId);

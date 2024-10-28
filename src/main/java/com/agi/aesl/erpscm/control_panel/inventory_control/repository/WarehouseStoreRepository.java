@@ -35,6 +35,7 @@ public interface WarehouseStoreRepository extends JpaRepository<WarehouseStore,L
                 WHERE ws.active =1 AND ( COALESCE(:warehouseId) IS NULL OR ws.warehouse_id IN (:warehouseId))
             """,nativeQuery = true)
     List<WarehouseStoreInfo> findAllByWarehouseId(List<Long> warehouseId);
+    List<WarehouseStore> findAllByWarehouseId(Long warehouseId);
 
 
     @Query(value = "SELECT ws FROM WarehouseStore ws WHERE ws.id=:id")

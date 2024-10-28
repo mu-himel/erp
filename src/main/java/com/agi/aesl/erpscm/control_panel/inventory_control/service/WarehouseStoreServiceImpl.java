@@ -91,6 +91,11 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
     }
 
     @Override
+    public List<WarehouseStore> getStoresByWarehouseId(Long warehouseId) {
+        return warehouseStoreRepository.findAllByWarehouseId(warehouseId);
+    }
+
+    @Override
     public Optional<?> getStore(Long warehouseStoreId) {
         return warehouseStoreRepository.findStoreById(warehouseStoreId);
     }
