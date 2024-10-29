@@ -35,14 +35,17 @@ public interface CsDetailRepository extends JpaRepository<CsDetail, Long> {
                            pqs.vat_percent as vatPercent,
                            pqs.vat_amount as vatAmount,
                            pqd.warranty_duration as warrantyDuration,
-                           pqd.warranty_unit as warrantyUnit
+                           pqd.warranty_unit as warrantyUnit,
+                           csinfo.warehouse_id as warehouseId,
+                           csinfo.cvdId as cvdId
                            FROM price_quotation_details pqd
                            LEFT JOIN price_quotation_summary pqs ON pqs.price_quotation_id = pqd.price_quotation_id
-                           LEFT JOIN (SELECT idd.item_attribute, cvd.price_quotation_id, cvd.transaction_type,cvd.discount_amount, cvd.order_qty ,
+                           LEFT JOIN (SELECT i.warehouse_id, cvd.id as cvdId, idd.item_attribute, cvd.price_quotation_id, cvd.transaction_type,cvd.discount_amount, cvd.order_qty ,
                             cst.cs_no ,cvd.vendor_id  FROM cs_details csd
             LEFT JOIN cs cst ON cst.id=csd.cs_id
             LEFT JOIN cs_vendor_details cvd ON cvd.cs_detail_id = csd.id
             LEFT JOIN indent_details idd ON csd.indent_detail_id = idd.id
+            LEFT JOIN indents i ON i.id = idd.indent_id
             WHERE cst.cs_no IN (:csNo) AND cvd.vendor_id=:vendorId) csinfo ON csinfo.item_attribute=pqd.item_attribute 
             WHERE pqd.price_quotation_id = csinfo.price_quotation_id
             GROUP BY pqd.brand_name, pqd.item_attribute ,csinfo.order_qty
@@ -75,6 +78,9 @@ public interface CsDetailRepository extends JpaRepository<CsDetail, Long> {
 
         String getWarrantyUnit();
         Integer getWarrantyDuration();
+
+        Long getWarehouseId();
+        Long getCvdId();
 
     }
 }

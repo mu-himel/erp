@@ -23,7 +23,7 @@ import java.util.List;
 @Repository
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Long>, PoQuery {
     @Query(value = getPendingPOs, countQuery = countPendingPOs, nativeQuery = true)
-    Page<PendingPOItemDetail> findAllPendingPOs(Pageable pageable);
+    Page<PendingPOItemDetail> findAllPendingPOs(String csNo,Pageable pageable);
 
     @Query(value = getPendingVerificationPOs, countQuery = countGetPendingVerificationPOs, nativeQuery = true)
     Page<PoListItem> findAllPendingVerificationPOs(String userId, Pageable pageable);

@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface PurchaseOrderService extends VerificationDomainService {
-    Page<?> getPendingPOs(Optional<Integer> page, Optional<Integer> size);
+    Page<?> getPendingPOs(Optional<String>csNo,Optional<Integer> page, Optional<Integer> size);
 
     Page<?> getPendingVerificationPOs(Jwt token, Optional<Integer> page, Optional<Integer> size);
 

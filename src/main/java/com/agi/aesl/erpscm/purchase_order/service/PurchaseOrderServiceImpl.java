@@ -365,9 +365,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
 
     @Override
-    public Page<?> getPendingPOs(Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getPendingPOs(Optional<String>csNo,Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return purchaseOrderRepository.findAllPendingPOs(pageable);
+        return purchaseOrderRepository.findAllPendingPOs(csNo.orElse(null),pageable);
     }
 
     @Override

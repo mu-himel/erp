@@ -138,8 +138,10 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         remoteLedgerAccountDto.setItemCode(item.getCode());
         remoteLedgerAccountDto.setBrandName(item.getName());
         remoteLedgerAccountDto.setAtrName(item.getItemAttributeName());
+        remoteLedgerAccountDto.setCategoryId(category.getId());
         remoteLedgerAccountDto.setCategory(category.getName());
         remoteLedgerAccountDto.setCategoryCode(category.getCode());
+        remoteLedgerAccountDto.setSubCategoryId(subCategory.getId());
         remoteLedgerAccountDto.setSubCategory(subCategory.getName());
         remoteLedgerAccountDto.setSubCategoryCode(subCategory.getCode());
 //        LedgerInitiatorDto ledgerInitiatorDto = new LedgerInitiatorDto();

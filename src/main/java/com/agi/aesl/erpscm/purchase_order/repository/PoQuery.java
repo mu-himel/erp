@@ -23,6 +23,7 @@ public interface PoQuery {
         LEFT JOIN scm_item_categories sc ON i.sub_category_id = sc.id
         WHERE cpo.purchase_order_status IN ('PENDING','PENDING_VERIFICATION','PENDING_APPROVAL','REVIEW')
         AND csheet.cs_status IN ('APPROVED','VERIFIED','COMPLETED')
+        AND (COALESCE(:csNo) IS NULL OR csheet.cs_no IN (:csNo))
         GROUP BY csheet.id
             """;
 

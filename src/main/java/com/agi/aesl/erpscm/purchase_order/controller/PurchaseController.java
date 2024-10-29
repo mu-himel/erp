@@ -34,11 +34,12 @@ public class PurchaseController extends BaseController {
 
     @GetMapping("/pending")
     public ResponseEntity<?> getPendingPurchaseOrders(
+            @RequestParam("csNo") Optional<String> csNo,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                purchaseOrderService.getPendingPOs(page,size),
+                purchaseOrderService.getPendingPOs(csNo,page,size),
                 HttpStatus.OK
         );
     }
