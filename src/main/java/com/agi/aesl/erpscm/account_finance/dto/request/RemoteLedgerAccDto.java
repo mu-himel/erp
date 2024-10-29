@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class RemoteLedgerAccDto {
-    private LedgerInitiatorDto initiatorDetailsDto;
+//    private LedgerInitiatorDto initiatorDetailsDto;
     private String atrName;
     private String brandName;
     private String itemCode;

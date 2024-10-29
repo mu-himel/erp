@@ -114,6 +114,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     @Override
     @Transactional
     public void createLedgerItem(Jwt token, LedgerAccount ledgerAccount) {
+        claimResolver.setToken(token);
         Optional<Employee> employeeOptional = claimResolver.getEmployee();
         if(employeeOptional.isEmpty()){
             throw new RuntimeException("Sorry! required employee profile");
@@ -125,7 +126,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         }
         Warehouse warehouse = warehouseOp.get();
 
-        HttpHeaders headers = networkService.setHttpHeadersForHr(token);
+        HttpHeaders headers = networkService.setHttpHeaders(token);
 
         Item item = ledgerAccount.getItem();
         ItemCategory category = item.getItemParentCategory();
@@ -141,15 +142,15 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         remoteLedgerAccountDto.setCategoryCode(category.getCode());
         remoteLedgerAccountDto.setSubCategory(subCategory.getName());
         remoteLedgerAccountDto.setSubCategoryCode(subCategory.getCode());
-        LedgerInitiatorDto ledgerInitiatorDto = new LedgerInitiatorDto();
-        ledgerInitiatorDto.setEmployeeId(employee.getEmployeeId());
-        ledgerInitiatorDto.setEmployeeName(employee.getEmployeeName());
-        ledgerInitiatorDto.setEmployeeDepartment(employee.getDepartmentName());
-        ledgerInitiatorDto.setEmployeeDesignation(employee.getDesignationName());
-        ledgerInitiatorDto.setReportingManager(employee.getReportingManager());
-        ledgerInitiatorDto.setEmployeeWarehouse(employee.getWarehouseName());
-        ledgerInitiatorDto.setWarehouseLocation(warehouse.getLocation());
-        remoteLedgerAccountDto.setInitiatorDetailsDto(ledgerInitiatorDto);
+//        LedgerInitiatorDto ledgerInitiatorDto = new LedgerInitiatorDto();
+//        ledgerInitiatorDto.setEmployeeId(employee.getEmployeeId());
+//        ledgerInitiatorDto.setEmployeeName(employee.getEmployeeName());
+//        ledgerInitiatorDto.setEmployeeDepartment(employee.getDepartmentName());
+//        ledgerInitiatorDto.setEmployeeDesignation(employee.getDesignationName());
+//        ledgerInitiatorDto.setReportingManager(employee.getReportingManager());
+//        ledgerInitiatorDto.setEmployeeWarehouse(employee.getWarehouseName());
+//        ledgerInitiatorDto.setWarehouseLocation(warehouse.getLocation());
+//        remoteLedgerAccountDto.setInitiatorDetailsDto(ledgerInitiatorDto);
 
 //        remoteLedgerAccountDto.setUom(item.getItemUnit());
 //        remoteLedgerAccountDto.setItemName(item.getItemAttributeName());
