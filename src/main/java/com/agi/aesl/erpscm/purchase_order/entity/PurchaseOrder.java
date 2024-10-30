@@ -50,6 +50,8 @@ public class PurchaseOrder {
     @Column(length = 500)
     private String invoicePath;
 
+    private String deliveryChargeType;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDate createdAt;

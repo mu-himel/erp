@@ -56,7 +56,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     private String purchaseReceivedEndpoint;
 
 
-    @Value("${service.hr}")
+    @Value("${service.acc}")
     private String clientId;
 
     @Autowired
@@ -134,7 +134,8 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         item.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
 
         RemoteLedgerAccDto remoteLedgerAccountDto = new RemoteLedgerAccDto();
-
+        remoteLedgerAccountDto.setWarehouseId(ledgerAccount.getWarehouse().getId());
+        remoteLedgerAccountDto.setItemId(item.getId());
         remoteLedgerAccountDto.setItemCode(item.getCode());
         remoteLedgerAccountDto.setBrandName(item.getName());
         remoteLedgerAccountDto.setAtrName(item.getItemAttributeName());

@@ -3,7 +3,7 @@ package com.agi.aesl.erpscm.purchase_order.repository;
 public interface PoQuery {
     String getPendingPOs= """
             SELECT 
-            csheet.id as id,
+            po.po_group_id as id,
             (select MAX(cvah.verification_date) 
                 FROM cs_verification_approval_histories cvah 
                 WHERE cvah.cs_id=csheet.id 
@@ -11,6 +11,8 @@ public interface PoQuery {
             ) as poDate,
             GROUP_CONCAT(DISTINCT po.id) as poIds,
             i.indent_no                      as indentNo,
+            po.po_no as poNo,
+            (SELECT vendor_name FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
             CONCAT(c.name,'-',sc.name)       as categoryName,
             COALESCE((select count(*) from cs_details cd where cd.cs_id = csheet.id),0)  as itemQty,
             COALESCE((select count(*) from purchase_orders po2 where po2.cs_id = csheet.id), 0) as totalOrderQty,

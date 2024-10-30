@@ -12,7 +12,7 @@ public class PurchaseRequestDto {
     private Long vendorId;
     private String vendorEmail;
     private String phoneNo;
-
+    private String deliveryChargeType;
     List<PoTermsCondition> termsConditions;
     List<PoDetailReqDto> details;
 }

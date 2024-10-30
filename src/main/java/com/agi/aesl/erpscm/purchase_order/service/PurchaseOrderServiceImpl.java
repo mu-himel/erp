@@ -199,6 +199,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             po.setCs(cs);
             po.setPoDate(poGroup.getPoDate().toLocalDate());
             po.setVendorId(purchaseRequestDto.getVendorId());
+            po.setDeliveryChargeType(purchaseRequestDto.getDeliveryChargeType());
             po.setPoNo(generatePoNo(cs,1));
             po.setPoGroup(poGroup);
             po.setTermsConditions(purchaseRequestDto.getTermsConditions().stream().map(tnc->{
@@ -404,7 +405,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     public Map<String, Object> getPurchaseOrderDetail(Long csId) {
         // Need to update here cause now po verifing based on collection of po
         // first find poGroup from csId
-        Optional<PoGroup> poGroupOp = poGroupRepository.findByCsId(csId);
+        Optional<PoGroup> poGroupOp = poGroupRepository.findById(csId);
         Map<String,Object> map = new HashMap<>();
         if(poGroupOp.isPresent()){
             PoGroup poGroup = poGroupOp.get();

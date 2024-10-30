@@ -112,4 +112,6 @@ public interface ItemService {
 
     List<?> getTemplateData(Long categoryId, Long subCategoryId,
                             Long warehouseId, Long warehouseStoreId);
+
+    void approveItemFromAcc(Long id, Long warehouseId);
 }

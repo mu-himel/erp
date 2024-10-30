@@ -1291,4 +1291,14 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.fetchTemplateData(categoryId,subCategoryId,
                 warehouseId,warehouseStoreId);
     }
+
+    @Override
+    @Transactional
+    public void approveItemFromAcc(Long id, Long warehouseId) {
+        Optional<ItemImportLog> itemImportLogOp = itemImportLogRepository.findByItemIdAndWarehouseId(id,warehouseId);
+        if(itemImportLogOp.isPresent()){
+            ItemImportLog itemImportLog = itemImportLogOp.get();
+            itemImportLog.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+        }
+    }
 }

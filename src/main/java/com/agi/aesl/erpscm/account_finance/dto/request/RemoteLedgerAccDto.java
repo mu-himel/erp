@@ -9,7 +9,9 @@ public class RemoteLedgerAccDto {
     private String brandName;
     private String itemCode;
     private String categoryCode;
+    private Long itemId;
     private Long categoryId;
+    private Long warehouseId;
     private String category;
     private Long subCategoryId;
     private String subCategory;
