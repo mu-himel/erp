@@ -15,7 +15,9 @@ public interface IrStoreService extends VerificationDomainService {
 
     Optional<?> getStoreIRDetail(Long id);
 
-    Page<?> getPendingStoreIrs(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getPendingStoreIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                               Optional<String> fromDate, Optional<String> toDate
+                               );
 
     void transferStock(TransferStockDto transferStockDto);
 

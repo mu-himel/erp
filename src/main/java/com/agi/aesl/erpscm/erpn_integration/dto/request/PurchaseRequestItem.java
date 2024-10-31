@@ -6,6 +6,8 @@ import java.math.BigDecimal;
 
 @Data
 public class PurchaseRequestItem {
+    // deliveryCharge
+    //vatAmount
     private String itemCode;
     private BigDecimal acceptedQty;
     private BigDecimal rate;

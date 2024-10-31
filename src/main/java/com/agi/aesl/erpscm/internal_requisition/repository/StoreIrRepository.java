@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public interface StoreIrRepository extends JpaRepository<StoreIR,Long> {
     String pendingIr = """
         SELECT sirs.id as id,
+        ir.delivery_date as deliveryDate,
         ir.internal_requisition_no as internalRequisitionNo,
         CONCAT(e.employee_id, '-' , e.employee_name) as employeeName,
         c.name as categoryName,
@@ -29,7 +30,9 @@ public interface StoreIrRepository extends JpaRepository<StoreIR,Long> {
     LEFT JOIN internal_requisition_warehouses irw ON irw.internal_requisition_detail_id = ird.id
     LEFT JOIN scm_item_categories c ON c.id = ir.category_id
     WHERE ir.ir_status IN ('VERIFIED','APPROVED') AND ir.is_processed=1
-    AND irw.to_warehouse_id = :warehouseId AND sirs.ir_status IN ('PENDING','REVIEW','PENDING_VERIFICATION','PENDING_APPROVAL')
+    AND irw.to_warehouse_id = :warehouseId 
+    AND sirs.ir_status IN ('PENDING','REVIEW','PENDING_VERIFICATION','PENDING_APPROVAL')
+    AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate)) 
     GROUP BY ir.id
             """;
 
@@ -131,7 +134,7 @@ WHERE ird2.ir_id = ir.id) p) as status,
     String countReadyForTransfer = "SELECT count(*) FROM ("+readyForTransfer+")";
     String countReceiveReq = "SELECT count(*) FROM ("+receiveReq+")";
     @Query(value = pendingIr, countQuery = countPendingIr, nativeQuery = true)
-    Page<PendingStoreIR> findAllPendingIrs(Long warehouseId, Pageable pageable);
+    Page<PendingStoreIR> findAllPendingIrs(Long warehouseId,LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
     @Query(value = readyForTransfer, countQuery = countReadyForTransfer, nativeQuery = true)
     Page<PendingStoreIR> findAllReadyForTransfer(Long warehouseId, Pageable pageable);
@@ -147,6 +150,9 @@ WHERE ird2.ir_id = ir.id) p) as status,
 
     interface PendingStoreIR{
         Long getId();
+
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDateTime getDeliveryDate();
         String getInternalRequisitionNo();
         String getEmployeeName();
         String getCategoryName();

@@ -122,8 +122,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         purchaseOrderRepository.saveAll(purchaseOrders);
     }
 
-    private String generatePoNo(Cs cs,Integer i){
-        return cs.getCsNo()+"-"+ ((i<10)? "0"+i.toString() : i.toString());
+    private String generatePoNo(Cs cs){
+        Long count = purchaseOrderRepository.countAllByCsId(cs.getId());
+        count = ++count;
+        return cs.getCsNo()+"-"+ ((count<10)? "0"+count.toString() : count.toString());
     }
     @Override
     @Transactional
@@ -169,7 +171,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
                     pendingItemRequestDto.setBrand(csDetail.getBrandName());
 
-
                     List<PendingItemAttributeDto> attributes = extractAttributesFromItemAttributeName(subCat,csDetail.getItemAttributeName());
                     List<PendingItemAttributeDto> attributesFromItemAttributeName = extractAttributesFromItemAttributeName(subCat,csDetail.getExtendedAttributes());
                     attributes.addAll(attributesFromItemAttributeName);
@@ -191,8 +192,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             poGroup.setVendorName(purchaseRequestDto.getVendorName());
             poGroup.setVendorEmail(purchaseRequestDto.getVendorEmail());
             poGroup.setPoDate(LocalDateTime.now());
-            poGroup.setPurchaseOrderStatus(PurchaseOrderStatus.PENDING);
-
             poGroupRepository.save(poGroup);
 
             PurchaseOrder po = new PurchaseOrder();
@@ -200,8 +199,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             po.setPoDate(poGroup.getPoDate().toLocalDate());
             po.setVendorId(purchaseRequestDto.getVendorId());
             po.setDeliveryChargeType(purchaseRequestDto.getDeliveryChargeType());
-            po.setPoNo(generatePoNo(cs,1));
+            po.setPoNo(generatePoNo(cs));
             po.setPoGroup(poGroup);
+            po.setRequestedBy(employee);
             po.setTermsConditions(purchaseRequestDto.getTermsConditions().stream().map(tnc->{
                 tnc.setPurchaseOrder(po);
                 return tnc;
@@ -308,9 +308,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
         AppliedVADto vaResult = verificationService.applyVerifyApprovalProcess(poGroup, DomainType.PO, PurchaseOrderStatus.APPROVED.toString(),
                 uri, "CATEGORY", ids, null);
-//        if(vaResult.getVerifiers().isEmpty() && vaResult.getPanels().isEmpty()){
-//
-//        }
+        if(vaResult.getVerifiers().isEmpty() && vaResult.getPanels().isEmpty()){
+            poGroup.setStatus(PurchaseOrderStatus.COMPLETED.toString());
+        }
     }
 
     @Async
@@ -433,7 +433,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
             Cs cs = poGroup.getCs();
             Indent indent = cs.getIndent();
-            map.put("nextVerifierId", poGroup.getNextApproverId());
+            map.put("nextVerifierId", poGroup.getNextVerifierId());
             map.put("nextApproverId", poGroup.getNextApproverId());
             map.put("reviewerId", poGroup.getReviewerId());
             map.put("declineNote", poGroup.getDeclineNote());
@@ -443,6 +443,24 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             map.put("csId",cs.getId());
             map.put("poGroupId",poGroup.getId());
             map.put("indentId",indent.getId());
+
+            List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
+            List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
+            List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
+                    .getVerificationsByDomainTypeAndDomainId(DomainType.PO, poGroup.getId());
+            vrs.stream().forEach(verifier->{
+                if(verifier.getIsApproval()==false){
+                    verifiers.add(verifier);
+                }else{
+                    approvers.add(verifier);
+                }
+            });
+
+            List<?> comments = commentService.getCommentsByDomain(DomainType.PO, poGroup.getId());
+
+            map.put("verifiers",verifiers);
+            map.put("approvers",approvers);
+            map.put("comments",comments);
 
 
 
@@ -461,10 +479,27 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(new BigDecimal(0));
                 for (PurchaseOrderRepository.PqDetailInfo pqDetail : pqDetailInfo){
 
-
+                    Map<String,Object> detailMap = new HashMap<>();
+                    detailMap.put("poId",pqDetail.getPoId());
+                    detailMap.put("vendorPartialVatAmount", pqDetail.getVendorPartialVatAmount());
+                    detailMap.put("itemAttribute", pqDetail.getItemName());
+                    detailMap.put("unitPrice", pqDetail.getUnitPrice());
+                    detailMap.put("deliveryCharge", pqDetail.getDeliveryCharge());
+                    detailMap.put("deliveryQty", pqDetail.getDeliveryQty());
+                    detailMap.put("transactionType", pqDetail.getTransactionType());
+                    detailMap.put("totalPrice",  pqDetail.getTotalPrice());
+                    detailMap.put("vatAmount",  pqDetail.getVatAmount());
+                    detailMap.put("subTotal",  pqDetail.getSubTotal());
+                    detailMap.put("orderQty",   pqDetail.getOrderQty());
+                    detailMap.put("deliveryOrderQty",pqDetail.getDeliveryOrderQty());
+                    detailMap.put("deliveryDate",pqDetail.getDeliveryDate());
+                    detailMap.put("priceQuotationId",pqDetail.getPriceQuotationId());
+                    detailMap.put("warehouseId", pqDetail.getWarehouseId());
+                    detailMap.put("isAitAdded",pqDetail.getIsAitAdded());
+                    detailMap.put("isVatAdded" , pqDetail.getIsVatAdded());
                     totalPrice.set(pqDetail.getTotalPrice());
                     vendorPartialVatAmount.set(pqDetail.getVendorPartialVatAmount());
-                    Map<String,Object> detailMap = new HashMap<>();
+
                     String[] summary = pqDetail.getSummary().split(",");
 
                     termsAndConditions = pqTermAndConditionRepository.findAllByVendorIdAndPriceQuotationId(Long.parseLong(summary[1]),Long.parseLong(summary[16]));
@@ -488,34 +523,32 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     poItem.put("vendorName",summary[0]);
                     poItem.put("vendorId",summary[1]);
                     poItem.put("creditDays",summary[2]);
-
-                    poItem.put("unitPrice",summary[3]);
                     poItem.put("estDeliveryDays",summary[4]);
-                    poItem.put("deliveryCharge",summary[6].equals("1")? DeliveryCharge.INCLUDED.toString():
+                    poItem.put("deliveryChargeType",summary[6].equals("1")? DeliveryCharge.INCLUDED.toString():
                             DeliveryCharge.EXCLUDED.toString());
-                    poItem.put("deliveryChargeAmount",summary[7]);
-                    poItem.put("vatPercent",summary[8]);
-                    poItem.put("vatAmount",summary[9]);
-                    poItem.put("itemName",summary[10]);
-                    poItem.put("brandName",summary[11]);
-                    poItem.put("extendedAttribute",summary[12]);
-                    poItem.put("isItemExist",itemOp.isPresent());
-                    poItem.put("warrantyDuration",summary[13]);
-                    poItem.put("warrantyUnit",summary[14]);
+                    detailMap.put("vatPercent",summary[8]);
+                    detailMap.put("itemName",summary[10]);
+                    detailMap.put("brandName",summary[11]);
+                    detailMap.put("extendedAttribute",summary[12]);
+                    detailMap.put("isItemExist",itemOp.isPresent());
+                    detailMap.put("warrantyDuration",summary[13]);
+                    detailMap.put("warrantyUnit",summary[14]);
                     poItem.put("vendorType",summary[15]);
                     poItem.put("pqId",summary[16]);
+                    poItem.put("vendorEmail" , summary[17]);
+                    poItem.put("vendorPhoneNo" , summary[18]);
                     poDetailList.add(detailMap);
                 }
                 // poItem.put("vendor",po.get)
                 map.put("requestedBy",po.getRequestedBy());
-//                poItem.put("details",poDetailList);
+                poItem.put("details",poDetailList);
                 poItem.put("termsAndConditions", termsAndConditions);
                 poItem.put("totalPrice",totalPrice.get());
                 poItem.put("vendorPartialVatAmount",vendorPartialVatAmount);
                 return poItem;
             }).collect(Collectors.toList());
 
-            map.put("purchaseOrders",polist);
+            map.put("purchaseOrder",polist.stream().findFirst());
         }
         return map;
     }

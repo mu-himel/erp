@@ -137,6 +137,7 @@ public class IrStoreServiceImpl implements IrStoreService{
             detailMap.put("internalRequisitionNo",irDetail.getInternalRequisitionNo());
             detailMap.put("category",irDetail.getCategory());
             detailMap.put("details",irDetail.getDetails());
+            detailMap.put("deliveryDate",irDetail.getDeliveryDate());
             detailMap.put("requestedBy",storeIR.getRequestedBy());
             detailMap.put("warehouse",irDetail.getWarehouse());
 
@@ -162,10 +163,24 @@ public class IrStoreServiceImpl implements IrStoreService{
     }
 
     @Override
-    public Page<?> getPendingStoreIrs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getPendingStoreIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                      Optional<String> fromDateStr, Optional<String> toDateStr) {
         claimResolver.setToken(token);
+        Optional<Employee> empOp = claimResolver.getEmployee();
+        if(empOp.isEmpty()){
+            throw new RuntimeException("Sorry! Employee Profile required");
+        }
+        Employee employee = empOp.get();
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return storeIrRepository.findAllPendingIrs(claimResolver.getEmployee().get().getWarehouseId(),pageable);
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate = null;
+        if(fromDateStr.isPresent()){
+            fromDate = LocalDateTime.parse(fromDateStr.get()+"T00:00:00");
+        }
+        if(toDateStr.isPresent()){
+            toDate = LocalDateTime.parse(toDateStr.get()+"T23:59:59");
+        }
+        return storeIrRepository.findAllPendingIrs(employee.getWarehouseId(),fromDate, toDate,pageable);
     }
 
     @Override
