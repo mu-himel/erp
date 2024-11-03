@@ -18,4 +18,11 @@ public interface PqTermAndConditionRepository extends JpaRepository<PqTermsAndCo
     List<PqTermsAndCondition> findAllByRfqIdAndVendorId(@Param("rfqId")Long tenderId, @Param("vendorId") Long vendorId);
 
     List<PqTermsAndCondition> findAllByVendorIdAndPriceQuotationId(Long vendorId, Long priceQuotationId);
+
+    @Query(value = """
+            SELECT pqts FROM PqTermsAndCondition pqts
+            LEFT JOIN pqts.priceQuotation pq
+            WHERE pqts.vendorId=:vendorId AND pq.id IN (:ids)
+            """)
+    List<PqTermsAndCondition> findAllByVendorIdAndPriceQuotationId(Long vendorId, List<Long> ids);
 }

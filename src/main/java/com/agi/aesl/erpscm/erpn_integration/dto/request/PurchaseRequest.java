@@ -6,6 +6,8 @@ import java.util.List;
 
 @Data
 public class PurchaseRequest {
+    // srn no
+    // vendorId
     private String supplierName;
     private String costCenter;
     List<PurchaseRequestItem> items;

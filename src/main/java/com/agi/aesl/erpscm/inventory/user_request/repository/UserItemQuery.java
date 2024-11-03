@@ -81,7 +81,7 @@ public interface UserItemQuery {
              ui.item_attribute_name as productName,
              ui.item_status as status
              FROM user_items ui
-             LEFT scm_warehouse_stores sws ON sws.id = ui.store_id
+             LEFT JOIN scm_warehouse_stores sws ON sws.id = ui.warehouse_store_id
              LEFT JOIN user_categories subCat ON ui.sub_category_id = subCat.id
              LEFT JOIN user_categories cat ON ui.category_id = cat.id
              LEFT JOIN acl_users e ON ui.created_by_id = e.id

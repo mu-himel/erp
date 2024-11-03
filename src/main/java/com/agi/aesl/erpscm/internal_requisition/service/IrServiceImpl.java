@@ -33,6 +33,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -69,6 +71,7 @@ public class IrServiceImpl implements IrService {
         claimResolver.setToken(token);
         List<String> cateIds = new ArrayList<>();
         InternalRequisition ir = new InternalRequisition();
+        ir.setDeliveryDate(createDto.getDeliveryDate());
         ir.setInternalRequisitionNo(createDto.getIrNo());
         ir.setPriority(createDto.getPriority());
         ir.setCategory(new ItemCategory(createDto.getCategoryId()));
@@ -144,9 +147,18 @@ public class IrServiceImpl implements IrService {
     }
 
     @Override
-    public Page<?> getAllInternalRequisitions(Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getAllInternalRequisitions(Optional<Integer> page, Optional<Integer> size,
+                                              Optional<String> fromDateStr, Optional<String> toDateStr) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return irRepository.findAllIr(pageable);
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate = null;
+        if(fromDateStr.isPresent()){
+            fromDate = LocalDateTime.parse(fromDateStr.get()+"T00:00:00");
+        }
+        if(toDateStr.isPresent()){
+            toDate = LocalDateTime.parse(toDateStr.get()+"T23:59:59");
+        }
+        return irRepository.findAllIr(fromDate,toDate,pageable);
     }
 
     @Override
@@ -161,36 +173,84 @@ public class IrServiceImpl implements IrService {
     }
 
     @Override
-    public Page<?> getAllClosedIr(Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getAllClosedIr(Optional<Integer> page, Optional<Integer> size,
+                                  Optional<String> fromDateOp, Optional<String> toDateOp) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return irRepository.findAllClosedIr(pageable);
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate = null;
+        if(fromDateOp.isPresent()){
+            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
+        }
+        if(toDateOp.isPresent()){
+            toDate = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+        }
+        return irRepository.findAllClosedIr(fromDate,toDate,pageable);
     }
 
     @Override
-    public Page<?> getAllPendingVerificationIrs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getAllPendingVerificationIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                Optional<String> fromDateOp, Optional<String> toDateOp) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return irRepository.findAllPendingVerificationIr(claimResolver.getEmployee().get().getId(),pageable);
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate = null;
+        if(fromDateOp.isPresent()){
+            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
+        }
+        if(toDateOp.isPresent()){
+            toDate = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+        }
+        return irRepository.findAllPendingVerificationIr(claimResolver.getEmployee().get().getId(),
+                fromDate,toDate,
+                pageable);
     }
 
     @Override
-    public Page<?> getAllPendingApprovalIrs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getAllPendingApprovalIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                            Optional<String> fromDateOp, Optional<String> toDateOp) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE));
-        return irRepository.findAllPendingApprovalIr(claimResolver.getEmployee().get().getId(),pageable);
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate = null;
+        if(fromDateOp.isPresent()){
+            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
+        }
+        if(toDateOp.isPresent()){
+            toDate = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+        }
+        return irRepository.findAllPendingApprovalIr(claimResolver.getEmployee().get().getId(),
+                fromDate,toDate,pageable);
     }
 
     @Override
-    public Page<?> getAllVerifiedOrApprovedIrs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getAllVerifiedOrApprovedIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                               Optional<String> fromDateOp, Optional<String> toDateOp) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE));
-        return irRepository.findAllVerifiedOrApprovedIr(pageable);
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate = null;
+        if(fromDateOp.isPresent()){
+            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
+        }
+        if(toDateOp.isPresent()){
+            toDate = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+        }
+        return irRepository.findAllVerifiedOrApprovedIr(fromDate, toDate, pageable);
     }
 
     @Override
-    public Page<?> getAllProcessedIrs(Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getAllProcessedIrs(Optional<Integer> page, Optional<Integer> size,
+                                      Optional<String> fromDateOp, Optional<String> toDateOp) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return irRepository.findAllProcessedIr(pageable);
+        LocalDateTime fromDate = null;
+        LocalDateTime toDate = null;
+        if(fromDateOp.isPresent()){
+            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
+        }
+        if(toDateOp.isPresent()){
+            toDate = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+        }
+        return irRepository.findAllProcessedIr(fromDate, toDate,pageable);
     }
 
     @Override
@@ -201,11 +261,14 @@ public class IrServiceImpl implements IrService {
             InternalRequisitionRepository.IrDetail irDetail =    (InternalRequisitionRepository.IrDetail) irOp.get();
             detailMap.put("priority",irDetail.getPriority());
             detailMap.put("id",irDetail.getId());
+            detailMap.put("deliveryDate",irDetail.getDeliveryDate());
             detailMap.put("internalRequisitionNo",irDetail.getInternalRequisitionNo());
             detailMap.put("category",irDetail.getCategory());
             detailMap.put("details",irDetail.getDetails());
             detailMap.put("requestedBy",irDetail.getRequestedBy());
             detailMap.put("warehouse",irDetail.getWarehouse());
+            detailMap.put("deliveryDate",irDetail.getDeliveryDate());
+
 
             List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
             List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
@@ -319,13 +382,17 @@ public class IrServiceImpl implements IrService {
             itemDetail.getWarehouses().values().stream().forEach(w->{
                 Map<String,Object> map = new HashMap<>();
                 map.put("safetyStock", itemDetail.getStockThresholdQty());
-                AtomicInteger stock = new AtomicInteger() ;
-                w.stream().forEach(wi->{
+//                AtomicBigInteger stock = new AtomicInteger() ;
+                BigDecimal bi = new BigDecimal(0L);
+                for(Map<String,Object> wi : w){
                     map.put("warehouseId",wi.get("warehouseId"));
                     map.put("warehouseName",wi.get("warehouseName"));
-                    stock.addAndGet((int)wi.get("stockQty"));
-                });
-                map.put("currentStock",  stock.get());
+                    BigDecimal stock = (BigDecimal) wi.get("stockQty");
+
+                    bi = bi.add(stock);
+//                    stock.addAndGet((int)wi.get("stockQty"));
+                };
+                map.put("currentStock",  bi);
                 wMaps.add(map);
             });
 

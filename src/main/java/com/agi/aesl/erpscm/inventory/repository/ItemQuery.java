@@ -2,7 +2,7 @@ package com.agi.aesl.erpscm.inventory.repository;
 
 public interface ItemQuery {
 
-    String getItemsWithSearch = "SELECT i.id as id, i.name as name, i.code as code, " +
+    String getItemsWithSearch = "SELECT i.id as id, i.name as name, i.code as code, i.item_unit as itemUnit," +
             "ic.id as subCategoryId, ic.name as subCategoryName, ic.code as subCategoryCode, " +
             "ipc.id as categoryId, ipc.name as categoryName, ipc.code as categoryCode," +
             "w.id as warehouseId, w.name as warehouseName, " +
@@ -65,31 +65,31 @@ public interface ItemQuery {
     String countAllPendingItems = "SELECT COUNT(*) FROM ("+getPendingItemsWithSearch+") as total";
 
 
-    String getPendingVerificationItemsWithSearch = "SELECT i.id as id, i.name as name, i.code as code, " +
-            "ic.id as subCategoryId, ic.name as subCategoryName, ic.code as subCategoryCode, " +
-            "ipc.id as categoryId, ipc.name as categoryName, ipc.code as categoryCode," +
-//            "w.id as warehouseId, w.name as warehouseName, " +
-//            "ws.id as warehouseStoreId, ws.store_name as warehouseStoreName, " +
-            "0 as qty," +
-            " i.stock_threshold_qty as stockThresholdQty," +
-            " i.reorder_percentage as reorderPercentage " +
-            "FROM scm_items i " +
-            "LEFT JOIN scm_item_import_logs siil ON siil.item_id = i.id AND siil.item_inactive_status = 'PENDING_VERIFICATION'"+
-            "LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id " +
-            "LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id " +
-            "LEFT JOIN scm_item_stocks s ON s.item_id = i.id " +
-            " WHERE i.active=0 " +
-            "AND s.warehouse_id IN (:warehouseId) "+
-            "AND s.warehouse_store_id = :warehouseStoreId "+
-//            "   AND i.item_inactive_status IN ('PENDING_VERIFICATION') " +
-            "   AND (:name IS NULL OR i.name LIKE concat(:name,'%')) " +
-            "   AND (:code IS NULL OR i.code LIKE concat(:code,'%')) " +
-            "   AND ((:subCategoryId IS NULL OR ic.id = :subCategoryId) " +
-            "           OR (COALESCE(:categoryId) IS NULL OR ic.id IN (:categoryId)))" +
-            "   AND (COALESCE(:categoryId) IS NULL OR ipc.id IN (:categoryId)) " +
-            "   AND (:reorderPercentage IS NULL OR i.reorder_percentage = :reorderPercentage) " +
-            "   AND (:stockThresholdQty IS NULL OR i.stock_threshold_qty = :stockThresholdQty) " +
-            "GROUP BY i.id";
+    String getPendingVerificationItemsWithSearch = """
+                        SELECT i.id as id, i.name as name, i.code as code,
+                        ic.id as subCategoryId, ic.name as subCategoryName, ic.code as subCategoryCode,
+                        ipc.id as categoryId, ipc.name as categoryName, ipc.code as categoryCode,
+                        0 as qty,
+                         i.stock_threshold_qty as stockThresholdQty,
+                         i.reorder_percentage as reorderPercentage,
+                         (SELECT MAX(la.account_status)
+                                             FROM ledger_accounts la WHERE la.item_id = i.id ) as status
+                        FROM scm_items i 
+                        LEFT JOIN scm_item_import_logs siil ON siil.item_id = i.id AND siil.item_inactive_status = 'PENDING_VERIFICATION'
+                        LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id 
+                        LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id 
+                        LEFT JOIN scm_item_stocks s ON s.item_id = i.id 
+                         WHERE i.active=0 
+                        AND s.warehouse_id IN (:warehouseId) 
+                        AND s.warehouse_store_id = :warehouseStoreId 
+                           AND (:name IS NULL OR i.name LIKE concat(:name,'%')) 
+                           AND (:code IS NULL OR i.code LIKE concat(:code,'%')) 
+                           AND ((:subCategoryId IS NULL OR ic.id = :subCategoryId) 
+                                   OR (COALESCE(:categoryId) IS NULL OR ic.id IN (:categoryId)))
+                           AND (COALESCE(:categoryId) IS NULL OR ipc.id IN (:categoryId)) 
+                           AND (:reorderPercentage IS NULL OR i.reorder_percentage = :reorderPercentage) 
+                           AND (:stockThresholdQty IS NULL OR i.stock_threshold_qty = :stockThresholdQty) 
+                        GROUP BY i.id""";
 
     String countAllPendingVerificationItems = "SELECT COUNT(*) FROM ("+getPendingVerificationItemsWithSearch+") as total";
 

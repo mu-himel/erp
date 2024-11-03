@@ -44,12 +44,14 @@ import com.agi.aesl.erpscm.purchase_order.service.PurchaseOrderService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -125,6 +127,9 @@ public class CsServiceImpl implements CsService{
     @Autowired
     private PurchaseOrderService purchaseOrderService;
 
+    @Autowired
+    private CsAccountService csAccountService;
+
 
     @Override
     public Page<?> getAllPendingCs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
@@ -154,7 +159,7 @@ public class CsServiceImpl implements CsService{
         cs.setDeliveryCharge(csRequestDto.getDeliveryCharge());
         cs.setSubTotalPrice(csRequestDto.getSubTotalPrice());
         cs.setVatAmount(csRequestDto.getVatAmount());
-
+        cs.setValidityDate(csRequestDto.getValidityDate());
         Optional<Employee> empOp = claimResolver.getEmployee();
         if(empOp.isEmpty()){
             throw new RuntimeException("Sorry! requested by information missing");
@@ -203,8 +208,14 @@ public class CsServiceImpl implements CsService{
 
         csRepository.save(cs);
 
-        verificationService.applyVerifyApprovalProcess(cs, DomainType.CS, CsStatus.COMPLETED.toString(),
-                uri,"CATEGORY",ids, null);
+        AppliedVADto verifyApproval = verificationService.applyVerifyApprovalProcess(cs, DomainType.CS, CsStatus.COMPLETED.toString(),
+                uri, "CATEGORY", ids, null);
+
+
+        if(verifyApproval.getVerifiers().isEmpty() && verifyApproval.getPanels().isEmpty()){
+            cs.setCsStatus(CsStatus.COMPLETED);
+            csAccountService.createCsAccount(cs);
+        }
 
 //        @SuppressWarnings("unchecked")
 //        Optional<Map<String, Object>> verifierOp = (Optional<Map<String, Object>>) verificationService.getVerifiers(loggedInUser, uri, categories.toString());
@@ -250,6 +261,7 @@ public class CsServiceImpl implements CsService{
                     wMap.put("vendorId",w.getVendorId());
                     wMap.put("id",w.getId());
                     wMap.put("totalPrice",w.getTotalPrice());
+                    wMap.put("orderQty",w.getOrderQty());
                     wMap.put("priceQuotationId",w.getPriceQuotation().getId());
                     wMap.put("pds",w.getVendorDeliveryDetails().stream().map(pd->{
                         Map<String,Object> pdMap = new HashMap<>();
@@ -284,7 +296,9 @@ public class CsServiceImpl implements CsService{
 
             Map<String,Object> resultMap = new HashMap<>();
             resultMap.put("details",result);
+            resultMap.put("validityDate",cs.getValidityDate());
             resultMap.put("declineNote",cs.getDeclineNote());
+            resultMap.put("requestedBy",cs.getRequestedBy());
             resultMap.put("requestedBy",cs.getRequestedBy());
             resultMap.put("verifiers",verifiers);
             resultMap.put("approvers",approvers);
@@ -360,11 +374,11 @@ public class CsServiceImpl implements CsService{
 
         csRepository.save(cs);
 
-        verificationService.removeVerification(cs.getId(), DomainType.CS);
-        csVaHistoryRepository.deleteAllByCsId(cs.getId());
+//        verificationService.removeVerification(cs.getId(), DomainType.CS);
+//        csVaHistoryRepository.deleteAllByCsId(cs.getId());
 
-        verificationService.applyVerifyApprovalProcess(cs, DomainType.CS, CsStatus.COMPLETED.toString(),
-                uri,"CATEGORY",ids, null);
+//        verificationService.applyVerifyApprovalProcess(cs, DomainType.CS, CsStatus.COMPLETED.toString(),
+//                uri,"CATEGORY",ids, null);
 
 //        @SuppressWarnings("unchecked")
 //        Optional<Map<String, Object>> verifierOp = (Optional<Map<String, Object>>) verificationService.getVerifiers(loggedInUser, uri, categories.toString());
@@ -396,6 +410,19 @@ public class CsServiceImpl implements CsService{
 //
 //        verificationService.setVerifiers(cs, verifiers, DomainType.CS);
 //        verificationService.setApprovers(cs, approvalPanels, DomainType.CS);
+    }
+
+    @Override
+    public Optional<?> getAllItemsByVendorAndCs(Long vendorId, String csNo) {
+        List<CsDetailRepository.CsVendorItemInfo> allItemsByVendor = csDetailRepository.findAllItemsByVendor(csNo, vendorId);
+        record CsVendorItemsResult(Object result,List<?> termsConditions){}
+        List<Long> ids = new ArrayList<>();
+        allItemsByVendor.stream().forEach(i->{
+            ids.add(i.getPqId());
+        });
+        List<PqTermsAndCondition> allByVendorIdAndPriceQuotationId = pqTermAndConditionRepository.findAllByVendorIdAndPriceQuotationId(vendorId, ids);
+        var result = new CsVendorItemsResult(allItemsByVendor,allByVendorIdAndPriceQuotationId);
+        return Optional.of(result);
     }
 
     @Override
@@ -576,14 +603,15 @@ public class CsServiceImpl implements CsService{
             throw new RuntimeException("Sorry! Cs not found");
         }
         Cs cs = csOp.get();
-        cs.setCsStatus(CsStatus.REJECTED);
-        cs.getIndent().getIndentDetails().stream().forEach(ide->{
-            productRequirementService.reOpen(ide.getProductRequirementsIds());
+        cs.setCsStatus(CsStatus.PENDING_VERIFICATION);
+        cs.setReviewPrevStatus(null);
+        cs.setReviewerId(null);
+        csVaHistoryRepository.removeByCsId(cs.getId());
+        List<UserApplicationValidation> verifiers = verificationService.getVerifyersByDomainId(DomainType.CS,cs.getId());
+        verifiers.stream().forEach(verifer->{
+            verifer.setVerificationDate(null);
+            verifer.setVerified(false);
         });
-        commentService.addComment(
-                commentService.prepareComment(claimResolver.getEmployee().get(),
-                        DomainType.CS,cs.getId(),"Rejected & Resent To PR",new ArrayList<>())
-        );
     }
 
     @Override
@@ -599,6 +627,7 @@ public class CsServiceImpl implements CsService{
     }
 
     @Override
+    @Transactional
     public void onApprove(Long id, UserApplicationValidation verification, UserApplicationValidationRepository.VerificationResponse nextApprover) {
         Optional<Cs> csOp  = csRepository.findById(id);
         if(csOp.isPresent()){
@@ -624,7 +653,8 @@ public class CsServiceImpl implements CsService{
 
                 cs.setCsStatus(CsStatus.VERIFIED);
                 setVAHistory(cs,CsStatus.VERIFIED);
-                generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
+                csAccountService.createCsAccount(cs);
+//                generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
             }
 
         }
@@ -639,7 +669,8 @@ public class CsServiceImpl implements CsService{
             cs.setCsStatus(CsStatus.APPROVED);
             setVAHistory(cs,CsStatus.APPROVED);
 
-            generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
+            csAccountService.createCsAccount(cs);
+//            generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
         }
     }
 

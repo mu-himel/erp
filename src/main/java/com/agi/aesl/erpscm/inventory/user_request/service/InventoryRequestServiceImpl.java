@@ -382,6 +382,8 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
             itemRequestDto.setItemCategory(item.getSubCategory());
             itemRequestDto.setItemParentCategory(item.getCategory());
             itemRequestDto.setItemUnit(item.getItemUnit());
+            itemRequestDto.setWarehouse(new ReferenceObjectDto(item.getWarehouse().getId()));
+            itemRequestDto.setWarehouseStore(new ReferenceObjectDto(item.getWarehouseStore().getId()));
             if(item.getAttributes()!=null && !item.getAttributes().isEmpty()) {
                 itemRequestDto.setAttributes(item.getAttributes().stream().map(_attr -> {
                     ItemAttribute attr = new ItemAttribute();

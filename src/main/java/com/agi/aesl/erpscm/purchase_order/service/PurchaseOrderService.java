@@ -1,7 +1,11 @@
 package com.agi.aesl.erpscm.purchase_order.service;
 
+import com.agi.aesl.erpscm.cs.entity.Cs;
+import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.purchase_order.dto.request.PurchaseRequestDto;
 import com.agi.aesl.erpscm.purchase_order.entity.PoGroup;
 import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
+import com.agi.aesl.erpscm.purchase_order.enums.PurchaseOrderStatus;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomainService;
 import org.springframework.data.domain.Page;
@@ -13,7 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface PurchaseOrderService extends VerificationDomainService {
-    Page<?> getPendingPOs(Optional<Integer> page, Optional<Integer> size);
+    Page<?> getPendingPOs(Optional<String>csNo,Optional<Integer> page, Optional<Integer> size);
 
     Page<?> getPendingVerificationPOs(Jwt token, Optional<Integer> page, Optional<Integer> size);
 
@@ -31,5 +35,7 @@ public interface PurchaseOrderService extends VerificationDomainService {
     void rejectPo(Jwt loggedInUser, Long id, NoteDto noteDto);
 
     void createPurchaseOrder(List<PurchaseOrder> purchaseOrders);
+
+    void generatePurchaseOrder(Jwt token, String uri , PurchaseRequestDto purchaseRequestDto);
     public void sentPoToVendors(PoGroup poGroup);
 }

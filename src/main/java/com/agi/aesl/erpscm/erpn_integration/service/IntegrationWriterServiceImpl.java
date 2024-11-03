@@ -2,17 +2,23 @@ package com.agi.aesl.erpscm.erpn_integration.service;
 
 import java.util.*;
 
+import com.agi.aesl.erpscm.account_finance.dto.request.LedgerInitiatorDto;
+import com.agi.aesl.erpscm.account_finance.dto.request.RemoteLedgerAccDto;
 import com.agi.aesl.erpscm.account_finance.dto.request.RemoteLedgerAccountDto;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
+import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
+import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.dto.request.PurchaseRequest;
 import com.agi.aesl.erpscm.erpn_integration.dto.request.PurchaseRequestItem;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveNote;
+import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -24,9 +30,15 @@ import com.agi.aesl.erpscm.network.NetworkService;
 
 @Service
 public class IntegrationWriterServiceImpl implements IntegrationWriterService{
-    
+
+    @Autowired
+    private ClaimResolver claimResolver;
     @Autowired
     private NetworkService networkService;
+
+    @Autowired
+    @Lazy
+    private WarehouseService warehouseService;
 
     @Value("${app.hr.create.warehouse}")
     private String warehouseCreateEndpoint;
@@ -37,14 +49,14 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     @Value("${app.hr.delete.warehouse}")
     private String warehouseDeleteEndpoint;
 
-    @Value("${app.hr.ledger.item.create}")
+    @Value("${app.acc.ledger.item.create}")
     private String ledgerItemCreateEndpoint;
 
     @Value("${app.hr.purchase_receipt.create}")
     private String purchaseReceivedEndpoint;
 
 
-    @Value("${service.hr}")
+    @Value("${service.acc}")
     private String clientId;
 
     @Autowired
@@ -102,30 +114,62 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     @Override
     @Transactional
     public void createLedgerItem(Jwt token, LedgerAccount ledgerAccount) {
-        HttpHeaders headers = networkService.setHttpHeadersForHr(token);
+        claimResolver.setToken(token);
+        Optional<Employee> employeeOptional = claimResolver.getEmployee();
+        if(employeeOptional.isEmpty()){
+            throw new RuntimeException("Sorry! required employee profile");
+        }
+        Employee employee = employeeOptional.get();
+        Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(employee.getWarehouseId());
+        if(warehouseOp.isEmpty()){
+            throw new RuntimeException("Sorry! warehouse not found");
+        }
+        Warehouse warehouse = warehouseOp.get();
+
+        HttpHeaders headers = networkService.setHttpHeaders(token);
 
         Item item = ledgerAccount.getItem();
         ItemCategory category = item.getItemParentCategory();
         ItemCategory subCategory = item.getItemCategory();
         item.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
 
-        RemoteLedgerAccountDto remoteLedgerAccountDto = new RemoteLedgerAccountDto();
+        RemoteLedgerAccDto remoteLedgerAccountDto = new RemoteLedgerAccDto();
+        remoteLedgerAccountDto.setWarehouseId(ledgerAccount.getWarehouse().getId());
+        remoteLedgerAccountDto.setItemId(item.getId());
         remoteLedgerAccountDto.setItemCode(item.getCode());
-        remoteLedgerAccountDto.setUom(item.getItemUnit());
-        remoteLedgerAccountDto.setItemName(item.getItemAttributeName());
-        remoteLedgerAccountDto.setItemGroup(category.getName());
-        remoteLedgerAccountDto.setItemSubGroup(subCategory.getName());
-        remoteLedgerAccountDto.setWarehouse(ledgerAccount.getStore());
-        remoteLedgerAccountDto.setOpeningCredit(ledgerAccount.getOpeningCreditAmount());
-        remoteLedgerAccountDto.setOpeningDebit(ledgerAccount.getOpeningDebitAmount());
+        remoteLedgerAccountDto.setBrandName(item.getName());
+        remoteLedgerAccountDto.setAtrName(item.getItemAttributeName());
+        remoteLedgerAccountDto.setCategoryId(category.getId());
+        remoteLedgerAccountDto.setCategory(category.getName());
+        remoteLedgerAccountDto.setCategoryCode(category.getCode());
+        remoteLedgerAccountDto.setSubCategoryId(subCategory.getId());
+        remoteLedgerAccountDto.setSubCategory(subCategory.getName());
+        remoteLedgerAccountDto.setSubCategoryCode(subCategory.getCode());
+//        LedgerInitiatorDto ledgerInitiatorDto = new LedgerInitiatorDto();
+//        ledgerInitiatorDto.setEmployeeId(employee.getEmployeeId());
+//        ledgerInitiatorDto.setEmployeeName(employee.getEmployeeName());
+//        ledgerInitiatorDto.setEmployeeDepartment(employee.getDepartmentName());
+//        ledgerInitiatorDto.setEmployeeDesignation(employee.getDesignationName());
+//        ledgerInitiatorDto.setReportingManager(employee.getReportingManager());
+//        ledgerInitiatorDto.setEmployeeWarehouse(employee.getWarehouseName());
+//        ledgerInitiatorDto.setWarehouseLocation(warehouse.getLocation());
+//        remoteLedgerAccountDto.setInitiatorDetailsDto(ledgerInitiatorDto);
 
-        HttpEntity<RemoteLedgerAccountDto> payload = new HttpEntity<>(remoteLedgerAccountDto,headers);
+//        remoteLedgerAccountDto.setUom(item.getItemUnit());
+//        remoteLedgerAccountDto.setItemName(item.getItemAttributeName());
+//        remoteLedgerAccountDto.setItemGroup(category.getName());
+//        remoteLedgerAccountDto.setItemSubGroup(subCategory.getName());
+//        remoteLedgerAccountDto.setWarehouse(ledgerAccount.getStore());
+//        remoteLedgerAccountDto.setOpeningCredit(ledgerAccount.getOpeningCreditAmount());
+//        remoteLedgerAccountDto.setOpeningDebit(ledgerAccount.getOpeningDebitAmount());
+
+        HttpEntity<RemoteLedgerAccDto> payload = new HttpEntity<>(remoteLedgerAccountDto,headers);
         Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
         System.out.println(ledgerItemCreateEndpoint);
         if(serviceExist.isPresent()) {
-            networkService.put(ledgerItemCreateEndpoint, payload, Void.class);
+            networkService.post(ledgerItemCreateEndpoint, payload, Void.class);
         }else{
-            throw new RuntimeException("Sorry! Hr Service not available to create item ledger");
+            throw new RuntimeException("Sorry! Accounts Service not available to create item ledger");
         }
     }
 

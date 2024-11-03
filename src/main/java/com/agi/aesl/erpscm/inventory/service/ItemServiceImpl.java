@@ -984,8 +984,8 @@ public class ItemServiceImpl implements ItemService {
         List<SyncItemDetail> items = this.fetchItemsBySubCat(token,subCatCode);
         List<ScmItemUpdateDto> dtos = new ArrayList<>();
         items.stream().forEach(i->{
-            ScmItemUpdateDto scmItemUpdateDto = new ScmItemUpdateDto();
-           Item item = this.createItem(warehouseId,warehouseStoreId,i);
+           ScmItemUpdateDto scmItemUpdateDto = new ScmItemUpdateDto();
+           Item item = this.createItem(token,warehouseId,warehouseStoreId,i);
            scmItemUpdateDto.setItemIdCps(i.getId());
            scmItemUpdateDto.setItemIdScm(item.getId());
            dtos.add(scmItemUpdateDto);
@@ -1012,7 +1012,8 @@ public class ItemServiceImpl implements ItemService {
      * @return
      */
     @Transactional
-    private Item createItem(Long warehouseId, Long warehouseStoreId, SyncItemDetail syncItemDetail){
+    private Item createItem(Jwt token,Long warehouseId, Long warehouseStoreId, SyncItemDetail syncItemDetail){
+        claimResolver.setToken(token);
         Item item = syncItemDetail.getEntity();
         String itemAttributeName = generateItemAttribute(syncItemDetail.getAttributes());
 
@@ -1289,5 +1290,15 @@ public class ItemServiceImpl implements ItemService {
                                    Long warehouseId, Long warehouseStoreId) {
         return itemRepository.fetchTemplateData(categoryId,subCategoryId,
                 warehouseId,warehouseStoreId);
+    }
+
+    @Override
+    @Transactional
+    public void approveItemFromAcc(Long id, Long warehouseId) {
+        Optional<ItemImportLog> itemImportLogOp = itemImportLogRepository.findByItemIdAndWarehouseId(id,warehouseId);
+        if(itemImportLogOp.isPresent()){
+            ItemImportLog itemImportLog = itemImportLogOp.get();
+            itemImportLog.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+        }
     }
 }

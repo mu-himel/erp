@@ -20,6 +20,7 @@ public interface CsService extends VerificationDomainService {
 
     Optional<?> getDetailById(Long id);
 
+    Optional<?> getAllItemsByVendorAndCs(Long vendorId, String csNo);
 
     List<?> getItemWiseVendors(Long id, String itemName);
 

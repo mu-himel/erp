@@ -35,8 +35,11 @@ public class InternalReqStoreController extends BaseController {
     public ResponseEntity<?> pendingStoreIR(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
-            @RequestParam("size") Optional<Integer> size){
-        return new ResponseEntity<>(irStoreService.getPendingStoreIrs(token,page,size), HttpStatus.OK);
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate
+            ){
+        return new ResponseEntity<>(irStoreService.getPendingStoreIrs(token,page,size,fromDate,toDate), HttpStatus.OK);
     }
 
     @GetMapping("/pending-verification")

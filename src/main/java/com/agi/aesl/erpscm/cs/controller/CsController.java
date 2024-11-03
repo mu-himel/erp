@@ -62,6 +62,17 @@ public class CsController extends BaseController {
         return new ResponseEntity<>(csService.getDetailById(id),HttpStatus.OK);
     }
 
+    @GetMapping("/{vendorId}/{csNo}")
+    public ResponseEntity<?> getItemInfoByVendorAndCsNo(
+            @PathVariable("vendorId") Long vendorId,
+            @PathVariable("csNo") String csNo
+    ){
+        return new ResponseEntity<>(
+                csService.getAllItemsByVendorAndCs(vendorId,csNo),
+                HttpStatus.OK
+        );
+    }
+
     @PostMapping("/{rfqId}/item-wise-vendors")
     public ResponseEntity<?> getItemWiseVendors(
             @PathVariable("rfqId") Long id,
@@ -167,7 +178,7 @@ public class CsController extends BaseController {
     public ResponseEntity<?> resubmitForVerification(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id){
-        csService.resubmit(token,id);
+            csService.resubmit(token,id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

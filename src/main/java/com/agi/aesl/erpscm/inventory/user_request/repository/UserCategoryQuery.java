@@ -40,7 +40,7 @@ public interface UserCategoryQuery {
                     uch.category_status
                 ELSE
                     uc.category_status
-            END  as status,
+            END  as status
             FROM user_categories uc
             LEFT JOIN user_category_histories uch ON uch.user_category_id = uc.id
             WHERE (
@@ -58,7 +58,7 @@ public interface UserCategoryQuery {
                     uch.category_status
                 ELSE
                     uc.category_status
-            END  as status,
+            END  as status
              FROM user_categories uc
              LEFT JOIN user_category_histories uch ON uch.user_category_id = uc.id
              LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
@@ -80,7 +80,7 @@ public interface UserCategoryQuery {
                     uch.category_status
                 ELSE
                     uc.category_status
-            END  as status,
+            END  as status
             FROM user_categories uc
             LEFT JOIN user_category_histories uch ON uch.user_category_id = uc.id
             WHERE (
@@ -98,7 +98,7 @@ public interface UserCategoryQuery {
                     uch.category_status
                 ELSE
                     uc.category_status
-            END  as status,
+            END  as status
             FROM user_categories uc
             LEFT JOIN user_category_histories uch ON uch.user_category_id = uc.id
             LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
@@ -169,7 +169,10 @@ public interface UserCategoryQuery {
 //            UNION
     String getListCategories="""
             SELECT 'STORE_MANAGED' as `type`, ic.id,ic.name,ic.code from scm_item_categories ic
-            WHERE (:name IS NULL OR LOWER(ic.name) LIKE LOWER(CONCAT('%',:name,'%')))
+            LEFT JOIN scm_category_warehouse_stores scws ON scws.category_id = ic.id
+            WHERE 
+            (:storeId IS NULL OR scws.warehouse_store_id = :storeId)
+            AND (:name IS NULL OR LOWER(ic.name) LIKE LOWER(CONCAT('%',:name,'%')))
             AND (:code IS NULL OR LOWER(ic.code) LIKE LOWER(CONCAT('%',:code,'%')))
             AND ic.parent_category_id IS NULL
             """;

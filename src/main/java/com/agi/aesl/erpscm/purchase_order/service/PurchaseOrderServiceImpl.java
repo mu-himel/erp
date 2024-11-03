@@ -5,21 +5,35 @@ import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.common.enums.DeliveryCharge;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.cs.entity.Cs;
+import com.agi.aesl.erpscm.cs.entity.CsVendorDetail;
+import com.agi.aesl.erpscm.cs.repository.CsRepository;
+import com.agi.aesl.erpscm.cs.repository.CsVendorDetailRepository;
+import com.agi.aesl.erpscm.cs.service.CsService;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.indent.entity.Indent;
+import com.agi.aesl.erpscm.inventory.dto.request.PendingItemAttributeDto;
+import com.agi.aesl.erpscm.inventory.dto.request.PendingItemRequestDto;
+import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
 import com.agi.aesl.erpscm.inventory.entity.Item;
+import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.service.CategoryService;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.price_quotation.entity.PqTermsAndCondition;
+import com.agi.aesl.erpscm.price_quotation.repository.PqRepository;
 import com.agi.aesl.erpscm.price_quotation.repository.PqTermAndConditionRepository;
+import com.agi.aesl.erpscm.purchase_order.dto.request.PoDetailReqDto;
 import com.agi.aesl.erpscm.purchase_order.dto.request.PoRemoteDetailReqDto;
 import com.agi.aesl.erpscm.purchase_order.dto.request.PoRemoteReqDto;
+import com.agi.aesl.erpscm.purchase_order.dto.request.PurchaseRequestDto;
 import com.agi.aesl.erpscm.purchase_order.entity.PoGroup;
 import com.agi.aesl.erpscm.purchase_order.entity.PoVerificationApprovalHistory;
 import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
+import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrderDetail;
 import com.agi.aesl.erpscm.purchase_order.enums.PurchaseOrderStatus;
 import com.agi.aesl.erpscm.purchase_order.repository.PoGroupRepository;
 import com.agi.aesl.erpscm.purchase_order.repository.PoVaHistoryRepository;
@@ -27,6 +41,7 @@ import com.agi.aesl.erpscm.purchase_order.repository.PurchaseOrderRepository;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
@@ -42,7 +57,9 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -78,13 +95,25 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     private PoVaHistoryRepository poVaHistoryRepository;
 
     @Autowired
+    private CsVendorDetailRepository csVendorDetailRepository;
+
+    @Autowired
+    private CategoryService categoryService;
+
+    @Autowired
     private OrgService orgService;
+
+    @Autowired
+    private CsRepository csRepository;
     
     @Autowired
     private NetworkService networkService;
 
     @Autowired
     private CpsServerConfig cpsServerConfig;
+
+    @Autowired
+    private PqRepository pqRepository;
 
 
     @Override
@@ -93,10 +122,253 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         purchaseOrderRepository.saveAll(purchaseOrders);
     }
 
+    private String generatePoNo(Cs cs){
+        Long count = purchaseOrderRepository.countAllByCsId(cs.getId());
+        count = ++count;
+        return cs.getCsNo()+"-"+ ((count<10)? "0"+count.toString() : count.toString());
+    }
     @Override
-    public Page<?> getPendingPOs(Optional<Integer> page, Optional<Integer> size) {
+    @Transactional
+    public void generatePurchaseOrder(Jwt token, String uri, PurchaseRequestDto purchaseRequestDto){
+            claimResolver.setToken(token);
+            Optional<Employee> empOp = claimResolver.getEmployee();
+            Employee employee = empOp.get();
+            if(empOp.isEmpty()){
+                throw new RuntimeException("Sorry! Employee Profile required");
+            }
+            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
+            if(orgOp.isEmpty()){
+                throw new RuntimeException("Sorry! Organization not found");
+            }
+            Optional<Cs> csOp = csRepository.findById(purchaseRequestDto.getCsId());
+            if(csOp.isEmpty()){
+                throw new RuntimeException("Sorry! Cs not found");
+            }
+            Cs cs = csOp.get();
+            List<CsVendorDetailRepository.PendingItemBrandInfo> itemBrandInfos = csVendorDetailRepository.getPendingItemAndBrandInfoByCsId(purchaseRequestDto.getCsId());
+            for(CsVendorDetailRepository.PendingItemBrandInfo csDetail : itemBrandInfos){
+                String itemAttributeName = (csDetail.getExtendedAttributes()!=null)? csDetail.getItemAttributeName()+" - "+csDetail.getExtendedAttributes() : csDetail.getItemAttributeName();
+                Optional<Item> itemOp = itemService.getByBrandAndAttributeName(csDetail.getBrandName(),csDetail.getSubCatId(),itemAttributeName);
+                if(itemOp.isEmpty()){
+
+                    Optional<ItemCategory> subCatOp = categoryService.getItemCategory(csDetail.getSubCatId());
+                    if(subCatOp.isEmpty()){
+                        throw new RuntimeException("Sorry! Sub Cat missing");
+                    }
+                    ItemCategory subCat = subCatOp.get();
+
+                    PendingItemRequestDto pendingItemRequestDto = new PendingItemRequestDto();
+                    pendingItemRequestDto.setSubCategoryCode(csDetail.getSubCategoryCode());
+                    pendingItemRequestDto.setDepartment(employee.getDepartmentName());
+                    pendingItemRequestDto.setDesignation(employee.getDesignationName());
+                    pendingItemRequestDto.setEmployeeId(employee.getEmployeeId());
+                    if(employee.getReportingManager()!=null){
+                        pendingItemRequestDto.setReportingManager(employee.getReportingManager());
+                    }
+                    pendingItemRequestDto.setRequestedBy(employee.getEmployeeName());
+                    pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
+                    pendingItemRequestDto.setWarehouseLocation(employee.getWarehouseName());
+                    pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
+                    pendingItemRequestDto.setBrand(csDetail.getBrandName());
+
+                    List<PendingItemAttributeDto> attributes = extractAttributesFromItemAttributeName(subCat,csDetail.getItemAttributeName());
+                    List<PendingItemAttributeDto> attributesFromItemAttributeName = extractAttributesFromItemAttributeName(subCat,csDetail.getExtendedAttributes());
+                    attributes.addAll(attributesFromItemAttributeName);
+                    pendingItemRequestDto.setAttributes(attributes);
+                    pendingItemRequestDto.setOrganizationId(orgOp.get().getCpsVendorRegistrationId());
+                    pendingItemRequestDto.setExtendedAttributes(csDetail.getExtendedAttributes());
+                    sendPendingItemRequest(pendingItemRequestDto);
+                }
+
+            }
+
+
+
+            List<PurchaseOrder> purchaseOrders = new ArrayList<>();
+
+            PoGroup poGroup = new PoGroup();
+            poGroup.setCs(cs);
+            poGroup.setPhoneNo(purchaseRequestDto.getPhoneNo());
+            poGroup.setVendorName(purchaseRequestDto.getVendorName());
+            poGroup.setVendorEmail(purchaseRequestDto.getVendorEmail());
+            poGroup.setPoDate(LocalDateTime.now());
+            poGroupRepository.save(poGroup);
+
+            PurchaseOrder po = new PurchaseOrder();
+            po.setCs(cs);
+            po.setPoDate(poGroup.getPoDate().toLocalDate());
+            po.setVendorId(purchaseRequestDto.getVendorId());
+            po.setDeliveryChargeType(purchaseRequestDto.getDeliveryChargeType());
+            po.setPoNo(generatePoNo(cs));
+            po.setPoGroup(poGroup);
+            po.setRequestedBy(employee);
+            po.setTermsConditions(purchaseRequestDto.getTermsConditions().stream().map(tnc->{
+                tnc.setPurchaseOrder(po);
+                return tnc;
+            }).collect(Collectors.toList()));
+            List<String> ids = new ArrayList<>();
+            List<PurchaseOrderDetail> pods = new ArrayList<>();
+            for(PoDetailReqDto poDetailReqDto: purchaseRequestDto.getDetails()){
+                PurchaseOrderDetail pod = new PurchaseOrderDetail();
+                pod.setItemName(poDetailReqDto.getItemName());
+                pod.setUnitPrice(poDetailReqDto.getUnitPrice());
+                pod.setTransactionType(poDetailReqDto.getTransactionType());
+                pod.setEstimatedDeliveryDays(poDetailReqDto.getEstimatedDeliveryDays());
+                pod.setCreditDays(poDetailReqDto.getCreditDays());
+                pod.setTotalPrice(poDetailReqDto.getTotalPrice());
+                pod.setSubTotal(poDetailReqDto.getSubTotal());
+                pod.setWarrantyUnit(poDetailReqDto.getWarrantyUnit());
+                pod.setWarrantyDuration(poDetailReqDto.getWarrantyDuration());
+                pod.setVatPercent(poDetailReqDto.getVatPercent());
+                pod.setVatAmount(poDetailReqDto.getVatAmount());
+                pod.setCsVendorDetail(new CsVendorDetail(poDetailReqDto.getCsVendorDetail().getId()));
+                pod.setDeliveryDate(poDetailReqDto.getDeliveryDate());
+                pod.setDeliveryQty(poDetailReqDto.getDeliveryQty());
+                pod.setDeliveryCharge(poDetailReqDto.getDeliveryCharge());
+                pod.setPurchaseOrder(po);
+                pod.setWarehouse(new Warehouse(poDetailReqDto.getWarehouse().getId()));
+                pods.add(pod);
+                ids.add(poDetailReqDto.getCategoryId().toString());
+                ids.add(poDetailReqDto.getSubCategoryId().toString());
+            }
+
+
+            po.setPurchaseOrderDetails(pods);
+            po.setStatus(PurchaseOrderStatus.PENDING);
+            purchaseOrders.add(po);
+//            List<CsRepository.PotentialPoListItem> poListItems = csRepository.getPotentialPoListFromCs(cs.getId());
+//            int i=1;
+//            for(CsRepository.PotentialPoListItem pol : poListItems){
+//                if(pol.getDeliveryDate()!=null){
+//                    PurchaseOrder vPo = new PurchaseOrder();
+//                    vPo.setCs(cs);
+//                    vPo.setPoDate(pol.getDeliveryDate());
+//                    vPo.setVendorId(pol.getVendorId());
+//
+//                    vPo.setPoNo(generatePoNo(cs, i));
+//                    if(cs.getNextApproverId()!=null){
+//                        vPo.setRequestedBy(new Employee(cs.getNextApproverId()));
+//                    }else{
+//                        vPo.setRequestedBy(cs.getRequestedBy());
+//                    }
+//
+//                    List<PurchaseOrderDetail> pods = new ArrayList<>();
+//                    for(String csvdId : List.of(pol.getCsVendorDetailId().split(","))){
+//                        PurchaseOrderDetail pod = new PurchaseOrderDetail();
+//                        pod.setItemName(null);
+//                        pod.setCsVendorDetail(new CsVendorDetail(Long.valueOf(csvdId)));
+//                        pod.setDeliveryDate(pol.getDeliveryDate());
+//                        pod.setDeliveryQty(pol.getDeliveryQty());
+//                        pod.setPurchaseOrder(vPo);
+//                        pod.setWarehouse(new Warehouse(pol.getWarehouseId()));
+//                        pods.add(pod);
+//                    }
+//                    vPo.setPurchaseOrderDetails(pods);
+//                    vPo.setPoGroup(poGroup);
+//                    vPo.setStatus(PurchaseOrderStatus.PENDING);
+//                    purchaseOrders.add(vPo);
+//
+//                }else{
+//                    Optional<PqRepository.PriceQuotationDetailExt> pqDetailOp = pqRepository
+//                            .getPriceQuotationDetailByPqIdAndItemAttr(pol.getPriceQuotationId(),pol.getItemAttribute());
+//
+//                    if(pqDetailOp.isPresent()){
+//                        PurchaseOrder vPo = new PurchaseOrder();
+//                        vPo.setCs(cs);
+//                        LocalDate currentDate = LocalDate.now();
+//                        currentDate = currentDate.plusDays(pqDetailOp.get().getEstDeliveryDays());
+//                        vPo.setPoDate(currentDate.atTime(LocalTime.now()).toLocalDate());
+//                        vPo.setVendorId(pol.getVendorId());
+//
+//                        vPo.setPoNo(generatePoNo(cs, i));
+//                        if(cs.getNextApproverId()!=null){
+//                            vPo.setRequestedBy(new Employee(cs.getNextApproverId()));
+//                        }else{
+//                            vPo.setRequestedBy(cs.getRequestedBy());
+//                        }
+//
+//                        List<PurchaseOrderDetail> pods = new ArrayList<>();
+//                        for(String csvdId : List.of(pol.getCsVendorDetailId().split(","))){
+//                            PurchaseOrderDetail pod = new PurchaseOrderDetail();
+//                            pod.setCsVendorDetail(new CsVendorDetail(Long.valueOf(csvdId)));
+//                            pod.setDeliveryDate(currentDate);
+//                            pod.setPurchaseOrder(vPo);
+//                            pod.setWarehouse(new Warehouse(pqDetailOp.get().getWarehouseId()));
+//                            pods.add(pod);
+//                        }
+//                        vPo.setPurchaseOrderDetails(pods);
+//                        vPo.setStatus(PurchaseOrderStatus.PENDING);
+//                        vPo.setPoGroup(poGroup);
+//                        purchaseOrders.add(vPo);
+//                    }
+//                }
+//                i++;
+//            }
+            createPurchaseOrder(purchaseOrders);
+
+        AppliedVADto vaResult = verificationService.applyVerifyApprovalProcess(poGroup, DomainType.PO, PurchaseOrderStatus.APPROVED.toString(),
+                uri, "CATEGORY", ids, null);
+        if(vaResult.getVerifiers().isEmpty() && vaResult.getPanels().isEmpty()){
+            poGroup.setStatus(PurchaseOrderStatus.COMPLETED.toString());
+        }
+    }
+
+    @Async
+    private void sendPendingItemRequest(PendingItemRequestDto payloadDto) {
+        try{
+            HttpHeaders headers = new HttpHeaders();
+            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
+            if(orgOp.isPresent()){
+                headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
+            }
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(payloadDto,headers);
+            String url = cpsServerConfig.getPendingItemReqEndpoint();
+            ResponseEntity<Void> response = (ResponseEntity<Void>)networkService.post(url, payload,Void.class);
+            if(!response.getStatusCode().equals(HttpStatus.CREATED)){
+                throw new RuntimeException("Sorry! Something wrong");
+            }
+        }catch(Exception ex){
+            throw new RuntimeException(ex.getMessage());
+        }
+    }
+
+    private List<PendingItemAttributeDto> extractAttributesFromItemAttributeName(ItemCategory cat, String itemAttributeName){
+
+        List<PendingItemAttributeDto> pendingItemAttrList = new ArrayList<>();
+        if(itemAttributeName!=null){
+
+            String[] attrs = itemAttributeName.split(" - ");
+
+
+            for(String attr : attrs){
+                String _attr="";
+                Optional<CategoryAttribute> catAttrOp = cat.getAttributes().stream().filter(c->{
+                    return attr.contains(c.getAttributeType());
+
+                }).findFirst();
+
+                if(catAttrOp.isPresent()){
+                    _attr = attr.replace(catAttrOp.get().getAttributeType(),"");
+
+                    String[] args = _attr.trim().split(" ");
+                    PendingItemAttributeDto pia = new PendingItemAttributeDto();
+                    pia.setAttributeType(catAttrOp.get().getAttributeType());
+                    pia.setAttributeValue(args[0].trim());
+                    pia.setAttributeUnit(catAttrOp.get().getAttributeUnit());
+                    pendingItemAttrList.add(pia);
+                }
+            }
+        }
+        return pendingItemAttrList;
+    }
+
+
+    @Override
+    public Page<?> getPendingPOs(Optional<String>csNo,Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return purchaseOrderRepository.findAllPendingPOs(pageable);
+        return purchaseOrderRepository.findAllPendingPOs(csNo.orElse(null),pageable);
     }
 
     @Override
@@ -133,7 +405,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     public Map<String, Object> getPurchaseOrderDetail(Long csId) {
         // Need to update here cause now po verifing based on collection of po
         // first find poGroup from csId
-        Optional<PoGroup> poGroupOp = poGroupRepository.findByCsId(csId);
+        Optional<PoGroup> poGroupOp = poGroupRepository.findById(csId);
         Map<String,Object> map = new HashMap<>();
         if(poGroupOp.isPresent()){
             PoGroup poGroup = poGroupOp.get();
@@ -161,7 +433,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
             Cs cs = poGroup.getCs();
             Indent indent = cs.getIndent();
-            map.put("nextVerifierId", poGroup.getNextApproverId());
+            map.put("nextVerifierId", poGroup.getNextVerifierId());
             map.put("nextApproverId", poGroup.getNextApproverId());
             map.put("reviewerId", poGroup.getReviewerId());
             map.put("declineNote", poGroup.getDeclineNote());
@@ -171,6 +443,24 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             map.put("csId",cs.getId());
             map.put("poGroupId",poGroup.getId());
             map.put("indentId",indent.getId());
+
+            List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
+            List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
+            List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
+                    .getVerificationsByDomainTypeAndDomainId(DomainType.PO, poGroup.getId());
+            vrs.stream().forEach(verifier->{
+                if(verifier.getIsApproval()==false){
+                    verifiers.add(verifier);
+                }else{
+                    approvers.add(verifier);
+                }
+            });
+
+            List<?> comments = commentService.getCommentsByDomain(DomainType.PO, poGroup.getId());
+
+            map.put("verifiers",verifiers);
+            map.put("approvers",approvers);
+            map.put("comments",comments);
 
 
 
@@ -189,10 +479,27 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(new BigDecimal(0));
                 for (PurchaseOrderRepository.PqDetailInfo pqDetail : pqDetailInfo){
 
-
+                    Map<String,Object> detailMap = new HashMap<>();
+                    detailMap.put("poId",pqDetail.getPoId());
+                    detailMap.put("vendorPartialVatAmount", pqDetail.getVendorPartialVatAmount());
+                    detailMap.put("itemAttribute", pqDetail.getItemName());
+                    detailMap.put("unitPrice", pqDetail.getUnitPrice());
+                    detailMap.put("deliveryCharge", pqDetail.getDeliveryCharge());
+                    detailMap.put("deliveryQty", pqDetail.getDeliveryQty());
+                    detailMap.put("transactionType", pqDetail.getTransactionType());
+                    detailMap.put("totalPrice",  pqDetail.getTotalPrice());
+                    detailMap.put("vatAmount",  pqDetail.getVatAmount());
+                    detailMap.put("subTotal",  pqDetail.getSubTotal());
+                    detailMap.put("orderQty",   pqDetail.getOrderQty());
+                    detailMap.put("deliveryOrderQty",pqDetail.getDeliveryOrderQty());
+                    detailMap.put("deliveryDate",pqDetail.getDeliveryDate());
+                    detailMap.put("priceQuotationId",pqDetail.getPriceQuotationId());
+                    detailMap.put("warehouseId", pqDetail.getWarehouseId());
+                    detailMap.put("isAitAdded",pqDetail.getIsAitAdded());
+                    detailMap.put("isVatAdded" , pqDetail.getIsVatAdded());
                     totalPrice.set(pqDetail.getTotalPrice());
                     vendorPartialVatAmount.set(pqDetail.getVendorPartialVatAmount());
-                    Map<String,Object> detailMap = new HashMap<>();
+
                     String[] summary = pqDetail.getSummary().split(",");
 
                     termsAndConditions = pqTermAndConditionRepository.findAllByVendorIdAndPriceQuotationId(Long.parseLong(summary[1]),Long.parseLong(summary[16]));
@@ -216,34 +523,32 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     poItem.put("vendorName",summary[0]);
                     poItem.put("vendorId",summary[1]);
                     poItem.put("creditDays",summary[2]);
-
-                    poItem.put("unitPrice",summary[3]);
                     poItem.put("estDeliveryDays",summary[4]);
-                    poItem.put("deliveryCharge",summary[6].equals("1")? DeliveryCharge.INCLUDED.toString():
+                    poItem.put("deliveryChargeType",summary[6].equals("1")? DeliveryCharge.INCLUDED.toString():
                             DeliveryCharge.EXCLUDED.toString());
-                    poItem.put("deliveryChargeAmount",summary[7]);
-                    poItem.put("vatPercent",summary[8]);
-                    poItem.put("vatAmount",summary[9]);
-                    poItem.put("itemName",summary[10]);
-                    poItem.put("brandName",summary[11]);
-                    poItem.put("extendedAttribute",summary[12]);
-                    poItem.put("isItemExist",itemOp.isPresent());
-                    poItem.put("warrantyDuration",summary[13]);
-                    poItem.put("warrantyUnit",summary[14]);
+                    detailMap.put("vatPercent",summary[8]);
+                    detailMap.put("itemName",summary[10]);
+                    detailMap.put("brandName",summary[11]);
+                    detailMap.put("extendedAttribute",summary[12]);
+                    detailMap.put("isItemExist",itemOp.isPresent());
+                    detailMap.put("warrantyDuration",summary[13]);
+                    detailMap.put("warrantyUnit",summary[14]);
                     poItem.put("vendorType",summary[15]);
                     poItem.put("pqId",summary[16]);
+                    poItem.put("vendorEmail" , summary[17]);
+                    poItem.put("vendorPhoneNo" , summary[18]);
                     poDetailList.add(detailMap);
                 }
                 // poItem.put("vendor",po.get)
                 map.put("requestedBy",po.getRequestedBy());
-//                poItem.put("details",poDetailList);
+                poItem.put("details",poDetailList);
                 poItem.put("termsAndConditions", termsAndConditions);
                 poItem.put("totalPrice",totalPrice.get());
                 poItem.put("vendorPartialVatAmount",vendorPartialVatAmount);
                 return poItem;
             }).collect(Collectors.toList());
 
-            map.put("purchaseOrders",polist);
+            map.put("purchaseOrder",polist.stream().findFirst());
         }
         return map;
     }

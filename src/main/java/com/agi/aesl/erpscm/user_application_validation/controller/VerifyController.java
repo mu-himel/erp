@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.user_application_validation.controller;
 
 import com.agi.aesl.erpscm.account_finance.service.AccountService;
+import com.agi.aesl.erpscm.cs.service.CsAccountService;
 import com.agi.aesl.erpscm.cs.service.CsService;
 import com.agi.aesl.erpscm.indent.service.IndentService;
 import com.agi.aesl.erpscm.internal_requisition.service.IrService;
@@ -47,6 +48,9 @@ public class VerifyController extends BaseController{
     private CsService csService;
 
     @Autowired
+    private CsAccountService acsService;
+
+    @Autowired
     private PurchaseOrderService purchaseOrderService;
 
     @Autowired
@@ -72,6 +76,7 @@ public class VerifyController extends BaseController{
         verificationService.addVerificationDomainService(DomainType.ACCOUNT_LEDGER,accountService);
         verificationService.addVerificationDomainService(DomainType.INDENT,indentService);
         verificationService.addVerificationDomainService(DomainType.CS,csService);
+        verificationService.addVerificationDomainService(DomainType.ACS,acsService);
         verificationService.addVerificationDomainService(DomainType.PO,purchaseOrderService);
         verificationService.addVerificationDomainService(DomainType.QC,qcService);
         verificationService.addVerificationDomainService(DomainType.SRN,srnService);

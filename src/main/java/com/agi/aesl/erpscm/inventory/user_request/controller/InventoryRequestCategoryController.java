@@ -70,10 +70,11 @@ public class InventoryRequestCategoryController extends BaseController {
     public ResponseEntity<?> getList(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("name") Optional<String> name,
-            @RequestParam("code") Optional<String> code
+            @RequestParam("code") Optional<String> code,
+            @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId
     ){
         return new ResponseEntity<>(
-                categoryRequestService.getCategories(token,name,code),
+                categoryRequestService.getCategories(token,name,code,warehouseStoreId),
                 HttpStatus.OK
         );
     }

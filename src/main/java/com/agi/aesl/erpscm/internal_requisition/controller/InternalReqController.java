@@ -36,10 +36,12 @@ public class InternalReqController extends BaseController {
     @GetMapping
     public ResponseEntity<?> getAllIR(
             @RequestParam("page") Optional<Integer> page,
-            @RequestParam("size") Optional<Integer> size
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate
     ){
         return new ResponseEntity<>(
-                internalRequisitionService.getAllInternalRequisitions(page,size),
+                internalRequisitionService.getAllInternalRequisitions(page,size,fromDate,toDate),
                 HttpStatus.OK
         );
     }
@@ -48,10 +50,12 @@ public class InternalReqController extends BaseController {
     public ResponseEntity<?> getPendingVerificationIR(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
-            @RequestParam("size") Optional<Integer> size
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate
     ){
         return new ResponseEntity<>(
-                internalRequisitionService.getAllPendingVerificationIrs(token, page,size),
+                internalRequisitionService.getAllPendingVerificationIrs(token, page,size, fromDate,toDate),
                 HttpStatus.OK
         );
     }
@@ -60,10 +64,12 @@ public class InternalReqController extends BaseController {
     public ResponseEntity<?> getPendingApprovalIR(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
-            @RequestParam("size") Optional<Integer> size
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate
     ){
         return new ResponseEntity<>(
-                internalRequisitionService.getAllPendingApprovalIrs(token,page, size),
+                internalRequisitionService.getAllPendingApprovalIrs(token,page, size,fromDate,toDate),
                 HttpStatus.OK
         );
     }
@@ -71,11 +77,13 @@ public class InternalReqController extends BaseController {
     @GetMapping("/closed")
     public ResponseEntity<?> getClosedIR(
             @RequestParam("page") Optional<Integer> page,
-            @RequestParam("size") Optional<Integer> size
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate
     ){
 
         return new ResponseEntity<>(
-                internalRequisitionService.getAllClosedIr(page,size),
+                internalRequisitionService.getAllClosedIr(page,size,fromDate,toDate),
                 HttpStatus.OK
         );
 
@@ -85,10 +93,12 @@ public class InternalReqController extends BaseController {
     public ResponseEntity<?> getPendingRequisitionForController(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
-            @RequestParam("size") Optional<Integer> size
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate
     ){
         return new ResponseEntity<>(
-                internalRequisitionService.getAllVerifiedOrApprovedIrs(token,page, size),
+                internalRequisitionService.getAllVerifiedOrApprovedIrs(token,page, size,fromDate,toDate),
                 HttpStatus.OK
         );
     }
@@ -96,10 +106,12 @@ public class InternalReqController extends BaseController {
     @GetMapping("/processing-requisitions")
     public ResponseEntity<?> getProcessingIrsForController(
             @RequestParam("page") Optional<Integer> page,
-            @RequestParam("size") Optional<Integer> size
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate
     ){
         return new ResponseEntity<>(
-                internalRequisitionService.getAllProcessedIrs(page,size),
+                internalRequisitionService.getAllProcessedIrs(page,size,fromDate,toDate),
                 HttpStatus.OK
         );
     }

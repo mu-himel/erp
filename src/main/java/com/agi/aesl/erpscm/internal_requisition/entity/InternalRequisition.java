@@ -44,6 +44,11 @@ public class InternalRequisition extends VerifyableEntity {
     @OneToMany(mappedBy = "ir", cascade = CascadeType.ALL)
     List<InternalRequisitionDetail> details;
 
+
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    private LocalDateTime deliveryDate;
+
     @Enumerated(EnumType.STRING)
     private IrStatus irStatus;
 

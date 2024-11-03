@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.cs.dto;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -12,5 +13,6 @@ public class CsRequestDto {
     private BigDecimal deliveryCharge;
     private BigDecimal totalPrice;
     private BigDecimal subTotalPrice;
+    private LocalDate validityDate;
     private List<CsDetailReqDto> details;
 }

@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +45,18 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             @Param("warehouseId") List<Long> warehouseId,
             @Param("warehouseStoreId") Long warehouseStoreId,
             Pageable pageable
+    );
+
+    @Query(value = getItemsWithSearch,nativeQuery = true)
+    List<PageItemList> findAllItemList(
+            @Param("name") String name,
+            @Param("code") String code,
+            @Param("reorderPercentage") Integer reorderPercentage,
+            @Param("stockThresholdQty") Integer stockThresholdQty,
+            @Param("categoryId") List<Long> categoryId,
+            @Param("subCategoryId") Long subCategoryId,
+            @Param("warehouseId") List<Long> warehouseId,
+            @Param("warehouseStoreId") Long warehouseStoreId
     );
 
     @Query(value = getPendingItemsWithSearch,
@@ -194,9 +207,11 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
         String getCategoryCode();
         String getSubCategoryName();
         String getSubCategoryCode();
-        Integer getQty();
-        Integer getStockThresholdQty();
-        Integer getReorderPercentage();
+        String getItemUnit();
+        BigDecimal getQty();
+        BigDecimal getStockThresholdQty();
+        BigDecimal getReorderPercentage();
+        String getStatus();
     }
 
     interface ItemDetail extends ItemInfo{

@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.purchase_order.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
+import com.agi.aesl.erpscm.purchase_order.dto.request.PurchaseRequestDto;
 import com.agi.aesl.erpscm.purchase_order.entity.PoGroup;
 import com.agi.aesl.erpscm.purchase_order.service.PurchaseOrderService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
@@ -21,13 +22,24 @@ public class PurchaseController extends BaseController {
     @Autowired
     private PurchaseOrderService purchaseOrderService;
 
+    @PostMapping
+    public ResponseEntity<?> addPurchaseOrder(
+            @AuthenticationPrincipal Jwt token,
+            @RequestHeader("uri") String uri,
+            @RequestBody PurchaseRequestDto purchaseRequestDto
+    ){
+        purchaseOrderService.generatePurchaseOrder(token,uri,purchaseRequestDto);
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
     @GetMapping("/pending")
     public ResponseEntity<?> getPendingPurchaseOrders(
+            @RequestParam("csNo") Optional<String> csNo,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                purchaseOrderService.getPendingPOs(page,size),
+                purchaseOrderService.getPendingPOs(csNo,page,size),
                 HttpStatus.OK
         );
     }
@@ -120,11 +132,11 @@ public class PurchaseController extends BaseController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @GetMapping("/test")
-    public ResponseEntity<?> test(){
-        PoGroup poGroup = new PoGroup();
-        poGroup.setId(5L);
-        purchaseOrderService.sentPoToVendors(poGroup);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
+//    @GetMapping("/test")
+//    public ResponseEntity<?> test(){
+//        PoGroup poGroup = new PoGroup();
+//        poGroup.setId(5L);
+//        purchaseOrderService.sentPoToVendors(poGroup);
+//        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+//    }
 }

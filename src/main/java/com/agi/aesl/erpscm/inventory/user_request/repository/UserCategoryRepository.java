@@ -44,7 +44,7 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
     Page<UserSubCategory> findAllClosedSubCategory(String userId,Long categoryId, Pageable pageable);
 
     @Query(value = getListCategories,nativeQuery = true)
-    List<UserCategoryInfo> getAllCategories(String name, String code);
+    List<UserCategoryInfo> getAllCategories(String name, String code, Long storeId);
 
     @Query(value = getListSubCategories ,nativeQuery = true)
     List<UserCategoryInfo> getAllSubCategories(Long categoryId, String name, String code);

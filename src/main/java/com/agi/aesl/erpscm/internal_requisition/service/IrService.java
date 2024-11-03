@@ -14,19 +14,25 @@ import java.util.Optional;
 public interface IrService extends VerificationDomainService {
     void createInternalRequisition(Jwt token, String uri, CreateIRDto createDto);
 
-    Page<?> getAllInternalRequisitions(Optional<Integer> page, Optional<Integer> size);
+    Page<?> getAllInternalRequisitions(Optional<Integer> page, Optional<Integer> size,
+                                       Optional<String> fromDate, Optional<String> toDate);
 
     String getNextIrNo();
 
-    Page<?> getAllClosedIr(Optional<Integer> page, Optional<Integer> size);
+    Page<?> getAllClosedIr(Optional<Integer> page, Optional<Integer> size,
+                           Optional<String> fromDate, Optional<String> toDate);
 
-    Page<?> getAllPendingVerificationIrs(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getAllPendingVerificationIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                         Optional<String> fromDate, Optional<String> toDate);
 
-    Page<?> getAllPendingApprovalIrs(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getAllPendingApprovalIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                     Optional<String> fromDate, Optional<String> toDate);
 
-    Page<?> getAllVerifiedOrApprovedIrs(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getAllVerifiedOrApprovedIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                        Optional<String> fromDate, Optional<String> toDate);
 
-    Page<?> getAllProcessedIrs(Optional<Integer> page, Optional<Integer> size);
+    Page<?> getAllProcessedIrs(Optional<Integer> page, Optional<Integer> size,
+                               Optional<String> fromDate, Optional<String> toDate);
 
     <T> Optional<?> getDetail(Long id, Class<T> t);
 

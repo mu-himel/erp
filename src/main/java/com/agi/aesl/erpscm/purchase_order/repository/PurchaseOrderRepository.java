@@ -23,17 +23,17 @@ import java.util.List;
 @Repository
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Long>, PoQuery {
     @Query(value = getPendingPOs, countQuery = countPendingPOs, nativeQuery = true)
-    Page<PendingPOItemDetail> findAllPendingPOs(Pageable pageable);
+    Page<PendingPOItemDetail> findAllPendingPOs(String csNo,Pageable pageable);
 
     @Query(value = getPendingVerificationPOs, countQuery = countGetPendingVerificationPOs, nativeQuery = true)
-    Page<PoListItem> findAllPendingVerificationPOs(String userId, Pageable pageable);
+    Page<PendingPOItemDetail> findAllPendingVerificationPOs(String userId, Pageable pageable);
 
 
     @Query(value = getPendingApprovalPOs, countQuery = countGetPendingApprovalPOs, nativeQuery = true)
-    Page<PoListItem> findAllPendingApprovalPOs(String userId, Pageable pageable);
+    Page<PendingPOItemDetail> findAllPendingApprovalPOs(String userId, Pageable pageable);
 
     @Query(value = getClosedPOs, countQuery = countClosedPOs, nativeQuery = true)
-    Page<ClosedPOListItem> findAllClosedPOs(Pageable pageable);
+    Page<PendingPOItemDetail> findAllClosedPOs(Pageable pageable);
 
     @Query(value = getApprovedPOs, countQuery = countApprovedPOs, nativeQuery = true)
     Page<ClosedPOListItem> findAllApprovedPos(Pageable pageable);
@@ -43,6 +43,8 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
     @Query(value = purchaseOrderDetail,nativeQuery = true)
     List<PqDetailInfo> getPurchaseOrderDetail(Long poId);
 
+    Long countAllByCsId(Long id);
+
     interface PendingPOItemDetail{
         Long getId();
 
@@ -50,6 +52,8 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
         LocalDateTime getPoDate();
         String getPoIds();
         String getIndentNo();
+        String getPoNo();
+        String getVendorName();
         String getCategoryName();
         BigDecimal getItemQty();
         BigDecimal getTotalOrderQty();
@@ -155,7 +159,7 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
     interface PqDetailInfo {
         Long getPoId();
         BigDecimal getVendorPartialVatAmount();
-        String getItemAttribute();
+        String getItemName();
         String getTransactionType();
         BigDecimal getTotalPrice();
         BigDecimal getOrderQty();
@@ -166,5 +170,11 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
         String getSummary();
         Boolean getIsAitAdded();
         Boolean getIsVatAdded();
+        Long getDeliveryQty();
+        BigDecimal getUnitPrice();
+        BigDecimal getDeliveryCharge();
+
+        BigDecimal getVatAmount();
+        BigDecimal getSubTotal();
     }
 }

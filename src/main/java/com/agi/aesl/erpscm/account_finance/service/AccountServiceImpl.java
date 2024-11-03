@@ -496,7 +496,8 @@ public class AccountServiceImpl implements AccountService{
         ledgerAccount.setAccountStatus(AccountType.PENDING);
         ledgerAccount.setWarehouse(warehouse);
         ledgerAccount.setWarehouseStore(warehouseStore);
-        accountRepository.save(ledgerAccount);
+        integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
+//        accountRepository.save(ledgerAccount);
     }
 
     @Override
