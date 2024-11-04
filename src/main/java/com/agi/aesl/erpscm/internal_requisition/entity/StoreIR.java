@@ -21,7 +21,7 @@ public class StoreIR extends VerifyableEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @ManyToOne
     private InternalRequisition ir;
 
     @Enumerated(EnumType.STRING)

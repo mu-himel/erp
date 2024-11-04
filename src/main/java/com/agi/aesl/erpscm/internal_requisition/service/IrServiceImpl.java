@@ -343,6 +343,7 @@ public class IrServiceImpl implements IrService {
         if(irOp.isEmpty()){
             throw new RuntimeException("Sorry! Ir Not found");
         }
+
         InternalRequisition ir = irOp.get();
         ir.setIsProcessed(true);
         updateIrDto.getDetails().stream().forEach(uid->{
@@ -350,6 +351,15 @@ public class IrServiceImpl implements IrService {
             if(irdOp.isPresent()){
                 InternalRequisitionDetail ird = irdOp.get();
                 List<InternalRequisitionDetailWarehouse> irdwList = uid.getWarehouses().stream().map(uidw->{
+                    if(uidw.getFromWarehouseId()==null){
+                        throw new RuntimeException("Sorry! From Warehouse not selected");
+                    }
+                    if(uidw.getToWarehouseId()==null){
+                        throw new RuntimeException("Sorry! To Warehouse not selected");
+                    }
+                    if(uidw.getQty()==null){
+                        throw new RuntimeException("Sorry! Quantity Missing");
+                    }
                     InternalRequisitionDetailWarehouse irdw = new InternalRequisitionDetailWarehouse();
                     irdw.setFromWarehouse(new Warehouse(uidw.getFromWarehouseId()));
                     irdw.setToWarehouse(new Warehouse(uidw.getToWarehouseId()));

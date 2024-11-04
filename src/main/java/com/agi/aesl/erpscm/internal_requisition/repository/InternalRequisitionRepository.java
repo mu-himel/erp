@@ -24,7 +24,8 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             c.name as categoryName,
             count(ird.id) as itemsQty,
             ir.ir_status as status,
-            ir.delivery_date as deliveryDate
+            ir.delivery_date as deliveryDate,
+            ir.created_at as createdAt
         FROM internal_requisitions ir 
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN scm_item_categories c ON c.id = ir.category_id
@@ -67,7 +68,8 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             c.name as categoryName,
             count(ird.id) as itemsQty,
             ir.ir_status as status,
-            ir.delivery_date as deliveryDate
+            ir.delivery_date as deliveryDate,
+            ir.created_at as createdAt
         FROM internal_requisitions ir 
         LEFT JOIN acl_users e ON e.id = ir.requested_by_id
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
@@ -106,6 +108,7 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             count(ird.id) as itemsQty,
             ir.ir_status as status,
             ir.delivery_date as deliveryDate,
+            ir.created_at as createdAt,
             w.name as warehouse
         FROM internal_requisitions ir 
         LEFT JOIN acl_users e ON e.id = ir.requested_by_id
@@ -211,6 +214,8 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
         String getStatus();
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime getDeliveryDate();
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        LocalDateTime getCreatedAt();
         String getWarehouse();
     }
 }
