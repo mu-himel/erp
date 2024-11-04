@@ -102,6 +102,21 @@ public class ItemCategoryController extends BaseController{
         );
     }
 
+    @GetMapping("/inventory-control/main-categories/pages")
+    public ResponseEntity<?> getMainCategoryPage(
+            @RequestParam("warehouseId") Optional<Long> warehouseId,
+            @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId,
+            @RequestParam("name")  Optional<String> name,
+            @RequestParam("code") Optional<String> code,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+            ){
+        return new ResponseEntity<>(
+                categoryService.getCategories(warehouseId,warehouseStoreId,name,code,page,size),
+                HttpStatus.OK
+        );
+    }
+
     @GetMapping("/list")
     public ResponseEntity<?> getCategoryList(@RequestParam("storeId") Optional<Long> storeId,
                                             @RequestParam("categoryId")  Optional<Long> categoryId,
@@ -245,6 +260,22 @@ public class ItemCategoryController extends BaseController{
     ){
         return new ResponseEntity<>(
                 categoryService.getPendingCategories(token,warehouseId,warehouseStoreId,name,code),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/inventory-control/main-categories/pending/pages")
+    public ResponseEntity<?> getPendingCategories(
+            @AuthenticationPrincipal Jwt token,
+            Optional<Long> warehouseId,
+            Optional<Long> warehouseStoreId,
+            Optional<String> name,
+            Optional<String> code,
+            Optional<Integer> page,
+            Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                categoryService.getPendingCategories(token,warehouseId,warehouseStoreId,name,code,page,size),
                 HttpStatus.OK
         );
     }

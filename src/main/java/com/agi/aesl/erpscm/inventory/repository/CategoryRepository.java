@@ -97,6 +97,8 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             "GROUP BY ic.id ", nativeQuery = true)
     List<MainCategoriesInfo> findAllMainCategories(Long warehouseId,Long warehouseStoreId, String name, String code);
 
+    @Query(value = getMainCategoriesForInventoryControl,countQuery = countMainCategoriesForInventoryControl, nativeQuery = true)
+    Page<ItemCategoryInfo> findAllMainCategoriesForInventoryControl(Long warehouseId,Long warehouseStoreId, String name, String code,Pageable pageable);
     @Query(value = """
             SELECT ic.id as id, ic.name as name, ic.code as code,
             ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses,
@@ -213,6 +215,12 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
     List<ItemCategoryInfo> findAllPendingCategories(List<Long> warehouseId,
                                                     Long warehouseStoreId,
                                                     String name, String code);
+
+
+    @Query(value = getPendingMainCategories,countQuery = countPendingMainCategories,nativeQuery = true)
+    Page<ItemCategoryInfo> findAllPendingCategories(List<Long> warehouseId,
+                                                    Long warehouseStoreId,
+                                                    String name, String code,Pageable pageable);
 
     interface MainCategoriesInfo extends ItemCategoryInfo{
         Long getWarehouseId();

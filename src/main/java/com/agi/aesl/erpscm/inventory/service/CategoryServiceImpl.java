@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
+    private static final Integer PAGE_SIZE = 20;
     @Autowired
     private CategoryRepository categoryRepository;
 
@@ -495,6 +496,18 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    public Page<?> getCategories(Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name,
+                                 Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
+
+
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE));
+        return categoryRepository.findAllMainCategoriesForInventoryControl(
+                warehouseId.orElse(null),
+                warehouseStoreId.orElse(null),
+                name.orElse(null),code.orElse(null),pageable);
+    }
+
+    @Override
     public List<?> getCategoriesForInventoryControl(
                                                     Jwt token,
                                                     Optional<Long> warehouseId,
@@ -748,6 +761,26 @@ public class CategoryServiceImpl implements CategoryService {
         }
         return categoryRepository.findAllPendingCategories(warehouseIds,warehouseStoreId.orElse(null),
                 name.orElse(null),code.orElse(null));
+    }
+
+    @Override
+    public Page<?> getPendingCategories(Jwt token, Optional<Long> warehouseId,
+                                        Optional<Long> warehouseStoreId, Optional<String> name,
+                                        Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
+
+        claimResolver.setToken(token);
+        String uri="inventory-control/categories";
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else {
+            warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
+        Pageable pageable =PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
+        return categoryRepository.findAllPendingCategories(warehouseIds,warehouseStoreId.orElse(null),
+                name.orElse(null),code.orElse(null),pageable);
     }
 
     @Override
