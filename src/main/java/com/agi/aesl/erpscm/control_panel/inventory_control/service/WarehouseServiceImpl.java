@@ -60,9 +60,9 @@ public class WarehouseServiceImpl implements WarehouseService{
 
         warehouseRepository.save(warehouse);
 
-        if(warehouse.getId()!=null){
-            integrationWriterService.createWarehouse(token, warehouse);
-        }
+//        if(warehouse.getId()!=null){
+//            integrationWriterService.createWarehouse(token, warehouse);
+//        }
 
     }
 
