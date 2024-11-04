@@ -91,10 +91,10 @@ public class WarehouseServiceImpl implements WarehouseService{
         //     return warehouseStore;
         // }).collect(Collectors.toList()));
         warehouseRepository.save(newWarehouse);
-        if(newWarehouse.getId()!=null){
-            
-            integrationWriterService.updateWarehouse(token,oldName, newWarehouse);
-        }
+//        if(newWarehouse.getId()!=null){
+//
+//            integrationWriterService.updateWarehouse(token,oldName, newWarehouse);
+//        }
     }
 
     @Override
@@ -140,7 +140,7 @@ public class WarehouseServiceImpl implements WarehouseService{
         }
         warehouseOptional.ifPresent(warehouse -> {
             warehouse.setActive(false);
-            integrationWriterService.deleteWarehouse(token, warehouse.getName());
+//            integrationWriterService.deleteWarehouse(token, warehouse.getName());
         });
     }
 
