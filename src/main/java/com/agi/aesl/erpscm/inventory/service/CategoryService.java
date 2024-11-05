@@ -56,6 +56,8 @@ public interface CategoryService {
     void deleteCategory(Long id, Long warehouseId, Long storeId);
 
     List<?> getCategories(Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name, Optional<String> code);
+    Page<?> getCategories(Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name,
+                          Optional<String> code,Optional<Integer> page, Optional<Integer> size);
 
     List<?> getCategoriesForInventoryControl(Jwt token,Optional<Long> warehouse, Optional<Long> warehouseStore, Optional<String> name, Optional<String> code);
 
@@ -71,6 +73,17 @@ public interface CategoryService {
             Optional<Long> storeId,
             Optional<String> name,
             Optional<String> code);
+
+    Page<?> getSubCategoriesForInventoryControl(
+            Jwt token,
+            Optional<Long> categoryId,
+            Optional<Long> warehouseId,
+            Optional<Long> storeId,
+            Optional<String> name,
+            Optional<String> code,
+            Optional<Integer> page,
+            Optional<Integer> size
+            );
 
     String getNewCategoryCode();
 
@@ -91,11 +104,26 @@ public interface CategoryService {
                                  Optional<String> name,
                                  Optional<String> code);
 
+    Page<?> getPendingCategories(Jwt token, Optional<Long> warehouseId,
+                                 Optional<Long> warehouseStoreId,
+                                 Optional<String> name,
+                                 Optional<String> code,
+                                 Optional<Integer> page,
+                                 Optional<Integer> size
+
+    );
+
     List<?> getPendingSubCategoriesForInventoryControl(
             Jwt token,
             Optional<Long> categoryId, Optional<Long> warehouseId,
                                                        Optional<Long> storeId, Optional<String> name,
                                                        Optional<String> code);
+
+    Page<?> getPendingSubCategoriesForInventoryControl(
+            Jwt token,
+            Optional<Long> categoryId, Optional<Long> warehouseId,
+            Optional<Long> storeId, Optional<String> name,
+            Optional<String> code,Optional<Integer> page, Optional<Integer>size);
 
     void approveItemCategory(Jwt token, Long id, CategoryApproveRequestDto categoryApproveRequestDto);
 

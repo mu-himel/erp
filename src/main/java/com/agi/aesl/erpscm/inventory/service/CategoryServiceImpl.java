@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
+    private static final Integer PAGE_SIZE = 20;
     @Autowired
     private CategoryRepository categoryRepository;
 
@@ -495,6 +496,18 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    public Page<?> getCategories(Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name,
+                                 Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
+
+
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE));
+        return categoryRepository.findAllMainCategoriesForInventoryControl(
+                warehouseId.orElse(null),
+                warehouseStoreId.orElse(null),
+                name.orElse(null),code.orElse(null),pageable);
+    }
+
+    @Override
     public List<?> getCategoriesForInventoryControl(
                                                     Jwt token,
                                                     Optional<Long> warehouseId,
@@ -571,6 +584,37 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    public Page<?> getSubCategoriesForInventoryControl(Jwt token, Optional<Long> categoryId, Optional<Long> warehouseId, Optional<Long> storeId, Optional<String> name, Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
+        String uri="inventory-control/sub-categories";
+        List<Long> warehouseIds = new ArrayList<>();
+        List<Long> categoryIds = new ArrayList<>();
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> filterBy = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else{
+            warehouseIds = filterBy;
+        }
+
+        if(categoryId.isPresent()){
+            categoryIds.add(categoryId.get());
+        }else{
+            categoryIds = dataFilter.getCategoryIds();
+        }
+
+        return categoryRepository.findAllSubCategoriesForInventoryControl(
+                categoryIds,
+                warehouseIds,
+                storeId.orElse(null),
+                name.orElse(null),
+                code.orElse(null), pageable);
+    }
+
+    @Override
     public List<?> getPendingSubCategoriesForInventoryControl(
             Jwt token,
             Optional<Long> categoryId,
@@ -596,6 +640,29 @@ public class CategoryServiceImpl implements CategoryService {
                 storeId.orElse(null),
                 name.orElse(null),
                 code.orElse(null));
+    }
+
+    @Override
+    public Page<?> getPendingSubCategoriesForInventoryControl(Jwt token, Optional<Long> categoryId, Optional<Long> warehouseId, Optional<Long> storeId, Optional<String> name, Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
+        claimResolver.setToken(token);
+
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE) );
+        String uri = "inventory-control/sub-categories";
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else{
+            warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
+
+        return categoryRepository.findAllPendingSubCategoriesForInventoryControl(
+                categoryId.orElse(null),
+                warehouseIds,
+                storeId.orElse(null),
+                name.orElse(null),
+                code.orElse(null),pageable);
     }
 
     @Override
@@ -748,6 +815,26 @@ public class CategoryServiceImpl implements CategoryService {
         }
         return categoryRepository.findAllPendingCategories(warehouseIds,warehouseStoreId.orElse(null),
                 name.orElse(null),code.orElse(null));
+    }
+
+    @Override
+    public Page<?> getPendingCategories(Jwt token, Optional<Long> warehouseId,
+                                        Optional<Long> warehouseStoreId, Optional<String> name,
+                                        Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
+
+        claimResolver.setToken(token);
+        String uri="inventory-control/categories";
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else {
+            warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
+        Pageable pageable =PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
+        return categoryRepository.findAllPendingCategories(warehouseIds,warehouseStoreId.orElse(null),
+                name.orElse(null),code.orElse(null),pageable);
     }
 
     @Override

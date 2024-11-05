@@ -1299,6 +1299,8 @@ public class ItemServiceImpl implements ItemService {
         if(itemImportLogOp.isPresent()){
             ItemImportLog itemImportLog = itemImportLogOp.get();
             itemImportLog.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+            Item item = itemImportLog.getItem();
+            item.setActive(true);
         }
     }
 }

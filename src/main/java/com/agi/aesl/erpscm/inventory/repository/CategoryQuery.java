@@ -103,4 +103,85 @@ public interface CategoryQuery {
 
     String countSubCategoriesWithSearch="SELECT count(*) FROM (" + getSubCategoriesWithSearch +") p";
 
+    String getMainCategoriesForInventoryControl= """
+            SELECT ic.id as id, ic.name as name, ic.code as code,
+            ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses,
+            ic.cps_category_id as cpsCategoryId,
+            (SELECT COUNT(*) FROM scm_item_categories subCat 
+            LEFT JOIN scm_category_warehouse_stores subCws ON subCws.category_id=subCat.id
+            WHERE subCat.active=1 AND subCat.parent_category_id = ic.id
+            AND (:warehouseId IS NULL OR subCws.warehouse_id = :warehouseId)
+            AND (:warehouseStoreId IS NULL OR subCws.warehouse_store_id = :warehouseStoreId)
+            ) as subcategoryCount
+            FROM scm_item_categories ic
+            LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
+            WHERE ic.parent_category_id IS NULL AND ic.active=true AND ic.cps_category_id IS NOT NULL
+            AND ic.category_status IN ('APPROVED')
+            AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
+            AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
+            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
+            AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+            GROUP BY ic.id
+            """;
+    String countMainCategoriesForInventoryControl="SELECT COUNT(*) as total FROM ("+getMainCategoriesForInventoryControl+") as t";
+
+
+    String getPendingMainCategories = """
+            SELECT ic.id as id, ic.name as name, ic.code as code,
+            ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses,
+            ic.cps_category_id as cpsCategoryId,
+            (SELECT COUNT(*) FROM scm_item_categories subCat 
+            LEFT JOIN scm_category_warehouse_stores subCws ON subCws.category_id=subCat.id
+            WHERE subCat.active=0 AND subCat.parent_category_id = ic.id
+            AND (:warehouseId IS NULL OR subCws.warehouse_id = :warehouseId)
+            AND (:warehouseStoreId IS NULL OR subCws.warehouse_store_id = :warehouseStoreId)
+            ) as subcategoryCount
+            FROM scm_item_categories ic
+            LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
+            WHERE ic.parent_category_id IS NULL AND ic.active=false AND ic.category_status IN ('PENDING')
+            AND ic.cps_category_id IS NOT NULL
+            AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
+            AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
+            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
+            AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+            GROUP BY ic.id
+            """;
+
+    String countPendingMainCategories="SELECT COUNT(*) as total FROM ("+getPendingMainCategories+") as t";
+
+    String getSubCategoriesForInventoryControl="""
+            SELECT ic.id as id, ic.name as name, ic.code as code,
+            ipc.name as parentCategoryName, ipc.code as parentCategoryCode,
+            ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses
+            FROM scm_item_categories ic
+            LEFT JOIN scm_item_categories ipc ON ipc.id = ic.parent_category_id
+            LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
+            WHERE ic.parent_category_id IS NOT NULL AND ic.cps_category_id IS NOT NULL
+            AND ic.active=true
+            AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
+            AND (:storeId IS NULL OR cws.warehouse_store_id = :storeId)
+            AND (COALESCE(:parentCategoryId) IS NULL OR ic.parent_category_id IN (:parentCategoryId))
+            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
+            AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+            GROUP BY ic.id
+            """;
+    String countSubCategoriesForInventoryControl="SELECT COUNT(*) FROM ("+getSubCategoriesForInventoryControl+") as t";
+
+    String getPendingSubcategoriesForInventoryControl="""
+            SELECT ic.id as id, ic.name as name, ic.code as code,
+            ipc.name as parentCategoryName, ipc.code as parentCategoryCode,
+            ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses
+            FROM scm_item_categories ic
+            LEFT JOIN scm_item_categories ipc ON ipc.id = ic.parent_category_id
+            LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
+            WHERE ic.parent_category_id IS NOT NULL AND ic.cps_category_id IS NOT NULL
+            AND ic.active=false
+            AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
+            AND (:storeId IS NULL OR cws.warehouse_store_id = :storeId)
+            AND (:parentCategoryId IS NULL OR ic.parent_category_id = :parentCategoryId)
+            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
+            AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+            GROUP BY ic.id
+            """;
+    String countPendingSubCategoriesForInventoryControl="SELECT COUNT(*) FROM ("+getPendingSubcategoriesForInventoryControl+") as t";
 }
