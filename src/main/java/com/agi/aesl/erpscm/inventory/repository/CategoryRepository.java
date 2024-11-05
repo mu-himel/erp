@@ -144,6 +144,14 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             Long storeId,
             String name, String code);
 
+    @Query(value = getSubCategoriesForInventoryControl, countQuery = countSubCategoriesForInventoryControl,
+                nativeQuery = true)
+    Page<ItemCategoryInfo> findAllSubCategoriesForInventoryControl(
+            List<Long> parentCategoryId,
+            List<Long> warehouseId,
+            Long storeId,
+            String name, String code,Pageable pageable);
+
     @Query(value = """
             SELECT ic.id as id, ic.name as name, ic.code as code,
             ipc.name as parentCategoryName, ipc.code as parentCategoryCode,
@@ -165,6 +173,14 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             List<Long> warehouseId,
             Long storeId,
             String name, String code);
+
+    @Query(value = getPendingSubcategoriesForInventoryControl, countQuery = countPendingSubCategoriesForInventoryControl,
+            nativeQuery = true)
+    Page<ItemCategoryInfo> findAllPendingSubCategoriesForInventoryControl(
+            Long parentCategoryId,
+            List<Long> warehouseId,
+            Long storeId,
+            String name, String code,Pageable pageable);
 
     @Query(value = "SELECT ic.id as id, ic.name as name, ic.code as code,\n" +
             "            ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses\n" +

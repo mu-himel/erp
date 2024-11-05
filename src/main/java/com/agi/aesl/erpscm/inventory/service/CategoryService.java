@@ -74,6 +74,17 @@ public interface CategoryService {
             Optional<String> name,
             Optional<String> code);
 
+    Page<?> getSubCategoriesForInventoryControl(
+            Jwt token,
+            Optional<Long> categoryId,
+            Optional<Long> warehouseId,
+            Optional<Long> storeId,
+            Optional<String> name,
+            Optional<String> code,
+            Optional<Integer> page,
+            Optional<Integer> size
+            );
+
     String getNewCategoryCode();
 
     void deleteAttribute(Long categoryId, Long attributeId);
@@ -107,6 +118,12 @@ public interface CategoryService {
             Optional<Long> categoryId, Optional<Long> warehouseId,
                                                        Optional<Long> storeId, Optional<String> name,
                                                        Optional<String> code);
+
+    Page<?> getPendingSubCategoriesForInventoryControl(
+            Jwt token,
+            Optional<Long> categoryId, Optional<Long> warehouseId,
+            Optional<Long> storeId, Optional<String> name,
+            Optional<String> code,Optional<Integer> page, Optional<Integer>size);
 
     void approveItemCategory(Jwt token, Long id, CategoryApproveRequestDto categoryApproveRequestDto);
 

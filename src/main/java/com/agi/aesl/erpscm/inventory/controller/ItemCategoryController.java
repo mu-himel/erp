@@ -154,6 +154,25 @@ public class ItemCategoryController extends BaseController{
         );
     }
 
+    @GetMapping("/inventory-control/pages")
+    public ResponseEntity<?> getSubCategoriesForInventoryControl(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("categoryId")  Optional<Long> categoryId,
+            @RequestParam("warehouseId")  Optional<Long> warehouseId,
+            @RequestParam("warehouseStoreId")  Optional<Long> storeId,
+            @RequestParam("name")  Optional<String> name,
+            @RequestParam("code") Optional<String> code,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+    ){
+        return new ResponseEntity<>(
+                categoryService.getSubCategoriesForInventoryControl(
+                        token,
+                        categoryId,warehouseId,storeId, name,code,page,size),
+                HttpStatus.OK
+        );
+    }
+
     @GetMapping("/inventory-control/list/pending")
     public ResponseEntity<?> getPendingSubCategoryListForInventoryControl(
             @AuthenticationPrincipal Jwt token,
@@ -166,6 +185,25 @@ public class ItemCategoryController extends BaseController{
                 categoryService.getPendingSubCategoriesForInventoryControl(
                         token,
                         categoryId,warehouseId,storeId, name,code),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/inventory-control/pending")
+    public ResponseEntity<?> getPendingSubCategoryPendingForInventoryControl(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("categoryId")  Optional<Long> categoryId,
+            @RequestParam("warehouseId")  Optional<Long> warehouseId,
+            @RequestParam("warehouseStoreId")  Optional<Long> storeId,
+            @RequestParam("name")  Optional<String> name,
+            @RequestParam("code") Optional<String> code,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+            ){
+        return new ResponseEntity<>(
+                categoryService.getPendingSubCategoriesForInventoryControl(
+                        token,
+                        categoryId,warehouseId,storeId, name,code,page,size),
                 HttpStatus.OK
         );
     }
