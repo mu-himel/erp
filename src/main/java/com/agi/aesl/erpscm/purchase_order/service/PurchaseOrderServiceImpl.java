@@ -746,7 +746,12 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 //                            }).collect(Collectors.toList());
 //                    String[] summary = pqdi.getSummary().split(",");
                     prdr.setItemName(pqdi.getCsVendorDetail().getCsDetail().getIndentDetail().getItemAttribute());
-                    poRemoteReqDto.setWarehouse(new ReferenceObjectDto(pqdi.getWarehouse().getId()));
+                    Long warehouseId=pqdi.getCsVendorDetail().getCsDetail().getIndentDetail().getIndent()
+                                                .getSingleWarehouse().getId();
+                    if(warehouseId==null){
+                        warehouseId = pqdi.getCsVendorDetail().getCsDetail().getIndentDetail().getIndent().getWarehouse().getId();
+                    }
+                    poRemoteReqDto.setWarehouse(new ReferenceObjectDto(warehouseId));
 
                     poRemoteReqDto.setVendorId(pqdi.getCsVendorDetail().getVendorId());
                     poRemoteReqDto.setOfferId(pqdi.getCsVendorDetail().getPriceQuotation().getRemoteOfferId());
