@@ -12,7 +12,7 @@ public interface PoQuery {
             GROUP_CONCAT(DISTINCT po.id) as poIds,
             i.indent_no                      as indentNo,
             po.po_no as poNo,
-            (SELECT vendor_name FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
+            (SELECT MAX(vendor_name) FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
             CONCAT(c.name,'-',sc.name)       as categoryName,
             COALESCE((select count(*) from cs_details cd where cd.cs_id = csheet.id),0)  as itemQty,
             COALESCE((select count(*) from purchase_orders po2 where po2.cs_id = csheet.id), 0) as totalOrderQty,
@@ -39,7 +39,7 @@ public interface PoQuery {
                        WHERE cvah.cs_id=csheet.id
                        AND cvah.cs_status IN ('VERIFIED')
                    ) as poDate,
-                   (SELECT vendor_name FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
+                   (SELECT MAX(vendor_name) FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
                    GROUP_CONCAT(DISTINCT po.id) as poIds,
                    i.indent_no                      as indentNo,
                    po.po_no as poNo,
@@ -74,7 +74,7 @@ public interface PoQuery {
                        WHERE cvah.cs_id=csheet.id
                        AND cvah.cs_status IN ('VERIFIED')
                    ) as poDate,
-                   (SELECT vendor_name FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
+                   (SELECT MAX(vendor_name) FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
                    GROUP_CONCAT(DISTINCT po.id) as poIds,
                    i.indent_no                      as indentNo,
                    po.po_no as poNo,
@@ -109,7 +109,7 @@ public interface PoQuery {
                        WHERE cvah.cs_id=csheet.id
                        AND cvah.cs_status IN ('VERIFIED')
                    ) as poDate,
-                   (SELECT vendor_name FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
+                   (SELECT MAX(vendor_name) FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
                    GROUP_CONCAT(DISTINCT po.id) as poIds,
                    i.indent_no                      as indentNo,
                    po.po_no as poNo,
