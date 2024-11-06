@@ -98,6 +98,8 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
         String getIndentNo();
         CategoryInfo getCategory();
         CategoryInfo getSubCategory();
+        WarehouseInfo getSingleWarehouse();
+        WarehouseInfo getWarehouse();
     }
 
     interface CategoryInfo {
@@ -154,7 +156,10 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
     interface IndentDetailInfo {
         String getItemAttribute();
         Long getId();
+        IndentInfo getIndent();
     }
+
+
 
     interface PqDetailInfo {
         Long getPoId();
@@ -176,5 +181,9 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
 
         BigDecimal getVatAmount();
         BigDecimal getSubTotal();
+    }
+
+    interface WarehouseInfo{
+        Long getId();
     }
 }
