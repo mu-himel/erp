@@ -406,6 +406,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     public Map<String, Object> getPurchaseOrderDetail(Long csId) {
         // Need to update here cause now po verifing based on collection of po
         // first find poGroup from csId
+        System.out.println("HEREEEE "+ csId);
         Optional<PoGroup> poGroupOp = poGroupRepository.findById(csId);
         Map<String,Object> map = new HashMap<>();
         if(poGroupOp.isPresent()){
@@ -505,7 +506,11 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
                     termsAndConditions = pqTermAndConditionRepository.findAllByVendorIdAndPriceQuotationId(Long.parseLong(summary[1]),Long.parseLong(summary[16]));
 
+
                     String itemAttributeToMatch = (summary[12].trim()!="")? summary[10].trim()+" - "+ summary[12].trim() : summary[10].trim();
+                    System.out.println("brandName:"+summary[11].trim());
+                    System.out.println("itemAttributeToMatch:"+itemAttributeToMatch);
+                    System.out.println("subCat:"+indent.getSubCategory().getId());
                     Optional<Item> itemOp = itemService
                             .getByBrandAndAttributeName(summary[11].trim(),
                                     indent.getSubCategory().getId(),

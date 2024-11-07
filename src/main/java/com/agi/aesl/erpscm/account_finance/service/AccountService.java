@@ -8,6 +8,7 @@ import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomainService;
+import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -41,6 +42,7 @@ public interface AccountService extends VerificationDomainService {
     void updateAccount(Jwt token, String uri, Long id, LedgerAccountRequestDto ledgerAccountRequestDto);
 
     void createItemLedger(Item item, Warehouse warehouse, WarehouseStore warehouseStore);
+    void createItemLedger(ClaimResolver claimResolver, Item item, Warehouse warehouse, WarehouseStore warehouseStore);
 
     void review(Jwt token, Long id, ReviewDto reviewDto);
 

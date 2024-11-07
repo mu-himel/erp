@@ -1071,7 +1071,7 @@ public class ItemServiceImpl implements ItemService {
             }
         } else {
 
-            Optional<Item> itemExistByCode = itemRepository.findByCode(syncItemDetail.getCode());
+            Optional<Item> itemExistByCode = itemRepository.findByCode(item.getCode());
             if(itemExistByCode.isPresent()){
                 item = itemExistByCode.get();
                 List<ItemStock> stocks = item.getStocks();
@@ -1116,42 +1116,44 @@ public class ItemServiceImpl implements ItemService {
                         warehouseStore
                 )));
 //                item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+
+                if(itemExistByCode.isEmpty() && syncItemDetail.getAttributes()!=null && syncItemDetail.getAttributes().size()>0) {
+
+                    Item finalItem = item;
+                    item.setAttributes(syncItemDetail.getAttributes().stream().map(itemAttribute -> {
+
+                        itemAttribute.setId(null);
+                        itemAttribute.setItem(finalItem);
+                        return itemAttribute;
+                    }).collect(Collectors.toList()));
+                }
+
+                if(itemExistByCode.isEmpty() && syncItemDetail.getFunctionalUnits()!=null && syncItemDetail.getFunctionalUnits().size()>0) {
+                    Item finalItem = item;
+                    item.setItemFunctionalUnits(syncItemDetail.getFunctionalUnits().stream().map(itemFunctionalUnit -> {
+                        itemFunctionalUnit.setId(null);
+                        itemFunctionalUnit.setItem(finalItem);
+                        return itemFunctionalUnit;
+                    }).collect(Collectors.toList()));
+                }
+
+                itemRepository.save(item);
+
+                Optional<ItemImportLog> importLogExist = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseId);
+                if(importLogExist.isEmpty()) {
+                    ItemImportLog iil = new ItemImportLog();
+                    iil.setItem(item);
+                    iil.setWarehouse(warehouse);
+                    iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+                    itemImportLogRepository.save(iil);
+                }
+                accountService.setItemService(this);
+                accountService.createItemLedger(claimResolver,item,warehouse,warehouseStore);
             }
 
 
     
-            if(itemExistByCode.isEmpty() && syncItemDetail.getAttributes()!=null && syncItemDetail.getAttributes().size()>0) {
 
-                Item finalItem = item;
-                item.setAttributes(syncItemDetail.getAttributes().stream().map(itemAttribute -> {
-                    
-                    itemAttribute.setId(null);
-                    itemAttribute.setItem(finalItem);
-                    return itemAttribute;
-                }).collect(Collectors.toList()));
-            }
-
-            if(itemExistByCode.isEmpty() && syncItemDetail.getFunctionalUnits()!=null && syncItemDetail.getFunctionalUnits().size()>0) {
-                Item finalItem = item;
-                item.setItemFunctionalUnits(syncItemDetail.getFunctionalUnits().stream().map(itemFunctionalUnit -> {
-                    itemFunctionalUnit.setId(null);
-                    itemFunctionalUnit.setItem(finalItem);
-                    return itemFunctionalUnit;
-                }).collect(Collectors.toList()));
-            }
-
-            itemRepository.save(item);
-
-            Optional<ItemImportLog> importLogExist = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseId);
-            if(importLogExist.isEmpty()) {
-                ItemImportLog iil = new ItemImportLog();
-                iil.setItem(item);
-                iil.setWarehouse(warehouse);
-                iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
-                itemImportLogRepository.save(iil);
-            }
-            accountService.setItemService(this);
-            accountService.createItemLedger(item,warehouse,warehouseStore);
         }
         return item;
     }
