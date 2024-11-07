@@ -37,7 +37,16 @@ public interface CsDetailRepository extends JpaRepository<CsDetail, Long> {
                            pqd.warranty_duration as warrantyDuration,
                            pqd.warranty_unit as warrantyUnit,
                            csinfo.warehouse_id as warehouseId,
-                           csinfo.cvdId as cvdId
+                           csinfo.cvdId as cvdId,
+                           CASE WHEN pqd.extended_attributes IS NOT NULL THEN
+                                  (select csinfo.order_qty-COALESCE (SUM(pod.delivery_qty),0) FROM purchase_orders po
+                                LEFT JOIN purchase_order_details pod ON pod.purchase_order_id  = po.id
+                                WHERE vendor_id = csinfo.vendor_id  AND pod.item_name = CONCAT(pqd.brand_name,'-',pqd.item_attribute,'-',pqd.extended_attributes))
+                                ELSE
+                                (select csinfo.order_qty-COALESCE (SUM(pod.delivery_qty),0) FROM purchase_orders po
+                                LEFT JOIN purchase_order_details pod ON pod.purchase_order_id  = po.id
+                                WHERE vendor_id = csinfo.vendor_id  AND pod.item_name = CONCAT(pqd.brand_name,'-',pqd.item_attribute))
+                                END as remainingQty
                            FROM price_quotation_details pqd
                            LEFT JOIN price_quotation_summary pqs ON pqs.price_quotation_id = pqd.price_quotation_id
                            LEFT JOIN (SELECT i.warehouse_id, cvd.id as cvdId, idd.item_attribute, cvd.price_quotation_id, cvd.transaction_type,cvd.discount_amount, cvd.order_qty ,
@@ -66,6 +75,7 @@ public interface CsDetailRepository extends JpaRepository<CsDetail, Long> {
         String getTransactionType();
         BigDecimal getDiscountAmount();
         BigDecimal getOrderQty();
+        BigDecimal getRemainingQty();
         Long getDuration();
         String getDurationUnit();
         Boolean getIsAitAdded();

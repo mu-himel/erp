@@ -16,6 +16,7 @@ public class PoDetailReqDto {
     private String itemName;
     private BigDecimal unitPrice;
     private BigDecimal deliveryQty;
+    private BigDecimal remainingQty;
     private LocalDate deliveryDate;
     private String transactionType;
     private String estimatedDeliveryDays;
