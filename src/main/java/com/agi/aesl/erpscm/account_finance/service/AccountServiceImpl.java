@@ -490,6 +490,7 @@ public class AccountServiceImpl implements AccountService{
     @Override
     @Transactional
     public void createItemLedger(Item item, Warehouse warehouse, WarehouseStore warehouseStore) {
+
         LedgerAccount ledgerAccount = new LedgerAccount();
         ledgerAccount.setItem(item);
         ledgerAccount.setAccountNo(getNextAccountNo());
@@ -498,6 +499,17 @@ public class AccountServiceImpl implements AccountService{
         ledgerAccount.setWarehouseStore(warehouseStore);
         integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
 //        accountRepository.save(ledgerAccount);
+    }
+
+    @Override
+    public void createItemLedger(ClaimResolver claimResolver, Item item, Warehouse warehouse, WarehouseStore warehouseStore) {
+        LedgerAccount ledgerAccount = new LedgerAccount();
+        ledgerAccount.setItem(item);
+        ledgerAccount.setAccountNo(getNextAccountNo());
+        ledgerAccount.setAccountStatus(AccountType.PENDING);
+        ledgerAccount.setWarehouse(warehouse);
+        ledgerAccount.setWarehouseStore(warehouseStore);
+        integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
     }
 
     @Override

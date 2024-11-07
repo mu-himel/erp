@@ -165,7 +165,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
         HttpEntity<RemoteLedgerAccDto> payload = new HttpEntity<>(remoteLedgerAccountDto,headers);
         Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
-        System.out.println(ledgerItemCreateEndpoint);
+
         if(serviceExist.isPresent()) {
             networkService.post(ledgerItemCreateEndpoint, payload, Void.class);
         }else{
