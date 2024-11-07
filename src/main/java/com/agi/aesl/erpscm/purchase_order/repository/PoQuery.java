@@ -173,6 +173,7 @@ public interface PoQuery {
                 pqs2.is_vat_added as isVatAdded,
                 pod.delivery_qty as deliveryQty,
                 pod.item_name as itemName,
+                pod.remaining_qty as remainingQty,
                 pod.unit_price as unitPrice,
                 pod.delivery_charge as deliveryCharge,
                 pod.vat_amount as vatAmount,

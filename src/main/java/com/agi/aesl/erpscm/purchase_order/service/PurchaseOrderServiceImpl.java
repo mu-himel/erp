@@ -488,6 +488,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     detailMap.put("unitPrice", pqDetail.getUnitPrice());
                     detailMap.put("deliveryCharge", pqDetail.getDeliveryCharge());
                     detailMap.put("deliveryQty", pqDetail.getDeliveryQty());
+                    detailMap.put("remainingQty", pqDetail.getRemainingQty());
                     detailMap.put("transactionType", pqDetail.getTransactionType());
                     detailMap.put("totalPrice",  pqDetail.getTotalPrice());
                     detailMap.put("vatAmount",  pqDetail.getVatAmount());
