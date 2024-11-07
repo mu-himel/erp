@@ -662,7 +662,11 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     private void setVAHistory(PoGroup po, PurchaseOrderStatus status){
         PoVerificationApprovalHistory poVaHistory = new PoVerificationApprovalHistory();
         poVaHistory.setPo(po);
-        poVaHistory.setEmployee(new Employee(po.getNextVerifierId()));
+        if(status.equals(PurchaseOrderStatus.VERIFIED)) {
+            poVaHistory.setEmployee(new Employee(po.getNextVerifierId()));
+        }else if(status.equals(PurchaseOrderStatus.APPROVED)){
+            poVaHistory.setEmployee(new Employee(po.getNextApproverId()));
+        }
         poVaHistory.setPoStatus(status);
         poVaHistoryRepository.save(poVaHistory);
     }
@@ -753,8 +757,12 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 //                            }).collect(Collectors.toList());
 //                    String[] summary = pqdi.getSummary().split(",");
                     prdr.setItemName(pqdi.getCsVendorDetail().getCsDetail().getIndentDetail().getItemAttribute());
-                    Long warehouseId=pqdi.getCsVendorDetail().getCsDetail().getIndentDetail().getIndent()
-                                                .getSingleWarehouse().getId();
+                    Long warehouseId=null;
+                    if(pqdi.getCsVendorDetail().getCsDetail().getIndentDetail().getIndent()
+                            .getSingleWarehouse()!=null) {
+                        warehouseId = pqdi.getCsVendorDetail().getCsDetail().getIndentDetail().getIndent()
+                                .getSingleWarehouse().getId();
+                    }
                     if(warehouseId==null){
                         warehouseId = pqdi.getCsVendorDetail().getCsDetail().getIndentDetail().getIndent().getWarehouse().getId();
                     }
