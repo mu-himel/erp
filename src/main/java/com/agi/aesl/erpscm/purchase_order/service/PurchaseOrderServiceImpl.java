@@ -224,6 +224,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 pod.setCsVendorDetail(new CsVendorDetail(poDetailReqDto.getCsVendorDetail().getId()));
                 pod.setDeliveryDate(poDetailReqDto.getDeliveryDate());
                 pod.setDeliveryQty(poDetailReqDto.getDeliveryQty());
+                pod.setRemainingQty(poDetailReqDto.getRemainingQty());
                 pod.setDeliveryCharge(poDetailReqDto.getDeliveryCharge());
                 pod.setPurchaseOrder(po);
                 pod.setWarehouse(new Warehouse(poDetailReqDto.getWarehouse().getId()));

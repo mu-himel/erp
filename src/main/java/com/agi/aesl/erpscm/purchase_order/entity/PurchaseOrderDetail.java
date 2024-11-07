@@ -29,6 +29,7 @@ public class PurchaseOrderDetail {
 
     private BigDecimal unitPrice;
     private BigDecimal deliveryQty;
+    private BigDecimal remainingQty;
 
     private LocalDate deliveryDate;
 
