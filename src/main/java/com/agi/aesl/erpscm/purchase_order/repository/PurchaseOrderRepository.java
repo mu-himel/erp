@@ -86,6 +86,7 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
         PurchaseOrderStatus getStatus();
         List<POD> getPurchaseOrderDetails();
         Employee getRequestedBy();
+        String getDeliveryChargeType();
     }
 
     interface CsInfo {
@@ -114,6 +115,11 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
         LocalDate getDeliveryDate();
 
         BigDecimal getDeliveryQty();
+        BigDecimal getDeliveryCharge();
+        BigDecimal getVatAmount();
+        BigDecimal getVatPercent();
+        BigDecimal getTotalPrice();
+        BigDecimal getSubTotal();
         Warehouse getWarehouse();
         CsVendorDetailInfo getCsVendorDetail();
     }

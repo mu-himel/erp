@@ -1090,6 +1090,15 @@ public class ItemServiceImpl implements ItemService {
                         if(s.getWarehouse().getId().equals(warehouseId)){
                             warehouseExist=true;
                         }
+                        Optional<ItemImportLog> importLogExist = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),s.getWarehouse().getId());
+                        if(importLogExist.isPresent()) {
+                            ItemImportLog _iil = importLogExist.get();
+                            ItemImportLog iil = new ItemImportLog();
+                            iil.setItem(_iil.getItem());
+                            iil.setWarehouse(warehouse);
+                            iil.setItemInactiveStatus(_iil.getItemInactiveStatus());
+                            itemImportLogRepository.save(iil);
+                        }
                     }
                     if(!warehouseExist){
                         stocks.add(new ItemStock(
@@ -1102,6 +1111,8 @@ public class ItemServiceImpl implements ItemService {
                         item.setStocks(stocks);
                     }
                 }
+
+
             }else{
                 item.setItemUnit(syncItemDetail.getItemUnit());
                 item.setManufacturer(syncItemDetail.getManufacturer());
@@ -1297,12 +1308,13 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public void approveItemFromAcc(Long id, Long warehouseId) {
-        Optional<ItemImportLog> itemImportLogOp = itemImportLogRepository.findByItemIdAndWarehouseId(id,warehouseId);
-        if(itemImportLogOp.isPresent()){
-            ItemImportLog itemImportLog = itemImportLogOp.get();
-            itemImportLog.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
-            Item item = itemImportLog.getItem();
-            item.setActive(true);
+        List<ItemImportLog> itemImportLogs = itemImportLogRepository.findByItemId(id);
+        if(!itemImportLogs.isEmpty()){
+            for(ItemImportLog iil : itemImportLogs) {
+                iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+                Item item = iil.getItem();
+                item.setActive(true);
+            }
         }
     }
 }

@@ -80,7 +80,7 @@ public interface ItemQuery {
                         LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id 
                         LEFT JOIN scm_item_stocks s ON s.item_id = i.id 
                          WHERE i.active=0 
-                        AND s.warehouse_id IN (:warehouseId) 
+                        AND (s.warehouse_id IN (:warehouseId) AND siil.warehouse_id IN (:warehouseId))
                         AND s.warehouse_store_id = :warehouseStoreId 
                            AND (:name IS NULL OR i.name LIKE concat(:name,'%')) 
                            AND (:code IS NULL OR i.code LIKE concat(:code,'%')) 

@@ -1,15 +1,16 @@
 package com.agi.aesl.erpscm.product_requirements.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 import com.agi.aesl.erpscm.demand.service.DemandService;
+import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
+import com.agi.aesl.erpscm.product_requirements.dto.response.PrItemInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -99,11 +100,45 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
 
     @Override
     public List<?> getAllProductRequirementView(Optional<Long> categoryId, Optional<Long> subCategoryId) {
-        List<?> result = productRequirementRepository.getAllProductRequirementView(
+        List<ProductRequirementRepository.ProductRequirementViewInfoV2> result = productRequirementRepository.getAllProductRequirementView(
             categoryId.orElseThrow(()-> new RuntimeException("Sorry! Category should not empty")),
             subCategoryId.orElseThrow(()->new RuntimeException("Sorry! Sub Category should not empty"))
         );
-        return result;
+
+
+
+
+        Map<String, PrItemInfo> map = new HashMap<>();
+
+//        List<ItemInfo> itemList = new ArrayList<>();
+        for(ProductRequirementRepository.ProductRequirementViewInfoV2 res: result){
+            if(map.containsKey(res.getBrandName()+" - "+res.getItemName())){
+                PrItemInfo itemInfo = (PrItemInfo)map.get(res.getBrandName()+" - "+res.getItemName());
+                PrItemInfo.PrWarehouseInfo warehouseInfo=new PrItemInfo.PrWarehouseInfo(res.getWarehouseIds(),
+                        res.getWarehouses(),res.getCurrentStock(),res.getSafetytStock(),res.getPrQty(),
+                        res.getTransitQty(),res.getItemsQty());
+                List<PrItemInfo.PrWarehouseInfo> warehouses = itemInfo.getWarehouses();
+                itemInfo.setProductRequirementIds(res.getProductRequirementsIds());
+                itemInfo.setPrQty(itemInfo.getPrQty().add(res.getPrQty()));
+                itemInfo.setDaysRemain(res.getDaysRemain());
+                warehouses.add(warehouseInfo);
+            }else{
+
+                List<PrItemInfo.PrWarehouseInfo> warehouseInfos= new ArrayList<>();
+                PrItemInfo.PrWarehouseInfo warehouseInfo=new PrItemInfo.PrWarehouseInfo(res.getWarehouseIds(),
+                        res.getWarehouses(),res.getCurrentStock(),res.getSafetytStock(),res.getPrQty(),
+                        res.getTransitQty(),res.getItemsQty());
+                warehouseInfos.add(warehouseInfo);
+                PrItemInfo itemInfo  = new PrItemInfo(res.getProductRequirementsIds(),res.getBrandName(),
+                        res.getCategoryName(),res.getSubCategoryName(),
+                        res.getItemName(),res.getPrQty(),warehouseInfos);
+                itemInfo.setDaysRemain(res.getDaysRemain());
+                itemInfo.setBrandId(res.getBrandId());
+                itemInfo.setPriorityDate(res.getDemandDeadline());
+                map.put(res.getBrandName()+" - "+res.getItemName(),itemInfo);
+            }
+        }
+        return map.values().stream().toList();
     }
 
     @Override

@@ -745,11 +745,17 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             poRemoteReqDto.setPoDate(po.getCreatedAt().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
             poRemoteReqDto.setCategoryCode(po.getCs().getIndent().getSubCategory().getCode());
             poRemoteReqDto.setTenderNo(po.getCs().getIndent().getIndentNo());
+            poRemoteReqDto.setDeliveryChargeType(po.getDeliveryChargeType());
             poRemoteReqDto.setDeliveryDate(po.getPoDate().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
             po.getPurchaseOrderDetails().stream().forEach(pqdi->{
 //                if(po.getId().equals(pqdi.get)){
                     PoRemoteDetailReqDto prdr = new PoRemoteDetailReqDto();
-
+                    prdr.setWarehouse(new ReferenceObjectDto(pqdi.getWarehouse().getId()));
+                    prdr.setDeliveryCharge(pqdi.getDeliveryCharge());
+                    prdr.setVatAmount(pqdi.getVatAmount());
+                    prdr.setVatPercent(pqdi.getVatPercent());
+                    prdr.setSubTotal(pqdi.getSubTotal());
+                    prdr.setTotalPrice(pqdi.getTotalPrice());
                     prdr.setItemQty(pqdi.getDeliveryQty());
 //                    List<ItemInfo> items = pqdi.getCsVendorDetail().getPriceQuotation().getQuotationDetails().stream().map(
 //                            q->{
@@ -766,7 +772,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     if(warehouseId==null){
                         warehouseId = pqdi.getCsVendorDetail().getCsDetail().getIndentDetail().getIndent().getWarehouse().getId();
                     }
-                    poRemoteReqDto.setWarehouse(new ReferenceObjectDto(warehouseId));
+
 
                     poRemoteReqDto.setVendorId(pqdi.getCsVendorDetail().getVendorId());
                     poRemoteReqDto.setOfferId(pqdi.getCsVendorDetail().getPriceQuotation().getRemoteOfferId());

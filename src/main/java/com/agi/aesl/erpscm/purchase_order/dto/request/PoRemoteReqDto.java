@@ -15,6 +15,7 @@ public class PoRemoteReqDto {
     private String categoryCode;
     private Long deliveryDate;
     private Long offerId;
-    private ReferenceObjectDto warehouse;
+    private String deliveryChargeType;
+//    private ReferenceObjectDto warehouse;
     private List<PoRemoteDetailReqDto> orderDetails;
 }
