@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 @Data
 @NoArgsConstructor
@@ -15,9 +16,8 @@ public class PrItemInfo {String brandName;String categoryName; String subCategor
     Long brandId;
     Long daysRemain;
     LocalDateTime priorityDate;
-    public record PrWarehouseInfo(String warehouseIds,String warehouseName, BigDecimal currentStock,
-                         Long safetyStock, BigDecimal prQty, Long transitQty, BigDecimal itemQty){}
-    public List<PrWarehouseInfo> warehouses;
+
+    public List<PrWarehouseInfo> warehouses=new ArrayList<>();
 
     public PrItemInfo(String productRequirementIds,String brandName, String categoryName, String subCategoryName, String itemName, BigDecimal prQty, List<PrWarehouseInfo> warehouses) {
         if(this.productRequirementIds!=null){
@@ -34,11 +34,29 @@ public class PrItemInfo {String brandName;String categoryName; String subCategor
         this.warehouses = warehouses;
     }
 
+    public PrItemInfo(String productRequirementIds,String brandName, String categoryName, String subCategoryName, String itemName, BigDecimal prQty) {
+        if(this.productRequirementIds!=null){
+            this.productRequirementIds = this.getProductRequirementIds().concat(","+productRequirementIds);
+        }else{
+            this.productRequirementIds=productRequirementIds;
+        }
+
+        this.brandName = brandName;
+        this.categoryName = categoryName;
+        this.subCategoryName = subCategoryName;
+        this.itemName = itemName;
+        this.prQty = prQty;
+    }
+
     public void setProductRequirementIds(String productRequirementIds) {
         if(this.productRequirementIds!=null){
             this.productRequirementIds = this.getProductRequirementIds().concat(","+productRequirementIds);
         }else{
             this.productRequirementIds=productRequirementIds;
         }
+    }
+
+    public void setWarehouses(PrWarehouseInfo warehouse) {
+        this.warehouses.add(warehouse);
     }
 }

@@ -11,6 +11,7 @@ import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 import com.agi.aesl.erpscm.demand.service.DemandService;
 import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
 import com.agi.aesl.erpscm.product_requirements.dto.response.PrItemInfo;
+import com.agi.aesl.erpscm.product_requirements.dto.response.PrWarehouseInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -112,30 +113,45 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
 
 //        List<ItemInfo> itemList = new ArrayList<>();
         for(ProductRequirementRepository.ProductRequirementViewInfoV2 res: result){
-            if(map.containsKey(res.getBrandName()+" - "+res.getItemName())){
-                PrItemInfo itemInfo = (PrItemInfo)map.get(res.getBrandName()+" - "+res.getItemName());
-                PrItemInfo.PrWarehouseInfo warehouseInfo=new PrItemInfo.PrWarehouseInfo(res.getWarehouseIds(),
+            String _key=res.getBrandName()+" - "+res.getItemName();
+            if(map.containsKey(_key)){
+                PrItemInfo itemInfo = map.get(_key);
+                PrWarehouseInfo warehouseInfo= new PrWarehouseInfo(res.getWarehouseIds(),
                         res.getWarehouses(),res.getCurrentStock(),res.getSafetytStock(),res.getPrQty(),
                         res.getTransitQty(),res.getItemsQty());
-                List<PrItemInfo.PrWarehouseInfo> warehouses = itemInfo.getWarehouses();
+                List<PrWarehouseInfo> warehouses = itemInfo.getWarehouses();
+                List<PrWarehouseInfo> _warehouses = new ArrayList<>();
+                for(PrWarehouseInfo w: warehouses){
+                    if(w.getWarehouseIds().equals(res.getWarehouseIds())){
+                        w.setPrQty(w.getPrQty().add(res.getPrQty()));
+                    }else{
+                        _warehouses.add(warehouseInfo);
+
+                    }
+                }
+                _warehouses.stream().forEach(w->{
+                    itemInfo.setWarehouses(warehouseInfo);
+                });
                 itemInfo.setProductRequirementIds(res.getProductRequirementsIds());
                 itemInfo.setPrQty(itemInfo.getPrQty().add(res.getPrQty()));
                 itemInfo.setDaysRemain(res.getDaysRemain());
-                warehouses.add(warehouseInfo);
+//                warehouses.add(warehouseInfo);
             }else{
 
-                List<PrItemInfo.PrWarehouseInfo> warehouseInfos= new ArrayList<>();
-                PrItemInfo.PrWarehouseInfo warehouseInfo=new PrItemInfo.PrWarehouseInfo(res.getWarehouseIds(),
+//                List<PrWarehouseInfo> warehouseInfos= new ArrayList<>();
+                PrWarehouseInfo warehouseInfo=new PrWarehouseInfo(res.getWarehouseIds(),
                         res.getWarehouses(),res.getCurrentStock(),res.getSafetytStock(),res.getPrQty(),
                         res.getTransitQty(),res.getItemsQty());
-                warehouseInfos.add(warehouseInfo);
+//                warehouseInfos.add(warehouseInfo);
+
                 PrItemInfo itemInfo  = new PrItemInfo(res.getProductRequirementsIds(),res.getBrandName(),
                         res.getCategoryName(),res.getSubCategoryName(),
-                        res.getItemName(),res.getPrQty(),warehouseInfos);
+                        res.getItemName(),res.getPrQty());
+                itemInfo.setWarehouses(warehouseInfo);
                 itemInfo.setDaysRemain(res.getDaysRemain());
                 itemInfo.setBrandId(res.getBrandId());
                 itemInfo.setPriorityDate(res.getDemandDeadline());
-                map.put(res.getBrandName()+" - "+res.getItemName(),itemInfo);
+                map.put(_key,itemInfo);
             }
         }
         return map.values().stream().toList();

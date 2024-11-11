@@ -274,7 +274,7 @@ public interface ProductRequirementQuery {
                                     SELECT pr.id as pr_id,dd.request_quantity,COALESCE(dd.pr_qty,0) as pr_qty,dd.id,
                                     d.warehouse_id ,
                                            CASE WHEN cb.id IS NOT NULL THEN
-                                              GROUP_CONCAT(cb.name,' ',TRIM(dda.attribute_type),' ',TRIM(dda.attribute_value) , ' ',TRIM(dda.attribute_unit) separator ' - ')
+                                              CONCAT(TRIM(cb.name),' - ',GROUP_CONCAT(TRIM(dda.attribute_type),' ',TRIM(dda.attribute_value) , ' ',TRIM(dda.attribute_unit) separator ' - '))
                                            ELSE
                                               GROUP_CONCAT(TRIM(dda.attribute_type),' ',TRIM(dda.attribute_value) , ' ',TRIM(dda.attribute_unit) separator ' - ')
                                            END as demand_attributes
@@ -293,7 +293,7 @@ public interface ProductRequirementQuery {
 
             FROM (
                     SELECT i.id,i.stock_threshold_qty,
-                    CONCAT(TRIM(cb2.name),' ',GROUP_CONCAT(TRIM(ia.attribute_type),' ',TRIM(ia.attribute_value) , ' ',TRIM(ia.attribute_unit) ORDER BY ia.id separator ' - ')) iattrs
+                    CONCAT(TRIM(cb2.name),' - ',GROUP_CONCAT(TRIM(ia.attribute_type),' ',TRIM(ia.attribute_value) , ' ',TRIM(ia.attribute_unit) ORDER BY ia.id separator ' - ')) iattrs
                     FROM scm_item_attributes ia 
                     LEFT JOIN scm_items i ON i.id = ia.item_id 
                     LEFT JOIN scm_category_brands cb2 ON cb2.id = i.brand_id 

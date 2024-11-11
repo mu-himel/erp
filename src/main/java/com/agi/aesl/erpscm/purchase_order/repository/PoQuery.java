@@ -4,11 +4,7 @@ public interface PoQuery {
     String getPendingPOs= """
             SELECT 
             po.po_group_id as id,
-            (select MAX(cvah.verification_date) 
-                FROM cs_verification_approval_histories cvah 
-                WHERE cvah.cs_id=csheet.id 
-                AND cvah.cs_status IN ('APPROVED','VERIFIED')
-            ) as poDate,
+            cpo.po_date as poDate,
             GROUP_CONCAT(DISTINCT po.id) as poIds,
             i.indent_no                      as indentNo,
             po.po_no as poNo,
@@ -34,11 +30,7 @@ public interface PoQuery {
     String getPendingVerificationPOs = """
             SELECT
                    cpo.id as id,
-                   (select MAX(cvah.verification_date)
-                       FROM cs_verification_approval_histories cvah
-                       WHERE cvah.cs_id=csheet.id
-                       AND cvah.cs_status IN ('VERIFIED')
-                   ) as poDate,
+                   cpo.po_date as poDate,
                    (SELECT MAX(vendor_name) FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
                    GROUP_CONCAT(DISTINCT po.id) as poIds,
                    i.indent_no                      as indentNo,
@@ -69,11 +61,7 @@ public interface PoQuery {
     String getPendingApprovalPOs= """
             SELECT
                    cpo.id as id,
-                   (select MAX(cvah.verification_date)
-                       FROM cs_verification_approval_histories cvah
-                       WHERE cvah.cs_id=csheet.id
-                       AND cvah.cs_status IN ('VERIFIED')
-                   ) as poDate,
+                   cpo.po_date as poDate,
                    (SELECT MAX(vendor_name) FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
                    GROUP_CONCAT(DISTINCT po.id) as poIds,
                    i.indent_no                      as indentNo,
@@ -104,11 +92,7 @@ public interface PoQuery {
     String getClosedPOs= """
          SELECT
                    cpo.id as id,
-                   (select MAX(cvah.verification_date)
-                       FROM cs_verification_approval_histories cvah
-                       WHERE cvah.cs_id=csheet.id
-                       AND cvah.cs_status IN ('VERIFIED')
-                   ) as poDate,
+                   cpo.po_date as poDate,
                    (SELECT MAX(vendor_name) FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
                    GROUP_CONCAT(DISTINCT po.id) as poIds,
                    i.indent_no                      as indentNo,

@@ -310,7 +310,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         AppliedVADto vaResult = verificationService.applyVerifyApprovalProcess(poGroup, DomainType.PO, PurchaseOrderStatus.APPROVED.toString(),
                 uri, "CATEGORY", ids, null);
         if(vaResult.getVerifiers().isEmpty() && vaResult.getPanels().isEmpty()){
-            poGroup.setStatus(PurchaseOrderStatus.COMPLETED.toString());
+            throw new RuntimeException("Sorry! PO generation required Verify or Approval process");
         }
     }
 
