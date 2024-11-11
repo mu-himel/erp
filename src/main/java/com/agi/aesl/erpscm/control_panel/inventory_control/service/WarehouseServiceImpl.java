@@ -152,7 +152,8 @@ public class WarehouseServiceImpl implements WarehouseService{
 
     @Override
     public Optional<Warehouse> getWarehouseByName(String warehouseName) {
-        return warehouseRepository.findByName(warehouseName);
+        System.out.printf("HERE:" +warehouseName.trim());
+        return warehouseRepository.findByName(warehouseName.trim());
     }
     
 }

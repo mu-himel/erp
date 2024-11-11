@@ -26,10 +26,7 @@ import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.price_quotation.entity.PqTermsAndCondition;
 import com.agi.aesl.erpscm.price_quotation.repository.PqRepository;
 import com.agi.aesl.erpscm.price_quotation.repository.PqTermAndConditionRepository;
-import com.agi.aesl.erpscm.purchase_order.dto.request.PoDetailReqDto;
-import com.agi.aesl.erpscm.purchase_order.dto.request.PoRemoteDetailReqDto;
-import com.agi.aesl.erpscm.purchase_order.dto.request.PoRemoteReqDto;
-import com.agi.aesl.erpscm.purchase_order.dto.request.PurchaseRequestDto;
+import com.agi.aesl.erpscm.purchase_order.dto.request.*;
 import com.agi.aesl.erpscm.purchase_order.entity.PoGroup;
 import com.agi.aesl.erpscm.purchase_order.entity.PoVerificationApprovalHistory;
 import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
@@ -687,7 +684,16 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             po.getPurchaseOrderDetails().stream().forEach(pqdi->{
 //                if(po.getId().equals(pqdi.get)){
                     PoRemoteDetailReqDto prdr = new PoRemoteDetailReqDto();
-                    prdr.setWarehouse(new ReferenceObjectDto(pqdi.getWarehouse().getId()));
+//                    prdr.setWarehouse(new ReferenceObjectDto(pqdi.getWarehouse().getId()));
+                    List<PoRemoteDeliveryDetailDto> prdds = new ArrayList<>();
+                    pqdi.getWarehouseDetailList().stream().forEach(wd->{
+                        PoRemoteDeliveryDetailDto prdd = new PoRemoteDeliveryDetailDto();
+                        prdd.setItemQty(wd.getQty());
+                        prdd.setDeliveryCharge(wd.getDeliveryCharge());
+                        prdd.setWarehouse(new ReferenceObjectDto(wd.getWarehouse().getId()));
+                        prdds.add(prdd);
+                    });
+                    prdr.setDeliveryDetails(prdds);
                     prdr.setDeliveryCharge(pqdi.getDeliveryCharge());
                     prdr.setVatAmount(pqdi.getVatAmount());
                     prdr.setVatPercent(pqdi.getVatPercent());

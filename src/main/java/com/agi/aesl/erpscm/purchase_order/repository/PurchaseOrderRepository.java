@@ -7,6 +7,7 @@ import com.agi.aesl.erpscm.indent.repository.IndentRepository;
 import com.agi.aesl.erpscm.price_quotation.entity.PriceQuotationDetail;
 import com.agi.aesl.erpscm.price_quotation.repository.PqQuery;
 import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
+import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrderWarehouseDetail;
 import com.agi.aesl.erpscm.purchase_order.enums.PurchaseOrderStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.data.domain.Page;
@@ -120,7 +121,8 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
         BigDecimal getVatPercent();
         BigDecimal getTotalPrice();
         BigDecimal getSubTotal();
-        Warehouse getWarehouse();
+//        Warehouse getWarehouse();
+        List<PurchaseOrderWarehouseDetail> getWarehouseDetailList();
         CsVendorDetailInfo getCsVendorDetail();
     }
 
