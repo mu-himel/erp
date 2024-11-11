@@ -228,83 +228,20 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 pod.setDeliveryCharge(poDetailReqDto.getDeliveryCharge());
                 pod.setPurchaseOrder(po);
                 pod.setWarehouse(new Warehouse(poDetailReqDto.getWarehouse().getId()));
+                pod.setWarehouseDetailList(poDetailReqDto.getWarehouseDetailList().stream().map(wd->{
+                    wd.setPurchaseOrderDetail(pod);
+                    return wd;
+                }).collect(Collectors.toList()));
+
                 pods.add(pod);
                 ids.add(poDetailReqDto.getCategoryId().toString());
                 ids.add(poDetailReqDto.getSubCategoryId().toString());
-            }
 
+            }
 
             po.setPurchaseOrderDetails(pods);
             po.setStatus(PurchaseOrderStatus.PENDING);
             purchaseOrders.add(po);
-//            List<CsRepository.PotentialPoListItem> poListItems = csRepository.getPotentialPoListFromCs(cs.getId());
-//            int i=1;
-//            for(CsRepository.PotentialPoListItem pol : poListItems){
-//                if(pol.getDeliveryDate()!=null){
-//                    PurchaseOrder vPo = new PurchaseOrder();
-//                    vPo.setCs(cs);
-//                    vPo.setPoDate(pol.getDeliveryDate());
-//                    vPo.setVendorId(pol.getVendorId());
-//
-//                    vPo.setPoNo(generatePoNo(cs, i));
-//                    if(cs.getNextApproverId()!=null){
-//                        vPo.setRequestedBy(new Employee(cs.getNextApproverId()));
-//                    }else{
-//                        vPo.setRequestedBy(cs.getRequestedBy());
-//                    }
-//
-//                    List<PurchaseOrderDetail> pods = new ArrayList<>();
-//                    for(String csvdId : List.of(pol.getCsVendorDetailId().split(","))){
-//                        PurchaseOrderDetail pod = new PurchaseOrderDetail();
-//                        pod.setItemName(null);
-//                        pod.setCsVendorDetail(new CsVendorDetail(Long.valueOf(csvdId)));
-//                        pod.setDeliveryDate(pol.getDeliveryDate());
-//                        pod.setDeliveryQty(pol.getDeliveryQty());
-//                        pod.setPurchaseOrder(vPo);
-//                        pod.setWarehouse(new Warehouse(pol.getWarehouseId()));
-//                        pods.add(pod);
-//                    }
-//                    vPo.setPurchaseOrderDetails(pods);
-//                    vPo.setPoGroup(poGroup);
-//                    vPo.setStatus(PurchaseOrderStatus.PENDING);
-//                    purchaseOrders.add(vPo);
-//
-//                }else{
-//                    Optional<PqRepository.PriceQuotationDetailExt> pqDetailOp = pqRepository
-//                            .getPriceQuotationDetailByPqIdAndItemAttr(pol.getPriceQuotationId(),pol.getItemAttribute());
-//
-//                    if(pqDetailOp.isPresent()){
-//                        PurchaseOrder vPo = new PurchaseOrder();
-//                        vPo.setCs(cs);
-//                        LocalDate currentDate = LocalDate.now();
-//                        currentDate = currentDate.plusDays(pqDetailOp.get().getEstDeliveryDays());
-//                        vPo.setPoDate(currentDate.atTime(LocalTime.now()).toLocalDate());
-//                        vPo.setVendorId(pol.getVendorId());
-//
-//                        vPo.setPoNo(generatePoNo(cs, i));
-//                        if(cs.getNextApproverId()!=null){
-//                            vPo.setRequestedBy(new Employee(cs.getNextApproverId()));
-//                        }else{
-//                            vPo.setRequestedBy(cs.getRequestedBy());
-//                        }
-//
-//                        List<PurchaseOrderDetail> pods = new ArrayList<>();
-//                        for(String csvdId : List.of(pol.getCsVendorDetailId().split(","))){
-//                            PurchaseOrderDetail pod = new PurchaseOrderDetail();
-//                            pod.setCsVendorDetail(new CsVendorDetail(Long.valueOf(csvdId)));
-//                            pod.setDeliveryDate(currentDate);
-//                            pod.setPurchaseOrder(vPo);
-//                            pod.setWarehouse(new Warehouse(pqDetailOp.get().getWarehouseId()));
-//                            pods.add(pod);
-//                        }
-//                        vPo.setPurchaseOrderDetails(pods);
-//                        vPo.setStatus(PurchaseOrderStatus.PENDING);
-//                        vPo.setPoGroup(poGroup);
-//                        purchaseOrders.add(vPo);
-//                    }
-//                }
-//                i++;
-//            }
             createPurchaseOrder(purchaseOrders);
 
         AppliedVADto vaResult = verificationService.applyVerifyApprovalProcess(poGroup, DomainType.PO, PurchaseOrderStatus.APPROVED.toString(),

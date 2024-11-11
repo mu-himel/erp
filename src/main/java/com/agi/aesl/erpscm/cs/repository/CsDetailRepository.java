@@ -61,6 +61,31 @@ public interface CsDetailRepository extends JpaRepository<CsDetail, Long> {
               """, nativeQuery = true)
     List<CsVendorItemInfo> findAllItemsByVendor(String csNo, Long vendorId);
 
+    @Query(value = """
+            select sw.name as name,
+            idd.warehouse_id as warehouseId,
+            pr_qty as prQty,
+            rfq_qty as rfqQty,
+            concat(scb.name,' - ',id.item_attribute) as itemAttributeName
+            FROM cs_vendor_details cvd
+                        LEFT JOIN cs_details cd ON cvd.cs_detail_id =cd.id
+                        LEFT JOIN cs ON cs.id = cd.cs_id
+                        LEFT JOIN indent_details id ON id.id = cd.indent_detail_id\s
+                        LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = id.id
+                        LEFT JOIN scm_warehouses sw ON sw.id = idd.warehouse_id
+                        LEFT JOIN scm_category_brands scb ON scb.id = id.brand_id\s
+            			where cvd.vendor_id = :vendorId AND cs.cs_no = :csNo
+            """,nativeQuery = true)
+    List<VendorWarehouseList> findAllVendorWarehouses(String csNo,Long vendorId);
+
+    interface VendorWarehouseList{
+        String getName();
+        String getItemAttributeName();
+        Long getWarehouseId();
+        BigDecimal getPrQty();
+        BigDecimal getRfqQty();
+    }
+
     interface CsVendorItemInfo{
         String getBrandName();
         String getExtendedAttributes();
