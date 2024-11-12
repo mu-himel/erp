@@ -146,7 +146,7 @@ public interface PoQuery {
                 SELECT 
                 po1.id as poId,
                 cvd.transaction_type as transactionType, 
-                cvd.total_price as totalPrice, 
+                pod.total_price as totalPrice, 
                 cvd.order_qty as orderQty,
                 cvdd.delivery_qty as deliveryOrderQty,
                 cvdd.delivery_date as deliveryDate,
