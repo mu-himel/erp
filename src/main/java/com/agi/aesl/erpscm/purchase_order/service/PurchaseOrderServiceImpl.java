@@ -412,7 +412,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 poItem.put("date", po.getPoDate());
                 poItem.put("vendorPartialVatAmount", po.getPoDate());
                 AtomicReference<BigDecimal> vendorPartialVatAmount = new AtomicReference<>();
-                AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(new BigDecimal(0));
+//                AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(new BigDecimal(0));
                 for (PurchaseOrderRepository.PqDetailInfo pqDetail : pqDetailInfo){
                     Optional<PurchaseOrderRepository.POD> podOp = po.getPurchaseOrderDetails().stream()
                             .filter(_pod->_pod.getId().equals(pqDetail.getPodId())).findFirst();
@@ -439,7 +439,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                         detailMap.put("warehouses", podOp.get().getWarehouseDetailList());
                     }
 
-                    totalPrice.set(pqDetail.getTotalPrice());
+//                    totalPrice.set(pqDetail.getTotalPrice());
                     vendorPartialVatAmount.set(pqDetail.getVendorPartialVatAmount());
 
                     String[] summary = pqDetail.getSummary().split(",");
@@ -483,13 +483,15 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     poItem.put("pqId",summary[16]);
                     poItem.put("vendorEmail" , summary[17]);
                     poItem.put("vendorPhoneNo" , summary[18]);
+                    poItem.put("totalPrice",pqDetail.getTotalPrice());
                     poDetailList.add(detailMap);
                 }
                 // poItem.put("vendor",po.get)
                 map.put("requestedBy",po.getRequestedBy());
                 poItem.put("details",poDetailList);
                 poItem.put("termsAndConditions", termsAndConditions);
-                poItem.put("totalPrice",totalPrice.get());
+
+//                poItem.put("totalPrice",totalPrice.get());
                 poItem.put("vendorPartialVatAmount",vendorPartialVatAmount);
                 return poItem;
             }).collect(Collectors.toList());

@@ -163,6 +163,7 @@ public class GrnServiceImpl implements GrnService{
         grn.setAitOption(grnManualDto.getAitOption());
         grn.setVatOption(grnManualDto.getVatOption());
         grn.setVat(grnManualDto.getTotalVat());
+        grn.setVatPctg(grnManualDto.getVatPctg());
         grn.setDeliveryChargeAmount(grnManualDto.getDeliveryChargeAmount());
         grn.setDeliveryCharge(grnManualDto.getDeliveryCharge());
         grn.setDays(grnManualDto.getDays());
