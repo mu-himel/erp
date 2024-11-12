@@ -415,13 +415,14 @@ public class CsServiceImpl implements CsService{
     @Override
     public Optional<?> getAllItemsByVendorAndCs(Long vendorId, String csNo) {
         List<CsDetailRepository.CsVendorItemInfo> allItemsByVendor = csDetailRepository.findAllItemsByVendor(csNo, vendorId);
-        record CsVendorItemsResult(Object result,List<?> termsConditions){}
+        record CsVendorItemsResult(Object result,List<?> termsConditions,List<?> warehouses){}
         List<Long> ids = new ArrayList<>();
         allItemsByVendor.stream().forEach(i->{
             ids.add(i.getPqId());
         });
+        List<?> warehoues = csDetailRepository.findAllVendorWarehouses(csNo,vendorId);
         List<PqTermsAndCondition> allByVendorIdAndPriceQuotationId = pqTermAndConditionRepository.findAllByVendorIdAndPriceQuotationId(vendorId, ids);
-        var result = new CsVendorItemsResult(allItemsByVendor,allByVendorIdAndPriceQuotationId);
+        var result = new CsVendorItemsResult(allItemsByVendor,allByVendorIdAndPriceQuotationId,warehoues);
         return Optional.of(result);
     }
 

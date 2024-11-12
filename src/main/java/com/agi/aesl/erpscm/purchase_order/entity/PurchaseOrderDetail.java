@@ -8,6 +8,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Data
@@ -46,4 +47,7 @@ public class PurchaseOrderDetail {
 
     @ManyToOne
     private Warehouse warehouse;
+
+    @OneToMany(mappedBy = "purchaseOrderDetail", cascade = CascadeType.ALL)
+    private List<PurchaseOrderWarehouseDetail> warehouseDetailList;
 }

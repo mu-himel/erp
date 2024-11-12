@@ -31,8 +31,8 @@ public interface ProductRequirementRepository extends JpaRepository<ProductRequi
             LocalDateTime endDate,
             Pageable pageable);
 
-    @Query(value = getProductRequirementViewWithSearch,nativeQuery = true)
-    List<ProductRequirementViewInfo> getAllProductRequirementView(Long categoryId, Long subCategoryId);
+    @Query(value = getProductRequirementViewWithSearchV2,nativeQuery = true)
+    List<ProductRequirementViewInfoV2> getAllProductRequirementView(Long categoryId, Long subCategoryId);
 
     @Modifying
     @Query(value = "UPDATE product_requirements pr SET pr.status='OPEN' WHERE pr.id IN :ids",nativeQuery = true)
@@ -71,6 +71,45 @@ public interface ProductRequirementRepository extends JpaRepository<ProductRequi
         Long getDaysRemain();
 
         Long getItemsQty();
+
+    }
+
+    interface ProductRequirementViewInfoV2 {
+        String getProductRequirementsIds();
+        Long getCategoryId();
+        Long getDemandId();
+        Long getBrandId();
+        String getBrandName();
+        String getCategoryName();
+
+        Long getSubCategoryId();
+
+        String getSubCategoryName();
+
+        Long getItemId();
+
+        String getItemName();
+
+        String getItemDescription();
+
+        BigDecimal getPrQty();
+        BigDecimal getApprovedQty();
+
+        BigDecimal getItemsQty();
+
+        BigDecimal getCurrentStock();
+
+        Long getSafetytStock();
+
+        Long getTransitQty();
+
+        Long getDaysRemain();
+
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+        LocalDateTime getDemandDeadline();
+        String getDemandPriority();
+        String getWarehouses();
+        String getWarehouseIds();
 
     }
 

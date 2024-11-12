@@ -162,7 +162,7 @@ public class PqServiceImpl implements PqService{
                 PriceQuotationDeliveryDetail pqdd = new PriceQuotationDeliveryDetail();
                 pqdd.setDeliveryCharge(_pqdd.getDeliveryChargeType());
                 pqdd.setDeliveryChargeAmount(_pqdd.getDeliveryChargeAmount());
-                Optional<Warehouse> warehouseOp = warehouseService.getWarehouseByName(_pqdd.getWarehouseName());
+                Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(_pqdd.getWarehouseId());
                 if(warehouseOp.isEmpty()){
                     throw new RuntimeException("Warehouse not found");
                 }

@@ -1,15 +1,17 @@
 package com.agi.aesl.erpscm.product_requirements.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 import com.agi.aesl.erpscm.demand.service.DemandService;
+import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
+import com.agi.aesl.erpscm.product_requirements.dto.response.PrItemInfo;
+import com.agi.aesl.erpscm.product_requirements.dto.response.PrWarehouseInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -99,11 +101,60 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
 
     @Override
     public List<?> getAllProductRequirementView(Optional<Long> categoryId, Optional<Long> subCategoryId) {
-        List<?> result = productRequirementRepository.getAllProductRequirementView(
+        List<ProductRequirementRepository.ProductRequirementViewInfoV2> result = productRequirementRepository.getAllProductRequirementView(
             categoryId.orElseThrow(()-> new RuntimeException("Sorry! Category should not empty")),
             subCategoryId.orElseThrow(()->new RuntimeException("Sorry! Sub Category should not empty"))
         );
-        return result;
+
+
+
+
+        Map<String, PrItemInfo> map = new HashMap<>();
+
+//        List<ItemInfo> itemList = new ArrayList<>();
+        for(ProductRequirementRepository.ProductRequirementViewInfoV2 res: result){
+            String _key=res.getBrandName()+" - "+res.getItemName();
+            if(map.containsKey(_key)){
+                PrItemInfo itemInfo = map.get(_key);
+                PrWarehouseInfo warehouseInfo= new PrWarehouseInfo(res.getWarehouseIds(),
+                        res.getWarehouses(),res.getCurrentStock(),res.getSafetytStock(),res.getPrQty(),
+                        res.getTransitQty(),res.getItemsQty());
+                List<PrWarehouseInfo> warehouses = itemInfo.getWarehouses();
+                List<PrWarehouseInfo> _warehouses = new ArrayList<>();
+                for(PrWarehouseInfo w: warehouses){
+                    if(w.getWarehouseIds().equals(res.getWarehouseIds())){
+                        w.setPrQty(w.getPrQty().add(res.getPrQty()));
+                    }else{
+                        _warehouses.add(warehouseInfo);
+
+                    }
+                }
+                _warehouses.stream().forEach(w->{
+                    itemInfo.setWarehouses(warehouseInfo);
+                });
+                itemInfo.setProductRequirementIds(res.getProductRequirementsIds());
+                itemInfo.setPrQty(itemInfo.getPrQty().add(res.getPrQty()));
+                itemInfo.setDaysRemain(res.getDaysRemain());
+//                warehouses.add(warehouseInfo);
+            }else{
+
+//                List<PrWarehouseInfo> warehouseInfos= new ArrayList<>();
+                PrWarehouseInfo warehouseInfo=new PrWarehouseInfo(res.getWarehouseIds(),
+                        res.getWarehouses(),res.getCurrentStock(),res.getSafetytStock(),res.getPrQty(),
+                        res.getTransitQty(),res.getItemsQty());
+//                warehouseInfos.add(warehouseInfo);
+
+                PrItemInfo itemInfo  = new PrItemInfo(res.getProductRequirementsIds(),res.getBrandName(),
+                        res.getCategoryName(),res.getSubCategoryName(),
+                        res.getItemName(),res.getPrQty());
+                itemInfo.setWarehouses(warehouseInfo);
+                itemInfo.setDaysRemain(res.getDaysRemain());
+                itemInfo.setBrandId(res.getBrandId());
+                itemInfo.setPriorityDate(res.getDemandDeadline());
+                map.put(_key,itemInfo);
+            }
+        }
+        return map.values().stream().toList();
     }
 
     @Override

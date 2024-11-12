@@ -26,10 +26,7 @@ import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.price_quotation.entity.PqTermsAndCondition;
 import com.agi.aesl.erpscm.price_quotation.repository.PqRepository;
 import com.agi.aesl.erpscm.price_quotation.repository.PqTermAndConditionRepository;
-import com.agi.aesl.erpscm.purchase_order.dto.request.PoDetailReqDto;
-import com.agi.aesl.erpscm.purchase_order.dto.request.PoRemoteDetailReqDto;
-import com.agi.aesl.erpscm.purchase_order.dto.request.PoRemoteReqDto;
-import com.agi.aesl.erpscm.purchase_order.dto.request.PurchaseRequestDto;
+import com.agi.aesl.erpscm.purchase_order.dto.request.*;
 import com.agi.aesl.erpscm.purchase_order.entity.PoGroup;
 import com.agi.aesl.erpscm.purchase_order.entity.PoVerificationApprovalHistory;
 import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
@@ -228,89 +225,26 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 pod.setDeliveryCharge(poDetailReqDto.getDeliveryCharge());
                 pod.setPurchaseOrder(po);
                 pod.setWarehouse(new Warehouse(poDetailReqDto.getWarehouse().getId()));
+                pod.setWarehouseDetailList(poDetailReqDto.getWarehouseDetailList().stream().map(wd->{
+                    wd.setPurchaseOrderDetail(pod);
+                    return wd;
+                }).collect(Collectors.toList()));
+
                 pods.add(pod);
                 ids.add(poDetailReqDto.getCategoryId().toString());
                 ids.add(poDetailReqDto.getSubCategoryId().toString());
-            }
 
+            }
 
             po.setPurchaseOrderDetails(pods);
             po.setStatus(PurchaseOrderStatus.PENDING);
             purchaseOrders.add(po);
-//            List<CsRepository.PotentialPoListItem> poListItems = csRepository.getPotentialPoListFromCs(cs.getId());
-//            int i=1;
-//            for(CsRepository.PotentialPoListItem pol : poListItems){
-//                if(pol.getDeliveryDate()!=null){
-//                    PurchaseOrder vPo = new PurchaseOrder();
-//                    vPo.setCs(cs);
-//                    vPo.setPoDate(pol.getDeliveryDate());
-//                    vPo.setVendorId(pol.getVendorId());
-//
-//                    vPo.setPoNo(generatePoNo(cs, i));
-//                    if(cs.getNextApproverId()!=null){
-//                        vPo.setRequestedBy(new Employee(cs.getNextApproverId()));
-//                    }else{
-//                        vPo.setRequestedBy(cs.getRequestedBy());
-//                    }
-//
-//                    List<PurchaseOrderDetail> pods = new ArrayList<>();
-//                    for(String csvdId : List.of(pol.getCsVendorDetailId().split(","))){
-//                        PurchaseOrderDetail pod = new PurchaseOrderDetail();
-//                        pod.setItemName(null);
-//                        pod.setCsVendorDetail(new CsVendorDetail(Long.valueOf(csvdId)));
-//                        pod.setDeliveryDate(pol.getDeliveryDate());
-//                        pod.setDeliveryQty(pol.getDeliveryQty());
-//                        pod.setPurchaseOrder(vPo);
-//                        pod.setWarehouse(new Warehouse(pol.getWarehouseId()));
-//                        pods.add(pod);
-//                    }
-//                    vPo.setPurchaseOrderDetails(pods);
-//                    vPo.setPoGroup(poGroup);
-//                    vPo.setStatus(PurchaseOrderStatus.PENDING);
-//                    purchaseOrders.add(vPo);
-//
-//                }else{
-//                    Optional<PqRepository.PriceQuotationDetailExt> pqDetailOp = pqRepository
-//                            .getPriceQuotationDetailByPqIdAndItemAttr(pol.getPriceQuotationId(),pol.getItemAttribute());
-//
-//                    if(pqDetailOp.isPresent()){
-//                        PurchaseOrder vPo = new PurchaseOrder();
-//                        vPo.setCs(cs);
-//                        LocalDate currentDate = LocalDate.now();
-//                        currentDate = currentDate.plusDays(pqDetailOp.get().getEstDeliveryDays());
-//                        vPo.setPoDate(currentDate.atTime(LocalTime.now()).toLocalDate());
-//                        vPo.setVendorId(pol.getVendorId());
-//
-//                        vPo.setPoNo(generatePoNo(cs, i));
-//                        if(cs.getNextApproverId()!=null){
-//                            vPo.setRequestedBy(new Employee(cs.getNextApproverId()));
-//                        }else{
-//                            vPo.setRequestedBy(cs.getRequestedBy());
-//                        }
-//
-//                        List<PurchaseOrderDetail> pods = new ArrayList<>();
-//                        for(String csvdId : List.of(pol.getCsVendorDetailId().split(","))){
-//                            PurchaseOrderDetail pod = new PurchaseOrderDetail();
-//                            pod.setCsVendorDetail(new CsVendorDetail(Long.valueOf(csvdId)));
-//                            pod.setDeliveryDate(currentDate);
-//                            pod.setPurchaseOrder(vPo);
-//                            pod.setWarehouse(new Warehouse(pqDetailOp.get().getWarehouseId()));
-//                            pods.add(pod);
-//                        }
-//                        vPo.setPurchaseOrderDetails(pods);
-//                        vPo.setStatus(PurchaseOrderStatus.PENDING);
-//                        vPo.setPoGroup(poGroup);
-//                        purchaseOrders.add(vPo);
-//                    }
-//                }
-//                i++;
-//            }
             createPurchaseOrder(purchaseOrders);
 
         AppliedVADto vaResult = verificationService.applyVerifyApprovalProcess(poGroup, DomainType.PO, PurchaseOrderStatus.APPROVED.toString(),
                 uri, "CATEGORY", ids, null);
         if(vaResult.getVerifiers().isEmpty() && vaResult.getPanels().isEmpty()){
-            poGroup.setStatus(PurchaseOrderStatus.COMPLETED.toString());
+            throw new RuntimeException("Sorry! PO generation required Verify or Approval process");
         }
     }
 
@@ -480,7 +414,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 AtomicReference<BigDecimal> vendorPartialVatAmount = new AtomicReference<>();
                 AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(new BigDecimal(0));
                 for (PurchaseOrderRepository.PqDetailInfo pqDetail : pqDetailInfo){
-
+                    Optional<PurchaseOrderRepository.POD> podOp = po.getPurchaseOrderDetails().stream()
+                            .filter(_pod->_pod.getId().equals(pqDetail.getPodId())).findFirst();
                     Map<String,Object> detailMap = new HashMap<>();
                     detailMap.put("poId",pqDetail.getPoId());
                     detailMap.put("vendorPartialVatAmount", pqDetail.getVendorPartialVatAmount());
@@ -488,6 +423,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     detailMap.put("unitPrice", pqDetail.getUnitPrice());
                     detailMap.put("deliveryCharge", pqDetail.getDeliveryCharge());
                     detailMap.put("deliveryQty", pqDetail.getDeliveryQty());
+                    detailMap.put("remainingQty", pqDetail.getRemainingQty());
                     detailMap.put("transactionType", pqDetail.getTransactionType());
                     detailMap.put("totalPrice",  pqDetail.getTotalPrice());
                     detailMap.put("vatAmount",  pqDetail.getVatAmount());
@@ -499,6 +435,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     detailMap.put("warehouseId", pqDetail.getWarehouseId());
                     detailMap.put("isAitAdded",pqDetail.getIsAitAdded());
                     detailMap.put("isVatAdded" , pqDetail.getIsVatAdded());
+                    if(podOp.isPresent()){
+                        detailMap.put("warehouses", podOp.get().getWarehouseDetailList());
+                    }
+
                     totalPrice.set(pqDetail.getTotalPrice());
                     vendorPartialVatAmount.set(pqDetail.getVendorPartialVatAmount());
 
@@ -744,11 +684,26 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             poRemoteReqDto.setPoDate(po.getCreatedAt().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
             poRemoteReqDto.setCategoryCode(po.getCs().getIndent().getSubCategory().getCode());
             poRemoteReqDto.setTenderNo(po.getCs().getIndent().getIndentNo());
+            poRemoteReqDto.setDeliveryChargeType(po.getDeliveryChargeType());
             poRemoteReqDto.setDeliveryDate(po.getPoDate().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
             po.getPurchaseOrderDetails().stream().forEach(pqdi->{
 //                if(po.getId().equals(pqdi.get)){
                     PoRemoteDetailReqDto prdr = new PoRemoteDetailReqDto();
-
+//                    prdr.setWarehouse(new ReferenceObjectDto(pqdi.getWarehouse().getId()));
+                    List<PoRemoteDeliveryDetailDto> prdds = new ArrayList<>();
+                    pqdi.getWarehouseDetailList().stream().forEach(wd->{
+                        PoRemoteDeliveryDetailDto prdd = new PoRemoteDeliveryDetailDto();
+                        prdd.setItemQty(wd.getQty());
+                        prdd.setDeliveryCharge(wd.getDeliveryCharge());
+                        prdd.setWarehouse(new ReferenceObjectDto(wd.getWarehouse().getId()));
+                        prdds.add(prdd);
+                    });
+                    prdr.setPoDeliveryDetailsDtoList(prdds);
+                    prdr.setDeliveryCharge(pqdi.getDeliveryCharge());
+                    prdr.setVatAmount(pqdi.getVatAmount());
+                    prdr.setVatPercent(pqdi.getVatPercent());
+                    prdr.setSubTotal(pqdi.getSubTotal());
+                    prdr.setTotalPrice(pqdi.getTotalPrice());
                     prdr.setItemQty(pqdi.getDeliveryQty());
 //                    List<ItemInfo> items = pqdi.getCsVendorDetail().getPriceQuotation().getQuotationDetails().stream().map(
 //                            q->{
@@ -765,7 +720,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     if(warehouseId==null){
                         warehouseId = pqdi.getCsVendorDetail().getCsDetail().getIndentDetail().getIndent().getWarehouse().getId();
                     }
-                    poRemoteReqDto.setWarehouse(new ReferenceObjectDto(warehouseId));
+
 
                     poRemoteReqDto.setVendorId(pqdi.getCsVendorDetail().getVendorId());
                     poRemoteReqDto.setOfferId(pqdi.getCsVendorDetail().getPriceQuotation().getRemoteOfferId());

@@ -17,6 +17,10 @@ public interface WarehouseRepository extends JpaRepository<Warehouse,Long>, Ware
     @Query(value = getWarehouses, countQuery = countWarehouseWithPagination, nativeQuery = true)
     Page<WarehouseInfo> findAllByName(@Param("name") Optional<String> name, Pageable pageable);
 
+    @Query(value = """
+            SELECT w FROM Warehouse w
+            WHERE w.name = :name
+            """)
     Optional<Warehouse> findByName(String name);
     Optional<Warehouse> findByNameAndActive(String name,Boolean active);
 
