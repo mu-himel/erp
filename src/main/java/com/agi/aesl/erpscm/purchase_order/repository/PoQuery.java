@@ -155,6 +155,7 @@ public interface PoQuery {
                 cvd.vat_amount as vendorPartialVatAmount,
                 pqs2.is_ait_added as isAitAdded,
                 pqs2.is_vat_added as isVatAdded,
+                pod.id as podId,
                 pod.delivery_qty as deliveryQty,
                 pod.item_name as itemName,
                 pod.remaining_qty as remainingQty,

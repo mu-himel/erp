@@ -414,7 +414,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 AtomicReference<BigDecimal> vendorPartialVatAmount = new AtomicReference<>();
                 AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(new BigDecimal(0));
                 for (PurchaseOrderRepository.PqDetailInfo pqDetail : pqDetailInfo){
-
+                    Optional<PurchaseOrderRepository.POD> podOp = po.getPurchaseOrderDetails().stream()
+                            .filter(_pod->_pod.getId().equals(pqDetail.getPodId())).findFirst();
                     Map<String,Object> detailMap = new HashMap<>();
                     detailMap.put("poId",pqDetail.getPoId());
                     detailMap.put("vendorPartialVatAmount", pqDetail.getVendorPartialVatAmount());
@@ -434,6 +435,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     detailMap.put("warehouseId", pqDetail.getWarehouseId());
                     detailMap.put("isAitAdded",pqDetail.getIsAitAdded());
                     detailMap.put("isVatAdded" , pqDetail.getIsVatAdded());
+                    if(podOp.isPresent()){
+                        detailMap.put("warehouses", podOp.get().getWarehouseDetailList());
+                    }
+
                     totalPrice.set(pqDetail.getTotalPrice());
                     vendorPartialVatAmount.set(pqDetail.getVendorPartialVatAmount());
 
@@ -693,7 +698,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                         prdd.setWarehouse(new ReferenceObjectDto(wd.getWarehouse().getId()));
                         prdds.add(prdd);
                     });
-                    prdr.setDeliveryDetails(prdds);
+                    prdr.setPoDeliveryDetailsDtoList(prdds);
                     prdr.setDeliveryCharge(pqdi.getDeliveryCharge());
                     prdr.setVatAmount(pqdi.getVatAmount());
                     prdr.setVatPercent(pqdi.getVatPercent());

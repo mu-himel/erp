@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.purchase_order.entity;
 
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -19,6 +20,7 @@ public class PurchaseOrderWarehouseDetail {
     private Warehouse warehouse;
 
     @ManyToOne
+    @JsonIgnore
     private PurchaseOrderDetail purchaseOrderDetail;
 
     private BigDecimal qty;

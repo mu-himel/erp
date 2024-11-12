@@ -16,5 +16,5 @@ public class PoRemoteDetailReqDto {
     private BigDecimal vatPercent;
     private BigDecimal subTotal;
     private BigDecimal totalPrice;
-    private List<PoRemoteDeliveryDetailDto> deliveryDetails;
+    private List<PoRemoteDeliveryDetailDto> poDeliveryDetailsDtoList;
 }
