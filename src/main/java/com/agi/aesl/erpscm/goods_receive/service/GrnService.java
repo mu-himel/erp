@@ -7,6 +7,7 @@ import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -42,4 +43,7 @@ public interface GrnService {
     Optional<?> getGRNById(Long id, boolean b);
 
     Optional<GoodReceiveNote> getByGrnNo(String srnNo);
+
+    void receivedPO(Jwt token,Long id);
+    void declinePO(Jwt token,Long id, NoteDto noteDto);
 }
