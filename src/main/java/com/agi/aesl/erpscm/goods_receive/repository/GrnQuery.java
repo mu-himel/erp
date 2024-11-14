@@ -17,7 +17,8 @@ public interface GrnQuery {
                     p.qcPass as qcPass,
                     p.qcFail as qcFail,
                     p.qcHold as qcHold,
-                    p.warehouseId as warehouseId
+                    p.warehouseId as warehouseId,
+                    p.poNo as poNo
                 FROM (
                     SELECT 
                         grn.id as id,
@@ -39,7 +40,12 @@ public interface GrnQuery {
                         COALESCE(CASE WHEN grid.qc_type = 'HOLD' THEN
                             count(grid.qc_type)
                         END,0) qcHold,
-                        grn.warehouse_id as warehouseId
+                        grn.warehouse_id as warehouseId,
+                        CASE WHEN grn.remote_po_id IS NOT NULL THEN
+                            (SELECT po_no FROM purchase_orders po WHERE po.id=grn.remote_po_id) 
+                        ELSE
+                            'MANUAL'
+                        END as poNo
                     FROM good_receive_notes grn
                     LEFT JOIN good_receive_item_details grid ON grid.good_receive_note_id = grn.id
                     LEFT JOIN scm_item_categories ic ON ic.id = grid.category_id

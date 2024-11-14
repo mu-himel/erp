@@ -10,6 +10,7 @@ import com.agi.aesl.erpscm.inventory.dto.request.ItemApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.RemoteItemRequestDto;
 import com.agi.aesl.erpscm.inventory.entity.Item;
+import com.agi.aesl.erpscm.inventory.entity.ItemStock;
 import com.agi.aesl.erpscm.inventory.enums.StockType;
 
 import com.agi.aesl.erpscm.utils.ClaimResolver;
@@ -114,4 +115,8 @@ public interface ItemService {
                             Long warehouseId, Long warehouseStoreId);
 
     void approveItemFromAcc(Long id, Long warehouseId);
+
+    List<Item> getByCode(String itemCode);
+
+    List<ItemStock> getByItemAndWarehouse(List<Long>itemId, Long warehouseId);
 }

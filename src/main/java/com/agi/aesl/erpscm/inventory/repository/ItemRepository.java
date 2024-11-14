@@ -155,6 +155,11 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
     List<ItemTemplateInfo> fetchTemplateData(Long categoryId, Long subCategoryId,
                                              Long warehouseId, Long warehouseStoreId);
 
+    @Query(value = """
+            SELECT i FROM Item i WHERE LOWER(i.code) LIKE CONCAT('%',LOWER(:itemCode))
+            """)
+    List<Item> findByCodeLikeCode(String itemCode);
+
     interface ItemTemplateInfo {
 
         Long getWId();

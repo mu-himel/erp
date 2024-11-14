@@ -19,8 +19,8 @@ import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository;
 import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository.*;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.entity.ItemStock;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
-import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
 import com.agi.aesl.erpscm.quality_control.repository.QcQuery;
 import com.agi.aesl.erpscm.quality_control.service.QcMailService;
 import com.agi.aesl.erpscm.quality_control.service.QcService;
@@ -30,7 +30,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -142,7 +141,18 @@ public class GrnServiceImpl implements GrnService{
         grn.setGoodReceiveItemDetails(grnManualDto.getGrnDetails().stream().map(detailDto->{
             GoodReceiveItemDetail grid = new GoodReceiveItemDetail();
 
-                Optional<Item> itemOp = itemService.getItemDetail(detailDto.getItem().getId());
+                Optional<Item> itemOp = Optional.empty();
+                if(mode.equals(GrnMode.MANUAL)) {
+                    itemOp = itemService.getItemDetail(detailDto.getItem().getId());
+                }else if (mode.equals(GrnMode.AUTO)){
+                    List<Item> items = itemService.getByCode(detailDto.getItemCode());
+                    List<Long> itemIds = items.stream().map(Item::getId).toList();
+                    List<ItemStock> stocks = itemService.getByItemAndWarehouse(itemIds,grnManualDto.getWarehouseId());
+                    if(!stocks.isEmpty()){
+                       ItemStock stock = stocks.get(0);
+                        itemOp = Optional.of(stock.getItem());
+                    }
+                }
                 if(itemOp.isPresent()){
                     Item item = itemOp.get();
                     grid.setItem(item);

@@ -1317,4 +1317,14 @@ public class ItemServiceImpl implements ItemService {
             }
         }
     }
+
+    @Override
+    public List<Item> getByCode(String itemCode) {
+        return itemRepository.findByCodeLikeCode(itemCode);
+    }
+
+    @Override
+    public List<ItemStock> getByItemAndWarehouse(List<Long> itemIds, Long warehouseId) {
+        return itemStockRepository.findByItemsAndWarehosueId(itemIds,warehouseId);
+    }
 }

@@ -1,15 +1,14 @@
 package com.agi.aesl.erpscm.goods_receive.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
-import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
 
+import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualItemDetailDto;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
 
 import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
