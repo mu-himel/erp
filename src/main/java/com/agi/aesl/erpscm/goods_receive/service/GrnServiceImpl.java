@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.goods_receive.service;
 
 import com.agi.aesl.erpscm.common.DataFilter;
+import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
@@ -21,6 +22,10 @@ import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.entity.ItemStock;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
+import com.agi.aesl.erpscm.network.NetworkService;
+import com.agi.aesl.erpscm.organization.entity.Organization;
+import com.agi.aesl.erpscm.organization.service.OrgService;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.quality_control.repository.QcQuery;
 import com.agi.aesl.erpscm.quality_control.service.QcMailService;
 import com.agi.aesl.erpscm.quality_control.service.QcService;
@@ -30,6 +35,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,6 +73,15 @@ public class GrnServiceImpl implements GrnService{
 
     @Autowired
     private QcMailService qcMailService;
+
+    @Autowired
+    private OrgService orgService;
+
+    @Autowired
+    private CpsServerConfig cpsConfig;
+
+    @Autowired
+    private NetworkService networkService;
 
     @Override
     public String getNextGrnNumber() {
@@ -126,11 +144,14 @@ public class GrnServiceImpl implements GrnService{
         grn.setGrnDate(LocalDate.now());
         if(mode.equals(GrnMode.AUTO)) {
             grn.setRemotePoId(grnManualDto.getPoId());
+            grn.setGrnStatus(GrnStatus.PENDING);
         }
         grn.setGrnNo(grnManualDto.getGrnNo());
         grn.setIndentNo(grnManualDto.getIndentNo() );
         grn.setGrnMode(mode);
-        grn.setGrnStatus(GrnStatus.PENDING_QC);
+        if(mode.equals(GrnMode.MANUAL)) {
+            grn.setGrnStatus(GrnStatus.PENDING_QC);
+        }
 
         grn.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
         if(token != null && claimResolver.getEmployee().isPresent()){
@@ -407,4 +428,45 @@ public class GrnServiceImpl implements GrnService{
         return grnRepository.findByGrnNo(grnNo);
     }
 
+    @Override
+    @Transactional
+    public void receivedPO(Jwt token,Long id) {
+        Optional<GoodReceiveNote> grnOp = grnRepository.findById(id);
+        if(grnOp.isPresent()){
+            GoodReceiveNote grn = grnOp.get();
+            grn.setGrnStatus(GrnStatus.PENDING_QC);
+            Long remotePoId = grn.getRemotePoId();
+            sentGrnReceived(token,remotePoId,GrnStatus.RECEIVED,new NoteDto());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void declinePO(Jwt token,Long id, NoteDto noteDto) {
+        Optional<GoodReceiveNote> grnOp = grnRepository.findById(id);
+        if(grnOp.isPresent()){
+            GoodReceiveNote grn = grnOp.get();
+            grn.setGrnStatus(GrnStatus.REJECTED);
+            Long remotePoId = grn.getRemotePoId();
+            sentGrnReceived(token,remotePoId,GrnStatus.REJECTED,noteDto);
+        }
+    }
+
+    @Transactional
+    private void sentGrnReceived(Jwt token,Long id,GrnStatus status, NoteDto noteDto){
+        HttpHeaders headers = new HttpHeaders();
+        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
+        if(orgOp.isPresent()){
+            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
+        }
+
+        HttpEntity<NoteDto> payload = new HttpEntity<>(noteDto,headers);
+        String url = (status.equals(GrnStatus.RECEIVED))? cpsConfig.getPoReceiveEndpoint(id): cpsConfig.getPoRejectEndpoint(id);
+        System.out.println(url);
+        ResponseEntity<?> response = networkService.put(url, payload, Void.class);
+        if(response.getStatusCode()!= HttpStatus.NO_CONTENT){
+            throw new RuntimeException("Sorry! Something wrong");
+        }
+
+    }
 }

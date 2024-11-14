@@ -7,6 +7,7 @@ import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
 
 import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
+import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -79,5 +80,22 @@ public class GrnController extends BaseController {
             @PathVariable("id") Long id
     ){
         return new ResponseEntity<>(grnService.getGrnById(id,true),HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}/receive-po")
+    public ResponseEntity<?> receiveGrn(
+            @AuthenticationPrincipal Jwt token,
+            @PathVariable("id") Long id ){
+        grnService.receivedPO(token,id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/{id}/decline-po")
+    public ResponseEntity<?> declineGrn(@PathVariable("id") Long id,
+                                        @AuthenticationPrincipal Jwt token,
+                                        @RequestBody NoteDto noteDto
+    ){
+        grnService.declinePO(token, id,noteDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
