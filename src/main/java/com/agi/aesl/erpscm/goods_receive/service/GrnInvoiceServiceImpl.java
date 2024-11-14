@@ -4,6 +4,7 @@ import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
 import com.agi.aesl.erpscm.fileupload.service.FileUploadService;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,9 @@ public class GrnInvoiceServiceImpl implements GrnInvoiceService{
 
     @Autowired
     private GrnService grnService;
+
+    @Value("${upload.dir}")
+    private String uploadDir;
 
     @Override
     @Transactional
@@ -40,7 +44,7 @@ public class GrnInvoiceServiceImpl implements GrnInvoiceService{
             }
 
 
-            Path path = Path.of("/uploads/grn/"+id+"/po/invoice");
+            Path path = Path.of(uploadDir+"/grn/"+id+"/po/invoice");
 
             FileUploadResponse fileUploadResponse = fileUploadService.uploadFile(path, file);
             if(fileUploadResponse!=null){

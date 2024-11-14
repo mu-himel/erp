@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 @Data
 public class GrnManualItemDetailDto {
     private ReferenceObjectDto item;
+    private String itemCode;
     private ItemCategory category;
     private ItemCategory subCategory;
     private Integer estDeliveryDays;
