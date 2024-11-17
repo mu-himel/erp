@@ -129,6 +129,7 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             count(ird.id) as itemsQty,
             ir.ir_status as status,
             ir.delivery_date as deliveryDate,
+            ir.created_at as createdAt,
             w.name as warehouse
         FROM internal_requisitions ir 
         LEFT JOIN scm_warehouses w ON w.id = ir.warehouse_id
