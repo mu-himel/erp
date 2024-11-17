@@ -47,7 +47,7 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
             LEFT JOIN scm_item_categories c ON c.id = ir.category_id
             LEFT JOIN scm_warehouses w ON w.id=ir.warehouse_id
-            WHERE ir.ir_status IN ('RECEIVED', 'REJECTED')
+            WHERE ir.ir_status IN ('RECEIVED', 'REJECTED','COMPLETED')
             AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate)) 
             GROUP BY ir.id
             """;//    Page<IrListInfo> findAllClosedIr(Pageable pageable);
@@ -129,6 +129,7 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             count(ird.id) as itemsQty,
             ir.ir_status as status,
             ir.delivery_date as deliveryDate,
+            ir.created_at as createdAt,
             w.name as warehouse
         FROM internal_requisitions ir 
         LEFT JOIN scm_warehouses w ON w.id = ir.warehouse_id
