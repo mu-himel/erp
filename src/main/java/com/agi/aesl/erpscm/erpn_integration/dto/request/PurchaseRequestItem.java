@@ -6,10 +6,12 @@ import java.math.BigDecimal;
 
 @Data
 public class PurchaseRequestItem {
-    // deliveryCharge
-    //vatAmount
+    private String creditDays;
+    private String estDeliveryTime;
     private String itemCode;
-    private BigDecimal acceptedQty;
-    private BigDecimal rate;
-    private String costCenter;
+    private BigDecimal qty;
+    private BigDecimal vat;
+    private BigDecimal deliveryCharge;
+    private BigDecimal pricePerUnit;
+    private String transactionType;
 }

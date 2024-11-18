@@ -183,6 +183,7 @@ public class GrnServiceImpl implements GrnService{
                     grid.setEstimatedDeliveryDays(detailDto.getEstDeliveryDays());
                     grid.setReceiveQty(detailDto.getOrderQty());
                     grid.setPricePerUnit(detailDto.getPricePerUnit());
+                    grid.setDeliveryCharge(detailDto.getDeliveryChargeAmount());
                     grid.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
                     grid.setGoodReceiveNote(grn);
                 }
