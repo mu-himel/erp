@@ -5,6 +5,7 @@ import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationWriterService;
+import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
@@ -40,6 +41,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -111,7 +113,8 @@ public class SrnServiceImpl implements SrnService{
             storeReceiveDetail.setGoodReceiveItemDetail(goodReceiveItemDetailOptional.get());
             storeReceiveDetail.setStoreReceiveNote(storeReceiveNote);
             storeReceiveDetail.setCostCenter(storeReceiveDetailDto.getCostCenter());
-            storeReceiveDetail.setStockInQty(storeReceiveDetailDto.getStockInQty());
+            BigDecimal stockInQty = storeReceiveDetailDto.getStockInQty()!=null? storeReceiveDetailDto.getStockInQty(): new BigDecimal(0);
+            storeReceiveDetail.setStockInQty(stockInQty);
             ids.add(item.getItemCategory().getId().toString());
             ids.add(item.getItemParentCategory().getId().toString());
 
@@ -150,6 +153,11 @@ public class SrnServiceImpl implements SrnService{
             if(result.getVerifiers().isEmpty() && result.getPanels().isEmpty()){
                 storeReceiveNote.setSrnStatus(SrnStatus.COMPLETED);
                 storeReceiveNote.getGrn().setGrnStatus(GrnStatus.COMPLETED);
+                storeReceiveNote.setSrnDetails(storeReceiveNote.getSrnDetails().stream().map(srnd->{
+                    srnd.setStockInQty(srnd.getStockInQty());
+                    storeInItem(grn, srnd);
+                    return srnd;
+                }).collect(Collectors.toList()));
                 integrationWriterService.purchaseReceived(claimResolver.getToken(),storeReceiveNote);
             }
 
@@ -342,7 +350,13 @@ public class SrnServiceImpl implements SrnService{
                 srn.setSrnStatus(SrnStatus.PENDING_APPROVAL);
             } else {
                 srn.setSrnStatus(SrnStatus.VERIFIED);
-                srn.getGrn().setGrnStatus(GrnStatus.COMPLETED);
+                GoodReceiveNote grn = srn.getGrn();
+                grn.setGrnStatus(GrnStatus.COMPLETED);
+                srn.setSrnDetails(srn.getSrnDetails().stream().map(srnd->{
+                    srnd.setStockInQty(srnd.getStockInQty());
+                    storeInItem(grn, srnd);
+                    return srnd;
+                }).collect(Collectors.toList()));
                 integrationWriterService.purchaseReceived(claimResolver.getToken(),srn);
             }
         }
@@ -355,11 +369,15 @@ public class SrnServiceImpl implements SrnService{
         if(srnOp.isPresent()) {
             StoreReceiveNote srn = srnOp.get();
             srn.setSrnStatus(SrnStatus.APPROVED);
-            srn.getGrn().setGrnStatus(GrnStatus.COMPLETED);
+            GoodReceiveNote grn = srn.getGrn();
+            grn.setGrnStatus(GrnStatus.COMPLETED);
             srn.setSrnDetails(srn.getSrnDetails().stream().map(srnd->{
-                srnd.setStockInQty(srnd.getGoodReceiveItemDetail().getTotalApprovedQty());
+                srnd.setStockInQty(srnd.getStockInQty());
+                storeInItem(grn, srnd);
                 return srnd;
             }).collect(Collectors.toList()));
+
+
 
             SrnVerifyApprovalHistory svah = new SrnVerifyApprovalHistory();
             svah.setEmployee(new Employee(srn.getNextVerifierId()));
@@ -367,6 +385,33 @@ public class SrnServiceImpl implements SrnService{
             svah.setStoreReceiveNote(srn);
             srnVerifyApprovalHistoryRepository.save(svah);
             integrationWriterService.purchaseReceived(claimResolver.getToken(),srn);
+        }
+    }
+
+    @Transactional
+    private void storeInItem(GoodReceiveNote grn, StoreReceiveDetail srnd) {
+        Optional<Item> itemOp = itemService.getItemDetail(srnd.getItem().getId());
+        if(itemOp.isEmpty()) {
+            throw new RuntimeException("Sorry! Item not found");
+        }
+        Item item = itemOp.get();
+        Optional<ItemDetail> itemDetailOp = (Optional<ItemDetail>)itemService.getItemDetailWithWarehouse(item.getId());
+        if(itemDetailOp.isPresent()) {
+            grn.setIsReceivedByStore(true);
+            grn.setGrnStatus(GrnStatus.COMPLETED);
+            ItemDetail itemDetail = itemDetailOp.get();
+            List<Map<String,Object>> stores = itemDetail
+                    .getWarehouses().get(claimResolver.getEmployee().get().getWarehouseId().toString());
+            Optional<Map<String,Object>> store = stores.stream().filter(
+                    stringObjectMap -> !((String)stringObjectMap.get("warehouseStoreName"))
+                            .toLowerCase().contains("finish goods")
+            ).findFirst();
+            store.ifPresent(stringObjectMap -> {
+                Long warehouseStoreId = (Long)stringObjectMap.get("warehouseStoreId");
+                itemService.stockIn(item, srnd.getStockInQty(),
+                        claimResolver.getEmployee().get().getWarehouseId(),
+                        warehouseStoreId);
+            });
         }
     }
 

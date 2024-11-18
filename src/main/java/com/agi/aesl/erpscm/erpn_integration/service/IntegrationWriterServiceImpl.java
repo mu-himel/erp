@@ -10,6 +10,9 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseServ
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.dto.request.PurchaseRequest;
 import com.agi.aesl.erpscm.erpn_integration.dto.request.PurchaseRequestItem;
+import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
+import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
+import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
@@ -52,7 +55,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     @Value("${app.acc.ledger.item.create}")
     private String ledgerItemCreateEndpoint;
 
-    @Value("${app.hr.purchase_receipt.create}")
+    @Value("${app.acc.purchase_voucher.create}")
     private String purchaseReceivedEndpoint;
 
 
@@ -179,23 +182,35 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
         if(serviceExist.isPresent()) {
             PurchaseRequest purchaseRequest = new PurchaseRequest();
-            purchaseRequest.setSupplierName(receiveNote.getGrn().getVendorEmail());
-            purchaseRequest.setCostCenter(receiveNote.getCostCenter());
+            purchaseRequest.setSrnNo(receiveNote.getSrnNo());
+            GoodReceiveNote grn = receiveNote.getGrn();
+            purchaseRequest.setVendorCpsId(grn.getVendorId().toString());
             List<PurchaseRequestItem> items = new ArrayList<>();
+            purchaseRequest.setVatType(null);
+            purchaseRequest.setInvoice(grn.getInvoicePath());
             receiveNote.getSrnDetails().stream().forEach(srnd->{
+                Item item = srnd.getItem();
+                Optional<GoodReceiveItemDetail> grndetailOp = grn.getGoodReceiveItemDetails().stream().filter(grnd->grnd.getItem().getId().equals(item.getId())).findFirst();
+
                 PurchaseRequestItem pri = new PurchaseRequestItem();
                 pri.setItemCode(srnd.getItem().getCode());
-                pri.setAcceptedQty(srnd.getStockInQty());
-                pri.setRate(srnd.getGoodReceiveItemDetail().getPricePerUnit());
+                pri.setQty(srnd.getStockInQty());
+                pri.setTransactionType(grn.getPaymentType());
+                pri.setCreditDays(grn.getDays().toString());
+                pri.setPricePerUnit(srnd.getGoodReceiveItemDetail().getPricePerUnit());
+                if(grndetailOp.isPresent()){
+                    pri.setVat(grn.getVat());
+                    pri.setDeliveryCharge(grn.getDeliveryChargeAmount());
+                }
 //                pri.setCostCenter(srnd.getCostCenter());
                 items.add(pri);
             });
-            purchaseRequest.setItems(items);
+            purchaseRequest.setItemList(items);
 
-            HttpHeaders headers = networkService.setHttpHeadersForHr(token);
+            HttpHeaders headers = networkService.setHttpHeaders(token);
             HttpEntity<PurchaseRequest> payload = new HttpEntity<>(purchaseRequest,headers);
-
-            networkService.put(purchaseReceivedEndpoint, payload, Void.class);
+            System.out.println(purchaseReceivedEndpoint);
+            networkService.post(purchaseReceivedEndpoint, payload, Void.class);
         }else{
             throw new RuntimeException("Sorry! Hr Service not available to create item ledger");
         }
