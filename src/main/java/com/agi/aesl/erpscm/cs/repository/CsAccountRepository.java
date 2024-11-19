@@ -34,6 +34,8 @@ public interface CsAccountRepository extends JpaRepository<CsAccount,Long>, AcsQ
     @Query(value = getAllExpiredCsByIndentNo, countQuery = countAllExpiredCsByIndentNo, nativeQuery = true)
     Page<AcsPendingItem> findAllExpiredCs(String indentNo, List<String> status, Pageable pageable);
 
+    Optional<CsAccount> findByCsId(Long id);
+
     interface AcsPendingItem extends CsRepository.CsPendingListInfo{
         Long getAcsId();
         @JsonDeserialize(using = LocalDateDeserializer.class)

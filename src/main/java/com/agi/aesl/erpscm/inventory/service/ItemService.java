@@ -35,7 +35,7 @@ public interface ItemService {
 
     Optional<Item> getItemDetail(Long id);
 
-    List<?> getByAttributes(Long brandId,String attribute,Long warehouseId);
+    List<?> getByAttributes(Long brandId,String attribute,Long subCategoryId,Long warehouseId);
     Optional<?> getItemDetailWithWarehouse(Long id);
 
     <T extends ItemInterface> void sendItemToCps(ClaimResolver claimResolver, String _employee,T item,

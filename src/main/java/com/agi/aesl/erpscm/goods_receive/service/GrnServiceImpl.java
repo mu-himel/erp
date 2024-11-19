@@ -94,43 +94,43 @@ public class GrnServiceImpl implements GrnService{
         return String.format("%05d",1);
     }
 
-    @Override
-    @Transactional
-    public void addGrn(Jwt token, GoodReceiveNoteDto goodReceiveNoteDto) {
-        claimResolver.setToken(token);
-        GoodReceiveNote goodReceiveNote = new GoodReceiveNote();
-        goodReceiveNote.setGrnNo(goodReceiveNote.getGrnNo());
-        goodReceiveNote.setGrnStatus(GrnStatus.PENDING_QC);
-        if(token != null)
-            goodReceiveNote.setCreatedBy(claimResolver.getEmployee().get());
-
-        goodReceiveNote.setGoodReceiveItemDetails(
-                goodReceiveNoteDto.getGoodReceiveItemDetails().stream().map(
-                        goodReceiveItemDetailDto -> {
-                            goodReceiveNote.setWarehouse(new Warehouse(goodReceiveItemDetailDto.getWarehouse().getId()));
-
-                            GoodReceiveItemDetail goodReceiveItemDetail = new GoodReceiveItemDetail();
-                            goodReceiveItemDetail.setItem(new Item(goodReceiveItemDetailDto.getItem().getId()));
-                            goodReceiveItemDetail.setCategory(new ItemCategory(goodReceiveItemDetailDto.getCategory().getId()));
-                            goodReceiveItemDetail.setSubCategory(new ItemCategory(goodReceiveItemDetailDto.getSubCategory().getId()));
-                            goodReceiveItemDetail.setWarehouse(new Warehouse(goodReceiveItemDetailDto.getWarehouse().getId()));
-                            if(goodReceiveItemDetailDto.getWarehouseStore()!=null){
-                                goodReceiveItemDetail.setWarehouseStore(new WarehouseStore(goodReceiveItemDetailDto.getWarehouseStore().getId()));
-                            }
-                            goodReceiveItemDetail.setReceiveQty(BigDecimal.valueOf(goodReceiveItemDetailDto.getOrderQty()));
-                            if(goodReceiveItemDetailDto.getManufactureDate()!=null){
-                                goodReceiveItemDetail.setManufactureDate(goodReceiveItemDetailDto.getManufactureDate());
-                            }
-                            if(goodReceiveItemDetailDto.getExpireDate()!=null){
-                                goodReceiveItemDetail.setExpireDate(goodReceiveItemDetailDto.getExpireDate());
-                            }
-                            goodReceiveItemDetail.setGoodReceiveNote(goodReceiveNote);
-                            return goodReceiveItemDetail;
-                        }
-                ).collect(Collectors.toList())
-        );
-        grnRepository.save(goodReceiveNote);
-    }
+//    @Override
+//    @Transactional
+//    public void addGrn(Jwt token, GoodReceiveNoteDto goodReceiveNoteDto) {
+//        claimResolver.setToken(token);
+//        GoodReceiveNote goodReceiveNote = new GoodReceiveNote();
+//        goodReceiveNote.setGrnNo(goodReceiveNote.getGrnNo());
+//        goodReceiveNote.setGrnStatus(GrnStatus.PENDING_QC);
+//        if(token != null)
+//            goodReceiveNote.setCreatedBy(claimResolver.getEmployee().get());
+//
+//        goodReceiveNote.setGoodReceiveItemDetails(
+//                goodReceiveNoteDto.getGoodReceiveItemDetails().stream().map(
+//                        goodReceiveItemDetailDto -> {
+//                            goodReceiveNote.setWarehouse(new Warehouse(goodReceiveItemDetailDto.getWarehouse().getId()));
+//
+//                            GoodReceiveItemDetail goodReceiveItemDetail = new GoodReceiveItemDetail();
+//                            goodReceiveItemDetail.setItem(new Item(goodReceiveItemDetailDto.getItem().getId()));
+//                            goodReceiveItemDetail.setCategory(new ItemCategory(goodReceiveItemDetailDto.getCategory().getId()));
+//                            goodReceiveItemDetail.setSubCategory(new ItemCategory(goodReceiveItemDetailDto.getSubCategory().getId()));
+//                            goodReceiveItemDetail.setWarehouse(new Warehouse(goodReceiveItemDetailDto.getWarehouse().getId()));
+//                            if(goodReceiveItemDetailDto.getWarehouseStore()!=null){
+//                                goodReceiveItemDetail.setWarehouseStore(new WarehouseStore(goodReceiveItemDetailDto.getWarehouseStore().getId()));
+//                            }
+//                            goodReceiveItemDetail.setReceiveQty(BigDecimal.valueOf(goodReceiveItemDetailDto.getOrderQty()));
+//                            if(goodReceiveItemDetailDto.getManufactureDate()!=null){
+//                                goodReceiveItemDetail.setManufactureDate(goodReceiveItemDetailDto.getManufactureDate());
+//                            }
+//                            if(goodReceiveItemDetailDto.getExpireDate()!=null){
+//                                goodReceiveItemDetail.setExpireDate(goodReceiveItemDetailDto.getExpireDate());
+//                            }
+//                            goodReceiveItemDetail.setGoodReceiveNote(goodReceiveNote);
+//                            return goodReceiveItemDetail;
+//                        }
+//                ).collect(Collectors.toList())
+//        );
+//        grnRepository.save(goodReceiveNote);
+//    }
 
     @Override
     @Transactional

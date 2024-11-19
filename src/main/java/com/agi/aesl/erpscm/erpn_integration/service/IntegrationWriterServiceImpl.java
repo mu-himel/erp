@@ -2,20 +2,22 @@ package com.agi.aesl.erpscm.erpn_integration.service;
 
 import java.util.*;
 
-import com.agi.aesl.erpscm.account_finance.dto.request.LedgerInitiatorDto;
+
 import com.agi.aesl.erpscm.account_finance.dto.request.RemoteLedgerAccDto;
-import com.agi.aesl.erpscm.account_finance.dto.request.RemoteLedgerAccountDto;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
+import com.agi.aesl.erpscm.cs.entity.CsAccount;
+import com.agi.aesl.erpscm.cs.repository.CsAccountRepository;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.dto.request.PurchaseRequest;
 import com.agi.aesl.erpscm.erpn_integration.dto.request.PurchaseRequestItem;
-import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
+import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
+import com.agi.aesl.erpscm.purchase_order.repository.PurchaseOrderRepository;
 import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveNote;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
@@ -64,6 +66,12 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
     @Autowired
     private IntegrationReaderService integrationReaderService;
+
+    @Autowired
+    private PurchaseOrderRepository purchaseOrderRepository;
+
+    @Autowired
+    private CsAccountRepository csAccountRepository;
 
     @Override
     @Transactional
@@ -178,7 +186,14 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
     @Override
     public void purchaseReceived(Jwt token, StoreReceiveNote receiveNote) {
-
+        Optional<PurchaseOrder> poOp = purchaseOrderRepository.findById(receiveNote.getGrn().getRemotePoId());
+        Optional<CsAccount> csAccountOp=Optional.empty();
+        if(poOp.isPresent()){
+            csAccountOp = csAccountRepository.findByCsId(poOp.get().getPoGroup().getCs().getId());
+        }
+        if(csAccountOp.isEmpty()){
+            throw new RuntimeException("Sorry! Vat Type not found in Account Cs");
+        }
         Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
         if(serviceExist.isPresent()) {
             PurchaseRequest purchaseRequest = new PurchaseRequest();
@@ -186,7 +201,8 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
             GoodReceiveNote grn = receiveNote.getGrn();
             purchaseRequest.setVendorCpsId(grn.getVendorId().toString());
             List<PurchaseRequestItem> items = new ArrayList<>();
-            purchaseRequest.setVatType(null);
+
+            purchaseRequest.setVatType(csAccountOp.get().getVatType().replaceAll("_","").trim().toUpperCase());
             purchaseRequest.setInvoice(grn.getInvoicePath());
             receiveNote.getSrnDetails().stream().forEach(srnd->{
                 Item item = srnd.getItem();
@@ -199,6 +215,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
                 pri.setCreditDays(grn.getDays().toString());
                 pri.setPricePerUnit(srnd.getGoodReceiveItemDetail().getPricePerUnit());
                 if(grndetailOp.isPresent()){
+                    pri.setEstDeliveryTime(grndetailOp.get().getEstimatedDeliveryDays().toString());
                     pri.setVat(grn.getVat());
                     pri.setDeliveryCharge(grn.getDeliveryChargeAmount());
                 }

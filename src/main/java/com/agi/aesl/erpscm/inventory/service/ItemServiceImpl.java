@@ -492,7 +492,7 @@ public class ItemServiceImpl implements ItemService {
         }
         item.setCode(itemRequestDto.getCode());
         Long brandId = (itemRequestDto.getBrand()!=null)? itemRequestDto.getBrand().getId() : null;
-       List<?> itemExistByAttr = this.getByAttributes(brandId,itemAttributeName,warehouse.getId());
+       List<?> itemExistByAttr = this.getByAttributes(brandId,itemAttributeName,item.getItemCategory().getId(),warehouse.getId());
        if(itemExistByAttr.size()>0){
            throw new AesException("Sorry! Item Already exist with same attributes for this brand");
        }
@@ -647,7 +647,7 @@ public class ItemServiceImpl implements ItemService {
         Optional<CategoryBrand> catBrandOp = categoryBrandRepository.findByCategoryIdAndName(catOp.get().getId(), itemRequestDto.getBrandName());
 
         Long brandId = (catBrandOp.isPresent())? catBrandOp.get().getId() : null;
-       List<?> itemExistByAttr = this.getByAttributes(brandId,itemAttributeName,warehouse.getId());
+       List<?> itemExistByAttr = this.getByAttributes(brandId,itemAttributeName,item.getItemCategory().getId(), warehouse.getId());
        if(itemExistByAttr.size()>0){
            throw new AesException("Sorry! Item Already exist with same attributes for this brand");
        }
@@ -869,8 +869,8 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<?> getByAttributes(Long brandId, String attribute, Long warehouseId) {
-        return itemRepository.findByAttributes(brandId,attribute,warehouseId);
+    public List<?> getByAttributes(Long brandId, String attribute,Long subCatId, Long warehouseId) {
+        return itemRepository.findByAttributes(brandId,attribute,subCatId,warehouseId);
     }
 
     @Override
@@ -1059,7 +1059,7 @@ public class ItemServiceImpl implements ItemService {
         item.setBrand(catBrand);
         item.setCpsItemId(syncItemDetail.getId());
 
-        List<?> itemExistByAttr = this.getByAttributes(catBrand.getId(),itemAttributeName,warehouseId);
+        List<?> itemExistByAttr = this.getByAttributes(catBrand.getId(),itemAttributeName,subCat.getId(),warehouseId);
         if(itemExistByAttr.size()>0){
             List<Item> items = itemRepository.findByBrandIdAndItemCategoryIdAndItemAttributeName(catBrand.getId(), subCat.getId(), itemAttributeName);
             for(Item i : items){

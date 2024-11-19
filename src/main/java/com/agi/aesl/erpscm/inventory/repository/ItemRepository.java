@@ -113,7 +113,7 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             Optional<Long> categoryId, Optional<Long> categoryId1, String name, String code);
 
     @Query(value = """
-            SELECT * FROM (SELECT i.id, i.brand_id ,i.active, s.warehouse_id,
+            SELECT * FROM (SELECT i.id, i.brand_id ,i.active, s.warehouse_id, i.item_category_id,
                     GROUP_CONCAT(DISTINCT  ia.attribute_type,' ',ia.attribute_value , ' ',ia.attribute_unit ORDER BY ia.id ASC separator ' - ') itemAttributes\s
             FROM scm_item_attributes ia
             LEFT JOIN scm_items i on i.id=ia.item_id
@@ -121,9 +121,11 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             GROUP BY i.id) p
             WHERE p.brand_id=:brandId AND itemAttributes = :attribute
              AND p.warehouse_id = :warehouseId
+             AND p.item_category_id = :subCategoryId
             """,nativeQuery = true)
     List<ItemInfoByAttribute> findByAttributes(@Param("brandId") Long brandId,
                                                @Param("attribute") String attribute,
+                                               @Param("subCategoryId") Long subCategoryId,
                                                @Param("warehouseId") Long warehouseId);
 
     Optional<Item> findByItemAttributeName(String itemAttribute);
