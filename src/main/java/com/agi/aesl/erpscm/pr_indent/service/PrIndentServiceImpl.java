@@ -107,7 +107,7 @@ public class PrIndentServiceImpl implements PrIndentService {
 
             Map<String, Object> item = new HashMap<>();
             String warehouseKey = prIndentViewInfo.getPrAttribute() + "_" + prIndentViewInfo.getWarehouseId();
-            System.out.println("HHHHHHHHHHHH " + warehouseKey);
+
             Optional<Map<String, Object>> anyItemOp = items.stream().filter(_item -> {
                 return _item.get("itemName").equals(prIndentViewInfo.getPrAttribute());
             }).findAny();
@@ -239,7 +239,6 @@ public class PrIndentServiceImpl implements PrIndentService {
 
             Map<String, Object> item = new HashMap<>();
             String warehouseKey = prIndentViewInfo.getBrandName() + "_" + prIndentViewInfo.getPrAttribute() + "_" + prIndentViewInfo.getWarehouseId();
-            System.out.println("HHHHHHHHHHHH " + warehouseKey);
             Optional<Map<String, Object>> anyItemOp = items.stream().filter(_item -> {
                 String itemName = (String) _item.get("itemName");
                 String prAttribute = prIndentViewInfo.getPrAttribute();

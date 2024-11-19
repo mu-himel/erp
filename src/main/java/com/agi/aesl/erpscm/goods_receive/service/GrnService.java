@@ -17,7 +17,7 @@ public interface GrnService {
 
     String getNextGrnNumber();
 
-    void addGrn(Jwt token, GoodReceiveNoteDto goodReceiveNoteDto);
+//    void addGrn(Jwt token, GoodReceiveNoteDto goodReceiveNoteDto);
 
     Page<?> getAllGrn(Jwt token, Optional<Integer> page, Optional<Integer> size,
                       Optional<String> grnNo, Optional<Integer> qty,
