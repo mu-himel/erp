@@ -20,7 +20,6 @@ import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
 import com.agi.aesl.erpscm.purchase_order.repository.PurchaseOrderRepository;
 import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveNote;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -32,6 +31,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.network.NetworkService;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class IntegrationWriterServiceImpl implements IntegrationWriterService{
@@ -185,6 +185,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     }
 
     @Override
+    @Transactional
     public void purchaseReceived(Jwt token, StoreReceiveNote receiveNote) {
         Optional<PurchaseOrder> poOp = purchaseOrderRepository.findById(receiveNote.getGrn().getRemotePoId());
         Optional<CsAccount> csAccountOp=Optional.empty();
@@ -219,7 +220,6 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
                     pri.setVat(grn.getVat());
                     pri.setDeliveryCharge(grn.getDeliveryChargeAmount());
                 }
-//                pri.setCostCenter(srnd.getCostCenter());
                 items.add(pri);
             });
             purchaseRequest.setItemList(items);
@@ -229,7 +229,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
             System.out.println(purchaseReceivedEndpoint);
             networkService.post(purchaseReceivedEndpoint, payload, Void.class);
         }else{
-            throw new RuntimeException("Sorry! Hr Service not available to create item ledger");
+            throw new RuntimeException("Sorry! Account Service not available to create item ledger");
         }
     }
 }
