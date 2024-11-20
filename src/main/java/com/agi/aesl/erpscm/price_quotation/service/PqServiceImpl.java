@@ -220,10 +220,20 @@ public class PqServiceImpl implements PqService{
             }
 
         }
+        if(pqDto.getPriceQuotationSummary()!=null && pqDto.getPriceQuotationSummary().getAitAmount() !=null){
+            if(pqDto.getPriceQuotationSummary().getVatAmount().contains(".")){
+                pqs.setAitAmount(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getAitAmount())));
+            }else{
+                pqs.setAitAmount(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getAitAmount())));
+            }
+
+        }
         if(pqDto.getPriceQuotationSummary()!=null && pqDto.getPriceQuotationSummary().getVatPercent() !=null){
             pqs.setVatPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatPercent())));
         }
-
+        if(pqDto.getPriceQuotationSummary()!=null && pqDto.getPriceQuotationSummary().getAitPercent() !=null){
+            pqs.setAitPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getAitPercent())));
+        }
         pqs.setSubTotalPrice(pqDto.getPriceQuotationSummary().getSubTotalPrice());
         pqs.setTotalPrice(pqDto.getPriceQuotationSummary().getTotalPrice());
         pqs.setPriceQuotation(priceQuotation);

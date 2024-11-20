@@ -244,7 +244,7 @@ public interface ProductRequirementQuery {
                                             LEFT JOIN scm_demand_details dd on p.demand_detail_id = dd.id
                                             LEFT JOIN scm_items i on dd.item_id = i.id
                                             LEFT JOIN scm_warehouses w on w.id = p.warehouse_id
-                                    WHERE (:categoryId IS NULL OR c.id = :categoryId)
+                                    WHERE p.status = 'OPEN' AND (:categoryId IS NULL OR c.id = :categoryId)
                                         AND (:subCategoryId IS NULL OR sc.id = :subCategoryId)
             """;
 
