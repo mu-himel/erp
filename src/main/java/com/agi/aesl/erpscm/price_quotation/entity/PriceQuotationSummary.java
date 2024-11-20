@@ -23,7 +23,9 @@ public class PriceQuotationSummary {
     private Boolean mushakIncluded;
     private Boolean isVatAdded;
     private BigDecimal vatPercent;
+    private BigDecimal aitPercent;
     private BigDecimal vatAmount;
+    private BigDecimal aitAmount;
     private Boolean isAitAdded;
     private BigDecimal subTotalPrice;
     private BigDecimal totalPrice;
