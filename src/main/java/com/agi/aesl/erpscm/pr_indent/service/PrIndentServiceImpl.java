@@ -106,10 +106,11 @@ public class PrIndentServiceImpl implements PrIndentService {
         for (PrIndentRepository.PrIndentViewInfo prIndentViewInfo : result) {
 
             Map<String, Object> item = new HashMap<>();
-            String warehouseKey = prIndentViewInfo.getPrAttribute() + "_" + prIndentViewInfo.getWarehouseId();
+            String warehouseKey = prIndentViewInfo.getBrandName()+"_"+prIndentViewInfo.getPrAttribute() + "_" + prIndentViewInfo.getWarehouseId();
 
             Optional<Map<String, Object>> anyItemOp = items.stream().filter(_item -> {
-                return _item.get("itemName").equals(prIndentViewInfo.getPrAttribute());
+                return _item.get("brandName").equals(prIndentViewInfo.getBrandName()) &&
+                _item.get("itemName").equals(prIndentViewInfo.getPrAttribute());
             }).findAny();
 
             if (anyItemOp.isEmpty()) {
@@ -241,8 +242,9 @@ public class PrIndentServiceImpl implements PrIndentService {
             String warehouseKey = prIndentViewInfo.getBrandName() + "_" + prIndentViewInfo.getPrAttribute() + "_" + prIndentViewInfo.getWarehouseId();
             Optional<Map<String, Object>> anyItemOp = items.stream().filter(_item -> {
                 String itemName = (String) _item.get("itemName");
+                String brandName = (String) _item.get("brandName");
                 String prAttribute = prIndentViewInfo.getPrAttribute();
-                return itemName.equals(prAttribute);
+                return brandName.equals(prIndentViewInfo.getBrandName()) && itemName.equals(prAttribute);
             }).findAny();
 
             if (anyItemOp.isEmpty()) {

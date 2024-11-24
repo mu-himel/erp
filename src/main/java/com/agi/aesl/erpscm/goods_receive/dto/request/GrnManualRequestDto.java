@@ -6,6 +6,7 @@ import lombok.Data;
 import org.hibernate.engine.jdbc.batch.spi.Batch;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data

@@ -5,9 +5,11 @@ import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Data
 public class GrnManualItemDetailDto {
+    private Long id;
     private ReferenceObjectDto item;
     private String itemCode;
     private ItemCategory category;
@@ -16,4 +18,6 @@ public class GrnManualItemDetailDto {
     private BigDecimal orderQty;
     private BigDecimal pricePerUnit;
     private BigDecimal deliveryChargeAmount;
+    private LocalDate expireDate;
+    private LocalDate productionDate;
 }

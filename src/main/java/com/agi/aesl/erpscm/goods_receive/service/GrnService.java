@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.goods_receive.service;
 
 import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
 
+import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualItemDetailDto;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
 
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
@@ -44,6 +45,6 @@ public interface GrnService {
 
     Optional<GoodReceiveNote> getByGrnNo(String srnNo);
 
-    void receivedPO(Jwt token,Long id);
+    void receivedPO(Jwt token, Long id, GrnManualItemDetailDto grnManualRequestDto);
     void declinePO(Jwt token,Long id, NoteDto noteDto);
 }

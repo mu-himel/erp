@@ -5,8 +5,10 @@ import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
+import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveItemDetailDto;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
 
+import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualItemDetailDto;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
 
 import com.agi.aesl.erpscm.goods_receive.dto.response.GoodReceiveNoteItemDetailInfo;
@@ -181,6 +183,8 @@ public class GrnServiceImpl implements GrnService{
                     grid.setCategory(item.getItemParentCategory());
                     grid.setSubCategory(item.getItemCategory());
                 }
+                grid.setExpireDate(detailDto.getExpireDate());
+                grid.setManufactureDate(detailDto.getProductionDate());
                 grid.setEstimatedDeliveryDays(detailDto.getEstDeliveryDays());
                 grid.setReceiveQty(detailDto.getOrderQty());
                 grid.setPricePerUnit(detailDto.getPricePerUnit());
@@ -430,10 +434,16 @@ public class GrnServiceImpl implements GrnService{
 
     @Override
     @Transactional
-    public void receivedPO(Jwt token,Long id) {
+    public void receivedPO(Jwt token, Long id, GrnManualItemDetailDto goodReceiveItemDetailDto) {
         Optional<GoodReceiveNote> grnOp = grnRepository.findById(id);
+        Optional<GoodReceiveItemDetail> grnDetailOp = grnDetailRepository.findById(goodReceiveItemDetailDto.getId());
         if(grnOp.isPresent()){
             GoodReceiveNote grn = grnOp.get();
+            if(grnDetailOp.isPresent()){
+                GoodReceiveItemDetail grnd = grnDetailOp.get();
+                grnd.setExpireDate(goodReceiveItemDetailDto.getExpireDate());
+                grnd.setManufactureDate(goodReceiveItemDetailDto.getProductionDate());
+            }
             grn.setGrnStatus(GrnStatus.PENDING_QC);
             Long remotePoId = grn.getRemotePoId();
             sentGrnReceived(token,remotePoId,GrnStatus.RECEIVED,new NoteDto());

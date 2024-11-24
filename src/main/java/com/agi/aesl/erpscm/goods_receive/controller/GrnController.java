@@ -85,8 +85,10 @@ public class GrnController extends BaseController {
     @PutMapping("/{id}/receive-po")
     public ResponseEntity<?> receiveGrn(
             @AuthenticationPrincipal Jwt token,
-            @PathVariable("id") Long id ){
-        grnService.receivedPO(token,id);
+            @PathVariable("id") Long id,
+            @RequestBody GrnManualItemDetailDto grnManualRequestDto
+            ){
+        grnService.receivedPO(token,id, grnManualRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
