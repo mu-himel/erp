@@ -167,7 +167,7 @@ public class GrnServiceImpl implements GrnService{
                     itemOp = itemService.getItemDetail(detailDto.getItem().getId());
                 }else if (mode.equals(GrnMode.AUTO)){
                     List<Item> items = itemService.getByCode(detailDto.getItemCode());
-                    List<Long> itemIds = items.stream().map(Item::getId).toList();
+                    List<Long> itemIds = items.stream().filter(Item::getActive).map(Item::getId).toList();
                     List<ItemStock> stocks = itemService.getByItemAndWarehouse(itemIds,grnManualDto.getWarehouseId());
                     if(!stocks.isEmpty()){
                        ItemStock stock = stocks.get(0);
@@ -180,14 +180,13 @@ public class GrnServiceImpl implements GrnService{
                     grid.setBrandName(item.getName());
                     grid.setCategory(item.getItemParentCategory());
                     grid.setSubCategory(item.getItemCategory());
-                    grid.setEstimatedDeliveryDays(detailDto.getEstDeliveryDays());
-                    grid.setReceiveQty(detailDto.getOrderQty());
-                    grid.setPricePerUnit(detailDto.getPricePerUnit());
-                    grid.setDeliveryCharge(detailDto.getDeliveryChargeAmount());
-                    grid.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
-                    grid.setGoodReceiveNote(grn);
                 }
-
+                grid.setEstimatedDeliveryDays(detailDto.getEstDeliveryDays());
+                grid.setReceiveQty(detailDto.getOrderQty());
+                grid.setPricePerUnit(detailDto.getPricePerUnit());
+                grid.setDeliveryCharge(detailDto.getDeliveryChargeAmount());
+                grid.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
+                grid.setGoodReceiveNote(grn);
                 return grid;
             }).collect(Collectors.toList())
         );

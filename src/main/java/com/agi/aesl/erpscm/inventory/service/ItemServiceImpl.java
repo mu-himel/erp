@@ -456,17 +456,33 @@ public class ItemServiceImpl implements ItemService {
 
     }
 
-    private String generateItemAttribute(List<ItemAttribute> attributes){
+//    private String generateItemAttribute(List<ItemAttribute> attributes){
+//        StringBuilder sb = new StringBuilder();
+//
+//        attributes.stream().forEach(itemAttribute -> {
+//            sb.append(itemAttribute.getAttributeType().trim()
+//                    +" "+itemAttribute.getAttributeValue().trim()
+//                    +" "+itemAttribute.getAttributeUnit().trim());
+//            sb.append(" - ");
+//        });
+//
+//        return (sb.isEmpty())? "" :  sb.toString().substring(0,sb.length()-3);
+//    }
+
+    private String generateItemAttributeName(List<ItemAttribute> attributes){
         StringBuilder sb = new StringBuilder();
 
         attributes.stream().forEach(itemAttribute -> {
-            sb.append(itemAttribute.getAttributeType().trim()
-                    +" "+itemAttribute.getAttributeValue().trim()
-                    +" "+itemAttribute.getAttributeUnit().trim());
-            sb.append(" - ");
+            String attrType = itemAttribute.getAttributeType().trim();
+            String attrValue = itemAttribute.getAttributeValue().trim();
+            String attrUnit = itemAttribute.getAttributeUnit().trim();
+            if(!attrType.isEmpty() && !attrValue.isEmpty() && !attrUnit.isEmpty()){
+                sb.append(attrType +" "+attrValue +" "+attrUnit);
+                sb.append(" - ");
+            }
         });
 
-        return (sb.isEmpty())? "" :  sb.toString().substring(0,sb.length()-3);
+        return (sb.isEmpty())? "" : sb.toString().substring(0,sb.length()-3);
     }
 
     @Override
@@ -475,7 +491,7 @@ public class ItemServiceImpl implements ItemService {
         claimResolver.setToken(loggedInUser);
         Item item = itemRequestDto.getEntity();
 
-        String itemAttributeName = generateItemAttribute(itemRequestDto.getAttributes());
+        String itemAttributeName = generateItemAttributeName(itemRequestDto.getAttributes());
 
        Warehouse warehouse = null;
        WarehouseStore warehouseStore = null;
@@ -626,7 +642,7 @@ public class ItemServiceImpl implements ItemService {
     public void createItem(Jwt loggedInUser, RemoteItemRequestDto itemRequestDto) {
         Item item = itemRequestDto.getEntity();
 
-        String itemAttributeName = generateItemAttribute(itemRequestDto.getAttributes());
+        String itemAttributeName = generateItemAttributeName(itemRequestDto.getAttributes());
 
        Warehouse warehouse = null;
        WarehouseStore warehouseStore = null;
@@ -1015,7 +1031,7 @@ public class ItemServiceImpl implements ItemService {
     private Item createItem(Jwt token,Long warehouseId, Long warehouseStoreId, SyncItemDetail syncItemDetail){
         claimResolver.setToken(token);
         Item item = syncItemDetail.getEntity();
-        String itemAttributeName = generateItemAttribute(syncItemDetail.getAttributes());
+        String itemAttributeName = generateItemAttributeName(syncItemDetail.getAttributes());
 
         Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(warehouseId);
         if(warehouseOp.isEmpty()){
