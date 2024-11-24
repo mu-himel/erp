@@ -326,10 +326,10 @@ public class IndentServiceImpl implements IndentService{
         AtomicReference<Long> prQty= new AtomicReference<>(0L);
         result.stream().forEach(indentViewInfo->{
             Map<String,Object> item = new HashMap<>();
-            String warehouseKey = indentViewInfo.getItemName()+"_"+indentViewInfo.getWarehouseId();
+            String warehouseKey = indentViewInfo.getBrandName()+"_"+indentViewInfo.getItemName()+"_"+indentViewInfo.getWarehouseId();
 
             Optional<Map<String,Object>> anyItemOp = items.stream().filter(_item->{
-                return  _item.get("itemName").equals(indentViewInfo.getItemName());
+                return _item.get("brandName").equals(indentViewInfo.getBrandName()) && _item.get("itemName").equals(indentViewInfo.getItemName());
             }).findAny();
 
             if(anyItemOp.isEmpty()){
