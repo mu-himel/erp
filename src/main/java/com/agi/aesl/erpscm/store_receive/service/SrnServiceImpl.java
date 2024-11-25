@@ -380,7 +380,7 @@ public class SrnServiceImpl implements SrnService{
 
 
             SrnVerifyApprovalHistory svah = new SrnVerifyApprovalHistory();
-            svah.setEmployee(new Employee(srn.getNextVerifierId()));
+            svah.setEmployee(new Employee(srn.getNextApproverId()));
             svah.setSrnStatus(SrnStatus.APPROVED);
             svah.setStoreReceiveNote(srn);
             srnVerifyApprovalHistoryRepository.save(svah);

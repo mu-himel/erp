@@ -47,7 +47,10 @@ public interface QcQuery {
                                 grn.created_at as createdAt, 
                                 grn.grn_no as grnNo, 
                                 grn.grn_status as grnStatus,
-                                CASE WHEN  qc.qc_status != 'REVIEW'  AND (qvah.id IS NOT NULL AND qvah.employee_id = :nextVerifierId) THEN
+                                CASE WHEN  qc.qc_status != 'REVIEW'  AND (qvah.id IS NOT NULL 
+                                AND qvah.quality_control_id = qc.id 
+                                AND qvah.employee_id = :nextVerifierId
+                                AND qvah.qc_status IN ('VERIFIED')) THEN
                                     qvah.qc_status
                                 ELSE
                                     qc.qc_status
@@ -118,7 +121,10 @@ public interface QcQuery {
                                 grn.created_at as createdAt, 
                                 grn.grn_no as grnNo, 
                                 grn.grn_status grnStatus,
-                                CASE WHEN qc.qc_status != 'REVIEW' AND (qvah.id IS NOT NULL AND qvah.employee_id = :nextApproveId) THEN
+                                CASE WHEN qc.qc_status != 'REVIEW' AND (qvah.id IS NOT NULL 
+                                AND qvah.quality_control_id = qc.id
+                                AND qvah.employee_id = :nextApproveId
+                                AND qvah.qc_status IN ('APPROVED')) THEN
                                     qvah.qc_status
                                 ELSE
                                     qc.qc_status
