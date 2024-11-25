@@ -425,7 +425,7 @@ public class QcServiceImpl implements QcService{
             QcVerifyApprovalHistory qvah = new QcVerifyApprovalHistory();
             qvah.setQcStatus(QcStatus.APPROVED);
             qvah.setQualityControl(qc);
-            qvah.setEmployee(new Employee(qc.getNextVerifierId()));
+            qvah.setEmployee(new Employee(qc.getNextApproverId()));
             qcVerifyApprovalHistoryRepository.save(qvah);
         }
     }

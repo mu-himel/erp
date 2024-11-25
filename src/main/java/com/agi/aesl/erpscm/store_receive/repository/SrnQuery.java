@@ -68,7 +68,10 @@ public interface SrnQuery {
                                            grn.created_at as createdAt,
                                            grn.grn_no as grnNo,grn.grn_status  as grnStatus,
                                            grn.is_received_by_store as isReceivedByStore,
-                                           CASE WHEN srn.srn_status != 'REVIEW' AND (svah.id IS NOT NULL AND svah.employee_id = :nextVerifierId) THEN
+                                           CASE WHEN srn.srn_status != 'REVIEW' AND (svah.id IS NOT NULL 
+                                           AND svah.store_receive_note_id = srn.id
+                                           AND svah.employee_id = :nextVerifierId
+                                           AND svah.srn_status IN ('VERIFIED')) THEN
                                                     svah.srn_status
                                                 ELSE
                                                     srn.srn_status
@@ -120,7 +123,10 @@ public interface SrnQuery {
                                            srn.id as srnId,
                                            grn.created_at as createdAt,
                                            grn.grn_no as grnNo,grn.grn_status grnStatus,
-                                           CASE WHEN srn.srn_status != 'REVIEW' AND (svah.id IS NOT NULL AND svah.employee_id = :nextApproverId) THEN
+                                           CASE WHEN srn.srn_status != 'REVIEW' AND (svah.id IS NOT NULL 
+                                           AND svah.store_receive_note_id = srn.id
+                                           AND svah.employee_id = :nextApproverId
+                                           AND svah.srn_status IN ('APPROVED')) THEN
                                                     svah.srn_status
                                                 ELSE
                                                     srn.srn_status
