@@ -17,6 +17,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -86,7 +87,7 @@ public class GrnController extends BaseController {
     public ResponseEntity<?> receiveGrn(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
-            @RequestBody GrnManualItemDetailDto grnManualRequestDto
+            @RequestBody List<GrnManualItemDetailDto> grnManualRequestDto
             ){
         grnService.receivedPO(token,id, grnManualRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

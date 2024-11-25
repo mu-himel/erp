@@ -37,7 +37,8 @@ public interface AcsQuery {
             csheet.validity_date as validityDate,
             i.id as id,
             csheet.id as csId,
-            CASE WHEN acs.acs_status != 'REVIEW' AND (cavah.id IS NOT NULL AND cavah.employee_id = :nextVerifierId) THEN
+            CASE WHEN acs.acs_status != 'REVIEW' AND (cavah.id IS NOT NULL AND cavah.cs_account_id = acs.id 
+            AND cavah.employee_id = :nextVerifierId AND cavah.acs_status IN ('VERIFIED')) THEN
                     cavah.acs_status
                 ELSE
                     acs.acs_status
@@ -77,8 +78,9 @@ public interface AcsQuery {
             csheet.validity_date as validityDate,
             i.id as id,
             csheet.id as csId,
-            CASE WHEN acs.acs_status != 'REVIEW' AND (cavah.id IS NOT NULL AND cavah.employee_id = :nextApproverId
-            AND cavah.acs_status NOT IN ('VERIFIED')) THEN
+            CASE WHEN acs.acs_status != 'REVIEW' AND (cavah.id IS NOT NULL AND cavah.cs_account_id = acs.id 
+            AND cavah.employee_id = :nextApproverId
+            AND cavah.acs_status IN ('APPROVED')) THEN
                     cavah.acs_status
                 ELSE
                     acs.acs_status

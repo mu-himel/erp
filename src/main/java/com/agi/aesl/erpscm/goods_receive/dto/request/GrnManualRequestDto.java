@@ -15,6 +15,7 @@ public class GrnManualRequestDto {
     private ReferenceObjectDto category;
     private VendorDto vendor;
     private String grnNo;
+    private String poNo;
     private String deliveryCharge;
     private String mushak;
     private Long poId;

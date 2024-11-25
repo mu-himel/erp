@@ -43,7 +43,8 @@ public interface IndentQuery {
                            COUNT(ide.id)                           as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
                            i.priority_date_time                    as priority,
-                           CASE WHEN i.indent_status != 'REVIEW' AND (ivah.id IS NOT NULL AND ivah.employee_id = :nextVerifierId) THEN
+                           CASE WHEN i.indent_status != 'REVIEW' AND (ivah.id IS NOT NULL AND ivah.indent_id = i.id 
+                           AND ivah.employee_id = :nextVerifierId AND ivah.indent_status IN ('VERIFIED')) THEN
                                     ivah.indent_status
                                 ELSE
                                     i.indent_status
@@ -84,7 +85,8 @@ public interface IndentQuery {
                            COUNT(ide.id)                           as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
                            i.priority_date_time                              as priority,
-                           CASE WHEN i.indent_status != 'REVIEW' AND (ivah.id IS NOT NULL AND ivah.employee_id = :nextApproverId) THEN
+                           CASE WHEN i.indent_status != 'REVIEW' AND (ivah.id IS NOT NULL AND ivah.indent_id = i.id 
+                           AND ivah.employee_id = :nextApproverId AND ivah.indent_status IN ('APPROVED')) THEN
                                     ivah.indent_status
                                 ELSE
                                     i.indent_status
