@@ -836,13 +836,13 @@ public class DemandServiceImpl implements DemandService{
                 if(item!=null) {
                     
                     demandDetail.setItem(item);
-                    if (demandReceiveDto.getQty() != null && (demandDetail.getApprovedQuantity().compareTo(demandReceiveDto.getQty()) >= 0)) {
-                        itemService.stockOut(item, demandReceiveDto.getQty(),demandReceiveDto.getWarehouseId(),
-                                demandReceiveDto.getWarehouseStoreId());
-                    } else {
-                        itemService.stockOut(item, demandDetail.getApprovedQuantity(),
-                                demandReceiveDto.getWarehouseId(),demandReceiveDto.getWarehouseStoreId());
-                    }
+//                    if (demandReceiveDto.getQty() != null && (demandDetail.getApprovedQuantity().compareTo(demandReceiveDto.getQty()) >= 0)) {
+//                        itemService.stockOut(item, demandReceiveDto.getQty(),demandReceiveDto.getWarehouseId(),
+//                                demandReceiveDto.getWarehouseStoreId());
+//                    } else {
+//                        itemService.stockOut(item, demandDetail.getApprovedQuantity(),
+//                                demandReceiveDto.getWarehouseId(),demandReceiveDto.getWarehouseStoreId());
+//                    }
                     if(demandReceiveDto.getNote()!=null && !demandReceiveDto.getNote().isEmpty()){
                         demandDetail.setStoreNote(demandReceiveDto.getNote());
                     }

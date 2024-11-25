@@ -26,6 +26,7 @@ public class GoodReceiveNote {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String grnNo;
+    private String poNo;
     private Long remotePoId;
 
     @Enumerated(EnumType.STRING)

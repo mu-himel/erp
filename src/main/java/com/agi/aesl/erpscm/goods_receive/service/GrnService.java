@@ -12,6 +12,7 @@ import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface GrnService {
@@ -45,6 +46,6 @@ public interface GrnService {
 
     Optional<GoodReceiveNote> getByGrnNo(String srnNo);
 
-    void receivedPO(Jwt token, Long id, GrnManualItemDetailDto grnManualRequestDto);
+    void receivedPO(Jwt token, Long id, List<GrnManualItemDetailDto> grnManualRequestDto);
     void declinePO(Jwt token,Long id, NoteDto noteDto);
 }

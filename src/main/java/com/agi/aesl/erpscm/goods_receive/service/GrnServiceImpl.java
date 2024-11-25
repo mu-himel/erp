@@ -149,6 +149,7 @@ public class GrnServiceImpl implements GrnService{
             grn.setGrnStatus(GrnStatus.PENDING);
         }
         grn.setGrnNo(grnManualDto.getGrnNo());
+        grn.setPoNo(grnManualDto.getPoNo());
         grn.setIndentNo(grnManualDto.getIndentNo() );
         grn.setGrnMode(mode);
         if(mode.equals(GrnMode.MANUAL)) {
@@ -434,19 +435,27 @@ public class GrnServiceImpl implements GrnService{
 
     @Override
     @Transactional
-    public void receivedPO(Jwt token, Long id, GrnManualItemDetailDto goodReceiveItemDetailDto) {
+    public void receivedPO(Jwt token, Long id, List<GrnManualItemDetailDto> goodReceiveItemDetailDtos) {
         Optional<GoodReceiveNote> grnOp = grnRepository.findById(id);
-        Optional<GoodReceiveItemDetail> grnDetailOp = grnDetailRepository.findById(goodReceiveItemDetailDto.getId());
-        if(grnOp.isPresent()){
-            GoodReceiveNote grn = grnOp.get();
-            if(grnDetailOp.isPresent()){
-                GoodReceiveItemDetail grnd = grnDetailOp.get();
-                grnd.setExpireDate(goodReceiveItemDetailDto.getExpireDate());
-                grnd.setManufactureDate(goodReceiveItemDetailDto.getProductionDate());
+        GoodReceiveNote grn = null;
+        for(GrnManualItemDetailDto gmidto: goodReceiveItemDetailDtos) {
+            Optional<GoodReceiveItemDetail> grnDetailOp = grnDetailRepository.findById(gmidto.getId());
+
+            if (grnOp.isPresent()) {
+                grn = grnOp.get();
+                if (grnDetailOp.isPresent()) {
+                    GoodReceiveItemDetail grnd = grnDetailOp.get();
+                    grnd.setExpireDate(gmidto.getExpireDate());
+                    grnd.setManufactureDate(gmidto.getProductionDate());
+                }
+                grn.setGrnStatus(GrnStatus.PENDING_QC);
+
+
             }
-            grn.setGrnStatus(GrnStatus.PENDING_QC);
+        }
+        if(grn!=null) {
             Long remotePoId = grn.getRemotePoId();
-            sentGrnReceived(token,remotePoId,GrnStatus.RECEIVED,new NoteDto());
+            sentGrnReceived(token, grn.getPoNo(), GrnStatus.RECEIVED, new NoteDto());
         }
     }
 
@@ -457,13 +466,12 @@ public class GrnServiceImpl implements GrnService{
         if(grnOp.isPresent()){
             GoodReceiveNote grn = grnOp.get();
             grn.setGrnStatus(GrnStatus.REJECTED);
-            Long remotePoId = grn.getRemotePoId();
-            sentGrnReceived(token,remotePoId,GrnStatus.REJECTED,noteDto);
+            sentGrnReceived(token,grn.getGrnNo(),GrnStatus.REJECTED,noteDto);
         }
     }
 
     @Transactional
-    private void sentGrnReceived(Jwt token,Long id,GrnStatus status, NoteDto noteDto){
+    private void sentGrnReceived(Jwt token,String id,GrnStatus status, NoteDto noteDto){
         HttpHeaders headers = new HttpHeaders();
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
         if(orgOp.isPresent()){

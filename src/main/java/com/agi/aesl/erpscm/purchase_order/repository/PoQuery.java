@@ -38,7 +38,8 @@ public interface PoQuery {
                    CONCAT(c.name,'-',sc.name)       as categoryName,
                    COALESCE((select count(*) from cs_details cd where cd.cs_id = csheet.id),0)  as itemQty,
                    COALESCE((select count(*) from purchase_orders po2 where po2.cs_id = csheet.id), 0) as totalOrderQty,
-                   CASE WHEN cpo.purchase_order_status != 'REVIEW' AND (pvah.id IS NOT NULL AND pvah.employee_id = :userId) THEN
+                   CASE WHEN cpo.purchase_order_status != 'REVIEW' AND (pvah.id IS NOT NULL AND pvah.po_id = cpo.id 
+                   AND pvah.employee_id = :userId AND pvah.purchase_order_status IN ('VERIFIED')) THEN
                                        pvah.po_status
                                    ELSE
                                        cpo.purchase_order_status
@@ -69,7 +70,8 @@ public interface PoQuery {
                    CONCAT(c.name,'-',sc.name)       as categoryName,
                    COALESCE((select count(*) from cs_details cd where cd.cs_id = csheet.id),0)  as itemQty,
                    COALESCE((select count(*) from purchase_orders po2 where po2.cs_id = csheet.id), 0) as totalOrderQty,
-                   CASE WHEN cpo.purchase_order_status != 'REVIEW' AND (pvah.id IS NOT NULL AND pvah.employee_id = :userId) THEN
+                   CASE WHEN cpo.purchase_order_status != 'REVIEW' AND (pvah.id IS NOT NULL AND pvah.po_id = cpo.id 
+                   AND pvah.employee_id = :userId AND pvah.purchase_order_status IN ('APPROVED')) THEN
                                        pvah.po_status
                                    ELSE
                                        cpo.purchase_order_status
@@ -174,7 +176,7 @@ public interface PoQuery {
                 WHERE pq.id=cvd.price_quotation_id  AND pqd.item_attribute LIKE CONCAT('%',ide.item_attribute,'%')
                 ) as summary
             from purchase_order_details pod
-            LEFT JOIN purchase_orders po1 ON po1.id =  pod.purchase_order_id
+            LEFT JOIN purchase_orders po1 ON po1.id =  pod.purchase_order_id 
             left join cs_vendor_details cvd ON pod.cs_vendor_detail_id = cvd.id
             left join cs_vendor_delivery_details cvdd ON cvdd.vendor_delivery_detail_id  = cvd.id
             left join cs_details cd  ON cd.id = cvd.cs_detail_id
