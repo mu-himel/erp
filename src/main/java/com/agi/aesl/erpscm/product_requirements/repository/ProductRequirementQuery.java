@@ -3,36 +3,39 @@ package com.agi.aesl.erpscm.product_requirements.repository;
 public interface ProductRequirementQuery {
     
     String getProductRequirementWithSearch="""
-        SELECT GROUP_CONCAT(p.id)                                 as productRequirementIds,
-                c.id                                               AS categoryId,
-                c.name                                             AS categoryName,
-                sc.id                                              AS subCategoryId,
-                sc.name                                            AS subCategoryName,
-                MIN(demand_deadline)                               as demandDeadline,
-                DATEDIFF(MIN(demand_deadline), CURRENT_DATE)       as daysRemain,
+            SELECT GROUP_CONCAT(p.id)                                 as productRequirementIds,
+                    c.id                                               AS categoryId,
+                    c.name                                             AS categoryName,
+                    sc.id                                              AS subCategoryId,
+                    sc.name                                            AS subCategoryName,
+                    MIN(demand_deadline)                               as demandDeadline,
+                    DATEDIFF(MIN(demand_deadline), CURRENT_DATE)       as daysRemain,
 
-                (SELECT COUNT(attr) FROM(
-                    SELECT GROUP_CONCAT(DISTINCT attribute_type,' ',attribute_value , ' ',attribute_unit order by sdda.id asc separator ' - ') attr
-                    FROM scm_demand_details ddsq1
-                    LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = ddsq1.id
-                    where ddsq1.id IN (p.demand_detail_id) 
-                    AND ddsq1.item_parent_category_id = p.category_id
-                    and ddsq1.item_category_id = p.sub_category_id) as p
-                ) AS itemsQty
+                    (SELECT COUNT(*) FROM (SELECT * FROM (SELECT sic.name, COALESCE(scb.name,'NA') as brandName, GROUP_CONCAT(DISTINCT scb.name,' ',
+                            sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit order by  sdda.id asc separator ' - ') attr FROM product_requirements pr
+                            LEFT JOIN scm_demand_details sdd ON pr.demand_detail_id = sdd.id
+                            LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+                            LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
+                            LEFT JOIN scm_item_categories sic ON sic.id = sc.id
+                            WHERE pr.status = 'OPEN'
+                            GROUP BY scb.name
+                            ) r
+                            GROUP BY r.name, r.brandName, r.attr) total
+                    ) AS itemsQty
 
-        FROM product_requirements AS p
-                LEFT JOIN scm_item_categories c ON p.category_id = c.id
-                LEFT JOIN scm_item_categories sc ON p.sub_category_id = sc.id
-                LEFT JOIN scm_demands d ON p.demand_id = d.id
-                LEFT JOIN scm_demand_details dd ON p.demand_detail_id = dd.id
+            FROM product_requirements AS p
+                    LEFT JOIN scm_item_categories c ON p.category_id = c.id
+                    LEFT JOIN scm_item_categories sc ON p.sub_category_id = sc.id
+                    LEFT JOIN scm_demands d ON p.demand_id = d.id
+                    LEFT JOIN scm_demand_details dd ON p.demand_detail_id = dd.id
 
-        WHERE (:categoryId IS NULL OR c.id = :categoryId)
-        AND (:subCategoryId IS NULL OR sc.id = :subCategoryId)
-        AND (:startDate IS NULL OR :endDate IS NULL OR p.product_requirement_date BETWEEN :startDate AND :endDate)
-        AND p.status = 'OPEN'
-        GROUP BY c.id, sc.id
-        ORDER BY c.id, sc.id
-            """;
+            WHERE (:categoryId IS NULL OR c.id = :categoryId)
+            AND (:subCategoryId IS NULL OR sc.id = :subCategoryId)
+            AND (:startDate IS NULL OR :endDate IS NULL OR p.product_requirement_date BETWEEN :startDate AND :endDate)
+            AND p.status = 'OPEN'
+            GROUP BY c.id, sc.id
+            ORDER BY c.id, sc.id
+                """;
 
     String countProductRequirementWithSearch =
             """

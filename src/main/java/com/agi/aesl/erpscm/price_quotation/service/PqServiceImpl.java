@@ -310,10 +310,17 @@ public class PqServiceImpl implements PqService{
         offerRequestDto.setVatIncluded(pqDto.getPriceQuotationSummary().getIsVatAdded());
         offerRequestDto.setAitIncluded(pqDto.getPriceQuotationSummary().getIsAitAdded());
         offerRequestDto.setVatPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatPercent())));
+        offerRequestDto.setAitPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getAitPercent())));
         if(pqDto.getPriceQuotationSummary().getVatAmount().contains(".")){
             offerRequestDto.setVatAmount(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getVatAmount())));
         }else{
             offerRequestDto.setVatAmount(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatAmount())));
+        }
+
+        if(pqDto.getPriceQuotationSummary().getAitAmount().contains(".")){
+            offerRequestDto.setAitAmount(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getAitAmount())));
+        }else{
+            offerRequestDto.setAitAmount(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getAitAmount())));
         }
 
         offerRequestDto.setIsFinal(pqDto.getIsFinal());
