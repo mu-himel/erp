@@ -46,18 +46,37 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
     }
 
     @Override
-    public List<CategoryInfo> getSubCategories(Long warehouseId, Long categoryId) {
+    public List<SubCategoryInfo> getSubCategories(Long warehouseId, Long categoryId) {
         List<WarehouseStore> stores = warehouseStoreService.getStoresByWarehouseId(warehouseId);
-        Optional<WarehouseStore> finish_good = stores.stream().filter(s -> {
+        Optional<WarehouseStore> finishGood = stores.stream().filter(s -> {
             return  s.getStoreName().toLowerCase().contains("finish");
         }).findFirst();
-        if(finish_good.isPresent()){
-            List<CategoryInfo> subCategories = new ArrayList<>();
+        if(finishGood.isPresent()){
+            List<SubCategoryInfo> subCategories = new ArrayList<>();
             List<CategoryRepository.ItemCategoryInfo> allSubCategories = categoryRepository
-                    .findAllSubCategories(finish_good.get().getId(), categoryId, null, null);
+                    .findAllSubCategories(finishGood.get().getId(), categoryId, null, null);
 
             allSubCategories.stream().forEach(sc->{
-                subCategories.add(new CategoryInfo(sc.getId(),sc.getName(),sc.getCode()));
+                subCategories.add(new SubCategoryInfo(sc.getId(),sc.getName(),sc.getCode(),sc.getParentCategoryCode()));
+            });
+            return subCategories;
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<SubCategoryInfo> getSubCategories(Long warehouseId, String categoryCode) {
+        List<WarehouseStore> stores = warehouseStoreService.getStoresByWarehouseId(warehouseId);
+        Optional<WarehouseStore> finishGood = stores.stream().filter(s -> {
+            return  s.getStoreName().toLowerCase().contains("finish");
+        }).findFirst();
+        if(finishGood.isPresent()){
+            List<SubCategoryInfo> subCategories = new ArrayList<>();
+            List<CategoryRepository.ItemCategoryInfo> allSubCategories = categoryRepository
+                    .findAllSubCategories(finishGood.get().getId(), categoryCode, null, null);
+
+            allSubCategories.stream().forEach(sc->{
+                subCategories.add(new SubCategoryInfo(sc.getId(),sc.getName(),sc.getCode(),sc.getParentCategoryCode()));
             });
             return subCategories;
         }
