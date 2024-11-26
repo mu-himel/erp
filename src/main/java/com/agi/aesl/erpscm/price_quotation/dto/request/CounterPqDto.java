@@ -18,7 +18,9 @@ public class CounterPqDto {
     private boolean vatIncluded;
     private boolean aitIncluded;
     private BigDecimal vatAmount;
+    private BigDecimal aitAmount;
     private BigDecimal vatPercent;
+    private BigDecimal aitPercent;
     private String note;
     private BigDecimal finalOfferPrice;
     private Boolean isFinal;
