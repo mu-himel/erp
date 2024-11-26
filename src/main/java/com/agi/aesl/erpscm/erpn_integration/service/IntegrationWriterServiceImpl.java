@@ -179,8 +179,6 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
         if(serviceExist.isPresent()) {
             networkService.post(ledgerItemCreateEndpoint, payload, Void.class);
-        }else{
-            throw new RuntimeException("Sorry! Accounts Service not available to create item ledger");
         }
     }
 
@@ -228,8 +226,6 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
             HttpEntity<PurchaseRequest> payload = new HttpEntity<>(purchaseRequest,headers);
             System.out.println(purchaseReceivedEndpoint);
             networkService.post(purchaseReceivedEndpoint, payload, Void.class);
-        }else{
-            throw new RuntimeException("Sorry! Account Service not available to create item ledger");
         }
     }
 }
