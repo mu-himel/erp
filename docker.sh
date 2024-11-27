@@ -1,5 +1,5 @@
 #!/bin/bash
-image=devopsaes/scmbe:v1.2.30
+image=devopsaes/scmbe:v1.3.0
 docker build -t $image --no-cache .
 echo  "image $image is built"
 docker push $image
