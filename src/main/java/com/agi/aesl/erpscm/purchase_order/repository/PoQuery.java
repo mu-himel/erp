@@ -39,7 +39,7 @@ public interface PoQuery {
                    COALESCE((select count(*) from cs_details cd where cd.cs_id = csheet.id),0)  as itemQty,
                    COALESCE((select count(*) from purchase_orders po2 where po2.cs_id = csheet.id), 0) as totalOrderQty,
                    CASE WHEN cpo.purchase_order_status != 'REVIEW' AND (pvah.id IS NOT NULL AND pvah.po_id = cpo.id 
-                   AND pvah.employee_id = :userId AND pvah.purchase_order_status IN ('VERIFIED')) THEN
+                   AND pvah.employee_id = :userId AND pvah.po_status IN ('VERIFIED')) THEN
                                        pvah.po_status
                                    ELSE
                                        cpo.purchase_order_status
@@ -71,7 +71,7 @@ public interface PoQuery {
                    COALESCE((select count(*) from cs_details cd where cd.cs_id = csheet.id),0)  as itemQty,
                    COALESCE((select count(*) from purchase_orders po2 where po2.cs_id = csheet.id), 0) as totalOrderQty,
                    CASE WHEN cpo.purchase_order_status != 'REVIEW' AND (pvah.id IS NOT NULL AND pvah.po_id = cpo.id 
-                   AND pvah.employee_id = :userId AND pvah.purchase_order_status IN ('APPROVED')) THEN
+                   AND pvah.employee_id = :userId AND pvah.po_status IN ('APPROVED')) THEN
                                        pvah.po_status
                                    ELSE
                                        cpo.purchase_order_status
