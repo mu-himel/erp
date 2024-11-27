@@ -80,7 +80,7 @@ public class CsController extends BaseController {
     ){
 
         return new ResponseEntity<>(
-                csService.getItemWiseVendors(id,dto.getItemName()),
+                csService.getItemWiseVendors(id,dto.getBrandName(),dto.getItemName()),
                 HttpStatus.OK);
     }
 

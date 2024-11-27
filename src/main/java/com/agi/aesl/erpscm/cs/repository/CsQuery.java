@@ -29,8 +29,10 @@ public interface CsQuery {
     LEFT JOIN price_quotation_details pqd ON pqd.price_quotation_id = pq.id
     LEFT JOIN price_quotation_summary pqs ON pqs.price_quotation_id = pq.id
     WHERE pq.id IN (select id FROM price_quotations pq2 where pq2.rfq_id=:tenderId) 
-    AND pqd.item_attribute = :itemName AND pq.is_recommend_for_cs = 1 AND pq.status = 'LOCKED'
-    group by vendor_id
+    AND pqd.item_attribute = :itemName 
+    AND (:brandName IS NULL OR pqd.brand_name = :brandName)
+    AND pq.is_recommend_for_cs = 1 AND pq.status = 'LOCKED'
+    group by vendor_id,brandName,pqd.item_attribute
             """;
 
     String fetchLockedVendorsByVendorAndItem= """
