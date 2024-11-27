@@ -22,7 +22,7 @@ public interface CsService extends VerificationDomainService {
 
     Optional<?> getAllItemsByVendorAndCs(Long vendorId, String csNo);
 
-    List<?> getItemWiseVendors(Long id, String itemName);
+    List<?> getItemWiseVendors(Long id,String brandName, String itemName);
 
     Map<String,Object> getItemWiseVendors(Long id, Long vendorId, String itemName);
 

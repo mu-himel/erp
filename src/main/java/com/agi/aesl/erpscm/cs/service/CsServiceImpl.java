@@ -427,12 +427,12 @@ public class CsServiceImpl implements CsService{
     }
 
     @Override
-    public List<?> getItemWiseVendors(Long tenderId, String itemName) {
+    public List<?> getItemWiseVendors(Long tenderId, String brandName,String itemName) {
         Optional<Indent> indentOp = indentRepository.findById(tenderId);
         if(indentOp.isEmpty()){
             throw new RuntimeException("Sorry! Rfq not found");
         }
-        return csRepository.findLockedVendorsByItemName(tenderId, itemName);
+        return csRepository.findLockedVendorsByItemName(tenderId, brandName,itemName);
     }
 
     @Override

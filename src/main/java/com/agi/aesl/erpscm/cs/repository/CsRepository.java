@@ -17,7 +17,9 @@ import java.util.List;
 public interface CsRepository extends JpaRepository<Cs,Long>, CsQuery {
 
     @Query(value = fetchLockedVendorsByItem,nativeQuery = true)
-    List<ItemWiseVendorDetail> findLockedVendorsByItemName(@Param("tenderId") Long tenderId, @Param("itemName")String itemName);
+    List<ItemWiseVendorDetail> findLockedVendorsByItemName(@Param("tenderId") Long tenderId,
+                                                           @Param("brandName") String brandName,
+                                                           @Param("itemName")String itemName);
 
     @Query(value = fetchLockedVendorsByVendorAndItem,nativeQuery = true)
     List<ItemWiseVendorDetail> findLockedVendorsByItemName(Long tenderId, Long vendorId, String itemName);
