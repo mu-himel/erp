@@ -9,7 +9,7 @@ public interface UserCategoryQuery {
             ) as subCategoryCount, 0 as productCount,
             category_status as status
             FROM user_categories uc
-            WHERE uc.created_by_id=:userId AND uc.parent_category_id IS NULL
+            WHERE uc.created_by_id=:userId AND (uc.parent_category_id IS NULL AND uc.active_parent_category_id IS NULL)
             """;
     String countMyCategories="SELECT COUNT(*) FROM ("+ getMyCategories+") as total";
 
@@ -25,14 +25,14 @@ public interface UserCategoryQuery {
             select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
             uc.category_status as status
              FROM user_categories uc
-             LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
-             WHERE uc.created_by_id=:userId 
-             AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId)
+             LEFT JOIN scm_item_categories puc ON (puc.id = uc.parent_category_id OR puc.id = uc.active_parent_category_id )
+             WHERE uc.created_by_id=:userId AND (uc.active_parent_category_id IS NOT NULL OR uc.parent_category_id IS NOT NULL)
+             AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId OR uc.active_parent_category_id = :categoryId)
             """;
     String countGetMySubCategories = "SELECT COUNT(*) FROM ("+getGetMySubCategories+") as total";
 
     String getCategoryPVs = """
-            select id as id, name as categoryName, (
+            select uc.id as id, name as categoryName, (
                 SELECT COUNT(*) FROM user_categories uc1
                 WHERE uc1.parent_category_id=uc.id
             ) as subCategoryCount, 0 as productCount,
@@ -72,7 +72,7 @@ public interface UserCategoryQuery {
     String countSubCategoryPVs = "SELECT COUNT(*) FROM ("+getSubCategoryPVs+") as total";
 
     String getCategoryPAs="""
-            select id as id, name as categoryName, (
+            select uc.id as id, name as categoryName, (
                 SELECT COUNT(*) FROM user_categories uc1
                 WHERE uc1.parent_category_id=uc.id
             ) as subCategoryCount, 0 as productCount,
@@ -112,13 +112,13 @@ public interface UserCategoryQuery {
     String countSubCategoryPAs = "SELECT COUNT(*) FROM ("+getSubCategoryPAs+") as total";
 
     String closedCategories="""
-            select id as id, name as categoryName, (
+            select uc.id as id, name as categoryName, (
                 SELECT COUNT(*) FROM user_categories uc1
                 WHERE uc1.parent_category_id=uc.id
             ) as subCategoryCount, 0 as productCount,
             category_status as status
             FROM user_categories uc
-            WHERE uc.created_by_id=:userId AND uc.parent_category_id IS NULL
+            WHERE uc.created_by_id=:userId AND (uc.parent_category_id IS NULL AND uc.active_parent_category_id IS NULL)
             AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED')
             """;
     String countClosedCategories = "SELECT COUNT(*) FROM ("+closedCategories+") as total";
@@ -155,8 +155,9 @@ public interface UserCategoryQuery {
             select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
             uc.category_status as status
              FROM user_categories uc
-             LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
+             LEFT JOIN scm_item_categories puc ON (puc.id = uc.parent_category_id OR puc.id = uc.active_parent_category_id)
              WHERE uc.created_by_id=:userId 
+             AND (uc.active_parent_category_id IS NOT NULL OR uc.parent_category_id IS NOT NULL)
              AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId)
              AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED')
             """;

@@ -36,6 +36,8 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             "GROUP BY ic.id")
     Optional<ItemCategory> findById(@Param("id") Long id, @Param("year") Integer Year);
 
+
+
     @Query("SELECT ic FROM ItemCategory ic " +
             "WHERE ic.id=:id AND ic.active=false " +
             "GROUP BY ic.id")

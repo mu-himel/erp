@@ -1032,4 +1032,9 @@ public class CategoryServiceImpl implements CategoryService {
         }
         return Optional.empty();
     }
+
+    @Override
+    public Optional<ItemCategory> getItemCategoryById(Long id) {
+        return categoryRepository.findById(id);
+    }
 }
