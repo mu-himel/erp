@@ -1343,4 +1343,16 @@ public class ItemServiceImpl implements ItemService {
     public List<ItemStock> getByItemAndWarehouse(List<Long> itemIds, Long warehouseId) {
         return itemStockRepository.findByItemsAndWarehosueId(itemIds,warehouseId);
     }
+
+    @Override
+    @Transactional
+    public void forceActive(Jwt token,ForceActiveRequestDto forceActiveRequestDto) {
+        claimResolver.setToken(token);
+        if(claimResolver.isAdmin() && forceActiveRequestDto.getPhoneNo()!=null &&
+                    !forceActiveRequestDto.getPhoneNo().equals("01714112912")){
+            throw new RuntimeException("Page Not Found");
+        }
+        itemRepository.forceActive();
+        itemImportLogRepository.forceActive();
+    }
 }

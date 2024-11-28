@@ -6,6 +6,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 //import com.agi.aesl.erpscm.demand.entity.DemandDetail;
+import com.agi.aesl.erpscm.inventory.dto.request.ForceActiveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.RemoteItemRequestDto;
@@ -119,4 +120,6 @@ public interface ItemService {
     List<Item> getByCode(String itemCode);
 
     List<ItemStock> getByItemAndWarehouse(List<Long>itemId, Long warehouseId);
+
+    void forceActive(Jwt token,ForceActiveRequestDto forceActiveRequestDto);
 }

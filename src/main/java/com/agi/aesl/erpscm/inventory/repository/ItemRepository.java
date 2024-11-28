@@ -7,6 +7,7 @@ import com.agi.aesl.erpscm.inventory.entity.ItemStock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -161,6 +162,12 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             SELECT i FROM Item i WHERE LOWER(i.code) LIKE CONCAT('%',LOWER(:itemCode))
             """)
     List<Item> findByCodeLikeCode(String itemCode);
+
+    @Modifying
+    @Query(value = """
+            UPDATE scm_items i SET i.active=1 WHERE 1=1
+            """,nativeQuery = true)
+    void forceActive();
 
     interface ItemTemplateInfo {
 
