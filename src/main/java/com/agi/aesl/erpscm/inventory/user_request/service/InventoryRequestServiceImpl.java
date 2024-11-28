@@ -384,6 +384,14 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
             itemRequestDto.setItemUnit(item.getItemUnit());
             itemRequestDto.setWarehouse(new ReferenceObjectDto(item.getWarehouse().getId()));
             itemRequestDto.setWarehouseStore(new ReferenceObjectDto(item.getWarehouseStore().getId()));
+            ObjectMapper objectMapper = new ObjectMapper();
+            String jsonStr = null;
+            try {
+                jsonStr = objectMapper.writeValueAsString(item.getCreatedBy());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            itemRequestDto.setEmployee(jsonStr);
             if(item.getAttributes()!=null && !item.getAttributes().isEmpty()) {
                 itemRequestDto.setAttributes(item.getAttributes().stream().map(_attr -> {
                     ItemAttribute attr = new ItemAttribute();

@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.inventory.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
+import com.agi.aesl.erpscm.inventory.dto.request.ForceActiveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.RemoteItemRequestDto;
@@ -233,6 +234,15 @@ public class ItemController extends BaseController{
     public ResponseEntity<?> approveItemFromCps(@PathVariable("id") Long id,
                     @RequestBody ItemApproveRequestDto approveRequestDto){
         itemService.approveItemFromCps(id, approveRequestDto);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PostMapping("/force-active")
+    public ResponseEntity<?> forceActive(
+            @AuthenticationPrincipal Jwt token,
+            @RequestBody ForceActiveRequestDto forceActiveRequestDto
+    ){
+        itemService.forceActive(token,forceActiveRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
