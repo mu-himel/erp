@@ -114,7 +114,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
             if(catOp.isPresent()) {
                 userCategory.setParentCategory(catOp.get());
             } else {
-                Optional<ItemCategory> _catOp = categoryService.getItemCategory(categoryRequestDto.getParentCategory().getId());
+                Optional<ItemCategory> _catOp = categoryService.getItemCategoryById(categoryRequestDto.getParentCategory().getId());
                 _catOp.ifPresent(userCategory::setActiveParentCategory);
             }
 
@@ -438,6 +438,14 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
                 categoryRequestDto.setParentCategory(category);
                 categoryRequestDto.setCurrentYearBudget(new BigDecimal(0));
             }
+            ObjectMapper objectMapper = new ObjectMapper();
+            String jsonStr = null;
+            try {
+                jsonStr = objectMapper.writeValueAsString(cat.getCreatedBy());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+            categoryRequestDto.setEmployee(jsonStr);
             categoryRequestDto.setWarehouse(new ReferenceObjectDto(cat.getStore().getWarehouse().getId()));
             categoryRequestDto.setWarehouseStore(new ReferenceObjectDto(cat.getStore().getId()));
             categoryRequestDto.setIsForCps(true);
