@@ -41,21 +41,25 @@ public interface CsDetailRepository extends JpaRepository<CsDetail, Long> {
                            CASE WHEN pqd.extended_attributes IS NOT NULL THEN
                                   (select csinfo.order_qty-COALESCE (SUM(pod.delivery_qty),0) FROM purchase_orders po
                                 LEFT JOIN purchase_order_details pod ON pod.purchase_order_id  = po.id
-                                WHERE vendor_id = csinfo.vendor_id  AND pod.item_name = CONCAT(pqd.brand_name,'-',pqd.item_attribute,'-',pqd.extended_attributes))
+                                WHERE vendor_id = :vendorId AND po.cs_id = csinfo.csId AND pod.item_name = CONCAT(pqd.brand_name,'-',pqd.item_attribute,'-',pqd.extended_attributes))
                                 ELSE
                                 (select csinfo.order_qty-COALESCE (SUM(pod.delivery_qty),0) FROM purchase_orders po
                                 LEFT JOIN purchase_order_details pod ON pod.purchase_order_id  = po.id
-                                WHERE vendor_id = csinfo.vendor_id  AND pod.item_name = CONCAT(pqd.brand_name,'-',pqd.item_attribute))
+                                WHERE vendor_id = :vendorId  AND po.cs_id = csinfo.csId  AND pod.item_name = CONCAT(pqd.brand_name,'-',pqd.item_attribute))
                                 END as remainingQty
                            FROM price_quotation_details pqd
                            LEFT JOIN price_quotation_summary pqs ON pqs.price_quotation_id = pqd.price_quotation_id
-                           LEFT JOIN (SELECT i.warehouse_id, cvd.id as cvdId, idd.item_attribute, cvd.price_quotation_id, cvd.transaction_type,cvd.discount_amount, cvd.order_qty ,
+                           LEFT JOIN (SELECT i.warehouse_id, cst.id as csId, cvd.id as cvdId, idd.sub_category_id, idd.brand_id,
+                            scb.name as brand_name, idd.item_attribute, 
+                           cvd.price_quotation_id, cvd.transaction_type,cvd.discount_amount, cvd.order_qty ,
                             cst.cs_no ,cvd.vendor_id  FROM cs_details csd
             LEFT JOIN cs cst ON cst.id=csd.cs_id
             LEFT JOIN cs_vendor_details cvd ON cvd.cs_detail_id = csd.id
             LEFT JOIN indent_details idd ON csd.indent_detail_id = idd.id
+            LEFT JOIN scm_category_brands scb ON scb.id = idd.brand_id
             LEFT JOIN indents i ON i.id = idd.indent_id
             WHERE cst.cs_no IN (:csNo) AND cvd.vendor_id=:vendorId) csinfo ON csinfo.item_attribute=pqd.item_attribute 
+            AND csinfo.brand_name = pqd.brand_name 
             WHERE pqd.price_quotation_id = csinfo.price_quotation_id
             GROUP BY pqd.brand_name, pqd.item_attribute ,csinfo.order_qty
               """, nativeQuery = true)

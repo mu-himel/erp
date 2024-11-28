@@ -173,7 +173,7 @@ public interface PoQuery {
                     FROM price_quotations pq
                 LEFT JOIN price_quotation_details pqd ON pqd.price_quotation_id = pq.id
                 LEFT JOIN price_quotation_summary pqs on pqs.price_quotation_id = pq.id
-                WHERE pq.id=cvd.price_quotation_id  AND pqd.item_attribute LIKE CONCAT('%',ide.item_attribute,'%')
+                WHERE pq.id=cvd.price_quotation_id AND pqd.brand_name = scb.name  AND pqd.item_attribute LIKE CONCAT('%',ide.item_attribute,'%')
                 ) as summary
             from purchase_order_details pod
             LEFT JOIN purchase_orders po1 ON po1.id =  pod.purchase_order_id 
@@ -182,6 +182,7 @@ public interface PoQuery {
             left join cs_details cd  ON cd.id = cvd.cs_detail_id
             left join price_quotation_summary pqs2 ON pqs2.price_quotation_id = cvd.price_quotation_id
             left join indent_details ide ON cd.indent_detail_id = ide.id
+            LEFT JOIN scm_category_brands scb  ON scb.id = ide.brand_id
             where po1.id= :poId
                 """;
 }
