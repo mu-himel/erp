@@ -82,8 +82,8 @@ public interface UserItemQuery {
              'PENDING' as status
              FROM user_items ui
              LEFT JOIN scm_warehouse_stores sws ON sws.id = ui.warehouse_store_id
-             LEFT JOIN user_categories subCat ON ui.sub_category_id = subCat.id
-             LEFT JOIN user_categories cat ON ui.category_id = cat.id
+             LEFT JOIN scm_item_categories subCat ON ui.sub_category_id = subCat.id
+             LEFT JOIN scm_item_categories cat ON ui.category_id = cat.id
              LEFT JOIN acl_users e ON ui.created_by_id = e.id
              WHERE (:warehouseId IS NULL OR sws.warehouse_id = :warehouseId)
              AND (:warehouseStoreId IS NULL OR sws.id = :warehouseStoreId)

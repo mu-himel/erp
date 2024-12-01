@@ -87,7 +87,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
 
     boolean existsByCode(String code);
 
-    @Query(value = "SELECT ic.id as id, ic.name as name, ic.code as code, " +
+    @Query(value = "SELECT ic.cps_category_id as cpsCategoryId, ic.id as id, ic.name as name, ic.code as code, " +
             "ic.active as active,cws.warehouse_id as warehouseId, cws.warehouse_store_id as storeId " +
             "FROM scm_item_categories ic " +
             "LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id " +
