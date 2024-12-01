@@ -1219,7 +1219,8 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional
-    public void approveItemFromCps(Long id, ItemApproveRequestDto approveRequestDto) {
+    public void approveItemFromCps(Jwt token, Long id, ItemApproveRequestDto approveRequestDto) {
+        claimResolver.setToken(token);
         Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(approveRequestDto.getWarehouseId());
         if(warehouseOp.isEmpty()){
             throw new RuntimeException("Warehouse Missing");

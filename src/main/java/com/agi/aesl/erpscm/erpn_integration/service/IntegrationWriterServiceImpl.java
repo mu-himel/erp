@@ -125,6 +125,9 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     @Override
     @Transactional
     public void createLedgerItem(Jwt token, LedgerAccount ledgerAccount) {
+        Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
+
+        if(serviceExist.isPresent()) {
         claimResolver.setToken(token);
         Optional<Employee> employeeOptional = claimResolver.getEmployee();
         if(employeeOptional.isEmpty()){
@@ -175,9 +178,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 //        remoteLedgerAccountDto.setOpeningDebit(ledgerAccount.getOpeningDebitAmount());
 
         HttpEntity<RemoteLedgerAccDto> payload = new HttpEntity<>(remoteLedgerAccountDto,headers);
-        Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
 
-        if(serviceExist.isPresent()) {
             networkService.post(ledgerItemCreateEndpoint, payload, Void.class);
         }
     }
