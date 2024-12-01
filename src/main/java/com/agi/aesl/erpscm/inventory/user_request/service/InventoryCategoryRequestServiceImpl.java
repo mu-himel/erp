@@ -433,8 +433,20 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
             CategoryRequestDto categoryRequestDto = new CategoryRequestDto();
             categoryRequestDto.setName(cat.getName());
             categoryRequestDto.setCode(categoryApproveDto.getCode());
+            categoryRequestDto.setAttributes(cat.getAttributes().stream().map(ca->{
+                CategoryAttribute cattr = new CategoryAttribute();
+                cattr.setAttributeType(ca.getAttributeType());
+                cattr.setAttributeValue(ca.getAttributeValue());
+                cattr.setAttributeUnit(ca.getAttributeUnit());
+                return cattr;
+            }).collect(Collectors.toList()));
+            categoryRequestDto.setBrands(cat.getBrands().stream().map(UserCategoryBrand::getName).collect(Collectors.toList()));
             if(cat.getParentCategory()!=null){
                 ItemCategory category = new ItemCategory(cat.getParentCategory().getId());
+                categoryRequestDto.setParentCategory(category);
+                categoryRequestDto.setCurrentYearBudget(new BigDecimal(0));
+            }else if(cat.getActiveParentCategory()!=null){
+                ItemCategory category = new ItemCategory(cat.getActiveParentCategory().getId());
                 categoryRequestDto.setParentCategory(category);
                 categoryRequestDto.setCurrentYearBudget(new BigDecimal(0));
             }

@@ -132,7 +132,7 @@ public interface UserCategoryQuery {
             CASE WHEN :categoryId IS NOT NULL THEN
             (select name from scm_item_categories sic WHERE sic.id = :categoryId)
             ELSE '' END as parentCategoryName,
-            category_status as status
+            'PENDING' as status
             FROM user_categories uc
             LEFT JOIN scm_warehouse_stores sws ON sws.id = uc.store_id
             LEFT JOIN acl_users e ON uc.created_by_id=e.id
