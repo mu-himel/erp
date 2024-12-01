@@ -445,7 +445,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
                 ItemCategory category = new ItemCategory(cat.getParentCategory().getId());
                 categoryRequestDto.setParentCategory(category);
                 categoryRequestDto.setCurrentYearBudget(new BigDecimal(0));
-            }else{
+            }else if(cat.getActiveParentCategory()!=null){
                 ItemCategory category = new ItemCategory(cat.getActiveParentCategory().getId());
                 categoryRequestDto.setParentCategory(category);
                 categoryRequestDto.setCurrentYearBudget(new BigDecimal(0));
