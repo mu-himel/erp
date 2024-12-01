@@ -185,16 +185,16 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     @Override
     @Transactional
     public void purchaseReceived(Jwt token, StoreReceiveNote receiveNote) {
-        Optional<PurchaseOrder> poOp = purchaseOrderRepository.findById(receiveNote.getGrn().getRemotePoId());
-        Optional<CsAccount> csAccountOp=Optional.empty();
-        if(poOp.isPresent()){
-            csAccountOp = csAccountRepository.findByCsId(poOp.get().getPoGroup().getCs().getId());
-        }
-        if(csAccountOp.isEmpty()){
-            throw new RuntimeException("Sorry! Vat Type not found in Account Cs");
-        }
         Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
         if(serviceExist.isPresent()) {
+            Optional<PurchaseOrder> poOp = purchaseOrderRepository.findById(receiveNote.getGrn().getRemotePoId());
+            Optional<CsAccount> csAccountOp=Optional.empty();
+            if(poOp.isPresent()){
+                csAccountOp = csAccountRepository.findByCsId(poOp.get().getPoGroup().getCs().getId());
+            }
+            if(csAccountOp.isEmpty()){
+                throw new RuntimeException("Sorry! Vat Type not found in Account Cs");
+            }
             PurchaseRequest purchaseRequest = new PurchaseRequest();
             purchaseRequest.setSrnNo(receiveNote.getSrnNo());
             GoodReceiveNote grn = receiveNote.getGrn();
