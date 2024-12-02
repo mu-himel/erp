@@ -622,7 +622,7 @@ public class ItemServiceImpl implements ItemService {
         }).collect(Collectors.toList()));
         pendingItemRequestDto.setItemUnit(item.getItemUnit());
         pendingItemRequestDto.setScmItemId(item.getId());
-        pendingItemRequestDto.setCode(item.getCode());
+        pendingItemRequestDto.setCode(item.getCode().substring(2));
 
         HttpHeaders headers =  new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
