@@ -256,7 +256,7 @@ public class CategoryServiceImpl implements CategoryService {
     public void sendToCps(Jwt token, CategoryInterface category, String employee){
         RemoteCategoryRequestDto remoteCategoryRequestDto = new RemoteCategoryRequestDto();
         remoteCategoryRequestDto.setName(category.getName());
-        remoteCategoryRequestDto.setCode(category.getCode());
+        remoteCategoryRequestDto.setCode(category.getCode().substring(2));
 
         if(category.getParentCategory()!=null) {
             Optional<ItemCategory> parentCategoryOp = categoryRepository.findById(category.getParentCategory().getId());
