@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.store_receive.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
+import com.agi.aesl.erpscm.store_receive.dto.SrnDemandAttrDto;
 import com.agi.aesl.erpscm.store_receive.dto.SrnDto;
 import com.agi.aesl.erpscm.store_receive.service.SrnService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,13 +75,13 @@ public class SrnController  extends BaseController {
         );
     }
 
-    @GetMapping("/by-attribute/{attributes}")
+    @PostMapping("/by-attribute")
     public ResponseEntity<?> getPendingDemandListBySrnItems(
-            @PathVariable("attributes") String attributes
+            @RequestBody SrnDemandAttrDto attributeDto
     ){
-        System.out.println(attributes);
+        System.out.println(attributeDto.getAttributeName());
         return new ResponseEntity<>(
-                srnService.getPendingDemandListBySrnItems(attributes),
+                srnService.getPendingDemandListBySrnItems(attributeDto.getAttributeName()),
                 HttpStatus.OK
         );
     }

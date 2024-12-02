@@ -250,8 +250,9 @@ public interface SrnQuery {
             LEFT JOIN store_receive_notes srn ON srn.id = srd.store_receive_note_id
             LEFT JOIN scm_warehouses sw ON sw.id = d.warehouse_id
             WHERE dd.status IN ('PENDING')
-            GROUP BY srd.item_id, d.id) p
-            WHERE p.demand_attributes LIKE CONCAT('%',:attributes,'%')
+            GROUP BY srd.item_id, dd.id) p
+            WHERE (COALESCE(:attributes) IS NULL OR p.demand_attributes LIKE CONCAT('%',:attributes,'%'))
+            GROUP BY p.demand_attributes
             """;
 
     interface PendingDemandList{
