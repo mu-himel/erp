@@ -606,7 +606,7 @@ public class ItemServiceImpl implements ItemService {
         Optional<ItemCategory> catOp = categoryService.getAnyItemCategory(item.getCategory().getId());
 
 
-        pendingItemRequestDto.setSubCategoryCode(catOp.get().getCode());
+        pendingItemRequestDto.setSubCategoryCode(catOp.get().getCode().substring(2));
         if(item.getBrand()!=null) {
             Optional<CategoryBrand> brandOp = categoryBrandRepository.findById(item.getBrand().getId());
             pendingItemRequestDto.setBrand(brandOp.get().getName());
