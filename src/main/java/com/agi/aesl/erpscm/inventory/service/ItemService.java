@@ -121,5 +121,6 @@ public interface ItemService {
 
     List<ItemStock> getByItemAndWarehouse(List<Long>itemId, Long warehouseId);
 
-    void forceActive(Jwt token,ForceActiveRequestDto forceActiveRequestDto);
+    void forceActivev2(Jwt token,ForceActiveRequestDto forceActiveRequestDto);
+    void forceActive();
 }

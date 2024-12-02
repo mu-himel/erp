@@ -1240,8 +1240,9 @@ public class ItemServiceImpl implements ItemService {
                         ItemImportLog iil = iilOp.get();
                         iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
                     }
-                    accountService.setItemService(this);
-                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
+//                    accountService.setItemService(this);
+                    forceActive();
+//                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
                 }
                 if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()!=null){
                     item.setItemInactiveStatus(null);
@@ -1252,8 +1253,9 @@ public class ItemServiceImpl implements ItemService {
 
                     }
                     mergeItem(item, itemMergeRequestDto);
-                    accountService.setItemService(this);
-                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
+//                    accountService.setItemService(this);
+                    forceActive();
+//                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
 
                 }
             }else if(approveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)){
@@ -1347,12 +1349,19 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional
-    public void forceActive(Jwt token,ForceActiveRequestDto forceActiveRequestDto) {
+    public void forceActivev2(Jwt token,ForceActiveRequestDto forceActiveRequestDto) {
         claimResolver.setToken(token);
         if(claimResolver.isAdmin() && forceActiveRequestDto.getPhoneNo()!=null &&
                     !forceActiveRequestDto.getPhoneNo().equals("01714112912")){
             throw new RuntimeException("Page Not Found");
         }
+        itemRepository.forceActive();
+        itemImportLogRepository.forceActive();
+    }
+
+    @Override
+    @Transactional
+    public void forceActive() {
         itemRepository.forceActive();
         itemImportLogRepository.forceActive();
     }
