@@ -686,7 +686,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             poRemoteReqDto.setPoNo(po.getPoNo());
 //            System.out.println(po.getCreatedAt().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
             poRemoteReqDto.setPoDate(po.getCreatedAt().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
-            poRemoteReqDto.setCategoryCode(po.getCs().getIndent().getSubCategory().getCode());
+            poRemoteReqDto.setCategoryCode(po.getCs().getIndent().getSubCategory().getCode().substring(2));
             poRemoteReqDto.setTenderNo(po.getCs().getIndent().getIndentNo());
             poRemoteReqDto.setDeliveryChargeType(po.getDeliveryChargeType());
             poRemoteReqDto.setDeliveryDate(po.getPoDate().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
