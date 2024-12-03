@@ -1361,14 +1361,15 @@ public class ItemServiceImpl implements ItemService {
                     !forceActiveRequestDto.getPhoneNo().equals("01714112912")){
             throw new RuntimeException("Page Not Found");
         }
-        itemRepository.forceActive();
         itemImportLogRepository.forceActive();
+        itemRepository.forceActive();
+
     }
 
     @Override
     @Transactional
     public void forceActive() {
-        itemRepository.forceActive();
         itemImportLogRepository.forceActive();
+        itemRepository.forceActive();
     }
 }
