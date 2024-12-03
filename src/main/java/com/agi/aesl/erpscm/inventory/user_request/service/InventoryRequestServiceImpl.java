@@ -368,17 +368,17 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
 
     @Override
     @Transactional
-    public void approveByStore(Jwt token, Long id, CategoryApproveDto approveDto) {
-        if(approveDto.getCode()==null){
-            throw new RuntimeException("Sorry! prefix and code required");
-        }
+    public void approveByStore(Jwt token, Long id) {
+//        if(approveDto.getPrefix()==null){
+//            throw new RuntimeException("Sorry! prefix and code required");
+//        }
         Optional<UserItem> itemOp = userItemRepository.findById(id);
         itemOp.ifPresent((item)->{
             item.setIsApprovedByStore(true);
             ItemRequestDto itemRequestDto = new ItemRequestDto();
             itemRequestDto.setBrand(new ReferenceObjectDto(item.getBrand().getId()));
             itemRequestDto.setName(item.getName());
-            itemRequestDto.setCode(approveDto.getCode());
+//            itemRequestDto.setCode(approveDto.getCode());
             itemRequestDto.setItemCategory(item.getSubCategory());
             itemRequestDto.setItemParentCategory(item.getCategory());
             itemRequestDto.setItemUnit(item.getItemUnit());

@@ -19,7 +19,6 @@ import lombok.NoArgsConstructor;
 public class DemandRequestDto implements EntityConvertable<Demand>{
     private Long id;
 
-    @NotBlank(message = "Demand no is required")
     private String demandNo;
 
     @NotNull(message = "Demand Initiator Required")
@@ -43,7 +42,7 @@ public class DemandRequestDto implements EntityConvertable<Demand>{
     public Demand getEntity() {
         Demand demand = Demand.builder()
                 .id(id)
-                .demandNo(demandNo)
+//                .demandNo(demandNo)
                 .build();
 
         return demand;

@@ -96,6 +96,7 @@ public class Item implements ItemInterface {
     private ItemInactiveStatus itemInactiveStatus;
 
     private Long cpsItemId;
+    private Long pendingReqItemId;
 
     @OneToMany(mappedBy = "item",cascade = CascadeType.ALL)
     private List<ItemImportLog> itemImportLogs = new ArrayList<>();

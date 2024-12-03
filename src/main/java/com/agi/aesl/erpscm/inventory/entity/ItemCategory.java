@@ -36,6 +36,8 @@ public class ItemCategory implements CategoryInterface {
   @Column(unique = true, name="code")
   private String code;
 
+  private Long userCategoryId;
+
   @ManyToOne
   private ItemCategory parentCategory;
 

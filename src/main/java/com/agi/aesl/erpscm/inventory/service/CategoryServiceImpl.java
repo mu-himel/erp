@@ -94,6 +94,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Autowired
     private NetworkService networkService;
 
+
     @Override
     @Transactional
     public void addCategories(Jwt token,List<CategoryRequestDtoCustom> categoryRequestDtos) {
@@ -161,6 +162,9 @@ public class CategoryServiceImpl implements CategoryService {
     public Optional<ItemCategory> addCategory(Jwt token, CategoryRequestDto categoryRequestDto) {
         ItemCategory category = categoryRequestDto.getEntity();
 
+        if(categoryRequestDto.getUserCategoryId()!=null){
+            category.setUserCategoryId(categoryRequestDto.getUserCategoryId());
+        }
         Optional<ItemCategory> itemCategoryOptional = categoryRepository.findByCode(category.getCode());
         if(itemCategoryOptional.isPresent()){
             category = itemCategoryOptional.get();
@@ -237,7 +241,11 @@ public class CategoryServiceImpl implements CategoryService {
         categoryRepository.save(category);
         
         Optional<CategoryWarehouseStore> cwsOp =  categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseId(category.getId() ,categoryRequestDto.getWarehouse().getId());
-        
+        Optional<Warehouse> warehouseOp = warehouseRepository.findById(categoryRequestDto.getWarehouse().getId());
+        Optional<WarehouseStore> warehouseStoreOp = warehouseStoreRepository.findById(categoryRequestDto.getWarehouseStore().getId());
+        if(warehouseStoreOp.isEmpty()){
+            throw new RuntimeException("Sorry! Store not found");
+        }
         if(cwsOp.isEmpty()){
             CategoryWarehouseStore categoryWarehouseStore = new CategoryWarehouseStore();
             categoryWarehouseStore.setCategory(category);
@@ -247,16 +255,20 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         if(category.getId()!=null && categoryRequestDto.getIsForCps()){
-            this.sendToCps(token,category,categoryRequestDto.getEmployee());
+            WarehouseStore ws = warehouseStoreOp.get();
+            String storePrefix = ws.getStoreName().substring(0,1);
+            storePrefix = storePrefix.toUpperCase();
+            this.sendToCps(token,category,storePrefix,categoryRequestDto.getPrefix(),categoryRequestDto.getEmployee());
         }
         return categoryRepository.findById(category.getId());
 
     }
 
-    public void sendToCps(Jwt token, CategoryInterface category, String employee){
+    public void sendToCps(Jwt token, ItemCategory category,String storePrefix,String prefix, String employee){
         RemoteCategoryRequestDto remoteCategoryRequestDto = new RemoteCategoryRequestDto();
         remoteCategoryRequestDto.setName(category.getName());
-        remoteCategoryRequestDto.setCode(category.getCode().substring(2));
+
+        remoteCategoryRequestDto.setPrefix(prefix);
 
         if(category.getParentCategory()!=null) {
             Optional<ItemCategory> parentCategoryOp = categoryRepository.findById(category.getParentCategory().getId());
@@ -290,7 +302,9 @@ public class CategoryServiceImpl implements CategoryService {
         ResponseEntity<?> response = networkService.post(url,payload,Void.class);
         HttpHeaders httpHeaders = response.getHeaders();
         List<String> headerId = httpHeaders.get("id");
+        List<String> headerCode = httpHeaders.get("code");
         if(headerId.size()>0){
+            category.setCode(storePrefix.concat("-").concat(headerCode.get(0)));
             category.setCpsCategoryId(Long.parseLong(headerId.get(0)));
         }
     }

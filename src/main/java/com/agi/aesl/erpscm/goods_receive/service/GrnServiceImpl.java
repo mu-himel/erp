@@ -139,22 +139,22 @@ public class GrnServiceImpl implements GrnService{
     public void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto, GrnMode mode) {
         claimResolver.setToken(token);
         String uri = "";
-        if(claimResolver.getEmployee()==null){
-            throw new RuntimeException("Sorry! Employee profile required");
-        }
+//        if(claimResolver.getEmployee()==null){
+//            throw new RuntimeException("Sorry! Employee profile required");
+//        }
         GoodReceiveNote grn = new GoodReceiveNote();
         grn.setGrnDate(LocalDate.now());
         if(mode.equals(GrnMode.AUTO)) {
             grn.setRemotePoId(grnManualDto.getPoId());
-            grn.setGrnStatus(GrnStatus.PENDING);
+
         }
-        grn.setGrnNo(grnManualDto.getGrnNo());
+        grn.setGrnStatus(GrnStatus.PENDING);
         grn.setPoNo(grnManualDto.getPoNo());
         grn.setIndentNo(grnManualDto.getIndentNo() );
         grn.setGrnMode(mode);
-        if(mode.equals(GrnMode.MANUAL)) {
-            grn.setGrnStatus(GrnStatus.PENDING_QC);
-        }
+//        if(mode.equals(GrnMode.MANUAL)) {
+//            grn.setGrnStatus(GrnStatus.PENDING_QC);
+//        }
 
         grn.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
         if(token != null && claimResolver.getEmployee().isPresent()){
@@ -214,6 +214,7 @@ public class GrnServiceImpl implements GrnService{
 
         grn.setMushak(grnManualDto.getMushak());
         grn.setPaymentType(grnManualDto.getPayment());
+        grn.setGrnNo(getNextGrnNumber());
         grnRepository.save(grn);
 
 //        Optional<GoodReceiveNote> qcOp = (Optional<GoodReceiveNote>) qcService.getByGrnId(grn.getId());
@@ -227,7 +228,7 @@ public class GrnServiceImpl implements GrnService{
 
     @Override
     public void createAutoGrn(Jwt token, GrnManualRequestDto grnManualDto) {
-        grnManualDto.setGrnNo(getNextGrnNumber());
+//        grnManualDto.setGrnNo(getNextGrnNumber());
         createManualGrn(token,grnManualDto,GrnMode.AUTO);
     }
 
@@ -455,7 +456,9 @@ public class GrnServiceImpl implements GrnService{
         }
         if(grn!=null) {
             Long remotePoId = grn.getRemotePoId();
-            sentGrnReceived(token, grn.getPoNo(), GrnStatus.RECEIVED, new NoteDto());
+            if(grn.getGrnMode().equals(GrnMode.AUTO)) {
+                sentGrnReceived(token, grn.getPoNo(), GrnStatus.RECEIVED, new NoteDto());
+            }
         }
     }
 
@@ -466,7 +469,9 @@ public class GrnServiceImpl implements GrnService{
         if(grnOp.isPresent()){
             GoodReceiveNote grn = grnOp.get();
             grn.setGrnStatus(GrnStatus.REJECTED);
-            sentGrnReceived(token,grn.getGrnNo(),GrnStatus.REJECTED,noteDto);
+            if(grn.getGrnMode().equals(GrnMode.AUTO)) {
+                sentGrnReceived(token, grn.getGrnNo(), GrnStatus.REJECTED, noteDto);
+            }
         }
     }
 

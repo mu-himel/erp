@@ -19,6 +19,7 @@ public class RemoteCategoryRequestDto {
     private String name;
 
     private String code;
+    private String prefix;
 
     private ReferenceObjectDto parentCategory;
 
