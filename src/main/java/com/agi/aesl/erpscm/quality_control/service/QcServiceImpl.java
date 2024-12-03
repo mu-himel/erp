@@ -145,6 +145,13 @@ public class QcServiceImpl implements QcService{
                     goodReceiveItemDetail -> goodReceiveItemDetail.getId().equals(qcItemDetail.getId())
             ).findFirst();
 
+            if(qcItemDetail.getDeclaredQty()==null){
+                throw new RuntimeException("Sorry! Declared Qty Required");
+            }
+
+            if(qcItemDetail.getInspectedQty()==null){
+                throw new RuntimeException("Sorry! Inspected Qty Required");
+            }
             if(grnItemDetail.isPresent()){
                 GoodReceiveItemDetail goodReceiveItemDetail = grnItemDetail.get();
                 ids.add(goodReceiveItemDetail.getItem().getItemCategory().getId().toString());
