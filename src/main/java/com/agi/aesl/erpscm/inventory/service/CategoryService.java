@@ -129,7 +129,7 @@ public interface CategoryService {
 
     void validateCategorySubCategoryRelation(ItemCategory category, ItemCategory subCategory);
 
-    void sendToCps(Jwt token, CategoryInterface category, String employee);
+    void sendToCps(Jwt token, ItemCategory category,String storePrefix, String prefix, String employee);
 
     void setYearlyBudget(Integer year,ItemCategory category);
 

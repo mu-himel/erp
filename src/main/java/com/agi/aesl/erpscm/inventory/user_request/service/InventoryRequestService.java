@@ -37,6 +37,6 @@ public interface InventoryRequestService extends VerificationDomainService {
 
     void review(Jwt token, Long id, ReviewDto reviewDto);
 
-    void approveByStore(Jwt token, Long id, CategoryApproveDto itemApproveDto);
+    void approveByStore(Jwt token, Long id);
     void rejectByStore(Long id, CategoryRejectDto rejectDto);
 }

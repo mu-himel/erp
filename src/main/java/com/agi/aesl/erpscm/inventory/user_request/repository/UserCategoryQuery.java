@@ -7,6 +7,7 @@ public interface UserCategoryQuery {
                 SELECT COUNT(*) FROM user_categories uc1
                 WHERE uc1.parent_category_id=uc.id
             ) as subCategoryCount, 0 as productCount,
+            (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active, 
             category_status as status
             FROM user_categories uc
             WHERE uc.created_by_id=:userId AND (uc.parent_category_id IS NULL AND uc.active_parent_category_id IS NULL)
@@ -22,7 +23,9 @@ public interface UserCategoryQuery {
             """;
 
     String getGetMySubCategories = """
-            select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
+            select uc.id as id, 
+            (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active, 
+            puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
             uc.category_status as status
              FROM user_categories uc
              LEFT JOIN scm_item_categories puc ON (puc.id = uc.parent_category_id OR puc.id = uc.active_parent_category_id )
@@ -169,7 +172,7 @@ public interface UserCategoryQuery {
 //            AND ua.created_by_id = :userId
 //            UNION
     String getListCategories="""
-            SELECT 'STORE_MANAGED' as `type`, ic.id,ic.name,ic.code from scm_item_categories ic
+            SELECT 'STORE_MANAGED' as `type`, ic.user_category_id as userCategoryId, ic.id,ic.name,ic.code from scm_item_categories ic
             LEFT JOIN scm_category_warehouse_stores scws ON scws.category_id = ic.id
             WHERE 
             (:storeId IS NULL OR scws.warehouse_store_id = :storeId)

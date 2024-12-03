@@ -424,15 +424,16 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     @Override
     @Transactional
     public void approveByStore(Jwt token, Long domainId, CategoryApproveDto categoryApproveDto) {
-        if(categoryApproveDto.getCode()==null){
-            throw new RuntimeException("Sorry! prefix and code required");
+        if(categoryApproveDto.getPrefix()==null){
+            throw new RuntimeException("Sorry! prefix required");
         }
         Optional<UserCategory> catOp = userCategoryRepository.findById(domainId);
         catOp.ifPresent((cat)->{
             cat.setIsApprovedByStore(true);
             CategoryRequestDto categoryRequestDto = new CategoryRequestDto();
+            categoryRequestDto.setUserCategoryId(cat.getId());
             categoryRequestDto.setName(cat.getName());
-            categoryRequestDto.setCode(categoryApproveDto.getCode());
+            categoryRequestDto.setPrefix(categoryApproveDto.getPrefix());
             categoryRequestDto.setAttributes(cat.getAttributes().stream().map(ca->{
                 CategoryAttribute cattr = new CategoryAttribute();
                 cattr.setAttributeType(ca.getAttributeType());

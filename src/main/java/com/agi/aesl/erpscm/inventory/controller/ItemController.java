@@ -244,7 +244,7 @@ public class ItemController extends BaseController{
             @AuthenticationPrincipal Jwt token,
             @RequestBody ForceActiveRequestDto forceActiveRequestDto
     ){
-        itemService.forceActive(token,forceActiveRequestDto);
+        itemService.forceActivev2(token,forceActiveRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

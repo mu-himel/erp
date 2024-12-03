@@ -495,18 +495,19 @@ public class ItemServiceImpl implements ItemService {
 
        Warehouse warehouse = null;
        WarehouseStore warehouseStore = null;
-
-        if(itemRequestDto.getWarehouse().getId()!=null) {
-           warehouse = new Warehouse(itemRequestDto.getWarehouse().getId()) ;
-        }else{
-           warehouse = new Warehouse(claimResolver.getEmployee().get().getWarehouseId());
+       Long warehouseId = (itemRequestDto.getWarehouse().getId()!=null)?itemRequestDto.getWarehouse().getId():
+               claimResolver.getEmployee().get().getWarehouseId();
+        Optional<Warehouse> wOp = warehouseService.getWarehouse(warehouseId);
+        if(wOp.isEmpty()){
+            throw new RuntimeException("Sorry! Warehouse not found");
         }
-
-        if(itemRequestDto.getWarehouseStore() !=null && itemRequestDto.getWarehouseStore().getId() != null){
-           warehouseStore = new WarehouseStore(itemRequestDto.getWarehouseStore().getId());
-
+        Optional<WarehouseStore> wsOp = warehouseStoreRepository.findById(itemRequestDto.getWarehouseStore().getId());
+        if(wsOp.isEmpty()){
+            throw new RuntimeException("Sorry! Warehouse Store not found");
         }
-        item.setCode(itemRequestDto.getCode());
+        warehouse= wOp.get();
+        warehouseStore = wsOp.get();
+//        item.setCode(itemRequestDto.getCode());
         Long brandId = (itemRequestDto.getBrand()!=null)? itemRequestDto.getBrand().getId() : null;
        List<?> itemExistByAttr = this.getByAttributes(brandId,itemAttributeName,item.getItemCategory().getId(),warehouse.getId());
        if(itemExistByAttr.size()>0){
@@ -583,7 +584,7 @@ public class ItemServiceImpl implements ItemService {
 
 
     @Override
-    public  <T extends ItemInterface> void sendItemToCps(ClaimResolver claimResolver, String _employee, T item,
+    public  <T extends Item> void sendItemToCps(ClaimResolver claimResolver, String _employee, T item,
                                                          List<ItemAttributeInterface> attributes,
                                                          WarehouseStore warehouseStore
                                                          ) {
@@ -622,7 +623,7 @@ public class ItemServiceImpl implements ItemService {
         }).collect(Collectors.toList()));
         pendingItemRequestDto.setItemUnit(item.getItemUnit());
         pendingItemRequestDto.setScmItemId(item.getId());
-        pendingItemRequestDto.setCode(item.getCode().substring(2));
+//        pendingItemRequestDto.setCode(item.getCode().substring(2));
 
         HttpHeaders headers =  new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -634,7 +635,12 @@ public class ItemServiceImpl implements ItemService {
         }
         HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(pendingItemRequestDto,headers);
         String url = cpsConfig.getPendingItemReqEndpoint();
-        ResponseEntity<?> response = networkService.post(url,payload,Void.class);
+        ResponseEntity<?> response = networkService.post(url,payload,Map.class);
+        Map<String,Object> map = (Map<String, Object>) response.getBody();
+        if(map!=null && map.containsKey("code") && map.containsKey("pendingItemRequestId") ) {
+            item.setCode(warehouseStore.getStoreName().substring(0,1).toUpperCase().concat("-").concat(map.get("code").toString()));
+            item.setPendingReqItemId(Long.parseLong(map.get("pendingItemRequestId").toString()));
+        }
         System.out.println("STATUS CODE: "+response.getStatusCode());
     }
 

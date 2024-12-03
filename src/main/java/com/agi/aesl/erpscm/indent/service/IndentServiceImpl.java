@@ -69,11 +69,11 @@ public class IndentServiceImpl implements IndentService{
 
     @Override
     public String getNextIndentNo() {
-        Optional<Long> demandOptional = indentRepository.findMaxIndentById();
-        if (demandOptional.isPresent()) {
-            Long demandNo = demandOptional.get();
-            Long newDemandNo = demandNo + 1L;
-            return String.format("%06d", newDemandNo);
+        Optional<Long> indentNoOptional = indentRepository.findMaxIndentById();
+        if (indentNoOptional.isPresent()) {
+            Long indentNo = indentNoOptional.get();
+            Long newIndentNo = indentNo + 1L;
+            return String.format("%06d", newIndentNo);
         }
         return String.format("%06d", 1);
     }
@@ -118,9 +118,9 @@ public class IndentServiceImpl implements IndentService{
     public void createIndent(Jwt token, String uri, IndentRequestDto indentRequestDto) {
         claimResolver.setToken(token);
         List<String> ids = new ArrayList<>();
-        if(indentRequestDto.getIndentNo()==null || indentRequestDto.getIndentNo().trim().length()<=0){
-            throw new RuntimeException("Sorry! Indent No Required");
-        }
+//        if(indentRequestDto.getIndentNo()==null || indentRequestDto.getIndentNo().trim().length()<=0){
+//            throw new RuntimeException("Sorry! Indent No Required");
+//        }
         ids.add(indentRequestDto.getCategoryId().toString());
 
         Indent indent = indentRequestDto.getEntity();
@@ -135,7 +135,7 @@ public class IndentServiceImpl implements IndentService{
 
         indent.setCategory(new ItemCategory(indentRequestDto.getCategoryId()));
         indent.setSubCategory(new ItemCategory(indentRequestDto.getSubCategoryId()));
-        indent.setIndentNo(indentRequestDto.getIndentNo());
+
         if(claimResolver.getEmployee().isPresent()) {
             indent.setRequestedBy(new Employee(claimResolver.getEmployee().get().getId()));
         }
@@ -149,7 +149,7 @@ public class IndentServiceImpl implements IndentService{
             return prid.toString();
         }).toList();
         indent.setPrIndents(String.join(",",prids));
-
+        indent.setIndentNo(getNextIndentNo());
         indentRepository.save(indent);
         verificationService.removeVerification(indent.getId(), DomainType.INDENT);
 

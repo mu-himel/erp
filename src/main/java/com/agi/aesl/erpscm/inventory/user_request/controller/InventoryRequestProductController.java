@@ -133,7 +133,7 @@ public class InventoryRequestProductController extends BaseController {
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody CategoryApproveDto itemApproveDto){
-        inventoryRequestService.approveByStore(token,id,itemApproveDto);
+        inventoryRequestService.approveByStore(token,id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

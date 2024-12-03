@@ -31,6 +31,9 @@ public class CategoryRequestDto implements EntityConvertable<ItemCategory>{
 
     // @ApiModelProperty(required = true)
     private String code;
+    private String prefix;
+
+    private Long userCategoryId;
 
 
     private BigDecimal currentYearBudget;

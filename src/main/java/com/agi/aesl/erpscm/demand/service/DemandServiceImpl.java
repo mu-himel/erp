@@ -224,6 +224,7 @@ public class DemandServiceImpl implements DemandService{
         }
         List<PendingAttributeDto> pendingAttributes = new ArrayList<>();
         setDemandDetail(demandRequestDto, demand,pendingAttributes);
+        demand.setDemandNo(getNextDemandNo());
         demandRepository.save(demand);
         setVerifiers(demand, verifiers);
         List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, demandRequestDto.getCategories());

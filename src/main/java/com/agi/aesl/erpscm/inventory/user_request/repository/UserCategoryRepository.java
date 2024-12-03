@@ -53,6 +53,7 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
 
         String getType();
         Long getId();
+        Long getUserCategoryId();
         String getCode();
         String getName();
 
@@ -69,6 +70,8 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
         String getCategoryName();
         Long getSubCategoryCount();
         Long getProductCount();
+
+        Integer getActive();
         UserCategoryStatus getStatus();
     }
 
@@ -77,6 +80,8 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
         String getCategoryName();
         String getSubCategoryName();
         Long getProductCount();
+
+        Integer getActive();
         UserCategoryStatus getStatus();
     }
 }

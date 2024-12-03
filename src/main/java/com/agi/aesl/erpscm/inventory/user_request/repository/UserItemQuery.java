@@ -7,8 +7,8 @@ public interface UserItemQuery {
              ui.item_attribute_name as productName,
              ui.item_status as status
              FROM user_items ui
-             LEFT JOIN user_categories subCat ON ui.sub_category_id = subCat.id
-             LEFT JOIN user_categories cat ON ui.category_id = cat.id
+             LEFT JOIN scm_item_categories subCat ON ui.sub_category_id = subCat.id
+             LEFT JOIN scm_item_categories cat ON ui.category_id = cat.id
              WHERE ui.created_by_id=:userId
              AND (:categoryId IS NULL OR ui.category_id = :categoryId)
              AND (:subCategoryId IS NULL OR ui.sub_category_id = :subCategoryId)
@@ -24,8 +24,8 @@ public interface UserItemQuery {
                     ui.item_status
             END  as status,
              FROM user_items ui
-             LEFT JOIN user_categories subCat ON ui.sub_category_id = subCat.id
-             LEFT JOIN user_categories cat ON ui.category_id = cat.id
+             LEFT JOIN scm_item_categories subCat ON ui.sub_category_id = subCat.id
+             LEFT JOIN scm_item_categories cat ON ui.category_id = cat.id
              LEFT JOIN user_item_histories uih ON uih.user_item_id = ui.id
              WHERE (
                 (ui.next_verifier_id=:userId AND ui.item_status IN ('PENDING_VERIFICATION','REVIEW','VERIFIED'))
@@ -47,8 +47,8 @@ public interface UserItemQuery {
                     ui.item_status
              END  as status,
              FROM user_items ui
-             LEFT JOIN user_categories subCat ON ui.sub_category_id = subCat.id
-             LEFT JOIN user_categories cat ON ui.category_id = cat.id
+             LEFT JOIN scm_item_categories subCat ON ui.sub_category_id = subCat.id
+             LEFT JOIN scm_item_categories cat ON ui.category_id = cat.id
              LEFT JOIN user_item_histories uih ON uih.user_item_id = ui.id
              WHERE (
                 (ui.next_approver_id=:userId AND ui.item_status IN ('PENDING_APPROVAL','REVIEW','APPROVED'))
@@ -66,8 +66,8 @@ public interface UserItemQuery {
              ui.item_attribute_name as productName,
              ui.item_status as status
              FROM user_items ui
-             LEFT JOIN user_categories subCat ON ui.sub_category_id = subCat.id
-             LEFT JOIN user_categories cat ON ui.category_id = cat.id
+             LEFT JOIN scm_item_categories subCat ON ui.sub_category_id = subCat.id
+             LEFT JOIN scm_item_categories cat ON ui.category_id = cat.id
              WHERE ui.created_by_id=:userId 
              AND (:categoryId IS NULL OR ui.category_id = :categoryId)
              AND (:subCategoryId IS NULL OR ui.sub_category_id = :subCategoryId)
