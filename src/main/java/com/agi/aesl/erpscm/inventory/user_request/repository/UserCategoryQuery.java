@@ -188,7 +188,7 @@ public interface UserCategoryQuery {
 //    AND ua.created_by_id = :userId
 //            UNION
     String getListSubCategories="""
-            SELECT 'STORE_MANAGED' as `type`, ic.id,ic.name,ic.code from scm_item_categories ic
+            SELECT 'STORE_MANAGED' as `type`, ic.user_category_id as userCategoryId, ic.id,ic.name,ic.code from scm_item_categories ic
             WHERE (:name IS NULL OR LOWER(ic.name) LIKE LOWER(CONCAT('%',:name,'%')))
             AND (:code IS NULL OR LOWER(ic.code) LIKE LOWER(CONCAT('%',:code,'%')))
             AND ic.parent_category_id = :categoryId
