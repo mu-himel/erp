@@ -17,7 +17,7 @@ public interface ItemImportLogRepository extends JpaRepository<ItemImportLog,Lon
     @Modifying
     @Query(value = """
             UPDATE scm_item_import_logs siil SET siil.item_inactive_status = 'APPROVED'
-            WHERE 1=1
+            WHERE siil.item_inactive_status = 'PENDING'
             """,nativeQuery = true)
     void forceActive();
 }
