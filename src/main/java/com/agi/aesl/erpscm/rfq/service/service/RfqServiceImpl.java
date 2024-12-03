@@ -103,7 +103,7 @@ public class RfqServiceImpl implements RfqService{
         TenderRequestDto tenderRequestDto = new TenderRequestDto();
         ItemCategory subCategory = indent.getSubCategory();
 
-        tenderRequestDto.setItemCategoryCode(subCategory.getCode());
+        tenderRequestDto.setItemCategoryCode(subCategory.getCode().substring(2));
         tenderRequestDto.setCode(rfqUuid);
         tenderRequestDto.setRfqNo(indent.getIndentNo());
         tenderRequestDto.setDeadline(indent.getExpireDateTime().toString());
