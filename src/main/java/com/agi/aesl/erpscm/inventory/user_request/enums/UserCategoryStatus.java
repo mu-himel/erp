@@ -9,5 +9,5 @@ public enum UserCategoryStatus {
     REJECTED,
     APPROVED,
     VERIFIED,
-    COMPLETED
+    MERGED, COMPLETED
 }

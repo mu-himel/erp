@@ -1294,6 +1294,12 @@ public class ItemServiceImpl implements ItemService {
                 if(iilOp.isPresent()){
                     ItemImportLog iil = iilOp.get();
                     iil.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
+                    if(item.getUserItemId()!=null){
+                        Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
+                        userItemOp.ifPresent((ui)->{
+                            ui.setItemStatus(UserCategoryStatus.MERGED);
+                        });
+                    }
                 }
                 if(approveRequestDto.getItemMergeRequestDto()!=null) {
                     itemOp = itemRepository.findByCode(approveRequestDto.getCode());
