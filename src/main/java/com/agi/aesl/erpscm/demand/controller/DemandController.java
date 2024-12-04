@@ -93,6 +93,7 @@ public class DemandController extends BaseController{
                     @AuthenticationPrincipal Jwt loggedInUser,
                     @RequestParam("page") Optional<Integer> page,
                     @RequestParam("size") Optional<Integer> size,
+                    @RequestParam("demandNo") Optional<String> demandNo,
                     @RequestParam("fromDate") Optional<String> fromDate,
                     @RequestParam("toDate") Optional<String> toDate,
                     @RequestParam("daysRemain") Optional<Integer> daysRemain
@@ -101,6 +102,7 @@ public class DemandController extends BaseController{
 
         return new ResponseEntity<>(
                 demandService.getAllDemands(loggedInUser, page,size,
+                        demandNo,
                         fromDate,toDate, daysRemain
                         ),
                 HttpStatus.OK

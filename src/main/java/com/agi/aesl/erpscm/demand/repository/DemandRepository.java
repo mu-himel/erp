@@ -90,7 +90,7 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
     Page<DemandListInfo> findAllByRequestedById(String id, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
     @Query(value = getAllPending, countQuery = countAllPending)
-    Page<DemandListInfo> findAllDemands(Long warehouseId, LocalDateTime fromDate, LocalDateTime toDate,
+    Page<DemandListInfo> findAllDemands(Long warehouseId, String demandNo, LocalDateTime fromDate, LocalDateTime toDate,
                                         Integer daysRemain, Pageable pageable);
 
     @Query(value = getAllPendingVerification, countQuery = countAllPendingVerification, nativeQuery = true)
