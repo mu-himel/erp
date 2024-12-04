@@ -11,7 +11,7 @@ public interface UserCategoryQuery {
             category_status as status
             FROM user_categories uc
             WHERE uc.created_by_id=:userId 
-            AND uc.category_status NOT IN ('COMPLETED','REJECTED','MERGED')
+            AND uc.category_status NOT IN ('VERIFIED','APPROVED','COMPLETED','REJECTED','MERGED')
             AND (uc.parent_category_id IS NULL AND uc.active_parent_category_id IS NULL)
             """;
     String countMyCategories="SELECT COUNT(*) FROM ("+ getMyCategories+") as total";
@@ -32,7 +32,7 @@ public interface UserCategoryQuery {
              FROM user_categories uc
              LEFT JOIN scm_item_categories puc ON (puc.id = uc.parent_category_id OR puc.id = uc.active_parent_category_id )
              WHERE uc.created_by_id=:userId 
-             AND uc.category_status NOT IN ('COMPLETED','REJECTED','MERGED')
+             AND uc.category_status NOT IN ('VERIFIED','APPROVED','COMPLETED','REJECTED','MERGED')
              AND (uc.active_parent_category_id IS NOT NULL OR uc.parent_category_id IS NOT NULL)
              AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId OR uc.active_parent_category_id = :categoryId)
             """;
@@ -131,7 +131,7 @@ public interface UserCategoryQuery {
             (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active
             FROM user_categories uc
             WHERE uc.created_by_id=:userId AND (uc.parent_category_id IS NULL AND uc.active_parent_category_id IS NULL)
-            AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED','MERGED')
+            AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED','REJECTED','MERGED')
             """;
     String countClosedCategories = "SELECT COUNT(*) FROM ("+closedCategories+") as total";
 
@@ -172,7 +172,7 @@ public interface UserCategoryQuery {
              WHERE uc.created_by_id=:userId 
              AND (uc.active_parent_category_id IS NOT NULL OR uc.parent_category_id IS NOT NULL)
              AND (:categoryId IS NULL OR uc.active_parent_category_id = :categoryId)
-             AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED','MERGED')
+             AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED','REJECTED','MERGED')
             """;
     String countClosedSubCategories = "SELECT COUNT(*) FROM ("+closedSubCategories+") as total";
 
