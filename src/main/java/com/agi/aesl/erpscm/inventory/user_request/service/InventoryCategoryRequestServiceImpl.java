@@ -130,12 +130,12 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         userCategoryRepository.save(userCategory);
 
         AppliedVADto appliedVADto = verificationService.applyVerifyApprovalProcess(
-                userCategory, domainType, UserCategoryStatus.COMPLETED.toString(),
+                userCategory, domainType, UserCategoryStatus.PENDING.toString(),
                 uri, domainType.toString(), List.of("-1"),
                 null);
 
         if(appliedVADto.getVerifiers().isEmpty() && appliedVADto.getPanels().isEmpty()){
-              userCategory.setCategoryStatus(UserCategoryStatus.COMPLETED);
+              userCategory.setCategoryStatus(UserCategoryStatus.PENDING);
 //            ObjectMapper mapper = new ObjectMapper();
 //            try {
 //                String employee = mapper.writeValueAsString(userCategory.getCreatedBy());
@@ -429,6 +429,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         }
         Optional<UserCategory> catOp = userCategoryRepository.findById(domainId);
         catOp.ifPresent((cat)->{
+            cat.setCategoryStatus(UserCategoryStatus.PENDING_CPS);
             cat.setIsApprovedByStore(true);
             CategoryRequestDto categoryRequestDto = new CategoryRequestDto();
             categoryRequestDto.setUserCategoryId(cat.getId());

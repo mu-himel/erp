@@ -10,6 +10,7 @@ public interface UserItemQuery {
              LEFT JOIN scm_item_categories subCat ON ui.sub_category_id = subCat.id
              LEFT JOIN scm_item_categories cat ON ui.category_id = cat.id
              WHERE ui.created_by_id=:userId
+             AND ui.item_status NOT IN ('COMPLETED','REJECTED')
              AND (:categoryId IS NULL OR ui.category_id = :categoryId)
              AND (:subCategoryId IS NULL OR ui.sub_category_id = :subCategoryId)
             """;
@@ -89,7 +90,7 @@ public interface UserItemQuery {
              AND (:warehouseStoreId IS NULL OR sws.id = :warehouseStoreId)
              AND (:categoryId IS NULL OR ui.category_id = :categoryId)
              AND (:subCategoryId IS NULL OR ui.sub_category_id = :subCategoryId)
-             AND ui.item_status IN ('VERIFIED','APPROVED','COMPLETED')
+             AND ui.item_status IN ('VERIFIED','APPROVED','COMPLETED','PENDING')
              AND (ui.is_approved_by_store IS NULL OR ui.is_approved_by_store=false)
             """;
     String countPendingApprovalsByStore = "SELECT COUNT(*) FROM ("+ getPendingApprovalsByStore+") as total";

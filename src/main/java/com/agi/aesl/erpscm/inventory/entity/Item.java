@@ -97,6 +97,7 @@ public class Item implements ItemInterface {
 
     private Long cpsItemId;
     private Long pendingReqItemId;
+    private Long userItemId;
 
     @OneToMany(mappedBy = "item",cascade = CascadeType.ALL)
     private List<ItemImportLog> itemImportLogs = new ArrayList<>();

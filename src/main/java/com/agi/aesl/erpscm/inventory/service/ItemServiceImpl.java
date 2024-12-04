@@ -34,6 +34,9 @@ import com.agi.aesl.erpscm.inventory.enums.ItemHeader;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import com.agi.aesl.erpscm.inventory.enums.StockType;
 import com.agi.aesl.erpscm.inventory.repository.*;
+import com.agi.aesl.erpscm.inventory.user_request.entity.UserItem;
+import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
+import com.agi.aesl.erpscm.inventory.user_request.repository.UserItemRepository;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
 // import com.agi.aesl.erpscm.scm.dto.request.OfferRequestDto;
@@ -128,6 +131,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Autowired
     private ItemFuncationalUnitRepository itemFuncationalUnitRepository;
+
+    @Autowired
+    private UserItemRepository userItemRepository;
 
     @Value("${upload.dir}")
     private String uploadDir;
@@ -490,7 +496,9 @@ public class ItemServiceImpl implements ItemService {
     public void createItem(Jwt loggedInUser, ItemRequestDto itemRequestDto) {
         claimResolver.setToken(loggedInUser);
         Item item = itemRequestDto.getEntity();
-
+        if(itemRequestDto.getUserItemId()!=null) {
+            item.setUserItemId(itemRequestDto.getUserItemId());
+        }
         String itemAttributeName = generateItemAttributeName(itemRequestDto.getAttributes());
 
        Warehouse warehouse = null;
@@ -1244,10 +1252,18 @@ public class ItemServiceImpl implements ItemService {
                     Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseOp.get().getId());
                     if(iilOp.isPresent()){
                         ItemImportLog iil = iilOp.get();
-                        iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+//                        iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+                        iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+                        item.setActive(true);
+                        if(item.getUserItemId()!=null){
+                            Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
+                            userItemOp.ifPresent((ui)->{
+                                ui.setItemStatus(UserCategoryStatus.COMPLETED);
+                            });
+                        }
                     }
 //                    accountService.setItemService(this);
-                    forceActive();
+//                    forceActive();
 //                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
                 }
                 if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()!=null){
@@ -1255,12 +1271,19 @@ public class ItemServiceImpl implements ItemService {
                     Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseOp.get().getId());
                     if(iilOp.isPresent()){
                         ItemImportLog iil = iilOp.get();
-                        iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
-
+//                        iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+                        iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+                        item.setActive(true);
+                        if(item.getUserItemId()!=null){
+                            Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
+                            userItemOp.ifPresent((ui)->{
+                                ui.setItemStatus(UserCategoryStatus.COMPLETED);
+                            });
+                        }
                     }
                     mergeItem(item, itemMergeRequestDto);
 //                    accountService.setItemService(this);
-                    forceActive();
+//                    forceActive();
 //                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
 
                 }
