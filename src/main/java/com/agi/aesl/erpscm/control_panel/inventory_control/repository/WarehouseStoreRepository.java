@@ -14,8 +14,30 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore
 
 @Repository
 public interface WarehouseStoreRepository extends JpaRepository<WarehouseStore,Long>{
-    
-    Page<WarehouseStore> findAllByActiveAndWarehouseId(Boolean active, Long warehouseId, Pageable pageable);
+
+    @Query(value = """
+            SELECT 
+            ws.id as id,
+            ws.active as active,
+            ws.store_name as storeName,
+            (SELECT COUNT(*) FROM scm_category_warehouse_stores scws 
+            LEFT JOIN scm_item_categories sic ON sic.id = scws.category_id
+            WHERE scws.warehouse_store_id = ws.id
+            AND sic.parent_category_id IS NULL
+            AND sic.active=1
+            ) as categoriesCount
+            FROM scm_warehouse_stores ws
+            WHERE ws.active=:active
+            AND ws.warehouse_id = :warehouseId
+            """,nativeQuery = true)
+    Page<WarehouseStoreInfoV2> findAllByActiveAndWarehouseId(Boolean active, Long warehouseId, Pageable pageable);
+
+    interface WarehouseStoreInfoV2{
+        Long getId();
+        Boolean getActive();
+        String getStoreName();
+        Long getCategoriesCount();
+    }
 
     @Query(value = """
                 SELECT 
