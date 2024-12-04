@@ -172,12 +172,12 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
         userItemRepository.save(userItem);
 
         AppliedVADto appliedVADto = verificationService.applyVerifyApprovalProcess(
-                userItem, DomainType.INVENTORY_REQ_PRODUCT, UserCategoryStatus.COMPLETED.toString(),
+                userItem, DomainType.INVENTORY_REQ_PRODUCT, UserCategoryStatus.PENDING.toString(),
                 uri, DomainType.INVENTORY_REQ_PRODUCT.toString(), List.of("-1"),
                 null);
 
         if(appliedVADto.getVerifiers().isEmpty() && appliedVADto.getPanels().isEmpty()){
-              userItem.setItemStatus(UserCategoryStatus.COMPLETED);
+              userItem.setItemStatus(UserCategoryStatus.PENDING);
 //            try {
 //                ObjectMapper mapper = new ObjectMapper();
 //                String employee = mapper.writeValueAsString(userItem.getCreatedBy());
@@ -374,10 +374,12 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
 //        }
         Optional<UserItem> itemOp = userItemRepository.findById(id);
         itemOp.ifPresent((item)->{
+            item.setItemStatus(UserCategoryStatus.PENDING_CPS);
             item.setIsApprovedByStore(true);
             ItemRequestDto itemRequestDto = new ItemRequestDto();
             itemRequestDto.setBrand(new ReferenceObjectDto(item.getBrand().getId()));
             itemRequestDto.setName(item.getName());
+            itemRequestDto.setUserItemId(item.getId());
 //            itemRequestDto.setCode(approveDto.getCode());
             itemRequestDto.setItemCategory(item.getSubCategory());
             itemRequestDto.setItemParentCategory(item.getCategory());

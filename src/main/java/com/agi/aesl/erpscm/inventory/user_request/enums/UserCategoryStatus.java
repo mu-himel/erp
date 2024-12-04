@@ -4,6 +4,7 @@ public enum UserCategoryStatus {
     PENDING,
     PENDING_VERIFICATION,
     PENDING_APPROVAL,
+    PENDING_CPS,
     REVIEW,
     REJECTED,
     APPROVED,

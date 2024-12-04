@@ -24,6 +24,10 @@ import com.agi.aesl.erpscm.inventory.enums.BudgetType;
 import com.agi.aesl.erpscm.inventory.enums.CategoryStatus;
 import com.agi.aesl.erpscm.inventory.repository.*;
 
+import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
+import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
+import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryRepository;
+import com.agi.aesl.erpscm.inventory.user_request.repository.UserItemRepository;
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
@@ -94,6 +98,8 @@ public class CategoryServiceImpl implements CategoryService {
     @Autowired
     private NetworkService networkService;
 
+    @Autowired
+    private UserCategoryRepository userCategoryRepository;
 
     @Override
     @Transactional
@@ -865,6 +871,12 @@ public class CategoryServiceImpl implements CategoryService {
                 approvedWithBody(token, categoryApproveRequestDto,mergePendingCategoryDto);
                 category.setActive(true);
                 category.setCategoryStatus(CategoryStatus.APPROVED);
+                if(category.getUserCategoryId()!=null){
+                    Optional<UserCategory> userCategoryOp = userCategoryRepository.findById(category.getUserCategoryId());
+                    userCategoryOp.ifPresent((uc->{
+                        uc.setCategoryStatus(UserCategoryStatus.COMPLETED);
+                    }));
+                }
             } else if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)) {
                 if(categoryApproveRequestDto.getMergePendingCategoryDto()!=null) {
                     mergeWithBody(token, category, mergePendingCategoryDto);

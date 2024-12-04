@@ -61,6 +61,7 @@ public class ItemRequestDto implements EntityConvertable<Item> {
 
     private Boolean active;
     private Long scmItemId;
+    private Long userItemId;
 
     private String employee;
 

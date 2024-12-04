@@ -10,7 +10,9 @@ public interface UserCategoryQuery {
             (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active, 
             category_status as status
             FROM user_categories uc
-            WHERE uc.created_by_id=:userId AND (uc.parent_category_id IS NULL AND uc.active_parent_category_id IS NULL)
+            WHERE uc.created_by_id=:userId 
+            AND uc.category_status NOT IN ('COMPLETED','REJECTED')
+            AND (uc.parent_category_id IS NULL AND uc.active_parent_category_id IS NULL)
             """;
     String countMyCategories="SELECT COUNT(*) FROM ("+ getMyCategories+") as total";
 
@@ -29,7 +31,9 @@ public interface UserCategoryQuery {
             uc.category_status as status
              FROM user_categories uc
              LEFT JOIN scm_item_categories puc ON (puc.id = uc.parent_category_id OR puc.id = uc.active_parent_category_id )
-             WHERE uc.created_by_id=:userId AND (uc.active_parent_category_id IS NOT NULL OR uc.parent_category_id IS NOT NULL)
+             WHERE uc.created_by_id=:userId 
+             AND uc.category_status NOT IN ('COMPLETED','REJECTED')
+             AND (uc.active_parent_category_id IS NOT NULL OR uc.parent_category_id IS NOT NULL)
              AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId OR uc.active_parent_category_id = :categoryId)
             """;
     String countGetMySubCategories = "SELECT COUNT(*) FROM ("+getGetMySubCategories+") as total";
@@ -43,7 +47,8 @@ public interface UserCategoryQuery {
                     uch.category_status
                 ELSE
                     uc.category_status
-            END  as status
+            END  as status,
+            (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active
             FROM user_categories uc
             LEFT JOIN user_category_histories uch ON uch.user_category_id = uc.id
             WHERE (
@@ -61,7 +66,8 @@ public interface UserCategoryQuery {
                     uch.category_status
                 ELSE
                     uc.category_status
-            END  as status
+            END  as status,
+            (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active
              FROM user_categories uc
              LEFT JOIN user_category_histories uch ON uch.user_category_id = uc.id
              LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
@@ -83,7 +89,8 @@ public interface UserCategoryQuery {
                     uch.category_status
                 ELSE
                     uc.category_status
-            END  as status
+            END  as status,
+            (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active
             FROM user_categories uc
             LEFT JOIN user_category_histories uch ON uch.user_category_id = uc.id
             WHERE (
@@ -101,7 +108,8 @@ public interface UserCategoryQuery {
                     uch.category_status
                 ELSE
                     uc.category_status
-            END  as status
+            END  as status,
+            (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active
             FROM user_categories uc
             LEFT JOIN user_category_histories uch ON uch.user_category_id = uc.id
             LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
@@ -119,7 +127,8 @@ public interface UserCategoryQuery {
                 SELECT COUNT(*) FROM user_categories uc1
                 WHERE uc1.parent_category_id=uc.id
             ) as subCategoryCount, 0 as productCount,
-            category_status as status
+            category_status as status,
+            (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active
             FROM user_categories uc
             WHERE uc.created_by_id=:userId AND (uc.parent_category_id IS NULL AND uc.active_parent_category_id IS NULL)
             AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED')
@@ -149,19 +158,20 @@ public interface UserCategoryQuery {
             OR
             (:categoryId IS NOT NULL AND uc.active_parent_category_id = :categoryId)
             )
-            AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED')
+            AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED','PENDING')
             AND (uc.is_approved_by_store IS NULL OR uc.is_approved_by_store=false)
             """;
     String countPendingApprovalByStoreCategories = "SELECT COUNT(*) FROM ("+pendingApprovalFromStoreCategories+") as total";
 
     String closedSubCategories="""
             select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
-            uc.category_status as status
+            uc.category_status as status,
+            (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active
              FROM user_categories uc
              LEFT JOIN scm_item_categories puc ON (puc.id = uc.parent_category_id OR puc.id = uc.active_parent_category_id)
              WHERE uc.created_by_id=:userId 
              AND (uc.active_parent_category_id IS NOT NULL OR uc.parent_category_id IS NOT NULL)
-             AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId)
+             AND (:categoryId IS NULL OR uc.active_parent_category_id = :categoryId)
              AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED')
             """;
     String countClosedSubCategories = "SELECT COUNT(*) FROM ("+closedSubCategories+") as total";
