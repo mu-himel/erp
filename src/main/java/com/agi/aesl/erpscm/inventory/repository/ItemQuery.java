@@ -2,34 +2,47 @@ package com.agi.aesl.erpscm.inventory.repository;
 
 public interface ItemQuery {
 
-    String getItemsWithSearch = "SELECT i.id as id, i.name as name, i.code as code, i.item_unit as itemUnit," +
-            "ic.id as subCategoryId, ic.name as subCategoryName, ic.code as subCategoryCode, " +
-            "ipc.id as categoryId, ipc.name as categoryName, ipc.code as categoryCode," +
-            "w.id as warehouseId, w.name as warehouseName, " +
-            "ws.id as warehouseStoreId, ws.store_name as warehouseStoreName, " +
-            "SUM(s.stock_qty) as qty," +
-            " i.stock_threshold_qty as stockThresholdQty," +
-            " i.reorder_percentage as reorderPercentage," +
-            " i.item_attribute_name as itemAttributeName " +
-            "FROM scm_items i " +
-            "LEFT JOIN scm_item_stocks s ON s.item_id = i.id " +
-            "LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id " +
-            "LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id " +
-            "LEFT JOIN scm_warehouse_stores ws ON ws.id = s.warehouse_store_id " +
-            "LEFT JOIN scm_warehouses w ON w.id = s.warehouse_id " +
-            "LEFT JOIN scm_item_import_logs siil ON siil.item_id = i.id " +
-            "WHERE siil.warehouse_id IN (:warehouseId) " +
-            " AND siil.item_inactive_status IN ('APPROVED') " +
-            "AND i.active=1 AND (:name IS NULL OR i.name LIKE concat(:name,'%')) " +
-            "   AND (:code IS NULL OR i.code LIKE concat(:code,'%')) " +
-            "   AND ((:subCategoryId IS NULL OR ic.id = :subCategoryId)  " +
-            "       OR (COALESCE(:categoryId) IS NULL OR ic.id IN (:categoryId)))" +
-            "   AND (COALESCE(:categoryId) IS NULL OR ipc.id IN (:categoryId)) " +
-            "   AND (:reorderPercentage IS NULL OR i.reorder_percentage = :reorderPercentage) " +
-            "   AND (:stockThresholdQty IS NULL OR i.stock_threshold_qty = :stockThresholdQty) " +
-            "   AND (COALESCE(:warehouseId) IS NULL OR w.id IN (:warehouseId)) " +
-            "   AND (:warehouseStoreId IS NULL OR ws.id = :warehouseStoreId) " +
-            "GROUP BY i.id ORDER BY i.name, i.item_attribute_name ASC";
+    String getItemsWithSearch = """
+            SELECT i.id as id, i.name as name, i.code as code, i.item_unit as itemUnit,
+            ic.id as subCategoryId, ic.name as subCategoryName, ic.code as subCategoryCode,
+            ipc.id as categoryId, ipc.name as categoryName, ipc.code as categoryCode,
+            w.id as warehouseId, w.name as warehouseName,
+            ws.id as warehouseStoreId, ws.store_name as warehouseStoreName,
+            SUM(s.stock_qty) as qty,
+            (SELECT sum(p.approved_quantity) FROM (SELECT
+                        sdd.approved_quantity,
+                        scb.name as brand_name,
+                        sdd.item_id	
+                       FROM scm_demand_details sdd
+                       LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+                       LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
+                       WHERE sdd.item_id IS NOT NULL
+                        AND sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
+                        group by sdd.id
+                       ) p WHERE p.item_id = i.id
+                   GROUP BY p.brand_name, p.item_id) as inTransit,
+            i.stock_threshold_qty as stockThresholdQty,
+            i.reorder_percentage as reorderPercentage,
+            i.item_attribute_name as itemAttributeName
+            FROM scm_items i
+            LEFT JOIN scm_item_stocks s ON s.item_id = i.id
+            LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id
+            LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
+            LEFT JOIN scm_warehouse_stores ws ON ws.id = s.warehouse_store_id
+            LEFT JOIN scm_warehouses w ON w.id = s.warehouse_id
+            LEFT JOIN scm_item_import_logs siil ON siil.item_id = i.id
+            WHERE siil.warehouse_id IN (:warehouseId)
+            AND siil.item_inactive_status IN ('APPROVED')
+            AND i.active=1 AND (:name IS NULL OR i.name LIKE concat(:name,'%'))
+            AND (:code IS NULL OR i.code LIKE concat(:code,'%'))
+            AND ((:subCategoryId IS NULL OR ic.id = :subCategoryId)
+            OR (COALESCE(:categoryId) IS NULL OR ic.id IN (:categoryId)))
+            AND (COALESCE(:categoryId) IS NULL OR ipc.id IN (:categoryId))
+            AND (:reorderPercentage IS NULL OR i.reorder_percentage = :reorderPercentage)
+            AND (:stockThresholdQty IS NULL OR i.stock_threshold_qty = :stockThresholdQty)
+            AND (COALESCE(:warehouseId) IS NULL OR w.id IN (:warehouseId))
+            AND (:warehouseStoreId IS NULL OR ws.id = :warehouseStoreId)
+            GROUP BY i.id ORDER BY i.name, i.item_attribute_name ASC""";
 
     String countItemsWithSearch = "SELECT count(*) FROM ("+getItemsWithSearch+") as p";
 

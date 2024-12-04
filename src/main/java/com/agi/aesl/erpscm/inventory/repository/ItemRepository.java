@@ -223,6 +223,7 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
         String getSubCategoryCode();
         String getItemUnit();
         BigDecimal getQty();
+        BigDecimal getInTransit();
         BigDecimal getStockThresholdQty();
         BigDecimal getReorderPercentage();
         String getStatus();
