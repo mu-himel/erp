@@ -27,6 +27,9 @@ public interface WarehouseRepository extends JpaRepository<Warehouse,Long>, Ware
     @Query(value = getWarehouses, nativeQuery = true)
     List<WarehouseInfo> findAllByName(Optional<String> name);
 
+    @Query(value = getWarehouseLists, nativeQuery = true)
+    List<WarehouseInfo> findAllByIdsAndName(List<Long> warehouseIds, Optional<String> name);
+
     @Query(value = getWarehousesDetail)
     Optional<Warehouse> findWarehouseById(Long id);
 
