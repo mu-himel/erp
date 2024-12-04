@@ -1185,7 +1185,10 @@ public class ItemServiceImpl implements ItemService {
                     ItemImportLog iil = new ItemImportLog();
                     iil.setItem(item);
                     iil.setWarehouse(warehouse);
-                    iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+//                    iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+                    // added for inactive account service
+                    iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+                    item.setActive(true);
                     itemImportLogRepository.save(iil);
                 }
                 accountService.setItemService(this);
