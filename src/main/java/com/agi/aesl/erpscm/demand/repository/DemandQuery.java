@@ -141,7 +141,7 @@ interface DemandQuery {
                        WHERE sdd.item_id IS NOT NULL
                         AND sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
                         group by sdd.id
-                       ) p
+                       ) p WHERE p.attribute_name like GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ')
                    GROUP BY p.brand_name, p.attribute_name)
             	ELSE
             	  (SELECT sum(p.approved_quantity) FROM (SELECT
