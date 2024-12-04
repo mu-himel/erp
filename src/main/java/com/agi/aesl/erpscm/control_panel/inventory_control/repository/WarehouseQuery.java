@@ -15,6 +15,21 @@ public interface WarehouseQuery {
             GROUP BY w.id 
             """;
 
+    String getWarehouseLists="""
+            SELECT 
+            w.id as id, 
+            w.name as name, 
+            w.location as location,
+            count(ws.id) as storeQty 
+            FROM scm_warehouses w 
+            LEFT JOIN scm_warehouse_stores ws ON ws.warehouse_id = w.id
+                AND ws.active = true
+            WHERE w.active = true
+                AND (:name IS NULL OR LOWER(w.name) LIKE CONCAT('%',LOWER(:name),'%'))
+                AND (COALESCE(:warehouseIds) IS NULL OR w.id IN (:warehouseIds))
+            GROUP BY w.id 
+            """;
+
     String getWarehousesWithFilter="""
             SELECT 
             w.id as id, 

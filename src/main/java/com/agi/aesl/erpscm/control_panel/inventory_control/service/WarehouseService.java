@@ -14,7 +14,7 @@ public interface WarehouseService {
 
     Page<?> getWarehouses(Jwt token, Optional<String> name, Optional<Integer> page, Optional<Integer> size);
 
-    List<?> getWarehouses(Optional<String> name);
+    List<?> getWarehouses(Jwt token, Optional<String> name);
 
 
     void deleteWarehouse(Jwt token, Long id);

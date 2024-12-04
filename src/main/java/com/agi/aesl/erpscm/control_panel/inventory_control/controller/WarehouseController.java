@@ -48,9 +48,11 @@ public class WarehouseController extends BaseController{
     }
 
     @GetMapping("/list")
-    public ResponseEntity<?> getWarehouses(@RequestParam("name") Optional<String> name){
+    public ResponseEntity<?> getWarehouses(
+            @AuthenticationPrincipal Jwt token,
+            @RequestParam("name") Optional<String> name){
         return new ResponseEntity<>(
-                warehouseService.getWarehouses(name),
+                warehouseService.getWarehouses(token, name),
                 HttpStatus.OK
         );
     }

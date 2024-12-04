@@ -122,8 +122,13 @@ public class WarehouseServiceImpl implements WarehouseService{
     }
 
     @Override
-    public List<?> getWarehouses(Optional<String> name) {
-        return warehouseRepository.findAllByName(name);
+    public List<?> getWarehouses(Jwt token, Optional<String> name) {
+        claimResolver.setToken(token);
+        String moduleUri="inventory-control/warehouse";
+        DataFilter dataFilter = new DataFilter(moduleUri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        return warehouseRepository.findAllByIdsAndName(warehouseIds,name);
     }
 
     @Override
