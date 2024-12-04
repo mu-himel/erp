@@ -345,9 +345,9 @@ public class DemandServiceImpl implements DemandService{
         demand.setDemandDetails(demand.getDemandDetails().stream().map(demandDetail -> {
             Long demandDetailId = demandDetail.getId();
             if(demandDetailId.equals(demandReceiveDto.getDemandDetailId())) {
-                itemService.stockUpdateByDemand(demandReceiveDto.getWarehouseId(),
-                        demandDetail,
-                        StockType.STOCK_IN);
+//                itemService.stockUpdateByDemand(demandReceiveDto.getWarehouseId(),
+//                        demandDetail,
+//                        StockType.STOCK_IN);
 
                 if (demandReceiveDto.getNote() != null && !demandReceiveDto.getNote().isEmpty()) {
                     demandDetail.setDeclineNote(demandReceiveDto.getNote());
@@ -756,7 +756,7 @@ public class DemandServiceImpl implements DemandService{
         if(demandDetailOp.isPresent()){
             DemandDetail demandDetail = demandDetailOp.get();
 
-            itemService.stockUpdateByDemand(demandReceiveDto.getWarehouseId(), demandDetail, StockType.STOCK_OUT);
+//            itemService.stockUpdateByDemand(demandReceiveDto.getWarehouseId(), demandDetail, StockType.STOCK_OUT);
 
             if(demandReceiveDto.getNote()!=null && !demandReceiveDto.getNote().isEmpty()){
 
