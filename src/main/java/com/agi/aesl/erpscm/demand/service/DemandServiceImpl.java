@@ -392,6 +392,7 @@ public class DemandServiceImpl implements DemandService{
 
     @Override
     public Page<?> getAllDemands(Jwt loggedInUser, Optional<Integer> page, Optional<Integer> size,
+            Optional<String> demandNo,
             Optional<String> fromDateStr, Optional<String> toDateStr, Optional<Integer> daysRemain) {
                 claimResolver.setToken(loggedInUser);
                 if(claimResolver.getEmployee().isEmpty()){
@@ -430,7 +431,8 @@ public class DemandServiceImpl implements DemandService{
                 }
         
 
-                return demandRepository.findAllDemands(warehouseId,fromDate,toDate, daysRemain.orElse(null),pageable);
+                return demandRepository.findAllDemands(warehouseId,demandNo.orElse(null),
+                        fromDate,toDate, daysRemain.orElse(null),pageable);
     }
 
     @Override
