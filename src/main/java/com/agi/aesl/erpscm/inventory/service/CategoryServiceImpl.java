@@ -880,9 +880,21 @@ public class CategoryServiceImpl implements CategoryService {
             } else if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)) {
                 if(categoryApproveRequestDto.getMergePendingCategoryDto()!=null) {
                     mergeWithBody(token, category, mergePendingCategoryDto);
+                    if(category.getUserCategoryId()!=null){
+                        Optional<UserCategory> userCategoryOp = userCategoryRepository.findById(category.getUserCategoryId());
+                        userCategoryOp.ifPresent((uc->{
+                            uc.setCategoryStatus(UserCategoryStatus.MERGED);
+                        }));
+                    }
                 }
                 category.setActive(false);
                 category.setCategoryStatus(CategoryStatus.REJECTED);
+                if(category.getUserCategoryId()!=null){
+                    Optional<UserCategory> userCategoryOp = userCategoryRepository.findById(category.getUserCategoryId());
+                    userCategoryOp.ifPresent((uc->{
+                        uc.setCategoryStatus(UserCategoryStatus.REJECTED);
+                    }));
+                }
             }
         }
     }
