@@ -130,7 +130,32 @@ interface DemandQuery {
                 END as currentStockQty,
                 d.delivery_date as deliveryDate,
                 (DATEDIFF(d.delivery_date,CURRENT_DATE)) as daysRemain,
-            	0 as inTransit,
+            	CASE WHEN dd.item_id IS NOT NULL THEN
+            	  (SELECT sum(p.approved_quantity) FROM (SELECT
+                        sdd.approved_quantity,
+                        scb.name as brand_name,
+                        GROUP_CONCAT(DISTINCT sdda.attribute_type,' ',sdda.attribute_value , ' ',sdda.attribute_unit order by sdda.id asc separator ' - ') attribute_name	
+                       FROM scm_demand_details sdd
+                       LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+                       LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
+                       WHERE sdd.item_id IS NOT NULL
+                        AND sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
+                        group by sdd.id
+                       ) p
+                   GROUP BY p.brand_name, p.attribute_name)
+            	ELSE
+            	  (SELECT sum(p.approved_quantity) FROM (SELECT
+               	sdd.approved_quantity,
+               	scb.name as brand_name,
+               	GROUP_CONCAT(DISTINCT sdda.attribute_type,' ',sdda.attribute_value , ' ',sdda.attribute_unit order by sdda.id asc separator ' - ') attribute_name	
+               FROM scm_demand_details sdd
+               LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+               LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
+               WHERE sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
+               	group by sdd.id
+               ) p WHERE p.attribute_name like GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ')
+               GROUP BY p.brand_name, p.attribute_name)
+            	END as inTransit,
             	GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ') deamndAttributes
             FROM scm_demand_details dd
             LEFT JOIN scm_demand_detail_attributes dda on dda.demand_detail_id = dd.id

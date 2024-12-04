@@ -56,7 +56,7 @@ public class WarehouseController extends BaseController{
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getWarhouse(@PathVariable("id") Long id){
+    public ResponseEntity<?> getWarehouse(@PathVariable("id") Long id){
         return new ResponseEntity<>(
                 warehouseService.getWarehouse(id),
                 HttpStatus.OK
