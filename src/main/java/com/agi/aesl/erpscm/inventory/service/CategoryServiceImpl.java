@@ -106,12 +106,19 @@ public class CategoryServiceImpl implements CategoryService {
     public void addCategories(Jwt token,List<CategoryRequestDtoCustom> categoryRequestDtos) {
         if(categoryRequestDtos!=null && categoryRequestDtos.size()>0){
             List<ScmIdUpdateDto> dtos = new ArrayList<>();
-            for(CategoryRequestDtoCustom categoryRequestDto : categoryRequestDtos){
-                    ScmIdUpdateDto scmIdUpdateDto = new ScmIdUpdateDto();
+           for(CategoryRequestDtoCustom categoryRequestDto : categoryRequestDtos){
+               Optional<WarehouseStore> warehouseStoreOp = warehouseStoreRepository
+                                        .findById(categoryRequestDto.getWarehouseStore().getId());
+                if(warehouseStoreOp.isEmpty()){
+                    throw new RuntimeException("Sorry! Store not found");
+                }
+               WarehouseStore ws = warehouseStoreOp.get();
+               String code = ws.getStoreName().substring(0,1).concat("-").concat(categoryRequestDto.getCode());
+               ScmIdUpdateDto scmIdUpdateDto = new ScmIdUpdateDto();
                     CategoryRequestDto cr = new CategoryRequestDto();
                     cr.setCategoryStatus(CategoryStatus.APPROVED);
                     cr.setAttributes(categoryRequestDto.getAttributes());
-                    Optional<ItemCategory> codeExist = categoryRepository.findByCode(categoryRequestDto.getCode());
+                    Optional<ItemCategory> codeExist = categoryRepository.findByCode(code);
                     if(codeExist.isPresent()){
                         Optional<CategoryWarehouseStore> cwsOp =  categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseId(codeExist.get().getId() ,categoryRequestDto.getWarehouse().getId());
 
@@ -127,7 +134,7 @@ public class CategoryServiceImpl implements CategoryService {
                         continue;
 
                     }
-                    cr.setCode(categoryRequestDto.getCode());
+                    cr.setCode(code);
                     cr.setCpsCategoryId(categoryRequestDto.getCpsCategoryId());
                     cr.setName(categoryRequestDto.getName());
                     cr.setParentCategory(categoryRequestDto.getParentCategory());
