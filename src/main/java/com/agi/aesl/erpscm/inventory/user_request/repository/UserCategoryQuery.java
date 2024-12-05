@@ -182,10 +182,12 @@ public interface UserCategoryQuery {
 //            AND ua.created_by_id = :userId
 //            UNION
     String getListCategories="""
-            SELECT 'STORE_MANAGED' as `type`, ic.user_category_id as userCategoryId, ic.id,ic.name,ic.code from scm_item_categories ic
+            SELECT 'STORE_MANAGED' as `type`, ic.user_category_id as userCategoryId, ic.id,ic.name,ic.code 
+            FROM scm_item_categories ic
             LEFT JOIN scm_category_warehouse_stores scws ON scws.category_id = ic.id
             WHERE 
-            (:storeId IS NULL OR scws.warehouse_store_id = :storeId)
+            ic.active=1 AND ic.category_status IN ('APPROVED')
+            AND (:storeId IS NULL OR scws.warehouse_store_id = :storeId)
             AND (:name IS NULL OR LOWER(ic.name) LIKE LOWER(CONCAT('%',:name,'%')))
             AND (:code IS NULL OR LOWER(ic.code) LIKE LOWER(CONCAT('%',:code,'%')))
             AND ic.parent_category_id IS NULL
@@ -198,8 +200,11 @@ public interface UserCategoryQuery {
 //    AND ua.created_by_id = :userId
 //            UNION
     String getListSubCategories="""
-            SELECT 'STORE_MANAGED' as `type`, ic.user_category_id as userCategoryId, ic.id,ic.name,ic.code from scm_item_categories ic
-            WHERE (:name IS NULL OR LOWER(ic.name) LIKE LOWER(CONCAT('%',:name,'%')))
+            SELECT 'STORE_MANAGED' as `type`, ic.user_category_id as userCategoryId, ic.id,ic.name,ic.code 
+            FROM scm_item_categories ic
+            WHERE 
+            ic.active=1 AND ic.category_status IN ('APPROVED')
+            AND (:name IS NULL OR LOWER(ic.name) LIKE LOWER(CONCAT('%',:name,'%')))
             AND (:code IS NULL OR LOWER(ic.code) LIKE LOWER(CONCAT('%',:code,'%')))
             AND ic.parent_category_id = :categoryId
             """;
