@@ -238,6 +238,9 @@ public class GrnServiceImpl implements GrnService{
                              Optional<Integer> qty,Optional<Integer> receivedQty,
                              Optional<String> fromDate, Optional<String> toDate, Optional<String> grnStatus) {
         claimResolver.setToken(token);
+        if(claimResolver.getEmployee().isEmpty()){
+            throw new RuntimeException("Sorry! Store Profile Required");
+        }
         String uri = "inventory-management/good-receive/good-receive-note";
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
@@ -253,6 +256,7 @@ public class GrnServiceImpl implements GrnService{
             fromDateObj = LocalDateTime.parse(fromDate.get()+"T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get()+"T23:59:59");
         }
+        warehouseIds.add(claimResolver.getEmployee().get().getWarehouseId());
         return grnRepository.findAllGrn(pageable,
                 warehouseIds,categoryIds,
                 grnNo.orElse(null),

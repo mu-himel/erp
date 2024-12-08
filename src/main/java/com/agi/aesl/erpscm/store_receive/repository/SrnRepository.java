@@ -22,11 +22,11 @@ import java.util.Optional;
 public interface SrnRepository extends JpaRepository<StoreReceiveNote, Long>, SrnQuery {
 
     @Query(value = getAll, countQuery = countAll, nativeQuery = true)
-    Page<StoreReceiveNoteInfo> findAllSrnByStatus(List<String> status, LocalDateTime fromDate,
+    Page<StoreReceiveNoteInfo> findAllSrnByStatus(Long warehouseId, List<String> status, LocalDateTime fromDate,
                                LocalDateTime toDate, Pageable pageable);
 
     @Query(value = getAllCompleted, countQuery = countAllCompleted, nativeQuery = true)
-    Page<StoreReceiveNoteInfo> findCompletedSrnByStatus(List<String> status, LocalDateTime fromDate,
+    Page<StoreReceiveNoteInfo> findCompletedSrnByStatus(Long warehouseId,List<String> status, LocalDateTime fromDate,
                                                   LocalDateTime toDate, Pageable pageable);
 
     @Query(value = getPendingDemandsBySrnForSrnItems,nativeQuery = true)
