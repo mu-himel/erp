@@ -38,6 +38,7 @@ public interface ItemService {
 
     List<?> getByAttributes(Long brandId,String attribute,Long subCategoryId,Long warehouseId);
     Optional<?> getItemDetailWithWarehouse(Long id);
+    Optional<?> getItemDetailWithWarehouseWithoutInTransit(Long id);
 
     <T extends Item> void sendItemToCps(ClaimResolver claimResolver, String _employee,T item,
                                                  List<ItemAttributeInterface> attributes,
