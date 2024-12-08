@@ -33,6 +33,10 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             "WHERE i.id=:id")
     Optional<ItemDetail> findByIdWithWarehouse(@Param("id") Long id);
 
+    @Query(value = getItemInTransit, nativeQuery = true)
+    Optional<BigDecimal> findInTransitByItemAndWarehouse(@Param("itemId") Long itemId,
+                                                     @Param("warehouseId") Long warehouseId);
+
 
     @Query(value = getItemsWithSearch,
             countQuery = countItemsWithSearch, nativeQuery = true)

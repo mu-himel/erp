@@ -197,15 +197,16 @@ public class ItemServiceImpl implements ItemService {
             stockInfo = mapOp.get();
         }
         BigDecimal sQty = (BigDecimal) stockInfo.get("stockQty");
+        stockInfo.put("inTransit",itemRepository.findInTransitByItemAndWarehouse(itemStock.getItem().getId(),itemStock.getWarehouse().getId()));
         stockInfo.put("stockQty",((sQty!=null)?sQty:new BigDecimal(0)).add(itemStock.getStockQty()));
-       stockInfo.put("warehouseId",itemStock.getWarehouse().getId());
-       stockInfo.put("warehouseName",itemStock.getWarehouse().getName());
-       stockInfo.put("warehouseStoreId",itemStock.getWarehouseStore().getId());
-       stockInfo.put("warehouseStoreName",itemStock.getWarehouseStore().getStoreName());
+        stockInfo.put("warehouseId",itemStock.getWarehouse().getId());
+        stockInfo.put("warehouseName",itemStock.getWarehouse().getName());
+        stockInfo.put("warehouseStoreId",itemStock.getWarehouseStore().getId());
+        stockInfo.put("warehouseStoreName",itemStock.getWarehouseStore().getStoreName());
         if(mapOp.isEmpty()) {
             itemStocks.add(stockInfo);
         }
-       warehouses.put(""+itemStock.getWarehouse().getId(), itemStocks);
+        warehouses.put(""+itemStock.getWarehouse().getId(), itemStocks);
     }
 
     @Override
