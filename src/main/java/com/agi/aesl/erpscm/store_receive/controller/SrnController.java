@@ -34,12 +34,13 @@ public class SrnController  extends BaseController {
 
     @GetMapping
     public ResponseEntity<?> getAllFromQc(
+            @AuthenticationPrincipal Jwt token,
             @RequestParam("fromDate") Optional<String> fromDate,
             @RequestParam("toDate") Optional<String> toDate,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size){
         return new ResponseEntity<>(
-                srnService.getAll(page,size, fromDate, toDate),
+                srnService.getAll(token, page,size, fromDate, toDate),
                 HttpStatus.OK
         );
     }
