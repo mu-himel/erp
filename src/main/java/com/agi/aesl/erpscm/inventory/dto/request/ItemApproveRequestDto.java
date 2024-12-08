@@ -9,6 +9,7 @@ public class ItemApproveRequestDto {
     private Long warehouseId;
     private Long warehouseStoreId;
     private ApproveStatus approveStatus;
+    private Boolean isMerged;
     private ItemMergeRequestDto itemMergeRequestDto;
 
 
