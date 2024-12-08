@@ -168,6 +168,7 @@ public class ItemServiceImpl implements ItemService {
         itemDetail.setStockThresholdQty(detail.getStockThresholdQty());
         Map<String, List<Map<String,Object>>> warehouses = new HashMap<>();
         detail.getStocks().stream().forEach(itemStock -> {
+            Optional<BigDecimal> inTransit  = itemRepository.findInTransitByItemAndWarehouse(itemStock.getItem().getId(),itemStock.getWarehouse().getId());
            if(warehouses.containsKey(""+itemStock.getWarehouse().getId())) {
                List<Map<String,Object>> itemStocks = warehouses.get(""+itemStock.getWarehouse().getId());
 
@@ -176,11 +177,11 @@ public class ItemServiceImpl implements ItemService {
                            return ((Long)iStock.get("warehouseId")).equals(itemStock.getWarehouse().getId())
                                    && ((Long)iStock.get("warehouseStoreId")).equals(itemStock.getWarehouseStore().getId());
                        }).findFirst();
-                 processItemStock(itemStock,warehouses,itemStocks,mapOp);
+                 processItemStock(itemStock,inTransit,warehouses,itemStocks,mapOp);
 
            }else{
                List<Map<String,Object>> itemStocks = new ArrayList<>();
-               processItemStock(itemStock,warehouses,itemStocks,Optional.ofNullable(null));
+               processItemStock(itemStock,inTransit,warehouses,itemStocks,Optional.ofNullable(null));
 
            }
         });
@@ -189,15 +190,63 @@ public class ItemServiceImpl implements ItemService {
         return Optional.ofNullable(itemDetail);
     }
 
-    private void processItemStock(ItemStock itemStock,
+    @Override
+    public Optional<?> getItemDetailWithWarehouseWithoutInTransit(Long id) {
+        Optional<ItemRepository.ItemDetail> itemDetailOptional = itemRepository.findByIdWithWarehouse(id);
+        if(itemDetailOptional.isEmpty()){
+            throw new AesException("Sorry! Item not found");
+        }
+
+        ItemRepository.ItemDetail detail = itemDetailOptional.get();
+        List<ItemFunctionalUnit> functionalUnits = itemFuncationalUnitRepository.findAllByItemId(detail.getId());
+        ItemDetail itemDetail = new ItemDetail();
+        itemDetail.setId(detail.getId());
+        itemDetail.setFunctionalUnits(functionalUnits);
+        itemDetail.setName(detail.getName());
+        itemDetail.setCode(detail.getCode());
+        itemDetail.setActive(detail.getActive());
+        itemDetail.setItemAttributeName(detail.getItemAttributeName());
+        itemDetail.setAttributes(detail.getAttributes());
+        itemDetail.setItemCategory(detail.getItemCategory());
+        itemDetail.setItemParentCategory(detail.getItemParentCategory());
+        itemDetail.setItemUnit(detail.getItemUnit());
+        itemDetail.setBrand(detail.getBrand());
+        itemDetail.setReorderPercentage(detail.getReorderPercentage());
+        itemDetail.setStockThresholdQty(detail.getStockThresholdQty());
+        Map<String, List<Map<String,Object>>> warehouses = new HashMap<>();
+        detail.getStocks().stream().forEach(itemStock -> {
+            Optional<BigDecimal> inTransit  = Optional.empty();// itemRepository.findInTransitByItemAndWarehouse(itemStock.getItem().getId(),itemStock.getWarehouse().getId());
+            if(warehouses.containsKey(""+itemStock.getWarehouse().getId())) {
+                List<Map<String,Object>> itemStocks = warehouses.get(""+itemStock.getWarehouse().getId());
+
+                Optional<Map<String,Object>> mapOp = itemStocks.stream().filter(
+                        iStock->{
+                            return ((Long)iStock.get("warehouseId")).equals(itemStock.getWarehouse().getId())
+                                    && ((Long)iStock.get("warehouseStoreId")).equals(itemStock.getWarehouseStore().getId());
+                        }).findFirst();
+                processItemStock(itemStock,inTransit,warehouses,itemStocks,mapOp);
+
+            }else{
+                List<Map<String,Object>> itemStocks = new ArrayList<>();
+                processItemStock(itemStock,inTransit,warehouses,itemStocks,Optional.ofNullable(null));
+
+            }
+        });
+        itemDetail.setWarehouses(warehouses);
+
+        return Optional.ofNullable(itemDetail);
+    }
+
+    private void processItemStock(ItemStock itemStock, Optional<BigDecimal> inTransit,
                                   Map<String, List<Map<String,Object>>> warehouses,
-                                  List<Map<String,Object>> itemStocks,Optional<Map<String,Object>> mapOp){
+                                  List<Map<String,Object>> itemStocks, Optional<Map<String,Object>> mapOp){
         Map<String,Object> stockInfo = new HashMap<>();
         if(mapOp.isPresent()){
             stockInfo = mapOp.get();
         }
         BigDecimal sQty = (BigDecimal) stockInfo.get("stockQty");
-        stockInfo.put("inTransit",itemRepository.findInTransitByItemAndWarehouse(itemStock.getItem().getId(),itemStock.getWarehouse().getId()));
+
+        stockInfo.put("inTransit",inTransit.orElse(new BigDecimal(0)));
         stockInfo.put("stockQty",((sQty!=null)?sQty:new BigDecimal(0)).add(itemStock.getStockQty()));
         stockInfo.put("warehouseId",itemStock.getWarehouse().getId());
         stockInfo.put("warehouseName",itemStock.getWarehouse().getName());
@@ -882,6 +931,7 @@ public class ItemServiceImpl implements ItemService {
         this.updateStock(item,qty,StockType.STOCK_IN,warehouseId,warehouseStoreId);
     }
 
+    @Transactional
     private void updateStock(Item item,BigDecimal qty, StockType stockType, Long warehouseId, Long warehouseStoreId){
         
        ItemStock itemStock = new ItemStock(qty, item,stockType,new Warehouse(warehouseId),new WarehouseStore(warehouseStoreId));

@@ -158,7 +158,7 @@ public class SrnServiceImpl implements SrnService{
                     storeInItem(grn, srnd);
                     return srnd;
                 }).collect(Collectors.toList()));
-                integrationWriterService.purchaseReceived(claimResolver.getToken(),storeReceiveNote);
+//                integrationWriterService.purchaseReceived(claimResolver.getToken(),storeReceiveNote);
             }
 
 //            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver, uri,
@@ -395,7 +395,7 @@ public class SrnServiceImpl implements SrnService{
             throw new RuntimeException("Sorry! Item not found");
         }
         Item item = itemOp.get();
-        Optional<ItemDetail> itemDetailOp = (Optional<ItemDetail>)itemService.getItemDetailWithWarehouse(item.getId());
+        Optional<ItemDetail> itemDetailOp = (Optional<ItemDetail>)itemService.getItemDetailWithWarehouseWithoutInTransit(item.getId());
         if(itemDetailOp.isPresent()) {
             grn.setIsReceivedByStore(true);
             grn.setGrnStatus(GrnStatus.COMPLETED);
