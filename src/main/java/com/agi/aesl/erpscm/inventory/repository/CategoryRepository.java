@@ -184,16 +184,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             Long storeId,
             String name, String code,Pageable pageable);
 
-    @Query(value = "SELECT ic.id as id, ic.name as name, ic.code as code,\n" +
-            "            ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses\n" +
-            "            FROM scm_item_categories ic\n" +
-            "            LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id\n" +
-            "            WHERE ic.parent_category_id IS NOT NULL\n" +
-            "            AND (:parentCategoryId IS NULL OR ic.parent_category_id = :parentCategoryId)\n" +
-            "            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))\n" +
-            "            AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))\n" +
-            "            AND (:storeId IS NULL OR cws.warehouse_store_id = :storeId)" +
-            "            GROUP BY ic.id",nativeQuery = true)
+    @Query(value = findAllSubCategories,nativeQuery = true)
     List<ItemCategoryInfo> findAllSubCategories(
             Long storeId,
             Long parentCategoryId,

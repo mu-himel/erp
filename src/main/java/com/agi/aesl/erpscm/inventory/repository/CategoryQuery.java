@@ -184,4 +184,16 @@ public interface CategoryQuery {
             GROUP BY ic.id
             """;
     String countPendingSubCategoriesForInventoryControl="SELECT COUNT(*) FROM ("+getPendingSubcategoriesForInventoryControl+") as t";
+
+    String findAllSubCategories="""
+            SELECT ic.id as id, ic.name as name, ic.code as code,
+            ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses
+            FROM scm_item_categories ic
+            LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
+            WHERE ic.active=1 AND ic.category_status IN ('APPROVED') AND ic.parent_category_id IS NOT NULL
+                AND (:parentCategoryId IS NULL OR ic.parent_category_id = :parentCategoryId)
+                AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
+                AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+                AND (:storeId IS NULL OR cws.warehouse_store_id = :storeId)
+           GROUP BY ic.id""";
 }
