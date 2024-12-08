@@ -14,9 +14,10 @@ public interface ItemQuery {
                         scb.name as brand_name,
                         sdd.item_id	
                        FROM scm_demand_details sdd
+                       LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
                        LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
                        LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
-                       WHERE sdd.item_id IS NOT NULL
+                       WHERE sdd.item_id IS NOT NULL AND sd.warehouse_id = w.id
                         AND sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
                         group by sdd.id
                        ) p WHERE p.item_id = i.id
@@ -45,6 +46,22 @@ public interface ItemQuery {
             GROUP BY i.id ORDER BY i.name, i.item_attribute_name ASC""";
 
     String countItemsWithSearch = "SELECT count(*) FROM ("+getItemsWithSearch+") as p";
+
+    String getItemInTransit= """
+            SELECT sum(p.approved_quantity) FROM (SELECT
+                        sdd.approved_quantity,
+                        scb.name as brand_name,
+                        sdd.item_id
+                       FROM scm_demand_details sdd
+                       LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
+                       LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+                       LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
+                       WHERE sdd.item_id IS NOT NULL AND sd.warehouse_id = :warehouseId
+                        AND sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
+                        group by sdd.id
+                       ) p WHERE p.item_id = :itemId
+                   GROUP BY p.brand_name, p.item_id
+            """;
 
 
     String getPendingItemsWithSearch = "SELECT i.id as id, i.name as name, i.code as code, " +

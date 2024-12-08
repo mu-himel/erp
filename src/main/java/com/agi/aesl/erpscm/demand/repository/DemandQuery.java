@@ -136,9 +136,10 @@ interface DemandQuery {
                         scb.name as brand_name,
                         GROUP_CONCAT(DISTINCT sdda.attribute_type,' ',sdda.attribute_value , ' ',sdda.attribute_unit order by sdda.id asc separator ' - ') attribute_name	
                        FROM scm_demand_details sdd
+                       LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
                        LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
                        LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
-                       WHERE sdd.item_id IS NOT NULL
+                       WHERE sdd.item_id IS NOT NULL AND sd.warehouse_id = d.warehouse_id
                         AND sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
                         group by sdd.id
                        ) p WHERE p.attribute_name like GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ')
@@ -149,9 +150,10 @@ interface DemandQuery {
                	scb.name as brand_name,
                	GROUP_CONCAT(DISTINCT sdda.attribute_type,' ',sdda.attribute_value , ' ',sdda.attribute_unit order by sdda.id asc separator ' - ') attribute_name	
                FROM scm_demand_details sdd
+               LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
                LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
                LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
-               WHERE sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
+               WHERE sdd.status IN ('PENDING_QC') AND sd.warehouse_id = d.warehouse_id AND sdd.approved_quantity > 0
                	group by sdd.id
                ) p WHERE p.attribute_name like GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ')
                GROUP BY p.brand_name, p.attribute_name)
