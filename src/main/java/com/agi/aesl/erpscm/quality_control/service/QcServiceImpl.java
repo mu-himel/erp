@@ -616,7 +616,9 @@ public class QcServiceImpl implements QcService{
                                 Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty,
                                 Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
-
+        if(claimResolver.getEmployee().isEmpty()){
+            throw new RuntimeException("Sorry! Qc Relevant Employee Profile Required");
+        }
         String uri="inventory-management/good-receive/quality-check-closed";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
@@ -633,7 +635,7 @@ public class QcServiceImpl implements QcService{
         dataFilter.setReaderService(readerService);
         List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
         List<Long> categoryIds = dataFilter.getCategoryIds();
-
+        warehouseIds.add(claimResolver.getEmployee().get().getWarehouseId());
         return qcRepository.findAllClosed(
                 warehouseIds,categoryIds,
                 grnNo.orElse(null),

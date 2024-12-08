@@ -361,6 +361,9 @@ public class GrnServiceImpl implements GrnService{
                                       Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty,
                                       Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
+        if(claimResolver.getEmployee().isEmpty()){
+            throw new RuntimeException("Sorry! Qc Relevant Employee Profile Required");
+        }
         String uri="inventory-management/good-receive/quality-check";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
@@ -368,7 +371,7 @@ public class GrnServiceImpl implements GrnService{
         dataFilter.setReaderService(integrationReaderService);
         List<Long> warehouseIds= dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
         List<Long> categoryIds = dataFilter.getCategoryIds();
-
+        warehouseIds.add(claimResolver.getEmployee().get().getWarehouseId());
         LocalDateTime fromDateObj = null;
         LocalDateTime toDateObj = null;
 
@@ -382,7 +385,7 @@ public class GrnServiceImpl implements GrnService{
         status.add(GrnStatus.QC_PASS.toString());
         status.add(GrnStatus.QC_FAILED.toString());
         return grnRepository.findAllGrnByStatus(
-                null,null,
+                warehouseIds,categoryIds,
                 grnNo.orElse(null), qty.orElse(null), receivedQty.orElse(null),
                 status,
                 fromDateObj,
