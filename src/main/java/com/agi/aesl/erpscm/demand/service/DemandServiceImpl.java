@@ -1,12 +1,14 @@
 package com.agi.aesl.erpscm.demand.service;
 
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
@@ -26,7 +28,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.security.core.parameters.P;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -662,7 +663,7 @@ public class DemandServiceImpl implements DemandService{
         Demand demand = demandOptional.get();
 
         Integer completeCount  = demandDetailRepository.countByStatusAndDemandId(DemandStatus.RECEIVED,demand.getId());
-        Integer demandCount = demand.getDemandDetails().size();
+        AtomicReference<Integer> demandCount = new AtomicReference<>(demand.getDemandDetails().size());
 
         demand.setDemandDetails(demand.getDemandDetails().stream().map(demandDetail -> {
             Long demandDetailId = demandDetail.getId();
@@ -691,18 +692,55 @@ public class DemandServiceImpl implements DemandService{
                 if(demandReceiveDto.getNote()!=null && !demandReceiveDto.getNote().isEmpty()){
                     demandDetail.setReceiveNote(demandReceiveDto.getNote());
                 }
+
                 demandDetail.setReceivedByUserDate(LocalDateTime.now());
+
+                setRemainingQtyDetail(demand,demandDetail);
+                if(demandDetail.getStatus().equals(DemandStatus.PENDING_QC) &&
+                        demandDetail.getApprovedQuantity().compareTo(demandDetail.getRequestQuantity())<0){
+                    demandCount.set(demandCount.get() + 1);
+                }
                 demandDetail.setStatus(DemandStatus.RECEIVED);
             }
            return demandDetail;
         }).collect(Collectors.toList()));
 
-        if((demandCount-completeCount) == 1){
+        if((demandCount.get() -completeCount) == 1){
             demand.setStatus(DemandStatus.RECEIVED);
         }
         
     }
 
+    @Transactional
+    private void setRemainingQtyDetail(Demand demand, DemandDetail demandDetail){
+        if(demandDetail.getStatus().equals(DemandStatus.PENDING_QC) &&
+            demandDetail.getApprovedQuantity().compareTo(demandDetail.getRequestQuantity())<0){
+            BigDecimal remainingQty = demandDetail.getRequestQuantity().subtract(demandDetail.getApprovedQuantity());
+            DemandDetail demandDetailNew = new DemandDetail();
+            demandDetailNew.setDemand(demand);
+            demand.setStatus(DemandStatus.PARTIAL);
+            demandDetailNew.setRequestQuantity(remainingQty);
+            demandDetailNew.setItem(demandDetail.getItem());
+            demandDetailNew.setBrand(demandDetail.getBrand());
+
+            if(!demandDetail.getAttributes().isEmpty()) {
+                demandDetailNew.setAttributes(demandDetail.getAttributes().stream().map(attr -> {
+                    DemandDetailAttribute dda = new DemandDetailAttribute();
+                    dda.setDemandDetail(demandDetailNew);
+                    dda.setAttributeType(attr.getAttributeType());
+                    dda.setAttributeValue(attr.getAttributeValue());
+                    dda.setAttributeUnit(attr.getAttributeUnit());
+                    return dda;
+                }).collect(Collectors.toList()));
+            }
+            demandDetailNew.setItemCategory(demandDetail.getItemCategory());
+            demandDetailNew.setItemParentCategory(demandDetail.getItemParentCategory());
+            demandDetailNew.setStatus(DemandStatus.PENDING);
+            demandDetailNew.setPriority(demandDetail.getPriority());
+            demandDetailNew.setSpecification(demandDetail.getSpecification());
+            demandDetailRepository.save(demandDetailNew);
+        }
+    }
     @Override
     @Transactional
     public void rejectDemand(Jwt token, DemandReceiveDto demandReceiveDto) {

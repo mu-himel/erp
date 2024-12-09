@@ -253,7 +253,7 @@ public interface SrnQuery {
             WHERE dd.status IN ('PENDING')
             GROUP BY srd.item_id, dd.id) p
             WHERE (COALESCE(:attributes) IS NULL OR p.demand_attributes LIKE CONCAT('%',:attributes,'%'))
-            GROUP BY p.demand_attributes
+            GROUP BY p.demand_attributes, p.id
             """;
 
     interface PendingDemandList{

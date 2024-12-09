@@ -797,7 +797,7 @@ public class ItemServiceImpl implements ItemService {
             item.setName(itemRequestDto.getName());
         }
 
-        itemOptional = itemRepository.findByCode(itemRequestDto.getCode());
+        itemOptional = itemRepository.findByCodeAndActive(itemRequestDto.getCode(),true);
         if(itemOptional.isPresent() && !id.equals(itemOptional.get().getId())){
             throw new AesException("Item already exist with same attributes");
         }

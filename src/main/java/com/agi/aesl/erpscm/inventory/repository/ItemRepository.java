@@ -98,6 +98,7 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
     List<ItemInfo> findAllByActiveAndCodeLikeIgnoreCase(Boolean active, String code);
 
     Optional<Item> findByCode(String code);
+    Optional<Item> findByCodeAndActive(String code,Boolean active);
 
     @Query("select max(i.id) from Item i")
     Optional<Item> findMaxOrderById();
