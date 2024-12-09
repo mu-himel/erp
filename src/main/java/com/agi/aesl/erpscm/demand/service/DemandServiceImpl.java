@@ -1095,7 +1095,8 @@ public class DemandServiceImpl implements DemandService{
         }
     }
 
-
-    
-    
+    @Override
+    public List<?> getStockBySubCategory(Long subCategoryId, Long warehouseId) {
+        return demandRepository.findStockBySubCatAndWarehouse(subCategoryId,warehouseId);
+    }
 }

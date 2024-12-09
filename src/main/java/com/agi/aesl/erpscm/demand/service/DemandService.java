@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.demand.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
@@ -56,4 +57,6 @@ public interface DemandService extends VerificationDomainService{
     void resendDemandItem(Jwt loggedInUser, DemandReceiveDto demandReceiveDto);
 
     void cancelDemand(Jwt token, Long id, String uri, String categories, NoteDto noteDto);
+
+    List<?> getStockBySubCategory(Long subCategoryId, Long warehouseId);
 }
