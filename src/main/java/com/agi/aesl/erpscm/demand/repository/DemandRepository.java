@@ -30,6 +30,15 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
     @Query(value = demandDetailQuery,nativeQuery = true)
     List<DemandDetailItem> findByDemandId(Long id);
 
+    @Query(value = getStockBySubCatAndWarehouseId,nativeQuery = true)
+    List<SubCatStockInfo> findStockBySubCatAndWarehouse(Long subCategoryId, Long warehouseId);
+
+    interface SubCatStockInfo{
+        Long getId();
+        String getName();
+        BigDecimal getStockQty();
+        BigDecimal getInTransit();
+    }
 
     interface DemandDetailItem{
         Long getId();

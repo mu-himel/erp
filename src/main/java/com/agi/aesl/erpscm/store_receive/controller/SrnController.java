@@ -35,24 +35,26 @@ public class SrnController  extends BaseController {
     @GetMapping
     public ResponseEntity<?> getAllFromQc(
             @AuthenticationPrincipal Jwt token,
+            @RequestParam("grnNo") Optional<String> grnNo,
             @RequestParam("fromDate") Optional<String> fromDate,
             @RequestParam("toDate") Optional<String> toDate,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size){
         return new ResponseEntity<>(
-                srnService.getAll(token, page,size, fromDate, toDate),
+                srnService.getAll(token, page,size, grnNo, fromDate, toDate),
                 HttpStatus.OK
         );
     }
     @GetMapping("/complete")
     public ResponseEntity<?> getAllComplete(
             @AuthenticationPrincipal Jwt token,
+            @RequestParam("grnNo") Optional<String> grnNo,
             @RequestParam("fromDate") Optional<String> fromDate,
             @RequestParam("toDate") Optional<String> toDate,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size){
         return new ResponseEntity<>(
-                srnService.getAllComplete(token, page,size, fromDate, toDate),
+                srnService.getAllComplete(token, page,size, grnNo, fromDate, toDate),
                 HttpStatus.OK
         );
     }

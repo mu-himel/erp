@@ -10,16 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestAttribute;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.demand.dto.request.DemandReceiveDto;
@@ -77,6 +68,17 @@ public class DemandController extends BaseController{
         return new ResponseEntity<>(
                 demandService.getMyDemands(loggedInUser,page,size, fromDate, toDate),
             HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/stock-by/sub-category")
+    public ResponseEntity<?> getStockBySubCategory(
+            @RequestParam("subCategoryId") Long subCategoryId,
+            @RequestParam("warehouseId") Long warehouseId
+    ){
+        return new ResponseEntity<>(
+                demandService.getStockBySubCategory(subCategoryId,warehouseId),
+                HttpStatus.OK
         );
     }
 

@@ -220,7 +220,9 @@ public class SrnServiceImpl implements SrnService{
     }
 
     @Override
-    public Page<?> getAll(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate) {
+    public Page<?> getAll(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                          Optional<String> grnNo,
+                          Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
             throw new RuntimeException("Sorry! Store Profile Required");
@@ -240,7 +242,8 @@ public class SrnServiceImpl implements SrnService{
         status.add(SrnStatus.APPROVED.toString());
         status.add(SrnStatus.VERIFIED.toString());
         Employee employee = claimResolver.getEmployee().get();
-        return srnRepository.findAllSrnByStatus(employee.getWarehouseId(),status, fromDateObj, toDateObj,
+        return srnRepository.findAllSrnByStatus(employee.getWarehouseId(),status, grnNo.orElse(null),
+                fromDateObj, toDateObj,
                 pageable);
     }
 
@@ -280,7 +283,8 @@ public class SrnServiceImpl implements SrnService{
     }
 
     @Override
-    public Page<?> getAllComplete(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> fromDate, Optional<String> toDate) {
+    public Page<?> getAllComplete(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                  Optional<String> grnNo, Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
             throw new RuntimeException("Sorry! Store Profile Required");
@@ -301,7 +305,7 @@ public class SrnServiceImpl implements SrnService{
         status.add(SrnStatus.APPROVED.toString());
         status.add(SrnStatus.REJECTED.toString());
         Employee employee = claimResolver.getEmployee().get();
-        return srnRepository.findCompletedSrnByStatus(employee.getWarehouseId(),status,
+        return srnRepository.findCompletedSrnByStatus(employee.getWarehouseId(),status, grnNo.orElse(null),
                 fromDateObj, toDateObj,pageable);
     }
 

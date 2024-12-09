@@ -43,6 +43,7 @@ public interface SrnQuery {
                                        LEFT JOIN store_receive_notes srn on srn.grn_id = grn.id
                                        WHERE grn.grn_status IN (:status)
                                        AND grn.warehouse_id = :warehouseId
+                                       AND (:grnNo IS NULL OR grn.grn_no LIKE CONCAT('%',:grnNo,'%'))
                                        AND (COALESCE(:fromDate) IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
                                        GROUP BY grn.id) p
             """;
@@ -196,6 +197,7 @@ public interface SrnQuery {
                                        LEFT JOIN scm_item_categories ic ON ic.id = grid.category_id
                                        LEFT JOIN store_receive_notes srn on srn.grn_id = grn.id
                                        WHERE srn.srn_status IN (:status) AND grn.warehouse_id = :warehouseId
+                                       AND (:grnNo IS NULL OR grn.grn_no LIKE CONCAT('%',:grnNo,'%'))
                                        AND (COALESCE(:fromDate) IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
                                        GROUP BY grn.id) p
             """;

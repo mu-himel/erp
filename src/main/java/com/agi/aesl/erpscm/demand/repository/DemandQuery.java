@@ -411,4 +411,28 @@ interface DemandQuery {
             """;
 
     String countAllFilteredPendingApprovalDemands = "SELECT COUNT(*) FROM ("+getAllFilteredPendingApprovalDemands+") total";
+
+    String getStockBySubCatAndWarehouseId= """
+            SELECT sic.id,sic.name,sum(stock_qty) stockQty,(
+               SELECT sum(p.approved_quantity) FROM(
+                    SELECT
+                    sdd.approved_quantity,
+                    scb.name as brand_name,
+                    sdd.item_id,
+                    sdd.item_category_id
+                   FROM scm_demand_details sdd
+                   LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
+                   LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+                   LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
+                   WHERE sdd.item_id IS NOT NULL AND sd.warehouse_id = :warehouseId AND sdd.item_category_id = sic.id
+                    AND sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
+                    group by sdd.id
+                    )p WHERE p.item_category_id = sic.id
+               GROUP BY p.brand_name, p.item_id
+               ) as inTransit FROM scm_item_stocks sis
+               LEFT JOIN scm_items si ON si.id = sis.item_id
+               LEFT JOIN scm_item_categories sic ON sic.id = si.item_category_id
+               LEFT JOIN scm_category_warehouse_stores scws ON scws.category_id = sic.id\s
+               where sic.id = :subCategoryId AND scws.warehouse_id = :warehouseId
+            """;
 }
