@@ -271,16 +271,16 @@ public class CategoryServiceImpl implements CategoryService {
             WarehouseStore ws = warehouseStoreOp.get();
             String storePrefix = ws.getStoreName().substring(0,1);
             storePrefix = storePrefix.toUpperCase();
-            this.sendToCps(token,category,storePrefix,categoryRequestDto.getPrefix(),categoryRequestDto.getEmployee());
+            this.sendToCps(token,category,ws.getId(),storePrefix,categoryRequestDto.getPrefix(),categoryRequestDto.getEmployee());
         }
         return categoryRepository.findById(category.getId());
 
     }
 
-    public void sendToCps(Jwt token, ItemCategory category,String storePrefix,String prefix, String employee){
+    public void sendToCps(Jwt token, ItemCategory category, Long storeId, String storePrefix,String prefix, String employee){
         RemoteCategoryRequestDto remoteCategoryRequestDto = new RemoteCategoryRequestDto();
         remoteCategoryRequestDto.setName(category.getName());
-
+        remoteCategoryRequestDto.setStoreTypeId(storeId);
         remoteCategoryRequestDto.setPrefix(prefix);
 
         if(category.getParentCategory()!=null) {
