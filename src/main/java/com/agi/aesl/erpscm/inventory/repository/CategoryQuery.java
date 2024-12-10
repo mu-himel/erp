@@ -110,7 +110,7 @@ public interface CategoryQuery {
             (SELECT COUNT(*) FROM scm_item_categories subCat 
             LEFT JOIN scm_category_warehouse_stores subCws ON subCws.category_id=subCat.id
             WHERE subCat.active=1 AND subCat.parent_category_id = ic.id
-            AND (:warehouseId IS NULL OR subCws.warehouse_id = :warehouseId)
+            AND (COALESCE(:warehouseId) IS NULL OR subCws.warehouse_id IN (:warehouseId))
             AND (:warehouseStoreId IS NULL OR subCws.warehouse_store_id = :warehouseStoreId)
             ) as subcategoryCount
             FROM scm_item_categories ic

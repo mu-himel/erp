@@ -29,12 +29,12 @@ public class GrnInvoiceServiceImpl implements GrnInvoiceService{
     @Transactional
     public FileUploadResponse uploadInvoice(Jwt token, String id, Optional<MultipartFile> fileOp) {
 
-//        Optional<GoodReceiveNote> goodReceiveNoteOp = (Optional<GoodReceiveNote>) grnService.getGRNById(id,true);
-//        if(goodReceiveNoteOp.isEmpty()){
-//            throw new RuntimeException("Sorry! Grn not found");
-//        }
-//
-//        GoodReceiveNote goodReceiveNote = goodReceiveNoteOp.get();
+        Optional<GoodReceiveNote> goodReceiveNoteOp = (Optional<GoodReceiveNote>) grnService.getByGrnNo(id);
+        if(goodReceiveNoteOp.isEmpty()){
+            throw new RuntimeException("Sorry! Grn not found");
+        }
+
+        GoodReceiveNote goodReceiveNote = goodReceiveNoteOp.get();
 
         if(fileOp.isPresent()){
             MultipartFile file = fileOp.get();
@@ -48,8 +48,8 @@ public class GrnInvoiceServiceImpl implements GrnInvoiceService{
 
             FileUploadResponse fileUploadResponse = fileUploadService.uploadFile(path, file);
             if(fileUploadResponse!=null){
+                goodReceiveNote.setInvoicePath(path.resolve(fileUploadResponse.getFilename()).toString());
                 return fileUploadResponse;
-//                goodReceiveNote.setInvoicePath(path.resolve(fileUploadResponse.getFilename()).toString());
             }
         }
 

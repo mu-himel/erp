@@ -100,7 +100,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
     List<MainCategoriesInfo> findAllMainCategories(Long warehouseId,Long warehouseStoreId, String name, String code);
 
     @Query(value = getMainCategoriesForInventoryControl,countQuery = countMainCategoriesForInventoryControl, nativeQuery = true)
-    Page<ItemCategoryInfo> findAllMainCategoriesForInventoryControl(Long warehouseId,Long warehouseStoreId, String name, String code,Pageable pageable);
+    Page<ItemCategoryInfo> findAllMainCategoriesForInventoryControl(List<Long> warehouseId,Long warehouseStoreId, String name, String code,Pageable pageable);
     @Query(value = """
             SELECT ic.id as id, ic.name as name, ic.code as code,
             ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses,

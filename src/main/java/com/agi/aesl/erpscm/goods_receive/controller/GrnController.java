@@ -52,8 +52,9 @@ public class GrnController extends BaseController {
             @AuthenticationPrincipal Jwt token,
             @RequestBody @Valid GrnManualRequestDto grnManualDto
     ){
-        grnService.createManualGrn(token, grnManualDto, GrnMode.MANUAL);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+        Map<String,Object> result = new HashMap<>();
+        result.put("grnNo",grnService.createManualGrn(token, grnManualDto, GrnMode.MANUAL));
+        return new ResponseEntity<>(result,HttpStatus.CREATED);
     }
 
 
