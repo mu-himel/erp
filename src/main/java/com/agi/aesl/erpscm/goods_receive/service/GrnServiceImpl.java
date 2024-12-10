@@ -136,7 +136,7 @@ public class GrnServiceImpl implements GrnService{
 
     @Override
     @Transactional
-    public void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto, GrnMode mode) {
+    public String createManualGrn(Jwt token, GrnManualRequestDto grnManualDto, GrnMode mode) {
         claimResolver.setToken(token);
         String uri = "";
 //        if(claimResolver.getEmployee()==null){
@@ -222,8 +222,8 @@ public class GrnServiceImpl implements GrnService{
         qcMailService.setClaimResolver(claimResolver);
         qcMailService.setQualityControl(grn);
         qcMailService.getAuthorizedUsers(uri);
-        qcMailService.sentMail(null,"Pending Demand");
-
+        qcMailService.sentMail(null,"Pending QC");
+        return grn.getGrnNo();
     }
 
     @Override

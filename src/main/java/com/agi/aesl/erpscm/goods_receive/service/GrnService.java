@@ -32,7 +32,7 @@ public interface GrnService {
 
 
 
-    void createManualGrn(Jwt token, GrnManualRequestDto grnManualDto, GrnMode mode);
+    String createManualGrn(Jwt token, GrnManualRequestDto grnManualDto, GrnMode mode);
     void createAutoGrn(Jwt token, GrnManualRequestDto grnManualDto);
 
 

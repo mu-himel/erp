@@ -7,6 +7,8 @@ import lombok.Data;
 public class CategoryApproveRequestDto {
     private String code;
     private Long scmParentCategoryId;
+    private Boolean isMerged;
+    private Long warehouseStoreId;
     private MergePendingCategoryDto mergePendingCategoryDto;
     private ApproveStatus approveStatus;
 }

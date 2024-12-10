@@ -523,13 +523,27 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Page<?> getCategories(Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name,
+    public Page<?> getCategories(Jwt token,Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name,
                                  Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
 
-
+        claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE));
+        String uri="inventory-control/categories";
+        List<Long> warehouseIds = new ArrayList<>();
+        List<Long> categoryIds = new ArrayList<>();
+
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> filterBy = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else{
+            warehouseIds = filterBy;
+        }
+
+
         return categoryRepository.findAllMainCategoriesForInventoryControl(
-                warehouseId.orElse(null),
+                warehouseIds,
                 warehouseStoreId.orElse(null),
                 name.orElse(null),code.orElse(null),pageable);
     }
@@ -886,22 +900,23 @@ public class CategoryServiceImpl implements CategoryService {
                 }
             } else if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)) {
                 if(categoryApproveRequestDto.getMergePendingCategoryDto()!=null) {
-                    mergeWithBody(token, category, mergePendingCategoryDto);
+                    mergeWithBody(token, category,categoryApproveRequestDto.getWarehouseStoreId(), mergePendingCategoryDto);
                     if(category.getUserCategoryId()!=null){
                         Optional<UserCategory> userCategoryOp = userCategoryRepository.findById(category.getUserCategoryId());
                         userCategoryOp.ifPresent((uc->{
                             uc.setCategoryStatus(UserCategoryStatus.MERGED);
                         }));
                     }
+                }else{
+                    if(category.getUserCategoryId()!=null){
+                        Optional<UserCategory> userCategoryOp = userCategoryRepository.findById(category.getUserCategoryId());
+                        userCategoryOp.ifPresent((uc->{
+                            uc.setCategoryStatus(UserCategoryStatus.REJECTED);
+                        }));
+                    }
                 }
                 category.setActive(false);
                 category.setCategoryStatus(CategoryStatus.REJECTED);
-                if(category.getUserCategoryId()!=null){
-                    Optional<UserCategory> userCategoryOp = userCategoryRepository.findById(category.getUserCategoryId());
-                    userCategoryOp.ifPresent((uc->{
-                        uc.setCategoryStatus(UserCategoryStatus.REJECTED);
-                    }));
-                }
             }
         }
     }
@@ -924,15 +939,22 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Transactional
-    private void mergeWithBody(Jwt token, ItemCategory category, MergePendingCategoryDto mergePendingCategoryDto){
+    private void mergeWithBody(Jwt token, ItemCategory category,Long warehouseStoreId, MergePendingCategoryDto mergePendingCategoryDto){
 
+            Optional<WarehouseStore> wsOp = warehouseStoreRepository.findById(warehouseStoreId);
+            if(wsOp.isEmpty()){
+                throw new RuntimeException("Sorry! Warehouse Store not found");
+            }
+            WarehouseStore ws = wsOp.get();
+            String storeWisePrefixCode = ws.getStoreName().substring(0,1)+"-"+mergePendingCategoryDto.getCode();
+        System.out.println(storeWisePrefixCode);
             // merge category
-            Optional<ItemCategory> existCatOp = categoryRepository.findByCode(mergePendingCategoryDto.getCode());
+            Optional<ItemCategory> existCatOp = categoryRepository.findByCode(storeWisePrefixCode);
             if(existCatOp.isPresent()){
                 // if exist then
                 List<CategoryWarehouseStore> cws = categoryWarehouseStoreRepository.findByCategoryId(category.getId());
                 for(CategoryWarehouseStore cw : cws){
-                    cw.setCategory(existCatOp.get());
+                    categoryWarehouseStoreRepository.delete(cw);
                 }
             } else if (existCatOp.isEmpty()) {
                 ItemCategory newCat = new ItemCategory();

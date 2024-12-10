@@ -104,6 +104,7 @@ public class ItemCategoryController extends BaseController{
 
     @GetMapping("/inventory-control/main-categories/pages")
     public ResponseEntity<?> getMainCategoryPage(
+            @AuthenticationPrincipal Jwt token,
             @RequestParam("warehouseId") Optional<Long> warehouseId,
             @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId,
             @RequestParam("name")  Optional<String> name,
@@ -112,7 +113,7 @@ public class ItemCategoryController extends BaseController{
             @RequestParam("size") Optional<Integer> size
             ){
         return new ResponseEntity<>(
-                categoryService.getCategories(warehouseId,warehouseStoreId,name,code,page,size),
+                categoryService.getCategories(token, warehouseId,warehouseStoreId,name,code,page,size),
                 HttpStatus.OK
         );
     }
