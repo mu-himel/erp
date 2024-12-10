@@ -40,6 +40,8 @@ public class RemoteCategoryRequestDto {
 
     private Long scmCategoryId;
 
+    private Long storeTypeId;
+
     private String createdBy;
 
     private String categoryStatus;
