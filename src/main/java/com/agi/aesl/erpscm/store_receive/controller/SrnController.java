@@ -80,11 +80,12 @@ public class SrnController  extends BaseController {
 
     @PostMapping("/by-attribute")
     public ResponseEntity<?> getPendingDemandListBySrnItems(
+            @AuthenticationPrincipal Jwt token,
             @RequestBody SrnDemandAttrDto attributeDto
     ){
         System.out.println(attributeDto.getAttributeName());
         return new ResponseEntity<>(
-                srnService.getPendingDemandListBySrnItems(attributeDto.getAttributeName()),
+                srnService.getPendingDemandListBySrnItems(token,attributeDto.getAttributeName()),
                 HttpStatus.OK
         );
     }

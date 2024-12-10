@@ -33,7 +33,8 @@ public interface SrnRepository extends JpaRepository<StoreReceiveNote, Long>, Sr
     List<PendingDemandList> getPendingDemandsBySrnForSrnItems(@Param("id") Long id);
 
     @Query(value = getGetPendingDemandsByAttributes, nativeQuery = true)
-    List<PendingDemandList> getPendingDemandsBySrnForSrnItems(@Param("attributes") String attributes);
+    List<PendingDemandList> getPendingDemandsBySrnForSrnItems(@Param("warehouseId") Long warehouseId,
+                                                              @Param("attributes") String attributes);
 
     @Query(value = getPendingVerifications, countQuery = countPendingVerifications, nativeQuery = true)
     Page<StoreReceiveNoteInfo> findAllPendingVerification(String nextVerifierId, LocalDateTime fromDate,

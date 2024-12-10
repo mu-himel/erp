@@ -215,8 +215,16 @@ public class SrnServiceImpl implements SrnService{
     }
 
     @Override
-    public List<?> getPendingDemandListBySrnItems(String attributes) {
-        return srnRepository.getPendingDemandsBySrnForSrnItems(attributes);
+    public List<?> getPendingDemandListBySrnItems(Jwt token, String attributes) {
+        claimResolver.setToken(token);
+        Long warehouseId=null;
+        if(claimResolver.getEmployee().isPresent()){
+            warehouseId = claimResolver.getEmployee().get().getWarehouseId();
+        }
+        if(warehouseId==null){
+            throw new RuntimeException("Sorry! warehouse information missing for user");
+        }
+        return srnRepository.getPendingDemandsBySrnForSrnItems(warehouseId,attributes);
     }
 
     @Override
