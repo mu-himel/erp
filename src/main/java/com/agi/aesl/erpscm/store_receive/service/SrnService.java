@@ -13,7 +13,7 @@ public interface SrnService extends VerificationDomainService {
     void addSrn(Jwt token, SrnDto srnDto);
 
     List<?> getPendingDemandListBySrnItems(Long id);
-    List<?> getPendingDemandListBySrnItems(String attributes);
+    List<?> getPendingDemandListBySrnItems(Jwt token,String attributes);
 
     Page<?> getAll(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> grnNo, Optional<String> fromDate, Optional<String> toDate);
     Page<?> getAllComplete(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> grnNo,
