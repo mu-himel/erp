@@ -1297,6 +1297,7 @@ public class ItemServiceImpl implements ItemService {
         if(warehouseStoreOp.isEmpty()){
             throw new RuntimeException("Warehouse Store Missing");
         }
+        WarehouseStore ws = warehouseStoreOp.get();
         Optional<Item> itemOp = itemRepository.findById(id);
         if(itemOp.isPresent()){
             Item item = itemOp.get();
@@ -1360,7 +1361,8 @@ public class ItemServiceImpl implements ItemService {
                     }
                 }
                 if(approveRequestDto.getItemMergeRequestDto()!=null) {
-                    itemOp = itemRepository.findByCode(approveRequestDto.getCode());
+                    String storePrefixedItemCode = ws.getStoreName().substring(0,1)+"-"+approveRequestDto.getCode();
+                    itemOp = itemRepository.findByCode(storePrefixedItemCode);
                     if(itemOp.isEmpty()){
                         throw new RuntimeException("Sorry! Item not found using code ["+approveRequestDto.getCode()+"]");
                     }
