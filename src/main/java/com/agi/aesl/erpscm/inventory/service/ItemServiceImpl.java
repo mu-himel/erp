@@ -1336,7 +1336,7 @@ public class ItemServiceImpl implements ItemService {
                             });
                         }
                     }
-                    mergeItem(item, itemMergeRequestDto);
+                    mergeItem(item, approveRequestDto.getWarehouseStoreId(), itemMergeRequestDto);
 //                    accountService.setItemService(this);
 //                    forceActive();
 //                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
@@ -1367,21 +1367,26 @@ public class ItemServiceImpl implements ItemService {
                         throw new RuntimeException("Sorry! Item not found using code ["+approveRequestDto.getCode()+"]");
                     }
                     Item existItem = itemOp.get();
-                    mergeItem(existItem, itemMergeRequestDto);
+                    mergeItem(existItem, approveRequestDto.getWarehouseStoreId(), itemMergeRequestDto);
                 }
             }
         }
     }
 
-    private void mergeItem(Item item, ItemMergeRequestDto itemMergeRequestDto) {
+    private void mergeItem(Item item, Long warehouseStoreId, ItemMergeRequestDto itemMergeRequestDto) {
 
+        Optional<WarehouseStore> wsOp = warehouseStoreRepository.findById(warehouseStoreId);
+        if(wsOp.isEmpty()){
+            throw new RuntimeException("Sorry! Warehouse Store not found");
+        }
+        WarehouseStore ws = wsOp.get();
         Optional<ItemCategory> categoryOp = categoryService.getAnyItemCategory(itemMergeRequestDto.getItemParentCategory().getId());
         Optional<ItemCategory> subCategoryOp = categoryService.getAnyItemCategory(itemMergeRequestDto.getItemCategory().getId());
         if(categoryOp.isPresent()){
-            item.setItemCategory(categoryOp.get());
+            item.setItemCategory(subCategoryOp.get());
         }
         if(subCategoryOp.isPresent()){
-            item.setItemParentCategory(subCategoryOp.get());
+            item.setItemParentCategory(categoryOp.get());
         }
         item.setName(item.getName());
         item.setItemAttributeName(itemMergeRequestDto.getItemAttributeName());
@@ -1409,7 +1414,9 @@ public class ItemServiceImpl implements ItemService {
         if(categoryBrandOp.isPresent()){
            item.setBrand(categoryBrandOp.get());
         }
-        item.setCode(itemMergeRequestDto.getCode());
+
+        String storeWiseItemCode= ws.getStoreName().substring(0,1)+"-"+itemMergeRequestDto.getCode();
+        item.setCode(storeWiseItemCode);
     }
 
     @Override
