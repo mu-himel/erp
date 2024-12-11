@@ -924,8 +924,14 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     private void approvedWithBody(Jwt token, CategoryApproveRequestDto categoryApproveRequestDto,
                                   MergePendingCategoryDto mergePendingCategoryDto){
+        Optional<WarehouseStore> wsOp = warehouseStoreRepository.findById(categoryApproveRequestDto.getWarehouseStoreId());
+        if(wsOp.isEmpty()){
+            throw new RuntimeException("Sorry! Warehouse Store not found");
+        }
+        WarehouseStore ws = wsOp.get();
+        String storeWisePrefixCode = ws.getStoreName().substring(0,1)+"-"+mergePendingCategoryDto.getCode();
         if (categoryApproveRequestDto.getCode() == null && mergePendingCategoryDto != null) {
-            Optional<ItemCategory> replacedCatOp = categoryRepository.findByCode(mergePendingCategoryDto.getCode());
+            Optional<ItemCategory> replacedCatOp = categoryRepository.findByCode(storeWisePrefixCode);
             if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
                 if (replacedCatOp.isPresent()) {
                     ItemCategory replacedCategory = replacedCatOp.get();
