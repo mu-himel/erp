@@ -25,7 +25,10 @@ import com.agi.aesl.erpscm.inventory.enums.CategoryStatus;
 import com.agi.aesl.erpscm.inventory.repository.*;
 
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
+import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryAttribute;
+import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
+import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryAttributeRepository;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryRepository;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserItemRepository;
 import com.agi.aesl.erpscm.network.NetworkService;
@@ -100,6 +103,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Autowired
     private UserCategoryRepository userCategoryRepository;
+
+    @Autowired
+    private UserCategoryAttributeRepository userCategoryAttributeRepository;
 
     @Override
     @Transactional
@@ -895,6 +901,7 @@ public class CategoryServiceImpl implements CategoryService {
                 if(category.getUserCategoryId()!=null){
                     Optional<UserCategory> userCategoryOp = userCategoryRepository.findById(category.getUserCategoryId());
                     userCategoryOp.ifPresent((uc->{
+                        approveAndUpdateCategory(mergePendingCategoryDto,uc);
                         uc.setCategoryStatus(UserCategoryStatus.COMPLETED);
                     }));
                 }
@@ -1037,6 +1044,64 @@ public class CategoryServiceImpl implements CategoryService {
                 cbs= (replacedCategory.getBrands()!=null)? replacedCategory.getBrands(): new ArrayList<>();
                 if(!catBrandOp.isPresent()){
                     CategoryBrand cb = new CategoryBrand();
+                    cb.setCategory(replacedCategory);
+                    cb.setName(brandName);
+                    cbs.add(cb);
+                }
+            }
+            replacedCategory.setBrands(cbs);
+        }
+    }
+
+    @Transactional
+    private void approveAndUpdateCategory(MergePendingCategoryDto mergePendingCategoryDto, UserCategory replacedCategory) {
+
+
+//                    if(categoryApproveRequestDto.getMergePendingCategoryDto()!=null){
+
+        if(mergePendingCategoryDto.getName()!=null){
+            replacedCategory.setName(mergePendingCategoryDto.getName());
+        }
+        if(mergePendingCategoryDto.getParentCategory()!=null){
+            replacedCategory.setActiveParentCategory(mergePendingCategoryDto.getParentCategory());
+        }
+        if(mergePendingCategoryDto.getVat()!=null){
+            replacedCategory.setVat(mergePendingCategoryDto.getVat());
+        }
+        if(mergePendingCategoryDto.getAttributes()!=null){
+            List<UserCategoryAttribute> attributes = new ArrayList<>();
+            categoryAttributeRepository.deleteByCategoryId(replacedCategory.getId());
+            for (CategoryAttribute ca : mergePendingCategoryDto.getAttributes()) {
+                Optional<UserCategoryAttribute> caOp = userCategoryAttributeRepository
+                        .findAllByAttributeTypeAndAttributeUnit(
+                                ca.getAttributeType(),
+                                ca.getAttributeType()
+                        );
+                UserCategoryAttribute uca = new UserCategoryAttribute();
+                if(caOp.isPresent()){
+                    uca.setId(caOp.get().getId());
+                    uca.setAttributeType(caOp.get().getAttributeType());
+                    uca.setAttributeUnit(caOp.get().getAttributeUnit());
+                }else{
+                    uca.setId(null);
+
+                }
+
+                uca.setAttributeValue(ca.getAttributeValue());
+                uca.setCategory(replacedCategory);
+                attributes.add(uca);
+            }
+            replacedCategory.setAttributes(attributes);
+        }
+        if(mergePendingCategoryDto.getBrands()!=null && mergePendingCategoryDto.getBrands().size()>0){
+            List<String> brands = mergePendingCategoryDto.getBrands();
+            List<UserCategoryBrand> cbs = new ArrayList<>();
+            for(String brandName : brands) {
+                Optional<CategoryBrand> catBrandOp = categoryBrandRepository
+                        .findByCategoryIdAndName(replacedCategory.getId(), brandName);
+                cbs= (replacedCategory.getBrands()!=null)? replacedCategory.getBrands(): new ArrayList<>();
+                if(!catBrandOp.isPresent()){
+                    UserCategoryBrand cb = new UserCategoryBrand();
                     cb.setCategory(replacedCategory);
                     cb.setName(brandName);
                     cbs.add(cb);
