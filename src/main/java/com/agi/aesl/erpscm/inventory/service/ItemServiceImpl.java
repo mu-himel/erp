@@ -1362,7 +1362,7 @@ public class ItemServiceImpl implements ItemService {
                 }
                 if(approveRequestDto.getItemMergeRequestDto()!=null) {
                     String storePrefixedItemCode = ws.getStoreName().substring(0,1)+"-"+approveRequestDto.getCode();
-                    itemOp = itemRepository.findByCode(storePrefixedItemCode);
+                    itemOp = itemRepository.findByCodeAndActive(storePrefixedItemCode,true);
                     if(itemOp.isEmpty()){
                         throw new RuntimeException("Sorry! Item not found using code ["+approveRequestDto.getCode()+"]");
                     }
