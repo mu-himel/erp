@@ -178,6 +178,7 @@ public interface QcQuery {
                     p.grnStatus as grnStatus,
                     p.indentNo as indentNo,
                     p.grnNo as grnNo,
+                    p.grnMode as grnMode,
                     p.categoryName as categoryName,
                     p.items as items,
                     p.receivedQty as receivedQty,

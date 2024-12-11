@@ -280,7 +280,7 @@ interface DemandQuery {
         LEFT JOIN d.demandDetails dd 
         LEFT JOIN dd.item i 
         LEFT JOIN dd.itemCategory c
-        WHERE d.status IN ('REJECTED','COMPLETED','CANCELED','DECLINED','RECEIVED')
+        WHERE d.status IN ('REJECTED','COMPLETED','CANCELED','DECLINED','RECEIVED','CLOSED_BY_STORE')
         AND (:warehouseId IS NULL OR w.id = :warehouseId)
         AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
         GROUP BY d.id
@@ -290,7 +290,7 @@ interface DemandQuery {
         SELECT count(d) FROM Demand d
             LEFT JOIN d.requestedBy r 
             LEFT JOIN d.warehouse w 
-            WHERE d.status IN ('REJECTED','COMPLETED','CANCELED','DECLINED','RECEIVED')
+            WHERE d.status IN ('REJECTED','COMPLETED','CANCELED','DECLINED','RECEIVED','CLOSED_BY_STORE')
             AND (:warehouseId IS NULL OR w.id = :warehouseId)
             AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
             GROUP BY d.id

@@ -134,7 +134,16 @@ public class DemandServiceImpl implements DemandService{
 
         if(demandDetailOp.isPresent()){
             DemandDetail demandDetail = demandDetailOp.get();
-            
+            Demand demand = demandDetail.getDemand();
+            int detailCount=0;
+            List<DemandDetail> details = demand.getDemandDetails();
+            if(!demand.getDemandDetails().isEmpty()){
+                for(DemandDetail _dd : details){
+                    if(_dd.getApprovedQuantity()!=null && _dd.getStatus().equals(DemandStatus.DECLINED)){
+                        ++detailCount;
+                    }
+                }
+            }
             //itemService.stockUpdateByDemand(demandReceiveDto.getWarehouseId(), demandDetail, StockType.STOCK_IN);
 
             if(demandReceiveDto.getNote() !=null && !demandReceiveDto.getNote().isEmpty()){
@@ -145,6 +154,9 @@ public class DemandServiceImpl implements DemandService{
                         ));
             }
             demandDetail.setStatus(DemandStatus.CLOSED_BY_STORE);
+            if(details.size()==detailCount) {
+                demand.setStatus(DemandStatus.CLOSED_BY_STORE);
+            }
         }
         
     }
