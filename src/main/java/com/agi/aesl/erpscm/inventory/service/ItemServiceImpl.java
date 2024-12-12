@@ -1111,10 +1111,11 @@ public class ItemServiceImpl implements ItemService {
         Warehouse warehouse = warehouseOp.get();
         WarehouseStore warehouseStore = warehouseStoreOp.get();
 
-        item.setCode(warehouseStore.getStoreName().substring(0,1)+"-"+item.getCode());
+        item.setCode(warehouseStore.getStoreName().substring(0,1).toUpperCase()+"-"+item.getCode());
 
+        String subCategoryCode = warehouseStore.getStoreName().substring(0,1).toUpperCase()+"-"+syncItemDetail.getItemCategory().code();
         // Get Subcategory By Code
-        Optional<ItemCategory> subCatOp = categoryService.getCategoryByCode(syncItemDetail.getItemCategory().code());
+        Optional<ItemCategory> subCatOp = categoryService.getCategoryByCode(subCategoryCode);
         if(subCatOp.isEmpty()){
             throw new AesException("Sorry! Sub Category not found");
         }
@@ -1343,7 +1344,7 @@ public class ItemServiceImpl implements ItemService {
 
                 }
             }else if(approveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)){
-
+                UserItem ui = null;
 //                item.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
                 Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseOp.get().getId());
                 if(iilOp.isPresent()){
@@ -1351,13 +1352,15 @@ public class ItemServiceImpl implements ItemService {
                     iil.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
                     if(item.getUserItemId()!=null){
                         Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
-                        userItemOp.ifPresent((ui)->{
-                            if(approveRequestDto.getIsMerged()) {
-                                ui.setItemStatus(UserCategoryStatus.MERGED);
-                            }else{
-                                ui.setItemStatus(UserCategoryStatus.REJECTED);
-                            }
-                        });
+                        if(userItemOp.isPresent()){
+                            ui = userItemOp.get();
+                                if(approveRequestDto.getIsMerged()) {
+                                    ui.setItemStatus(UserCategoryStatus.MERGED);
+                                }else{
+                                    ui.setItemStatus(UserCategoryStatus.REJECTED);
+                                }
+                        }
+
                     }
                 }
                 if(approveRequestDto.getItemMergeRequestDto()!=null) {
@@ -1367,6 +1370,14 @@ public class ItemServiceImpl implements ItemService {
                         throw new RuntimeException("Sorry! Item not found using code ["+approveRequestDto.getCode()+"]");
                     }
                     Item existItem = itemOp.get();
+                    if(ui!=null){
+                        String itemName = (existItem.getName().trim()!=null)? existItem.getName():"";
+                        if(itemName.length()>0){
+                            itemName+="-";
+                        }
+                        itemName += (existItem.getItemAttributeName().trim()!=null)? existItem.getItemAttributeName():"";
+                        ui.setMergedItem(itemName);
+                    }
                     mergeItem(existItem, approveRequestDto.getWarehouseStoreId(), itemMergeRequestDto);
                 }
             }
@@ -1388,7 +1399,7 @@ public class ItemServiceImpl implements ItemService {
         if(subCategoryOp.isPresent()){
             item.setItemParentCategory(categoryOp.get());
         }
-        item.setName(item.getName());
+        item.setName(itemMergeRequestDto.getName());
         item.setItemAttributeName(itemMergeRequestDto.getItemAttributeName());
         List<ItemAttribute> attributes = itemMergeRequestDto.getAttributes().stream().map(attr->{
             ItemAttribute _attr = new ItemAttribute();

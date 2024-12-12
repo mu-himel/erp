@@ -864,7 +864,7 @@ public class DemandServiceImpl implements DemandService{
 
 
         demandMailService.prepareMailContentForInitiator(demand.getRequestedBy().getEmployeeName(),null,demand);
-        demandMailService.sentMail(demand.getRequestedBy().getEmailAddress(),"Pending Pending QC");
+        demandMailService.sentMail(demand.getRequestedBy().getEmailAddress(),"Pending RN");
 
         System.out.println("Item Pending "+ pendingQcCount);
 

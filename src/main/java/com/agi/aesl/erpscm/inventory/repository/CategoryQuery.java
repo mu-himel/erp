@@ -106,6 +106,8 @@ public interface CategoryQuery {
     String getMainCategoriesForInventoryControl= """
             SELECT ic.id as id, ic.name as name, ic.code as code,
             ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses,
+            GROUP_CONCAT(w.name) as warehouseName,
+            GROUP_CONCAT(ws.store_name) as storeName,
             ic.cps_category_id as cpsCategoryId,
             (SELECT COUNT(*) FROM scm_item_categories subCat 
             LEFT JOIN scm_category_warehouse_stores subCws ON subCws.category_id=subCat.id
@@ -115,6 +117,8 @@ public interface CategoryQuery {
             ) as subcategoryCount
             FROM scm_item_categories ic
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
+            LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
+            LEFT JOIN scm_warehouses w ON w.id = cws.warehouse_id
             WHERE ic.parent_category_id IS NULL AND ic.active=true AND ic.cps_category_id IS NOT NULL
             AND ic.category_status IN ('APPROVED')
             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
@@ -130,6 +134,8 @@ public interface CategoryQuery {
             SELECT ic.id as id, ic.name as name, ic.code as code,
             ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses,
             ic.cps_category_id as cpsCategoryId,
+            GROUP_CONCAT(w.name) as warehouseName,
+            GROUP_CONCAT(ws.store_name) as storeName,
             (SELECT COUNT(*) FROM scm_item_categories subCat 
             LEFT JOIN scm_category_warehouse_stores subCws ON subCws.category_id=subCat.id
             WHERE subCat.active=0 AND subCat.parent_category_id = ic.id
@@ -138,6 +144,8 @@ public interface CategoryQuery {
             ) as subcategoryCount
             FROM scm_item_categories ic
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
+            LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
+            LEFT JOIN scm_warehouses w ON w.id = cws.warehouse_id
             WHERE ic.parent_category_id IS NULL AND ic.active=false AND ic.category_status IN ('PENDING')
             AND ic.cps_category_id IS NOT NULL
             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
@@ -152,10 +160,14 @@ public interface CategoryQuery {
     String getSubCategoriesForInventoryControl="""
             SELECT ic.id as id, ic.name as name, ic.code as code,
             ipc.name as parentCategoryName, ipc.code as parentCategoryCode,
-            ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses
+            ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses,
+            GROUP_CONCAT(w.name) as warehouseName,
+            GROUP_CONCAT(ws.store_name) as storeName
             FROM scm_item_categories ic
             LEFT JOIN scm_item_categories ipc ON ipc.id = ic.parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
+            LEFT JOIN scm_warehouse_stores ws ON ws.id=cws.warehouse_store_id
+            LEFT JOIN scm_warehouses w ON w.id = cws.warehouse_id
             WHERE ic.parent_category_id IS NOT NULL AND ic.cps_category_id IS NOT NULL
             AND ic.active=true
             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
@@ -170,10 +182,15 @@ public interface CategoryQuery {
     String getPendingSubcategoriesForInventoryControl="""
             SELECT ic.id as id, ic.name as name, ic.code as code,
             ipc.name as parentCategoryName, ipc.code as parentCategoryCode,
-            ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses
+            ic.active as active,
+            GROUP_CONCAT(cws.warehouse_id) as warehouses,
+            GROUP_CONCAT(w.name) as warehouseName,
+            GROUP_CONCAT(ws.store_name) as storeName
             FROM scm_item_categories ic
             LEFT JOIN scm_item_categories ipc ON ipc.id = ic.parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
+            LEFT JOIN scm_warehouse_stores ws ON ws.id=cws.warehouse_store_id
+            LEFT JOIN scm_warehouses w ON w.id = cws.warehouse_id
             WHERE ic.parent_category_id IS NOT NULL AND ic.cps_category_id IS NOT NULL
             AND ic.active=false
             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
