@@ -62,6 +62,7 @@ public class UserCategory extends VerifyableEntity implements CategoryInterface 
     private BigDecimal vat;
 
     private Boolean isApprovedByStore;
+    private String mergedCategory;
 
     @Enumerated(EnumType.STRING)
     private UserCategoryStatus categoryStatus;
