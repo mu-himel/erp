@@ -136,17 +136,20 @@ public interface UserCategoryQuery {
     String countClosedCategories = "SELECT COUNT(*) FROM ("+closedCategories+") as total";
 
     String pendingApprovalFromStoreCategories="""
-            select uc.id as id, e.employee_name as employeeName, name as categoryName, (
+            select uc.id as id, e.employee_name as employeeName, uc.name as categoryName, (
                 SELECT COUNT(*) FROM user_categories uc1
                 WHERE uc1.parent_category_id=uc.id
-            ) as subCategoryCount, 
+            ) as subCategoryCount,
             0 as productCount,
             CASE WHEN :categoryId IS NOT NULL THEN
             (select name from scm_item_categories sic WHERE sic.id = :categoryId)
             ELSE '' END as parentCategoryName,
+            sws.store_name as storeName,
+            sw.name as warehouseName,
             'PENDING' as status
             FROM user_categories uc
             LEFT JOIN scm_warehouse_stores sws ON sws.id = uc.store_id
+            LEFT JOIN scm_warehouses sw ON sw.id = sws.warehouse_id
             LEFT JOIN acl_users e ON uc.created_by_id=e.id
             WHERE 
             (:warehouseId IS NULL OR sws.warehouse_id = :warehouseId)
@@ -182,7 +185,7 @@ public interface UserCategoryQuery {
 //            AND ua.created_by_id = :userId
 //            UNION
     String getListCategories="""
-            SELECT 'STORE_MANAGED' as `type`, ic.user_category_id as userCategoryId, ic.id,ic.name,ic.code 
+            SELECT 'STORE_MANAGED' as `type`, scws.warehouse_store_id as storeId, ic.user_category_id as userCategoryId, ic.id,ic.name,ic.code 
             FROM scm_item_categories ic
             LEFT JOIN scm_category_warehouse_stores scws ON scws.category_id = ic.id
             WHERE 

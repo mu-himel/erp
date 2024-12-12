@@ -46,6 +46,8 @@ public interface UserItemRepository extends JpaRepository<UserItem,Long>, UserIt
 
     interface PendingApprovalUserItem extends UserItem{
         String getEmployeeName();
+        String getWarehouseName();
+        String getStoreName();
     }
 
     interface UserItem{

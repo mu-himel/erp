@@ -119,7 +119,7 @@ public class CategoryServiceImpl implements CategoryService {
                     throw new RuntimeException("Sorry! Store not found");
                 }
                WarehouseStore ws = warehouseStoreOp.get();
-               String code = ws.getStoreName().substring(0,1).concat("-").concat(categoryRequestDto.getCode());
+               String code = ws.getStoreName().substring(0,1).toUpperCase().concat("-").concat(categoryRequestDto.getCode());
                ScmIdUpdateDto scmIdUpdateDto = new ScmIdUpdateDto();
                     CategoryRequestDto cr = new CategoryRequestDto();
                     cr.setCategoryStatus(CategoryStatus.APPROVED);

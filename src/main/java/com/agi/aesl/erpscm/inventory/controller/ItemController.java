@@ -196,7 +196,7 @@ public class ItemController extends BaseController{
    ){
        itemService.syncItemsBySubCatCode(token,syncItemReqDto.warehouseId(), 
                         syncItemReqDto.warehouseStoreId(),
-                         syncItemReqDto.subCatCode());
+                         syncItemReqDto.subCatCode().substring(2));
        return new ResponseEntity<>(
                HttpStatus.NO_CONTENT
        );

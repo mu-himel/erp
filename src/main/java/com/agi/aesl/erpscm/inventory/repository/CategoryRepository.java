@@ -254,6 +254,8 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
         String getParentCategoryCode();
         String getParentCategoryName();
         String getWarehouses();
+        String getWarehouseName();
+        String getStoreName();
         Long getSubCategoryCount();
         Boolean getActive();
         Long getCpsCategoryId();

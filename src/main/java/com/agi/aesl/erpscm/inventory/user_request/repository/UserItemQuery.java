@@ -79,10 +79,11 @@ public interface UserItemQuery {
 
     String getPendingApprovalsByStore = """
             select ui.id as id, e.employee_name as employeeName, cat.name as categoryName, subCat.name as subCategoryName,
-             ui.item_attribute_name as productName,
+             ui.item_attribute_name as productName,sws.store_name as storeName,sw.name as warehouseName,
              'PENDING' as status
              FROM user_items ui
              LEFT JOIN scm_warehouse_stores sws ON sws.id = ui.warehouse_store_id
+             LEFT JOIN scm_warehouses sw ON sw.id = sws.warehouse_id
              LEFT JOIN scm_item_categories subCat ON ui.sub_category_id = subCat.id
              LEFT JOIN scm_item_categories cat ON ui.category_id = cat.id
              LEFT JOIN acl_users e ON ui.created_by_id = e.id

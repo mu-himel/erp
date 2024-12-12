@@ -62,6 +62,8 @@ public class UserItem extends VerifyableEntity implements ItemInterface {
 
     private Boolean isApprovedByStore;
 
+    private String mergedItem;
+
     @Column(length = 500)
     private String rejectNoteFromStore;
 

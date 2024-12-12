@@ -188,7 +188,7 @@ interface DemandQuery {
             LEFT JOIN dd.item i
             LEFT JOIN dd.itemCategory c 
             WHERE r.id=:id
-            AND d.status NOT IN ('RECEIVED', 'REJECTED','COMPLETED')
+            AND d.status NOT IN ('RECEIVED', 'REJECTED','COMPLETED','CANCELED','DECLINED','CLOSED_BY_STORE')
             AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
             GROUP BY d.id
             """;

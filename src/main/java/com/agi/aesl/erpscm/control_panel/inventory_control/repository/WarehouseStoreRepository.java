@@ -20,6 +20,7 @@ public interface WarehouseStoreRepository extends JpaRepository<WarehouseStore,L
             ws.id as id,
             ws.active as active,
             ws.store_name as storeName,
+            w.name as warehouseName,
             (SELECT COUNT(*) FROM scm_category_warehouse_stores scws 
             LEFT JOIN scm_item_categories sic ON sic.id = scws.category_id
             WHERE scws.warehouse_store_id = ws.id
@@ -27,6 +28,7 @@ public interface WarehouseStoreRepository extends JpaRepository<WarehouseStore,L
             AND sic.active=1
             ) as categoriesCount
             FROM scm_warehouse_stores ws
+            LEFT JOIN scm_warehouses w ON w.id = ws.warehouse_id
             WHERE ws.active=:active
             AND ws.warehouse_id = :warehouseId
             """,nativeQuery = true)
@@ -36,6 +38,7 @@ public interface WarehouseStoreRepository extends JpaRepository<WarehouseStore,L
         Long getId();
         Boolean getActive();
         String getStoreName();
+        String getWarehouseName();
         Long getCategoriesCount();
     }
 
