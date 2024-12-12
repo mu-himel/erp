@@ -3,7 +3,7 @@ package com.agi.aesl.erpscm.inventory.repository;
 public interface CategoryQuery {
     String getCategoriesWithSearch="""
             SELECT cat.id, cat.code, cat.name, cat.currentYearBudget, cat.productCount,
-            cat.warehouse_id as warehouseId,
+            cat.warehouse_id as warehouseId, cat.warehouseName as warehouseName, cat.storeName as storeName,
             (select count(*) from scm_item_categories ic3 
             LEFT JOIN scm_category_warehouse_stores cws2 ON cws2.category_id =ic3.id
             where ic3.parent_category_id = cat.id AND ic3.active=true
@@ -13,6 +13,7 @@ public interface CategoryQuery {
             cat.warehouse_store_id as warehouseStoreId
              FROM (
                        SELECT ic.id, ic.code, ic.name, cws.warehouse_id, cws.warehouse_store_id, 
+                       sw.name as warehouseName, sws.store_name as storeName,
                        (COALESCE((
                                SELECT sum(amount) FROM scm_item_categories childCat
                                LEFT JOIN scm_category_budgets cb2 ON childCat.id = cb2.category_id
@@ -30,6 +31,8 @@ public interface CategoryQuery {
                        ) as productCount
                             FROM scm_item_categories ic
                             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
+                            LEFT JOIN scm_warehouse_stores sws ON sws.id = cws.warehouse_store_id
+                            LEFT JOIN scm_warehouses sw ON sw.id = cws.warehouse_id
                             WHERE ic.active=1 AND ic.parent_category_id IS NULL 
                             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
                             AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
@@ -58,7 +61,9 @@ public interface CategoryQuery {
                 cat.mainCategoryName, 
                 cat.mainCategoryCode,
                 cat.warehouse_id as warehouseId,
-                cat.warehouse_store_id as warehouseStoreId
+                cat.warehouse_store_id as warehouseStoreId,
+                cat.storeName as storeName,
+                cat.warehouseName as warehouseName
             FROM (
                 SELECT
                     ic.id, 
@@ -67,6 +72,8 @@ public interface CategoryQuery {
                     ipc.id as mainCategoryId,
                     ipc.name as mainCategoryName, 
                     ipc.code as mainCategoryCode, 
+                    sws.store_name as storeName,
+                    sw.name as warehouseName,
                     cws.warehouse_id, 
                     cws.warehouse_store_id,
                     (sum(amount) + COALESCE((
@@ -88,6 +95,8 @@ public interface CategoryQuery {
                  LEFT JOIN scm_item_categories ipc ON ipc.id = ic.parent_category_id 
                  LEFT JOIN scm_category_budgets cb ON ic.id = cb.category_id 
                  LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
+                 LEFT JOIN scm_warehouse_stores sws ON sws.id = cws.warehouse_store_id
+                 LEFT JOIN scm_warehouses sw ON sw.id = cws.warehouse_id
                 WHERE ic.active=1 AND ic.parent_category_id IS NOT NULL 
                 AND (:year IS NULL OR cb.current_year = :year)
                  AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
