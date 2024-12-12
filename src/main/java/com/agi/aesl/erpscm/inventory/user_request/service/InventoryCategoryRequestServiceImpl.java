@@ -262,7 +262,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
 
         return userCategoryRepository
-                .findAllPendingApprovalByStore(categoryId.orElse(null),
+                .findAllPendingApprovalSubCatByStore(categoryId.orElse(null),
                         warehouseId.orElse(null),warehouseStoreId.orElse(null),
                         pageable);
 

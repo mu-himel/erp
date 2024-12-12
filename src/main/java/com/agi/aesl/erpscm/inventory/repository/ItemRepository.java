@@ -223,6 +223,9 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
         Long getCategoryId();
         Long getSubCategoryId();
         String getCategoryName();
+        String getWarehouseName();
+        String getWarehouseStoreName();
+
         String getCategoryCode();
         String getSubCategoryName();
         String getSubCategoryCode();
