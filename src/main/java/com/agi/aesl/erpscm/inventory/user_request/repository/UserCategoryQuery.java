@@ -143,7 +143,9 @@ public interface UserCategoryQuery {
             0 as productCount,
             CASE WHEN :categoryId IS NOT NULL THEN
             (select name from scm_item_categories sic WHERE sic.id = :categoryId)
-            ELSE '' END as parentCategoryName,
+            ELSE 
+            (select name from scm_item_categories sic WHERE sic.id = uc.active_parent_category_id)
+            END as parentCategoryName,
             sws.store_name as storeName,
             sw.name as warehouseName,
             'PENDING' as status
@@ -165,6 +167,39 @@ public interface UserCategoryQuery {
             AND (uc.is_approved_by_store IS NULL OR uc.is_approved_by_store=false)
             """;
     String countPendingApprovalByStoreCategories = "SELECT COUNT(*) FROM ("+pendingApprovalFromStoreCategories+") as total";
+
+    String pendingApprovalFromStoreSubCategories="""
+            select uc.id as id, e.employee_name as employeeName, uc.name as categoryName, (
+                SELECT COUNT(*) FROM user_categories uc1
+                WHERE uc1.parent_category_id=uc.id
+            ) as subCategoryCount,
+            0 as productCount,
+            CASE WHEN :categoryId IS NOT NULL THEN
+            (select name from scm_item_categories sic WHERE sic.id = :categoryId)
+            ELSE 
+            (select name from scm_item_categories sic WHERE sic.id = uc.active_parent_category_id)
+            END as parentCategoryName,
+            sws.store_name as storeName,
+            sw.name as warehouseName,
+            'PENDING' as status
+            FROM user_categories uc
+            LEFT JOIN scm_warehouse_stores sws ON sws.id = uc.store_id
+            LEFT JOIN scm_warehouses sw ON sw.id = sws.warehouse_id
+            LEFT JOIN acl_users e ON uc.created_by_id=e.id
+            WHERE 
+            (:warehouseId IS NULL OR sws.warehouse_id = :warehouseId)
+            AND 
+            (:warehouseStoreId IS NULL OR sws.id = :warehouseStoreId)
+            AND
+            (
+            (:categoryId IS NULL AND uc.active_parent_category_id IS NOT NULL)
+            OR
+            (:categoryId IS NOT NULL AND uc.active_parent_category_id = :categoryId)
+            )
+            AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED','PENDING')
+            AND (uc.is_approved_by_store IS NULL OR uc.is_approved_by_store=false)
+            """;
+    String countPendingApprovalByStoreSubCategories = "SELECT COUNT(*) FROM ("+pendingApprovalFromStoreSubCategories+") as total";
 
     String closedSubCategories="""
             select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
