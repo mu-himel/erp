@@ -96,10 +96,14 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
 
 
     @Query(value = myDemandSql, countQuery = countMyDemandSql)
-    Page<DemandListInfo> findAllByRequestedById(String id, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
+    Page<DemandListInfo> findAllByRequestedById(String id,
+                                                String demandNo,Long categoryId,
+                                                LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
     @Query(value = getAllPending, countQuery = countAllPending)
-    Page<DemandListInfo> findAllDemands(Long warehouseId, String demandNo, LocalDateTime fromDate, LocalDateTime toDate,
+    Page<DemandListInfo> findAllDemands(Long warehouseId, String demandNo,
+                                        Long categoryId,
+                                        LocalDateTime fromDate, LocalDateTime toDate,
                                         Integer daysRemain, Pageable pageable);
 
     @Query(value = getAllPendingVerification, countQuery = countAllPendingVerification, nativeQuery = true)
@@ -154,7 +158,8 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
             LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
     @Query(value = getAllDemandsByCategory, countQuery = countAllDemandsByCategory)
-    Page<DemandListInfo> findAllDemandsByCategory(List<Long> categories, List<Long> warehouseId, LocalDateTime fromDate,
+    Page<DemandListInfo> findAllDemandsByCategory(List<Long> categories, List<Long> warehouseId,
+                                                  String demandNo, LocalDateTime fromDate,
             LocalDateTime toDate,Integer daysRemain, Pageable pageable);
 
     @Query(value=getAllFilteredPendingVerificationDemands, countQuery = countAllFilteredPendingVerificationDemands,nativeQuery = true)

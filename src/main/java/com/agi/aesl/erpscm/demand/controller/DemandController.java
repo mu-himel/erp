@@ -62,11 +62,13 @@ public class DemandController extends BaseController{
     public ResponseEntity<?> getMyDemands(@AuthenticationPrincipal Jwt loggedInUser,
                                           @RequestParam("page") Optional<Integer> page,
                                           @RequestParam("size") Optional<Integer> size,
+                                          @RequestParam("demandNo") Optional<String> demandNo,
+                                          @RequestParam("categoryId") Optional<Long> categoryId,
                                           @RequestParam("fromDate") Optional<String> fromDate,
                                           @RequestParam("toDate") Optional<String> toDate
                                           ){
         return new ResponseEntity<>(
-                demandService.getMyDemands(loggedInUser,page,size, fromDate, toDate),
+                demandService.getMyDemands(loggedInUser,page,size,demandNo,categoryId, fromDate, toDate),
             HttpStatus.OK
         );
     }
@@ -96,6 +98,7 @@ public class DemandController extends BaseController{
                     @RequestParam("page") Optional<Integer> page,
                     @RequestParam("size") Optional<Integer> size,
                     @RequestParam("demandNo") Optional<String> demandNo,
+                    @RequestParam("categoryId") Optional<Long> categoryId,
                     @RequestParam("fromDate") Optional<String> fromDate,
                     @RequestParam("toDate") Optional<String> toDate,
                     @RequestParam("daysRemain") Optional<Integer> daysRemain
@@ -104,7 +107,7 @@ public class DemandController extends BaseController{
 
         return new ResponseEntity<>(
                 demandService.getAllDemands(loggedInUser, page,size,
-                        demandNo,
+                        demandNo,categoryId,
                         fromDate,toDate, daysRemain
                         ),
                 HttpStatus.OK
