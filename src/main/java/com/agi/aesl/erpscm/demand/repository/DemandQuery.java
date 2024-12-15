@@ -179,23 +179,30 @@ interface DemandQuery {
                 d.demandNo as demandNo,
                 d.status as status,
                 d.demandDate as demandDate,
-                d.category as category,
+                cat as category,
                 COUNT(dd) as itemsQty,
                 d.requestedBy as requestedBy
             FROM Demand d 
+            LEFT JOIN d.category cat
             LEFT JOIN d.requestedBy r
             LEFT JOIN d.demandDetails dd
             LEFT JOIN dd.item i
             LEFT JOIN dd.itemCategory c 
             WHERE r.id=:id
+            AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
+            AND (COALESCE(:categoryId) IS NULL OR cat.id = :categoryId)
             AND d.status NOT IN ('RECEIVED', 'REJECTED','COMPLETED','CANCELED','DECLINED','CLOSED_BY_STORE')
             AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
             GROUP BY d.id
             """;
 
     String countMyDemandSql = """
-            SELECT count(*) FROM Demand d JOIN d.requestedBy r 
+            SELECT count(*) FROM Demand d
+            LEFT JOIN d.requestedBy r
+            LEFT JOIN d.category cat 
             WHERE r.id=:id
+            AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
+            AND (COALESCE(:categoryId) IS NULL OR cat.id = :categoryId)
             AND d.status NOT IN ('RECEIVED', 'REJECTED','COMPLETED')
             AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
             GROUP BY d.id""";
@@ -207,12 +214,13 @@ interface DemandQuery {
            d.demandNo as demandNo,
            d.status as status,
            d.demandDate as demandDate,
-           d.category as category,
+           cat as category,
            COUNT(dd) as itemsQty,
            d.requestedBy as requestedBy,
            DATEDIFF(d.deliveryDate,CURRENT_DATE) as daysRemain
        FROM Demand d 
         LEFT JOIN d.requestedBy r 
+        LEFT JOIN d.category cat
         LEFT JOIN d.warehouse w 
         LEFT JOIN d.demandDetails dd 
         LEFT JOIN dd.item i 
@@ -220,6 +228,7 @@ interface DemandQuery {
         WHERE d.status NOT IN ('PENDING_APPROVAL','PENDING_VERIFICATION','REJECTED','RECEIVED','COMPLETED','CANCELED','DECLINED')
         AND (:warehouseId IS NULL OR w.id = :warehouseId) 
         AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
+        AND (COALESCE(:categoryId) IS NULL OR cat.id = :categoryId)
         AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
         AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
         GROUP BY d.id 
@@ -229,9 +238,11 @@ interface DemandQuery {
         SELECT count(d) FROM Demand d
         LEFT JOIN d.requestedBy r
         LEFT JOIN d.warehouse w
+        LEFT JOIN d.category cat
         WHERE d.status NOT IN ('PENDING_APPROVAL','REJECTED','PENDING_VERIFICATION','RECEIVED','COMPLETED','CANCELED','DECLINED')
         AND (:warehouseId IS NULL OR w.id = :warehouseId) 
         AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
+        AND (COALESCE(:categoryId) IS NULL OR cat.id = :categoryId)
         AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
         AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
         GROUP BY d.id """;
@@ -339,6 +350,7 @@ interface DemandQuery {
             WHERE (dd.itemCategory.id IN :categories OR dd.itemParentCategory.id IN :categories)
             AND d.status NOT IN ('PENDING_APPROVAL','REJECTED','PENDING_VERIFICATION','RECEIVED','COMPLETED','CANCELED','DECLINED')
             AND (w.id IN :warehouseId) 
+            AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
             AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
             AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
             GROUP BY d.id
@@ -354,6 +366,7 @@ interface DemandQuery {
         WHERE (dd.itemCategory.id IN :categories OR dd.itemParentCategory.id IN :categories)
          AND d.status NOT IN ('PENDING_APPROVAL','REJECTED','PENDING_VERIFICATION','RECEIVED','COMPLETED','CANCELED','DECLINED')
          AND (w.id IN :warehouseId) 
+         AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
          AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
          AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
          GROUP BY d.id 

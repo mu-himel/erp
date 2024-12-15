@@ -405,7 +405,7 @@ public class DemandServiceImpl implements DemandService{
 
     @Override
     public Page<?> getAllDemands(Jwt loggedInUser, Optional<Integer> page, Optional<Integer> size,
-            Optional<String> demandNo,
+            Optional<String> demandNo,Optional<Long> categoryId,
             Optional<String> fromDateStr, Optional<String> toDateStr, Optional<Integer> daysRemain) {
                 claimResolver.setToken(loggedInUser);
                 if(claimResolver.getEmployee().isEmpty()){
@@ -433,18 +433,24 @@ public class DemandServiceImpl implements DemandService{
                 if(toDateStr.isPresent()){
                     toDate = LocalDateTime.parse(toDateStr.get()+"T23:59:59");
                 }
+
+                if(categoryId.isPresent()){
+                    categoryIds.add(categoryId.get());
+                }
         
                 if(modulePermission.isPresent()){
                     categoryIds = modulePermission.get().get("category_id");
                     warehouseIds = modulePermission.get().get("warehouse_id");
                     return demandRepository.findAllDemandsByCategory(categoryIds,
                             (warehouseIds !=null && warehouseIds.size()>0)? warehouseIds : List.of(warehouseId),
+                            demandNo.orElse(null),
                             fromDate,toDate,daysRemain.orElse(null),
                             pageable);
                 }
         
 
                 return demandRepository.findAllDemands(warehouseId,demandNo.orElse(null),
+                        categoryId.orElse(null),
                         fromDate,toDate, daysRemain.orElse(null),pageable);
     }
 
@@ -627,8 +633,8 @@ public class DemandServiceImpl implements DemandService{
 
     @Override
     public Page<?> getMyDemands(Jwt token, Optional<Integer> page, Optional<Integer> size,
+            Optional<String> demandNo,Optional<Long> categoryId,
             Optional<String> fromDateStr, Optional<String> toDateStr) {
-//        ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
 
        Optional<Employee> employeeOptional = userService.getUserById(claimResolver.getUserId());
@@ -650,7 +656,9 @@ public class DemandServiceImpl implements DemandService{
         }
 
 
-        return demandRepository.findAllByRequestedById(claimResolver.getUserId(),fromDate,toDate,pageable);
+        return demandRepository.findAllByRequestedById(claimResolver.getUserId(),
+                demandNo.orElse(null),categoryId.orElse(null),
+                fromDate,toDate,pageable);
     }
 
     @Override
