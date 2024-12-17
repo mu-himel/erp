@@ -2,14 +2,58 @@ package com.agi.aesl.erpscm.demand.repository;
 
 interface DemandQuery {
 
-    String prSql = "(SELECT count(*) as pr_qty  FROM product_requirements pr WHERE pr.status != 'OPEN' AND pr.demand_detail_id = dd.id) ";
+    String prSql = """
+            SELECT COALESCE(SUM(pr_qty),0) FROM (SELECT sdd.pr_qty  as pr_qty, sd.id as demandId, sdd.id as ddId,
+            			CASE WHEN scb.id IS NOT NULL THEN
+            			concat (scb.name, ' - ',GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - '))\s
+            			ELSE
+            			GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - ')
+            			END as pr_attrs
+            			FROM product_requirements pr
+                        LEFT JOIN scm_demand_details sdd ON sdd.id = pr.demand_detail_id
+                        LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
+                        LEFT JOIN scm_category_brands scb ON sdd.brand_id = scb.id
+                        LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+                        WHERE pr.status = 'OPEN' AND sd.warehouse_id = 205
+                        GROUP BY pr.id
+                        ) r WHERE r.pr_attrs LIKE CONCAT('%','Dize 64 GB','%')
+            """;
     String openPr="(SELECT count(*) as pr_qty  FROM product_requirements pr WHERE pr.demand_detail_id = dd.id)";
     String demandDetailQuery= """
             SELECT
             	i.id as id,
             	dd.id as demandDetailId,
-                """+prSql+"""
-                     as prQty,
+            	CASE WHEN dd.brand_id  IS NULL THEN
+                (SELECT COALESCE(SUM(pr_qty),0) FROM (SELECT sdd.pr_qty  as pr_qty, sd.id as demandId, sdd.id as ddId,
+            			CASE WHEN scb.id IS NOT NULL THEN
+            			concat (scb.name, ' - ',GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - '))\s
+            			ELSE
+            			GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - ')
+            			END as pr_attrs
+            			FROM product_requirements pr
+                        LEFT JOIN scm_demand_details sdd ON sdd.id = pr.demand_detail_id
+                        LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
+                        LEFT JOIN scm_category_brands scb ON sdd.brand_id = scb.id
+                        LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+                        WHERE pr.status = 'OPEN' AND sd.warehouse_id = d.warehouse_id
+                        GROUP BY pr.id
+                        ) r WHERE r.pr_attrs LIKE CONCAT('%',GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - '),'%'))
+                ELSE 
+                (SELECT COALESCE(SUM(pr_qty),0) FROM (SELECT sdd.pr_qty  as pr_qty, sd.id as demandId, sdd.id as ddId,
+            			CASE WHEN scb.id IS NOT NULL THEN
+            			concat (scb.name, ' - ',GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - '))\s
+            			ELSE
+            			GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - ')
+            			END as pr_attrs
+            			FROM product_requirements pr
+                        LEFT JOIN scm_demand_details sdd ON sdd.id = pr.demand_detail_id
+                        LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
+                        LEFT JOIN scm_category_brands scb ON sdd.brand_id = scb.id
+                        LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+                        WHERE pr.status = 'OPEN' AND sd.warehouse_id = d.warehouse_id
+                        GROUP BY pr.id
+                        ) r WHERE r.pr_attrs LIKE CONCAT('%',CONCAT(cb.name,' - ',GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ')),'%'))
+                END  as prQty,
                 """+openPr+"""
                      as openPrQty,
                 d.id as demandId,
