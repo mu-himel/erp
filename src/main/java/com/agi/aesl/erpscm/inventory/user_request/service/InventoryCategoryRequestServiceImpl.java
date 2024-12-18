@@ -110,13 +110,13 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         DomainType domainType = DomainType.INVENTORY_REQ_CATEGORY;
         if(categoryRequestDto.getParentCategory()!=null) {
             domainType = DomainType.INVENTORY_REQ_SUB_CATEGORY;
-            Optional<UserCategory> catOp = userCategoryRepository.findById(categoryRequestDto.getParentCategory().getId());
-            if(catOp.isPresent()) {
-                userCategory.setParentCategory(catOp.get());
-            } else {
-                Optional<ItemCategory> _catOp = categoryService.getItemCategoryById(categoryRequestDto.getParentCategory().getId());
-                _catOp.ifPresent(userCategory::setActiveParentCategory);
-            }
+//            Optional<UserCategory> catOp = userCategoryRepository.findById(categoryRequestDto.getParentCategory().getId());
+//            if(catOp.isPresent()) {
+//                userCategory.setParentCategory(catOp.get());
+//            } else {
+            Optional<ItemCategory> _catOp = categoryService.getItemCategoryById(categoryRequestDto.getParentCategory().getId());
+            _catOp.ifPresent(userCategory::setActiveParentCategory);
+//            }
 
             userCategory.setVat(categoryRequestDto.getVat());
 
