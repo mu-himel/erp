@@ -8,6 +8,7 @@ import com.agi.aesl.erpscm.erpn_integration.service.IntegrationWriterService;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
+import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
 import com.agi.aesl.erpscm.goods_receive.repository.GrnDetailRepository;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
@@ -158,7 +159,14 @@ public class SrnServiceImpl implements SrnService{
                     storeInItem(grn, srnd);
                     return srnd;
                 }).collect(Collectors.toList()));
-//                integrationWriterService.purchaseReceived(claimResolver.getToken(),storeReceiveNote);
+
+                if(storeReceiveNote.getGrn().getGrnMode().equals(GrnMode.MANUAL)){
+                    integrationWriterService.purchaseReceivedManual(claimResolver.getToken(),storeReceiveNote);
+                }
+
+                if(storeReceiveNote.getGrn().getGrnMode().equals(GrnMode.AUTO)){
+                integrationWriterService.purchaseReceived(claimResolver.getToken(),storeReceiveNote);
+                }
             }
 
 //            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver, uri,
