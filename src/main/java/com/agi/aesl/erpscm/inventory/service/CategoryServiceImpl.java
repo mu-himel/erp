@@ -1184,4 +1184,9 @@ public class CategoryServiceImpl implements CategoryService {
     public Optional<ItemCategory> getItemCategoryById(Long id) {
         return categoryRepository.findById(id);
     }
+
+    @Override
+    public Optional<ItemCategory> getCategoryByUserCategory(Long id) {
+        return categoryRepository.findByUserCategoryId(id);
+    }
 }

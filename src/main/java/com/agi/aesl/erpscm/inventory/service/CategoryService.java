@@ -136,4 +136,6 @@ public interface CategoryService {
     Optional<?> getItemCategoryDetail(Long id);
 
     Optional<ItemCategory> getItemCategoryById(Long id);
+
+    Optional<ItemCategory> getCategoryByUserCategory(Long id);
 }
