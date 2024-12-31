@@ -3,12 +3,14 @@ package com.agi.aesl.erpscm.inventory.user_request.service;
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
+import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.indent.entity.IndentVerificationApprovalHistory;
 import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
@@ -90,6 +92,9 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private IntegrationReaderService integrationReaderService;
 
     @Autowired
     private UserCategoryHistoryRepository userCategoryHistoryRepository;
@@ -245,6 +250,15 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
         Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
         claimResolver.setToken(token);
+        String uri="inventory-control/categories";
+        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        dataFilter.setReaderService(integrationReaderService);
+        List<Long> warehouseIds = new ArrayList<>();
+        if(warehouseId.isPresent()){
+            warehouseIds.add(warehouseId.get());
+        }else {
+            warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
+        }
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
 
