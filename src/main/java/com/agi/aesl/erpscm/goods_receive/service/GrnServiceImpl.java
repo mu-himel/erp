@@ -196,8 +196,11 @@ public class GrnServiceImpl implements GrnService{
             }).collect(Collectors.toList())
         );
 
+
+
         grn.setAitOption(grnManualDto.getAitOption());
         grn.setVatOption(grnManualDto.getVatOption());
+        grn.setVatType(grnManualDto.getVatType()!=null?grnManualDto.getVatType().toUpperCase():null);
         grn.setVat(grnManualDto.getTotalVat());
         grn.setVatPctg(grnManualDto.getVatPctg());
         grn.setDeliveryChargeAmount(grnManualDto.getDeliveryChargeAmount());

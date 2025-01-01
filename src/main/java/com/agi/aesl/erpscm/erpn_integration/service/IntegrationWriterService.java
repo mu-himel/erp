@@ -15,4 +15,6 @@ public interface IntegrationWriterService {
     void createLedgerItem(Jwt token, LedgerAccount ledgerAccount);
 
     void purchaseReceived(Jwt token, StoreReceiveNote receiveNote);
+    void purchaseReceivedManual(Jwt token, StoreReceiveNote receiveNote);
+    void createLedgerItemWithoutWarehouseId(Jwt token, LedgerAccount ledgerAccount);
 }

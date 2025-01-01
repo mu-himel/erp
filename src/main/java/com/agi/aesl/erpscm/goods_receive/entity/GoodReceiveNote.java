@@ -65,6 +65,7 @@ public class GoodReceiveNote {
     private BigDecimal deliveryChargeAmount;
     private Integer days;
     private String vatOption;
+    private String vatType;
     private String aitOption;
     private BigDecimal totalPrice;
     private BigDecimal vat;
