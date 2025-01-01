@@ -188,7 +188,7 @@ public interface QcQuery {
                     p.qcHold as qcHold,
                     p.warehouseId as warehouseId
                 FROM (
-                    SELECT      qc.id as id,
+                    SELECT      grn.id as id,
                                 grn.created_at as createdAt, 
                                 grn.grn_no as grnNo, 
                                 grn.grn_status grnStatus,

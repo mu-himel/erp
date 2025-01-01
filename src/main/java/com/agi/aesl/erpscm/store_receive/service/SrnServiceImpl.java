@@ -253,10 +253,10 @@ public class SrnServiceImpl implements SrnService{
             toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
         }
         List<String> status = new ArrayList<>();
-        status.add(GrnStatus.QC_PASS.toString());
-        status.add(GrnStatus.READY_FOR_STORE.toString());
-        status.add(SrnStatus.APPROVED.toString());
-        status.add(SrnStatus.VERIFIED.toString());
+        status.add(SrnStatus.PENDING_VERIFICATION.toString());
+        status.add(SrnStatus.PENDING_APPROVAL.toString());
+        status.add(SrnStatus.REVIEW.toString());
+
         Employee employee = claimResolver.getEmployee().get();
         return srnRepository.findAllSrnByStatus(employee.getWarehouseId(),status, grnNo.orElse(null),
                 fromDateObj, toDateObj,

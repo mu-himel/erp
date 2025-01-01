@@ -41,6 +41,7 @@ public class ItemCategoryController extends BaseController{
                                                @RequestParam("size") Optional<Integer> size,
                                                @RequestParam("name")  Optional<String> name,
                                                @RequestParam("code") Optional<String> code,
+                                               @RequestParam("year") Optional<Integer> year,
                                                @RequestParam("currentYearBudget") Optional<BigDecimal> currentYearBudget,
                                                @RequestParam("productCount") Optional<Long> productCount,
                                                @RequestParam("warehouseId") Optional<Long> warehouseId,
@@ -49,7 +50,7 @@ public class ItemCategoryController extends BaseController{
         return new ResponseEntity<>(
                 categoryService.getItemCategories(
                         token,
-                        page,size, name, code,currentYearBudget,productCount,
+                        page,size, name, code,year,currentYearBudget,productCount,
                         warehouseId,warehouseStoreId),
                 HttpStatus.OK
         );
@@ -63,6 +64,7 @@ public class ItemCategoryController extends BaseController{
                      @RequestParam("size") Optional<Integer> size,
                      @RequestParam("name")  Optional<String> name,
                      @RequestParam("code") Optional<String> code,
+                     @RequestParam("year") Optional<Integer> year,
                      @RequestParam("currentYearBudget") Optional<BigDecimal> currentYearBudget,
                      @RequestParam("productCount") Optional<Long> productCount,
                      @RequestParam("categoryId") Optional<Long> categoryId,
@@ -71,7 +73,7 @@ public class ItemCategoryController extends BaseController{
 
     ){
         return new ResponseEntity<>(
-                categoryService.getItemCategories(token,page,size, name, code,currentYearBudget,productCount,categoryId,
+                categoryService.getItemCategories(token,page,size, name, code,year,currentYearBudget,productCount,categoryId,
                         warehouseId,warehouseStoreId),
                 HttpStatus.OK
         );

@@ -37,6 +37,7 @@ public interface CategoryService {
     Page<?> getItemCategories(Jwt token,
                               Optional<Integer> page, Optional<Integer> size,
                               Optional<String> name, Optional<String> code,
+                              Optional<Integer> year,
                               Optional<BigDecimal> currentYearBudget,
                               Optional<Long> productCount,
                               Optional<Long> warehouseId,
@@ -44,7 +45,7 @@ public interface CategoryService {
     );
 
     Page<?> getItemCategories(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                              Optional<String> name, Optional<String> code,
+                              Optional<String> name, Optional<String> code,Optional<Integer> year,
                               Optional<BigDecimal> currentYearBudget, Optional<Long> productCount,
                               Optional<Long> categoryId,
                               Optional<Long> warehouseId,
