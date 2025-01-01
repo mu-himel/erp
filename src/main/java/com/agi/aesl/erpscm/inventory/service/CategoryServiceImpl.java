@@ -446,6 +446,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public Page<?> getItemCategories(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                         Optional<String> name, Optional<String> code,
+                                     Optional<Integer> year,
                                      Optional<BigDecimal> currentYearBudget,
                                      Optional<Long> productCount,
                                      Optional<Long> warehouseId,
@@ -455,7 +456,7 @@ public class CategoryServiceImpl implements CategoryService {
         claimResolver.setToken(token);
         String uri = "inventory-management/main-category";
 
-        Integer year  = LocalDate.now().getYear();
+//        Integer year  = LocalDate.now().getYear();
 //        Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(10));
 
@@ -470,7 +471,7 @@ public class CategoryServiceImpl implements CategoryService {
 
             return categoryRepository.findAllByYear(name.orElse(null),
                     code.orElse(null), currentYearBudget.orElse(null),
-                    productCount.orElse(null),year,
+                    productCount.orElse(null),year.orElse(null),
                     warehouseIds,warehouseStoreId.orElse(null)
                     ,pageable);
 
@@ -479,7 +480,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public Page<?> getItemCategories(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                                      Optional<String> name, Optional<String> code,
+                                      Optional<String> name, Optional<String> code,Optional<Integer> year,
                                       Optional<BigDecimal> currentYearBudget, Optional<Long> productCount,
                                       Optional<Long> categoryId,
                                       Optional<Long> warehouseId,
@@ -489,7 +490,7 @@ public class CategoryServiceImpl implements CategoryService {
         claimResolver.setToken(token);
         String uri = "inventory-management/sub-category";
 
-        Integer year  = LocalDate.now().getYear();
+//        Integer year  = LocalDateTime.now().getYear();
 //        Sort sort = Sort.by(Sort.Direction.DESC,"id");
         
         Page<?> result = null;
@@ -510,7 +511,7 @@ public class CategoryServiceImpl implements CategoryService {
                             currentYearBudget.orElse(null),
                             productCount.orElse(null),
                             categoryId.orElse(null),
-                            year,
+                            year.orElse(null),
                             warehouseIds,
                             warehouseStoreId.orElse(null)
                             ,pageable);

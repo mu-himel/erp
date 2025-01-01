@@ -18,7 +18,7 @@ public interface CategoryQuery {
                                SELECT sum(amount) FROM scm_item_categories childCat
                                LEFT JOIN scm_category_budgets cb2 ON childCat.id = cb2.category_id
                            WHERE childCat.parent_category_id = ic.id
-                           AND cb2.current_year = :year
+                           AND  (:year IS NULL OR cb2.current_year = :year)
                            ),0) ) as currentYearBudget,
                        ( select count(distinct item_id) from scm_item_stocks is2
                                  LEFT JOIN scm_items i on i.id=is2.item_id
