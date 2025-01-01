@@ -475,6 +475,7 @@ public class GrnServiceImpl implements GrnService{
         Optional<GoodReceiveNote> grnOp = grnRepository.findById(id);
         if(grnOp.isPresent()){
             GoodReceiveNote grn = grnOp.get();
+            grn.setDeclineNote(noteDto.getNote());
             grn.setGrnStatus(GrnStatus.REJECTED);
             if(grn.getGrnMode().equals(GrnMode.AUTO)) {
                 sentGrnReceived(token, grn.getGrnNo(), GrnStatus.REJECTED, noteDto);
