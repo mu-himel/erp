@@ -201,7 +201,7 @@ public interface CategoryQuery {
             LEFT JOIN scm_warehouse_stores ws ON ws.id=cws.warehouse_store_id
             LEFT JOIN scm_warehouses w ON w.id = cws.warehouse_id
             WHERE ic.parent_category_id IS NOT NULL AND ic.cps_category_id IS NOT NULL
-            AND ic.active=false
+            AND ic.active=false AND ic.category_status IN ('PENDING')
             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
             AND (:storeId IS NULL OR cws.warehouse_store_id = :storeId)
             AND (:parentCategoryId IS NULL OR ic.parent_category_id = :parentCategoryId)
