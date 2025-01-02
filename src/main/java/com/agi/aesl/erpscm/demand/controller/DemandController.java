@@ -159,12 +159,15 @@ public class DemandController extends BaseController{
             @AuthenticationPrincipal Jwt loggedInUser,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
+            @RequestParam("demandNo") Optional<String> demandNo,
+            @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("fromDate") Optional<String> fromDate,
             @RequestParam("toDate") Optional<String> toDate
             ){
 
         return new ResponseEntity<>(
-                demandService.getAllCloseDemands(loggedInUser, page,size,fromDate, toDate),
+                demandService.getAllCloseDemands(loggedInUser, page,size,
+                        demandNo,categoryId,fromDate, toDate),
                 HttpStatus.OK
         );
     }

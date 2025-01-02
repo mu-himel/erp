@@ -152,7 +152,9 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
 
 
     @Query(value = getAllCloseDemands, countQuery = countAllCloseDemands)
-    Page<DemandListInfo> findAllCloseDemands(Long warehouseId, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
+    Page<DemandListInfo> findAllCloseDemands(Long warehouseId,
+                                             String demandNo, Long categoryId,
+                                             LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
     @Query(value = getAllPendingApprovalDemands, countQuery=countAllPendingApprovalDemands, nativeQuery = true)
     Page<DemandPendingVerificationApprovalList> findAllDemandsByDemandStatusAndNextApproverId(List<String> demandStatus, String nextApproverId,
