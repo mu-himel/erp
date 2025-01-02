@@ -23,6 +23,7 @@ public interface SrnRepository extends JpaRepository<StoreReceiveNote, Long>, Sr
 
     @Query(value = getAll, countQuery = countAll, nativeQuery = true)
     Page<StoreReceiveNoteInfo> findAllSrnByStatus(Long warehouseId, List<String> status, String grnNo,
+                                                  Long categoryId, Long receivedQty,
                                                   LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
     @Query(value = getAllCompleted, countQuery = countAllCompleted, nativeQuery = true)
