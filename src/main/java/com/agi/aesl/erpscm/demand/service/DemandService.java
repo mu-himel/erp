@@ -44,10 +44,12 @@ public interface DemandService extends VerificationDomainService{
 
     Page<?> getAllPendingVerificationDemands(Jwt loggedInUser,
                                              Optional<Integer> page, Optional<Integer> size,
+                                             Optional<String> demandNo,Optional<Long> categoryId,
                                              Optional<String> fromDate, Optional<String> toDate
                                              );
     Page<?> getAllPendingApprovalDemands(Jwt loggedInUser,
                                          Optional<Integer> page, Optional<Integer> size,
+                                         Optional<String> demandNo, Optional<Long> categoryId,
                                          Optional<String> fromDate, Optional<String> toDate
 
     );

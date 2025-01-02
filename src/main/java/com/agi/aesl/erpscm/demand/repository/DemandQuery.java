@@ -313,6 +313,8 @@ interface DemandQuery {
         WHERE ((d.next_verifier_id = :nextVerifierId AND d.status IN (:pendingVerification)) 
             OR (dvah.employee_id = :nextVerifierId AND dvah.demand_status='VERIFIED'))
         AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate))
+        AND (:demandNo IS NULL OR d.demand_no LIKE CONCAT('%',:demandNo,'%'))
+        AND (:categoryId IS NULL OR d.category_id = :categoryId)
         GROUP BY d.id 
         ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_VERIFICATION') THEN 1 ELSE 2 END ASC
         """;
@@ -374,6 +376,8 @@ interface DemandQuery {
         WHERE ((d.next_approver_id = :nextApproverId AND d.status IN (:demandStatus))
             OR (dvah.employee_id = :nextApproverId AND dvah.demand_status = 'APPROVED')) 
         AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate)) 
+        AND (:demandNo IS NULL OR d.demand_no LIKE CONCAT('%',:demandNo,'%'))
+        AND (:categoryId IS NULL OR d.category_id = :categoryId)
         GROUP BY d.id ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_APPROVAL') THEN 1 ELSE 2 END ASC
         """;
 
@@ -441,6 +445,7 @@ interface DemandQuery {
         AND ((d.next_verifier_id = :nextVerifierId AND d.status IN (:pendingVerification)) 
             OR (dvah.employee_id = :nextVerifierId AND dvah.demand_status='VERIFIED'))
         AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate))
+        AND (:demandNo IS NULL OR d.demand_no LIKE CONCAT('%',:demandNo,'%'))
         GROUP BY d.id 
         ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_VERIFICATION') THEN 1 ELSE 2 END ASC
                     """;
@@ -467,6 +472,7 @@ interface DemandQuery {
     AND ((d.next_approver_id = :nextApproverId AND d.status IN (:demandStatuses))
         OR (dvah.employee_id = :nextApproverId AND dvah.demand_status = 'APPROVED')) 
     AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate)) 
+    AND (:demandNo IS NULL OR d.demand_no LIKE CONCAT('%',:demandNo,'%'))
     GROUP BY d.id ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_APPROVAL') THEN 1 ELSE 2 END ASC
             """;
 

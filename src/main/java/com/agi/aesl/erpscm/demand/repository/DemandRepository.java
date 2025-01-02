@@ -109,6 +109,7 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
     @Query(value = getAllPendingVerification, countQuery = countAllPendingVerification, nativeQuery = true)
     Page<DemandPendingVerificationApprovalList> findAllDemandsByDemandStatusAndNextVerifierId(
             List<String> pendingVerification, String nextVerifierId,
+            String demandNo, Long categoryId,
             LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
     interface DemandListInfo{
@@ -157,7 +158,7 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
 
     @Query(value = getAllPendingApprovalDemands, countQuery=countAllPendingApprovalDemands, nativeQuery = true)
     Page<DemandPendingVerificationApprovalList> findAllDemandsByDemandStatusAndNextApproverId(List<String> demandStatus, String nextApproverId,
-            LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
+            String demandNo, Long categoryId, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
     @Query(value = getAllDemandsByCategory, countQuery = countAllDemandsByCategory)
     Page<DemandListInfo> findAllDemandsByCategory(List<Long> categories, List<Long> warehouseId,
@@ -166,12 +167,12 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
 
     @Query(value=getAllFilteredPendingVerificationDemands, countQuery = countAllFilteredPendingVerificationDemands,nativeQuery = true)
     Page<DemandPendingVerificationApprovalList> findAllDemandsByCategoryAndDemandStatusAndNextVerifierId(
-            List<Long> categories, String nextVerifierId,
+            List<Long> categories, String nextVerifierId,String demandNo,
             List<String> pendingVerification, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
     
     @Query(value = getAllFilteredPendingApprovalDemands, countQuery = countAllFilteredPendingApprovalDemands,nativeQuery = true)
     Page<DemandPendingVerificationApprovalList> findAllDemandsByCategoryAndDemandStatusAndNextApproverId(
-            List<Long> categoryIds, String nextApproverId,
+            List<Long> categoryIds, String nextApproverId,String demandNo,
             List<String> demandStatuses, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
 }
