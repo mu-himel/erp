@@ -125,8 +125,12 @@ public interface UserCategoryQuery {
     String closedCategories="""
             select uc.id as id, name as categoryName, (
                 SELECT COUNT(*) FROM user_categories uc1
-                WHERE uc1.parent_category_id=uc.id
-            ) as subCategoryCount, 0 as productCount,
+                WHERE uc1.active_parent_category_id in (SELECT id FROM scm_item_categories ipc
+                WHERE ipc.user_category_id=uc.id)
+            ) as subCategoryCount,
+            (SELECT COUNT(*) FROM user_items ui WHERE ui.created_by_id = :userId
+            AND ui.category_id IN (SELECT id FROM item_categories ipc WHERE ipc.user_category_id=uc.id)
+            ) as productCount,
             category_status as status,
             (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active
             FROM user_categories uc
@@ -202,7 +206,10 @@ public interface UserCategoryQuery {
     String countPendingApprovalByStoreSubCategories = "SELECT COUNT(*) FROM ("+pendingApprovalFromStoreSubCategories+") as total";
 
     String closedSubCategories="""
-            select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
+            select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 
+            (SELECT COUNT(*) FROM user_items ui WHERE
+            ui.sub_category_id IN (SELECT id from scm_item_categories ic WHERE ic.user_category_id = uc.id)
+            ui.created_by_id = :userId ) as productCount,
             uc.category_status as status,
             (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active
              FROM user_categories uc
