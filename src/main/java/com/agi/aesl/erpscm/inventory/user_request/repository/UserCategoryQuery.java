@@ -129,7 +129,7 @@ public interface UserCategoryQuery {
                 WHERE ipc.user_category_id=uc.id)
             ) as subCategoryCount,
             (SELECT COUNT(*) FROM user_items ui WHERE ui.created_by_id = :userId
-            AND ui.category_id IN (SELECT id FROM item_categories ipc WHERE ipc.user_category_id=uc.id)
+            AND ui.category_id IN (SELECT id FROM scm_item_categories ipc WHERE ipc.user_category_id=uc.id)
             ) as productCount,
             category_status as status,
             (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active
@@ -209,7 +209,7 @@ public interface UserCategoryQuery {
             select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 
             (SELECT COUNT(*) FROM user_items ui WHERE
             ui.sub_category_id IN (SELECT id from scm_item_categories ic WHERE ic.user_category_id = uc.id)
-            ui.created_by_id = :userId ) as productCount,
+            AND ui.created_by_id = :userId ) as productCount,
             uc.category_status as status,
             (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active
              FROM user_categories uc
