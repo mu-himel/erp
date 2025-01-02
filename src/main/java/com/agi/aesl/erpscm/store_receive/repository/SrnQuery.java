@@ -44,9 +44,11 @@ public interface SrnQuery {
                                        WHERE ((srn.id IS NOT NULL AND srn.srn_status IN (:status)) 
                                        OR (srn.id IS NULL AND grn.grn_status IN ('READY_FOR_STORE') ))
                                        AND grn.warehouse_id = :warehouseId
+                                       AND (:categoryId IS NULL OR ic.id = :categoryId)
                                        AND (:grnNo IS NULL OR grn.grn_no LIKE CONCAT('%',:grnNo,'%'))
                                        AND (COALESCE(:fromDate) IS NULL OR grn.created_at BETWEEN :fromDate AND :toDate)
                                        GROUP BY grn.id) p
+                                       WHERE (:receivedQty IS NULL OR  p.receivedQty = :receivedQty)
             """;
 
 

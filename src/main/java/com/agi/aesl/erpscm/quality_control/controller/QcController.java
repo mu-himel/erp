@@ -31,6 +31,8 @@ public class QcController extends BaseController {
             @AuthenticationPrincipal Jwt token,
             @RequestParam("grnNo") Optional<String> grnNo,
             @RequestParam("items") Optional<Integer> qty,
+            @RequestParam("grnMode") Optional<String> grnMode,
+            @RequestParam("poNo") Optional<String> poNo,
             @RequestParam("receivedQty") Optional<Integer> receivedQty,
             @RequestParam("fromDate") Optional<String> fromDate,
             @RequestParam("toDate") Optional<String> toDate,
@@ -38,7 +40,7 @@ public class QcController extends BaseController {
             @RequestParam("size") Optional<Integer> size){
         return new ResponseEntity<>(
                 grnService.getAllGrnPendingQC(token, page,
-                        size, grnNo, qty,
+                        size, grnNo, qty,grnMode,poNo,
                         receivedQty, fromDate, toDate),
                 HttpStatus.OK
         );

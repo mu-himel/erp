@@ -361,7 +361,9 @@ public class GrnServiceImpl implements GrnService{
 
     @Override
     public Page<?> getAllGrnPendingQC(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                                      Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty,
+                                      Optional<String> grnNo, Optional<Integer> qty, Optional<String> grnMode,
+                                      Optional<String> poNo,
+                                      Optional<Integer> receivedQty,
                                       Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
@@ -389,7 +391,8 @@ public class GrnServiceImpl implements GrnService{
         status.add(GrnStatus.QC_FAILED.toString());
         return grnRepository.findAllGrnByStatus(
                 warehouseIds,categoryIds,
-                grnNo.orElse(null), qty.orElse(null), receivedQty.orElse(null),
+                grnNo.orElse(null), qty.orElse(null), grnMode.orElse(null),
+                poNo.orElse(null), receivedQty.orElse(null),
                 status,
                 fromDateObj,
                 toDateObj,pageable);

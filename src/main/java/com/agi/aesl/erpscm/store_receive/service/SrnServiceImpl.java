@@ -237,7 +237,7 @@ public class SrnServiceImpl implements SrnService{
 
     @Override
     public Page<?> getAll(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                          Optional<String> grnNo,
+                          Optional<String> grnNo,Optional<Long> categoryId, Optional<Long> receivedQty,
                           Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
@@ -259,6 +259,7 @@ public class SrnServiceImpl implements SrnService{
 
         Employee employee = claimResolver.getEmployee().get();
         return srnRepository.findAllSrnByStatus(employee.getWarehouseId(),status, grnNo.orElse(null),
+                categoryId.orElse(null),receivedQty.orElse(null),
                 fromDateObj, toDateObj,
                 pageable);
     }
