@@ -15,7 +15,9 @@ public interface SrnService extends VerificationDomainService {
     List<?> getPendingDemandListBySrnItems(Long id);
     List<?> getPendingDemandListBySrnItems(Jwt token,String attributes);
 
-    Page<?> getAll(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> grnNo, Optional<String> fromDate, Optional<String> toDate);
+    Page<?> getAll(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> grnNo,
+                   Optional<Long> categoryId, Optional<Long> receivedQty,
+                   Optional<String> fromDate, Optional<String> toDate);
     Page<?> getAllComplete(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> grnNo,
                            Optional<String> fromDate, Optional<String> toDate);
 

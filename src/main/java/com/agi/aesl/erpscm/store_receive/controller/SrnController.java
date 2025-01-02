@@ -36,12 +36,14 @@ public class SrnController  extends BaseController {
     public ResponseEntity<?> getAllFromQc(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("grnNo") Optional<String> grnNo,
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("receivedQty") Optional<Long> receivedQty,
             @RequestParam("fromDate") Optional<String> fromDate,
             @RequestParam("toDate") Optional<String> toDate,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size){
         return new ResponseEntity<>(
-                srnService.getAll(token, page,size, grnNo, fromDate, toDate),
+                srnService.getAll(token, page,size, grnNo,categoryId,receivedQty,  fromDate, toDate),
                 HttpStatus.OK
         );
     }

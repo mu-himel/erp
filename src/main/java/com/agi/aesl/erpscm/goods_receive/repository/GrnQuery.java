@@ -116,6 +116,8 @@ public interface GrnQuery {
                     LEFT JOIN scm_item_categories ic ON ic.id = grid.sub_category_id
                     WHERE grn.grn_status IN (:status) 
                     AND (:grnNo IS NULL OR grn.grn_no = :grnNo) 
+                    AND (:grnMode IS NULL OR grn.grn_mode = :grnMode)
+                    AND (:poNo IS NULL OR grn.po_no = :poNo)
                     AND (COALESCE(:warehouseIds) IS NULL OR grn.warehouse_id IN (:warehouseIds))
                     AND (
                             ( COALESCE(:categoryIds) IS NULL OR grid.category_id IN (:categoryIds)) 

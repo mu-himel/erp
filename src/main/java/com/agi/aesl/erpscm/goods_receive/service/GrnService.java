@@ -37,7 +37,8 @@ public interface GrnService {
 
 
     Page<?> getAllGrnPendingQC(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                               Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty,
+                               Optional<String> grnNo, Optional<Integer> qty,Optional<String> grnMode,Optional<String> poNo,
+                               Optional<Integer> receivedQty,
                                Optional<String> fromDate, Optional<String> toDate);
 
     void updateGrnItemDetail(GoodReceiveItemDetail goodReceiveItemDetail);
