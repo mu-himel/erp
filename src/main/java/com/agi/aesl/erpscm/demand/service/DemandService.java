@@ -36,6 +36,7 @@ public interface DemandService extends VerificationDomainService{
 
     Page<?> getAllCloseDemands(Jwt loggedInUser,
                                Optional<Integer> page, Optional<Integer> size,
+                               Optional<String> demandNo, Optional<Long> categoryId,
                                Optional<String> fromDate, Optional<String> toDate
     );
 
