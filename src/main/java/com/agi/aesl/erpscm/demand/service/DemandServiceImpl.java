@@ -456,6 +456,7 @@ public class DemandServiceImpl implements DemandService{
 
     @Override
     public Page<?> getAllPendingApprovalDemands(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                Optional<String> demandNo, Optional<Long> categoryId,
             Optional<String> fromDateStr, Optional<String> toDateStr) {
 //                ClaimResolver claimResolver = new ClaimResolver();
                 claimResolver.setToken(token);
@@ -484,8 +485,15 @@ public class DemandServiceImpl implements DemandService{
                 List<Long> categoryIds = new ArrayList<>();
                 if(modulePermission.isPresent()){
                     categoryIds = modulePermission.get().get("category_id");
+                    if(categoryIds!=null && categoryId.isPresent()){
+                        categoryIds.add(categoryId.get());
+                    }else if (categoryIds==null && categoryId.isPresent()){
+                        categoryIds = new ArrayList<>();
+                        categoryIds.add(categoryId.get());
+                    }
                     return demandRepository.findAllDemandsByCategoryAndDemandStatusAndNextApproverId(categoryIds,
                             claimResolver.getUserId(),
+                            demandNo.orElse(null),
                             demandStatuses,
                             fromDate,toDate,
                             pageable);
@@ -493,12 +501,15 @@ public class DemandServiceImpl implements DemandService{
                 return demandRepository.findAllDemandsByDemandStatusAndNextApproverId(
                         demandStatuses,
                         claimResolver.getUserId(),
+                        demandNo.orElse(null),
+                        categoryId.orElse(null),
                         fromDate,toDate,
                         pageable);
     }
 
     @Override
     public Page<?> getAllPendingVerificationDemands(Jwt token, Optional<Integer> page, Optional<Integer> size,
+            Optional<String> demandNo,Optional<Long> categoryId,
             Optional<String> fromDateStr, Optional<String> toDateStr) {
         claimResolver.setToken(token);
         
@@ -527,8 +538,16 @@ public class DemandServiceImpl implements DemandService{
         
         if(modulePermission.isPresent()){
             categoryIds = modulePermission.get().get("category_id");
+            if(categoryIds!=null && categoryId.isPresent()){
+                categoryIds.add(categoryId.get());
+            }else if (categoryIds==null && categoryId.isPresent()){
+                categoryIds = new ArrayList<>();
+                categoryIds.add(categoryId.get());
+            }
+
             return demandRepository.findAllDemandsByCategoryAndDemandStatusAndNextVerifierId(categoryIds,
                     claimResolver.getUserId(),
+                    demandNo.orElse(null),
                     demandStatuses,
                     fromDate,toDate,
                     pageable);
@@ -537,6 +556,8 @@ public class DemandServiceImpl implements DemandService{
         return demandRepository.findAllDemandsByDemandStatusAndNextVerifierId(
             demandStatuses,
                 claimResolver.getUserId(),
+                demandNo.orElse(null),
+                categoryId.orElse(null),
                 fromDate,toDate,
                 pageable);
     }
