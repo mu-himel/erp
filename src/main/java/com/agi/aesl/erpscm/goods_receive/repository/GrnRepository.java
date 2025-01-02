@@ -51,8 +51,8 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
     Page<GoodReceiveNoteInfo> findAllGrnByStatus(
             @Param("warehouseIds") List<Long> warehouseIds,
             @Param("categoryIds") List<Long> categoryIds,
-            @Param("grnNo") String grnNo, @Param("poNo") String poNo,
-            @Param("qty") Integer qty, @Param("grnMode") String grnMode,
+            @Param("grnNo") String grnNo,
+            @Param("qty") Integer qty, @Param("grnMode") String grnMode,@Param("poNo") String poNo,
             @Param("receivedQty") Integer receivedQty,List<String> status, LocalDateTime fromDate,
            LocalDateTime toDate,Pageable pageable);
 
