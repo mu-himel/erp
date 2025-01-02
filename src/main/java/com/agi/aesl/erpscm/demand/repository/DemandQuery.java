@@ -332,12 +332,15 @@ interface DemandQuery {
         FROM Demand d 
         LEFT JOIN d.requestedBy r 
         LEFT JOIN d.warehouse w 
+        LEFT JOIN d.category dc
         LEFT JOIN d.demandDetails dd 
         LEFT JOIN dd.item i 
         LEFT JOIN dd.itemCategory c
         WHERE d.status IN ('REJECTED','COMPLETED','CANCELED','DECLINED','RECEIVED','CLOSED_BY_STORE')
         AND (:warehouseId IS NULL OR w.id = :warehouseId)
         AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
+        AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
+        AND (:categoryId IS NULL OR dc.id = :categoryId)
         GROUP BY d.id
         """;
 

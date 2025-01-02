@@ -376,6 +376,7 @@ public class DemandServiceImpl implements DemandService{
 
     @Override
     public Page<?> getAllCloseDemands(Jwt loggedInUser, Optional<Integer> page, Optional<Integer> size,
+            Optional<String> demandNo, Optional<Long> categoryId,
             Optional<String> fromDateStr, Optional<String> toDateStr) {
 
         Optional<Employee> userOp = userService.getUserById(loggedInUser.getSubject());
@@ -399,6 +400,8 @@ public class DemandServiceImpl implements DemandService{
 
 
         return demandRepository.findAllCloseDemands(userOp.get().getWarehouseId(),
+                demandNo.orElse(null),
+                categoryId.orElse(null),
                 fromDate,toDate,
                 pageable);
     }
