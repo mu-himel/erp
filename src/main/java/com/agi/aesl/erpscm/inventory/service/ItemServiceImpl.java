@@ -1243,9 +1243,9 @@ public class ItemServiceImpl implements ItemService {
                     ItemImportLog iil = new ItemImportLog();
                     iil.setItem(item);
                     iil.setWarehouse(warehouse);
-//                    iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+                    iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
                     // added for inactive account service
-                    iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+//                    iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
                     item.setActive(true);
                     itemImportLogRepository.save(iil);
                 }
@@ -1314,8 +1314,8 @@ public class ItemServiceImpl implements ItemService {
                     Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseOp.get().getId());
                     if(iilOp.isPresent()){
                         ItemImportLog iil = iilOp.get();
-//                        iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
-                        iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+                        iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+//                        iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
                         item.setActive(true);
                         if(item.getUserItemId()!=null){
                             Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
@@ -1324,17 +1324,17 @@ public class ItemServiceImpl implements ItemService {
                             });
                         }
                     }
-//                    accountService.setItemService(this);
+                    accountService.setItemService(this);
 //                    forceActive();
-//                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
+                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
                 }
                 if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()!=null){
                     item.setItemInactiveStatus(null);
                     Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseOp.get().getId());
                     if(iilOp.isPresent()){
                         ItemImportLog iil = iilOp.get();
-//                        iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
-                        iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+                        iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
+//                        iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
                         item.setActive(true);
                         if(item.getUserItemId()!=null){
                             Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
@@ -1344,9 +1344,9 @@ public class ItemServiceImpl implements ItemService {
                         }
                     }
                     mergeItem(item, approveRequestDto.getWarehouseStoreId(), itemMergeRequestDto);
-//                    accountService.setItemService(this);
+                    accountService.setItemService(this);
 //                    forceActive();
-//                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
+                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
 
                 }
             }else if(approveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)){
