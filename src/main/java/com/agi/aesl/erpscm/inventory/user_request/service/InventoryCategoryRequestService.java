@@ -27,11 +27,13 @@ public interface InventoryCategoryRequestService extends VerificationDomainServi
     Page<?> getPendingApprovals(Jwt token, Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory);
     Page<?> getClosed(Jwt token, Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory);
     Page<?> getPendingApprovalCategoriesFromStore(Jwt token, Optional<Long> categoryId,
+                                                  Optional<String> name,
                                                   Optional<Long> warehouseId,
                                                   Optional<Long> warehouseStoreId,
                                                   Optional<Integer> page, Optional<Integer> size,
                                                   boolean isCategory);
     Page<?> getPendingApprovalSubCategoriesFromStore(Jwt token, Optional<Long> categoryId,
+                             Optional<String> name,
                              Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
                              Optional<Integer> page, Optional<Integer> size, boolean isCategory);
 

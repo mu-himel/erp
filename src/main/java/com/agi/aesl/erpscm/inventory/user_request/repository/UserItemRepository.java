@@ -52,6 +52,7 @@ public interface UserItemRepository extends JpaRepository<UserItem,Long>, UserIt
 
     interface UserItem{
         Long getId();
+        String getBrandName();
         String getCategoryName();
         String getSubCategoryName();
         String getProductName();
