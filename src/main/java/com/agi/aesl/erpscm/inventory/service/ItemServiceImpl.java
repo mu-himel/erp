@@ -1316,7 +1316,7 @@ public class ItemServiceImpl implements ItemService {
                         ItemImportLog iil = iilOp.get();
                         iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
 //                        iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
-                        item.setActive(true);
+                        item.setActive(false);
                         if(item.getUserItemId()!=null){
                             Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
                             userItemOp.ifPresent((ui)->{
@@ -1335,7 +1335,7 @@ public class ItemServiceImpl implements ItemService {
                         ItemImportLog iil = iilOp.get();
                         iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
 //                        iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
-                        item.setActive(true);
+                        item.setActive(false);
                         if(item.getUserItemId()!=null){
                             Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
                             userItemOp.ifPresent((ui)->{
