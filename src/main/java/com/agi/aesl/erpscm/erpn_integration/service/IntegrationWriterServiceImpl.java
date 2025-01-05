@@ -253,7 +253,9 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
                 pri.setItemCode(srnd.getItem().getCode());
                 pri.setQty(srnd.getStockInQty());
                 pri.setTransactionType(grn.getPaymentType());
-                pri.setCreditDays(grn.getDays().toString());
+                if(grn.getDays()!=null) {
+                    pri.setCreditDays(grn.getDays().toString());
+                }
                 pri.setPricePerUnit(srnd.getGoodReceiveItemDetail().getPricePerUnit());
                 if(grndetailOp.isPresent()){
                     pri.setEstDeliveryTime(grndetailOp.get().getEstimatedDeliveryDays().toString());
