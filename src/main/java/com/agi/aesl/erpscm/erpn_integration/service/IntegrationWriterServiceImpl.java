@@ -13,7 +13,9 @@ import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
+import com.agi.aesl.erpscm.inventory.entity.ItemImportLog;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
+import com.agi.aesl.erpscm.inventory.repository.ItemImportLogRepository;
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
 import com.agi.aesl.erpscm.purchase_order.repository.PurchaseOrderRepository;
@@ -71,6 +73,9 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     @Autowired
     private CsAccountRepository csAccountRepository;
 
+    @Autowired
+    private ItemImportLogRepository itemImportLogRepository;
+
     @Override
     @Transactional
     public void createWarehouse(Jwt token, Warehouse warehouse) {
@@ -127,12 +132,12 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
         if(serviceExist.isPresent()) {
         claimResolver.setToken(token);
-        Optional<Employee> employeeOptional = claimResolver.getEmployee();
-        if(employeeOptional.isEmpty()){
-            throw new RuntimeException("Sorry! required employee profile");
-        }
-        Employee employee = employeeOptional.get();
-        Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(employee.getWarehouseId());
+//        Optional<Employee> employeeOptional = claimResolver.getEmployee();
+//        if(employeeOptional.isEmpty()){
+//            throw new RuntimeException("Sorry! required employee profile");
+//        }
+//        Employee employee = employeeOptional.get();
+        Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(ledgerAccount.getWarehouse().getId());
         if(warehouseOp.isEmpty()){
             throw new RuntimeException("Sorry! warehouse not found");
         }
@@ -143,7 +148,13 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         Item item = ledgerAccount.getItem();
         ItemCategory category = item.getItemParentCategory();
         ItemCategory subCategory = item.getItemCategory();
-        item.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+//        item.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+        Optional<ItemImportLog> importLogOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouse.getId());
+        if(importLogOp.isEmpty()){
+            throw new RuntimeException("Sorry! Sorry no item found for cps approval");
+        }
+        ItemImportLog importLog = importLogOp.get();
+        importLog.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
 
         RemoteLedgerAccDto remoteLedgerAccountDto = new RemoteLedgerAccDto();
         remoteLedgerAccountDto.setWarehouseId(ledgerAccount.getWarehouse().getId());
