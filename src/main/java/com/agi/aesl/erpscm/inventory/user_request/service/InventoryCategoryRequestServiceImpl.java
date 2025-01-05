@@ -248,6 +248,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
 
     @Override
     public Page<?> getPendingApprovalCategoriesFromStore(Jwt token, Optional<Long> categoryId,
+        Optional<String> name,
         Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
         Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
         claimResolver.setToken(token);
@@ -264,12 +265,14 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
 
         return userCategoryRepository.findAllPendingApprovalByStore(null,
+                name.orElse(null),
                 warehouseId.orElse(null),warehouseStoreId.orElse(null),pageable);
 
     }
 
     @Override
     public Page<?> getPendingApprovalSubCategoriesFromStore(Jwt token, Optional<Long> categoryId,
+                                Optional<String> name,
                                 Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
                                 Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
         claimResolver.setToken(token);
@@ -278,6 +281,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
 
         return userCategoryRepository
                 .findAllPendingApprovalSubCatByStore(categoryId.orElse(null),
+                        name.orElse(null),
                         warehouseId.orElse(null),warehouseStoreId.orElse(null),
                         pageable);
 
