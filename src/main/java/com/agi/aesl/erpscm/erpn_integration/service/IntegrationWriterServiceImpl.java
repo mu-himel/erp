@@ -149,12 +149,12 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         ItemCategory category = item.getItemParentCategory();
         ItemCategory subCategory = item.getItemCategory();
 //        item.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
-        Optional<ItemImportLog> importLogOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouse.getId());
-        if(importLogOp.isEmpty()){
-            throw new RuntimeException("Sorry! Sorry no item found for cps approval");
-        }
-        ItemImportLog importLog = importLogOp.get();
-        importLog.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+//        Optional<ItemImportLog> importLogOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouse.getId());
+//        if(importLogOp.isEmpty()){
+//            throw new RuntimeException("Sorry! Sorry no item found for cps approval");
+//        }
+//        ItemImportLog importLog = importLogOp.get();
+//        importLog.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
 
         RemoteLedgerAccDto remoteLedgerAccountDto = new RemoteLedgerAccDto();
         remoteLedgerAccountDto.setWarehouseId(ledgerAccount.getWarehouse().getId());
