@@ -497,7 +497,7 @@ public class AccountServiceImpl implements AccountService{
         ledgerAccount.setAccountStatus(AccountType.PENDING);
         ledgerAccount.setWarehouse(warehouse);
         ledgerAccount.setWarehouseStore(warehouseStore);
-        integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
+        integrationWriterService.createLedgerItemWithoutWarehouseId(claimResolver.getToken(),ledgerAccount);
 //        accountRepository.save(ledgerAccount);
     }
 
@@ -509,7 +509,7 @@ public class AccountServiceImpl implements AccountService{
         ledgerAccount.setAccountStatus(AccountType.PENDING);
         ledgerAccount.setWarehouse(warehouse);
         ledgerAccount.setWarehouseStore(warehouseStore);
-        integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
+        integrationWriterService.createLedgerItemWithoutWarehouseId(claimResolver.getToken(),ledgerAccount);
     }
 
     @Override
