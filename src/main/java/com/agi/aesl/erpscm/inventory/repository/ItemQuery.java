@@ -71,7 +71,8 @@ public interface ItemQuery {
             "ws.id as warehouseStoreId, ws.store_name as warehouseStoreName, " +
             "SUM(s.stock_qty) as qty," +
             " i.stock_threshold_qty as stockThresholdQty," +
-            " i.reorder_percentage as reorderPercentage " +
+            " i.reorder_percentage as reorderPercentage, " +
+            " i.item_attribute_name as itemAttributeName " +
             "FROM scm_items i " +
             "LEFT JOIN scm_item_import_logs siil ON siil.item_id=i.id AND siil.warehouse_id=:warehouseId "+
             "LEFT JOIN scm_item_stocks s ON s.item_id = i.id " +
