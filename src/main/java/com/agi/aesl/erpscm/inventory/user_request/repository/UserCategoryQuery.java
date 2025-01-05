@@ -167,6 +167,7 @@ public interface UserCategoryQuery {
             OR
             (:categoryId IS NOT NULL AND uc.active_parent_category_id = :categoryId)
             )
+            AND (:name IS NULL OR uc.name LIKE CONCAT('%',:name,'%'))
             AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED','PENDING')
             AND (uc.is_approved_by_store IS NULL OR uc.is_approved_by_store=false)
             """;
@@ -200,6 +201,7 @@ public interface UserCategoryQuery {
             OR
             (:categoryId IS NOT NULL AND uc.active_parent_category_id = :categoryId)
             )
+            AND (:name IS NULL OR uc.name LIKE CONCAT('%',:name,'%'))
             AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED','PENDING')
             AND (uc.is_approved_by_store IS NULL OR uc.is_approved_by_store=false)
             """;

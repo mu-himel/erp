@@ -167,12 +167,14 @@ public class InventoryRequestCategoryController extends BaseController {
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
+            @RequestParam("name") Optional<String> name,
             @RequestParam("warehouseId") Optional<Long> warehouseId,
             @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId
 
     ){
         return new ResponseEntity<>(
                 categoryRequestService.getPendingApprovalCategoriesFromStore(token,Optional.empty(),
+                        name,
                         warehouseId,warehouseStoreId
                         ,page,size,true),
                 HttpStatus.OK);
@@ -182,6 +184,7 @@ public class InventoryRequestCategoryController extends BaseController {
     public ResponseEntity<?> getPendingApprovalSubCategoriesByStore(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("name") Optional<String> name,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
             @RequestParam("warehouseId") Optional<Long> warehouseId,
@@ -189,7 +192,7 @@ public class InventoryRequestCategoryController extends BaseController {
     ){
         return new ResponseEntity<>(
                 categoryRequestService.getPendingApprovalSubCategoriesFromStore(token,categoryId,
-                        warehouseId,warehouseStoreId,
+                        name,warehouseId,warehouseStoreId,
                         page,size,false),
                 HttpStatus.OK);
     }
