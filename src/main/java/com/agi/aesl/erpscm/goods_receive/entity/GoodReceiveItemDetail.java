@@ -67,6 +67,8 @@ public class GoodReceiveItemDetail {
 
     private BigDecimal deliveryCharge;
 
+    private BigDecimal vatAmount;
+
     @Column(length = 500)
     private String approveComment;
 

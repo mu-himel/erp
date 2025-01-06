@@ -165,7 +165,7 @@ public class SrnServiceImpl implements SrnService{
                 }
 
                 if(storeReceiveNote.getGrn().getGrnMode().equals(GrnMode.AUTO)){
-                integrationWriterService.purchaseReceived(claimResolver.getToken(),storeReceiveNote);
+                    integrationWriterService.purchaseReceived(claimResolver.getToken(),storeReceiveNote);
                 }
             }
 
