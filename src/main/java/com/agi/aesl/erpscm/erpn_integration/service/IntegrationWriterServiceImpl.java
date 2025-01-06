@@ -216,7 +216,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
                 pri.setPricePerUnit(srnd.getGoodReceiveItemDetail().getPricePerUnit());
                 if(grndetailOp.isPresent()){
                     pri.setEstDeliveryTime(grndetailOp.get().getEstimatedDeliveryDays().toString());
-                    pri.setVat(grn.getVat());
+                    pri.setVat(grndetailOp.get().getVatAmount());
                     pri.setDeliveryCharge(grn.getDeliveryChargeAmount());
                 }
                 items.add(pri);
@@ -229,4 +229,79 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
             networkService.post(purchaseReceivedEndpoint, payload, Void.class);
         }
     }
+
+
+
+
+//    @Override
+//    @Transactional
+//    public void purchaseReceivedManual(Jwt token, StoreReceiveNote receiveNote) {
+//        Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
+//        if(serviceExist.isPresent()) {
+//
+//
+//            PurchaseRequest purchaseRequest = new PurchaseRequest();
+//            purchaseRequest.setSrnNo(receiveNote.getSrnNo());
+//            GoodReceiveNote grn = receiveNote.getGrn();
+//            purchaseRequest.setVendorCpsId(grn.getVendorId().toString());
+//            List<PurchaseRequestItem> items = new ArrayList<>();
+//
+//            purchaseRequest.setVatType(receiveNote.getGrn().getVatType());
+//            purchaseRequest.setInvoice(grn.getInvoicePath());
+//            receiveNote.getSrnDetails().stream().forEach(srnd->{
+//                Item item = srnd.getItem();
+//                Optional<GoodReceiveItemDetail> grndetailOp = grn.getGoodReceiveItemDetails().stream().filter(grnd->grnd.getItem().getId().equals(item.getId())).findFirst();
+//
+//                PurchaseRequestItem pri = new PurchaseRequestItem();
+//                pri.setItemCode(srnd.getItem().getCode());
+//                pri.setQty(srnd.getStockInQty());
+//                pri.setTransactionType(grn.getPaymentType());
+//                if(grn.getDays()!=null) {
+//                    pri.setCreditDays(grn.getDays().toString());
+//                }
+//                pri.setPricePerUnit(srnd.getGoodReceiveItemDetail().getPricePerUnit());
+//                if(grndetailOp.isPresent()){
+//                    pri.setEstDeliveryTime(grndetailOp.get().getEstimatedDeliveryDays().toString());
+//                    pri.setVat(grndetailOp.get().getVatAmount());
+//                    pri.setDeliveryCharge(grn.getDeliveryChargeAmount());
+//                }
+//                items.add(pri);
+//            });
+//            purchaseRequest.setItemList(items);
+//
+//            HttpHeaders headers = networkService.setHttpHeaders(token);
+//            HttpEntity<PurchaseRequest> payload = new HttpEntity<>(purchaseRequest,headers);
+//            System.out.println(purchaseReceivedEndpoint);
+//            networkService.post(purchaseReceivedEndpoint, payload, Void.class);
+//        }
+//    }
+
+//    @Override
+//    public void createLedgerItemWithoutWarehouseId(Jwt token, LedgerAccount ledgerAccount) {
+//        HttpHeaders headers = networkService.setHttpHeaders(token);
+//
+//        Item item = ledgerAccount.getItem();
+//        ItemCategory category = item.getItemParentCategory();
+//        ItemCategory subCategory = item.getItemCategory();
+//        item.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+//
+//        RemoteLedgerAccDto remoteLedgerAccountDto = new RemoteLedgerAccDto();
+//        remoteLedgerAccountDto.setWarehouseId(ledgerAccount.getWarehouse().getId());
+//        remoteLedgerAccountDto.setItemId(item.getId());
+//        remoteLedgerAccountDto.setItemCode(item.getCode());
+//        remoteLedgerAccountDto.setBrandName(item.getName());
+//        remoteLedgerAccountDto.setAtrName(item.getItemAttributeName());
+//        remoteLedgerAccountDto.setCategoryId(category.getId());
+//        remoteLedgerAccountDto.setCategory(category.getName());
+//        remoteLedgerAccountDto.setCategoryCode(category.getCode());
+//        remoteLedgerAccountDto.setSubCategoryId(subCategory.getId());
+//        remoteLedgerAccountDto.setSubCategory(subCategory.getName());
+//        remoteLedgerAccountDto.setSubCategoryCode(subCategory.getCode());
+//
+//        HttpEntity<RemoteLedgerAccDto> payload = new HttpEntity<>(remoteLedgerAccountDto,headers);
+//
+//        networkService.post(ledgerItemCreateEndpoint, payload, Void.class);
+//
+//    }
+
 }

@@ -158,7 +158,18 @@ public class SrnServiceImpl implements SrnService{
                     storeInItem(grn, srnd);
                     return srnd;
                 }).collect(Collectors.toList()));
-//                integrationWriterService.purchaseReceived(claimResolver.getToken(),storeReceiveNote);
+
+                integrationWriterService.purchaseReceived(claimResolver.getToken(),storeReceiveNote);
+
+
+//                if(storeReceiveNote.getGrn().getGrnMode().equals(GrnMode.MANUAL)){
+//                    integrationWriterService.purchaseReceivedManual(claimResolver.getToken(),storeReceiveNote);
+//                }
+//
+//                if(storeReceiveNote.getGrn().getGrnMode().equals(GrnMode.AUTO)){
+//                    integrationWriterService.purchaseReceived(claimResolver.getToken(),storeReceiveNote);
+//                }
+
             }
 
 //            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver, uri,

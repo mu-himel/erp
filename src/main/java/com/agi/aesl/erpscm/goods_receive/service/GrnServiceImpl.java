@@ -146,7 +146,6 @@ public class GrnServiceImpl implements GrnService{
         grn.setGrnDate(LocalDate.now());
         if(mode.equals(GrnMode.AUTO)) {
             grn.setRemotePoId(grnManualDto.getPoId());
-
         }
         grn.setGrnStatus(GrnStatus.PENDING);
         grn.setPoNo(grnManualDto.getPoNo());
@@ -184,6 +183,7 @@ public class GrnServiceImpl implements GrnService{
                     grid.setCategory(item.getItemParentCategory());
                     grid.setSubCategory(item.getItemCategory());
                 }
+                grid.setVatAmount(detailDto.getVatAmount());
                 grid.setExpireDate(detailDto.getExpireDate());
                 grid.setManufactureDate(detailDto.getProductionDate());
                 grid.setEstimatedDeliveryDays(detailDto.getEstDeliveryDays());
