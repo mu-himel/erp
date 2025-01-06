@@ -225,7 +225,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
                 pri.setPricePerUnit(srnd.getGoodReceiveItemDetail().getPricePerUnit());
                 if(grndetailOp.isPresent()){
                     pri.setEstDeliveryTime(grndetailOp.get().getEstimatedDeliveryDays().toString());
-                    pri.setVat(grn.getVat());
+                    pri.setVat(grndetailOp.get().getVatAmount());
                     pri.setDeliveryCharge(grn.getDeliveryChargeAmount());
                 }
                 items.add(pri);
@@ -270,7 +270,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
                 pri.setPricePerUnit(srnd.getGoodReceiveItemDetail().getPricePerUnit());
                 if(grndetailOp.isPresent()){
                     pri.setEstDeliveryTime(grndetailOp.get().getEstimatedDeliveryDays().toString());
-                    pri.setVat(grn.getVat());
+                    pri.setVat(grndetailOp.get().getVatAmount());
                     pri.setDeliveryCharge(grn.getDeliveryChargeAmount());
                 }
                 items.add(pri);

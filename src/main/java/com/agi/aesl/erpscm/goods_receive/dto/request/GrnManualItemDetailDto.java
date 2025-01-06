@@ -18,6 +18,7 @@ public class GrnManualItemDetailDto {
     private BigDecimal orderQty;
     private BigDecimal pricePerUnit;
     private BigDecimal deliveryChargeAmount;
+    private BigDecimal vatAmount;
     private LocalDate expireDate;
     private LocalDate productionDate;
 }
