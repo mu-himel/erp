@@ -217,7 +217,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
                 if(grndetailOp.isPresent()){
                     pri.setEstDeliveryTime(grndetailOp.get().getEstimatedDeliveryDays().toString());
                     pri.setVat(grndetailOp.get().getVatAmount());
-                    pri.setDeliveryCharge(grn.getDeliveryChargeAmount());
+                    pri.setDeliveryCharge(grndetailOp.get().getDeliveryCharge());
                 }
                 items.add(pri);
             });
@@ -229,9 +229,6 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
             networkService.post(purchaseReceivedEndpoint, payload, Void.class);
         }
     }
-
-
-
 
 //    @Override
 //    @Transactional
