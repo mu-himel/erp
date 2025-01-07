@@ -104,12 +104,16 @@ public interface ItemQuery {
                          i.stock_threshold_qty as stockThresholdQty,
                          i.reorder_percentage as reorderPercentage,
                          (SELECT MAX(la.account_status)
-                                             FROM ledger_accounts la WHERE la.item_id = i.id ) as status
+                                             FROM ledger_accounts la WHERE la.item_id = i.id ) as status,
+                        w.name as warehouseName,
+                        ws.store_name as warehouseStoreName
                         FROM scm_items i 
                         LEFT JOIN scm_item_import_logs siil ON siil.item_id = i.id AND siil.item_inactive_status = 'PENDING_VERIFICATION'
                         LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id 
                         LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id 
                         LEFT JOIN scm_item_stocks s ON s.item_id = i.id 
+                        LEFT JOIN scm_warehouses w ON s.warehouse_id = w.id 
+                        LEFT JOIN scm_warehouse_stores ws ON s.warehouse_store_id = ws.id 
                          WHERE i.active=0 
                         AND (s.warehouse_id IN (:warehouseId) AND siil.warehouse_id IN (:warehouseId))
                         AND s.warehouse_store_id = :warehouseStoreId 

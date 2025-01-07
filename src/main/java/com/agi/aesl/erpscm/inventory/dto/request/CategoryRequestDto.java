@@ -68,6 +68,10 @@ public class CategoryRequestDto implements EntityConvertable<ItemCategory>{
     public ItemCategory getEntity() {
         ItemCategory category = new ItemCategory(id);
         BeanUtils.copyProperties(this,category);
+        if(category.getName().trim().equals("")){
+            throw new RuntimeException("Sorry! Name field should not blank");
+        }
+        category.setName(category.getName().trim());
         return category;
     }
     
