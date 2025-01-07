@@ -7,6 +7,7 @@ import java.util.List;
 @Data
 public class PurchaseRequest {
     private String srnNo;
+    private String poNo;
     private String vendorCpsId;
     private String vatType;
     private String invoice;

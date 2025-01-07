@@ -207,6 +207,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
             }
             PurchaseRequest purchaseRequest = new PurchaseRequest();
             purchaseRequest.setSrnNo(receiveNote.getSrnNo());
+            purchaseRequest.setPoNo(receiveNote.getGrn().getPoNo());
             GoodReceiveNote grn = receiveNote.getGrn();
             purchaseRequest.setVendorCpsId(grn.getVendorId().toString());
             List<PurchaseRequestItem> items = new ArrayList<>();

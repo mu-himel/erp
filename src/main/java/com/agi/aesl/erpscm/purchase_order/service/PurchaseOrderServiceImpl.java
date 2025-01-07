@@ -714,7 +714,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 //                               return new ItemInfo(q.getBrandName(),q.getItemAttribute(),q.getExtendedAttributes());
 //                            }).collect(Collectors.toList());
 //                    String[] summary = pqdi.getSummary().split(",");
-                    prdr.setItemName(podi.getCsVendorDetail().getCsDetail().getIndentDetail().getItemAttribute());
+                    prdr.setItemName(podi.getItemName());
                     Long warehouseId=null;
                     if(podi.getCsVendorDetail().getCsDetail().getIndentDetail().getIndent()
                             .getSingleWarehouse()!=null) {

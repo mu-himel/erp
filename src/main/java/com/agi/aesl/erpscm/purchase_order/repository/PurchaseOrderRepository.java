@@ -115,6 +115,7 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
         String getPoNo();
         LocalDate getDeliveryDate();
 
+        String getItemName();
         BigDecimal getDeliveryQty();
         BigDecimal getDeliveryCharge();
         BigDecimal getVatAmount();
