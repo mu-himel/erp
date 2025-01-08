@@ -493,8 +493,7 @@ interface DemandQuery {
                    WHERE sdd.item_id IS NOT NULL AND sd.warehouse_id = :warehouseId AND sdd.item_category_id = sic.id
                     AND sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
                     group by sdd.id
-                    )p WHERE p.item_category_id = sic.id
-               GROUP BY p.brand_name, p.item_id
+                    ) p WHERE p.item_category_id = sic.id
                ) as inTransit FROM scm_item_stocks sis
                LEFT JOIN scm_items si ON si.id = sis.item_id
                LEFT JOIN scm_item_categories sic ON sic.id = si.item_category_id
