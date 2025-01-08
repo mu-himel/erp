@@ -61,6 +61,8 @@ public class CategoryRequestDto implements EntityConvertable<ItemCategory>{
 
     private String employee;
 
+    private Boolean isActive=false;
+
 
     private CategoryStatus categoryStatus;
 

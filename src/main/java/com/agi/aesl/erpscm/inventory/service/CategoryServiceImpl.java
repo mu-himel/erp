@@ -124,6 +124,7 @@ public class CategoryServiceImpl implements CategoryService {
                     CategoryRequestDto cr = new CategoryRequestDto();
                     cr.setCategoryStatus(CategoryStatus.APPROVED);
                     cr.setAttributes(categoryRequestDto.getAttributes());
+                    cr.setIsActive(false);
                     Optional<ItemCategory> codeExist = categoryRepository.findByCode(code);
                     if(codeExist.isPresent()){
                         Optional<CategoryWarehouseStore> cwsOp =  categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseId(codeExist.get().getId() ,categoryRequestDto.getWarehouse().getId());
@@ -137,7 +138,8 @@ public class CategoryServiceImpl implements CategoryService {
                         }
                         ItemCategory itemCategory = codeExist.get();
                         itemCategory.setActive(true);
-                        continue;
+                        cr.setId(itemCategory.getId());
+                        cr.setIsActive(true);
 
                     }
                     cr.setCode(code);
@@ -148,14 +150,19 @@ public class CategoryServiceImpl implements CategoryService {
                     cr.setVat(categoryRequestDto.getVat());
                     cr.setWarehouse(categoryRequestDto.getWarehouse());
                     cr.setWarehouseStore(categoryRequestDto.getWarehouseStore());
-                if(categoryRequestDto.getBrands()!=null && categoryRequestDto.getBrands().size()>0){
-                    cr.setBrands(categoryRequestDto.getBrands());
-                }
+                    if(categoryRequestDto.getBrands()!=null && categoryRequestDto.getBrands().size()>0){
+                        cr.setBrands(categoryRequestDto.getBrands());
+                    }
                 cr.setCurrentYearBudget(new BigDecimal(0));
                 cr.setIsForCps(categoryRequestDto.getIsForCps());
                 scmIdUpdateDto.setCategoryIdCps(categoryRequestDto.getCpsCategoryId());
-                Optional<ItemCategory> catOp = this.addCategory(null,cr);
-
+               Optional<ItemCategory> catOp = Optional.empty();
+               if(cr.getIsActive()){
+                   cr.setBudgetId(Optional.empty());
+                    this.updateCategory(cr.getId(),cr);
+                }else {
+                    catOp = this.addCategory(null, cr);
+                }
                 if(catOp.isPresent()){
                     scmIdUpdateDto.setCategoryIdScm(catOp.get().getId());
                 }
@@ -374,9 +381,18 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         if(categoryRequestDto.getAttributes()!=null && categoryRequestDto.getAttributes().size()>0){
-            itemCategory.setAttributes(categoryRequestDto.getAttributes().stream().map(categoryAttribute -> {
-                categoryAttribute.setCategory(itemCategory);
-                return categoryAttribute;
+            itemCategory.setAttributes(categoryRequestDto.getAttributes().stream().filter(categoryAttribute -> {
+                Optional<CategoryAttribute> categoryAttributeOp= categoryAttributeRepository.findAllByAttributeTypeAndAttributeUnit(categoryAttribute.getAttributeType(),categoryAttribute.getAttributeUnit());
+                if(categoryAttributeOp.isEmpty()){
+                    categoryAttribute.setCategory(itemCategory);
+                    return true;
+                }else{
+                    CategoryAttribute categoryAttribute1 = categoryAttributeOp.get();
+                    categoryAttribute1.setAttributeValue(categoryAttribute.getAttributeValue());
+                    categoryAttributeRepository.save(categoryAttribute1);
+                    return false;
+                }
+
             }).collect(Collectors.toList()));
         }
 
@@ -386,6 +402,7 @@ public class CategoryServiceImpl implements CategoryService {
         if(categoryRequestDto.getVat()!=null) {
             itemCategory.setVat(categoryRequestDto.getVat());
         }
+        itemCategory.setActive(true);
         categoryRepository.save(itemCategory);
     }
 
