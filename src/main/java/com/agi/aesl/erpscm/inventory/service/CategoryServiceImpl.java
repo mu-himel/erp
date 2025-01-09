@@ -18,10 +18,14 @@ import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.exception.AesException;
+import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
+import com.agi.aesl.erpscm.fileupload.service.FileUploadService;
 import com.agi.aesl.erpscm.inventory.dto.request.*;
 import com.agi.aesl.erpscm.inventory.entity.*;
 import com.agi.aesl.erpscm.inventory.enums.BudgetType;
+import com.agi.aesl.erpscm.inventory.enums.CategoryHeader;
 import com.agi.aesl.erpscm.inventory.enums.CategoryStatus;
+import com.agi.aesl.erpscm.inventory.enums.ItemHeader;
 import com.agi.aesl.erpscm.inventory.repository.*;
 
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
@@ -35,7 +39,10 @@ import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -46,8 +53,13 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collector;
@@ -106,6 +118,10 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Autowired
     private UserCategoryAttributeRepository userCategoryAttributeRepository;
+    @Autowired
+    private FileUploadService fileUploadService;
+    @Value("${upload.dir}")
+    private String uploadDir;
 
     @Override
     @Transactional
@@ -1201,5 +1217,72 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public Optional<ItemCategory> getItemCategoryById(Long id) {
         return categoryRepository.findById(id);
+    }
+
+    private Iterable<CSVRecord> getItemRecords(FileUploadResponse fileUploadResponse) throws IOException{
+        FileReader in = new FileReader(fileUploadResponse.getPath()+"/"+fileUploadResponse.getFilename());
+        Iterable<CSVRecord> records  = CSVFormat.RFC4180.withHeader(CategoryHeader.class).parse(in);
+        records.iterator().next();
+        return records;
+    }
+
+    @Async
+    @Override
+    public void importCategories(Optional<MultipartFile> fileOp) {
+        Path path = Path.of(uploadDir+"/inventory-mgm/categories");
+        FileUploadResponse fileUploadResponse = null;
+        if(fileOp.isPresent()){
+            fileUploadResponse = fileUploadService.uploadFile(path, fileOp.get());
+            try {
+                Iterable<CSVRecord> records = getItemRecords(fileUploadResponse);
+                for(CSVRecord r : records){
+
+                    Long id = Long.valueOf(r.get("ID"));
+                    Long warehouseId = Long.valueOf(r.get("WAREHOUSE_ID"));
+                    Long warehouseStoreId = Long.valueOf(r.get("WAREHOUSE_STORE_ID"));
+                    String warehosueName = (r.get("WAREHOUSE_NAME"));
+                    String warehouseStoreName = (r.get("WAREHOUSE_STORE_NAME"));
+                    String budgetYearStr = (r.get("BUDGET_YEAR")).trim();
+                    String amount = (r.get("AMOUNT")).trim();
+                    if(budgetYearStr.length()==0){
+                        throw new RuntimeException("Budget Year field should not be blank or empty string");
+                    }
+                    if(amount.length()==0){
+                        throw new RuntimeException("Amount field should not be blank or empty string");
+                    }
+                    Integer budgetYear = Integer.parseInt(budgetYearStr);
+                    Optional<CategoryBudget> categoryBudgetOp = categoryBudgetRepository.findByCategoryIdAndBudgetTypeAndCurrentYear(id,BudgetType.REGULAR,budgetYear);
+                    if(categoryBudgetOp.isPresent()){
+                        CategoryBudget categoryBudget = categoryBudgetOp.get();
+                        if(categoryBudget.getAmount().compareTo(new BigDecimal(amount))<0){
+                            CategoryBudget extendedBudget = new CategoryBudget(categoryBudget.getCategory(),
+                                    new BigDecimal(amount),
+                                    LocalDate.now().getYear(), BudgetType.EXTENDED);
+
+                            extendedBudget.setAmount(new BigDecimal(amount)
+                                    .subtract(categoryBudget.getAmount()));
+                            categoryBudgetRepository.save(extendedBudget);
+                        } else {
+                            categoryBudget.setAmount(new BigDecimal(amount));
+                            categoryBudgetRepository.save(categoryBudget);
+
+                        }
+                    }
+
+                }
+            } catch (NumberFormatException e){
+                throw new RuntimeException("Sorry! Number fields might not have number value pls check (ID, WAREHOUSE ID, WAREHOUSE STORE ID)");
+            }
+            catch (FileNotFoundException e) {
+                throw new AesException(e.getMessage());
+            } catch (IOException e) {
+                throw new AesException("File Columns are not valid for extracting value: "+e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public List<?> getTemplateData(Long categoryId, Long warehouseId, Long warehouseStoreId) {
+        return categoryRepository.findSubCategoryTemplate(categoryId,warehouseId,warehouseStoreId);
     }
 }

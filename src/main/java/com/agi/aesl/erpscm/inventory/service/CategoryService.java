@@ -12,6 +12,7 @@ import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.enums.BudgetType;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -137,4 +138,8 @@ public interface CategoryService {
     Optional<?> getItemCategoryDetail(Long id);
 
     Optional<ItemCategory> getItemCategoryById(Long id);
+
+    void importCategories(Optional<MultipartFile> file);
+
+    List<?> getTemplateData(Long categoryId,  Long warehouseId, Long warehouseStoreId);
 }
