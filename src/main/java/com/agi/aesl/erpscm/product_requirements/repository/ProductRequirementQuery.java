@@ -286,7 +286,7 @@ public interface ProductRequirementQuery {
                                     LEFT JOIN scm_demands d ON d.id = dd.demand_id 
                                     LEFT JOIN scm_category_brands cb ON cb.id=dd.brand_id 
                                     LEFT JOIN scm_demand_detail_attributes dda ON dda.demand_detail_id  = dd.id
-                                    WHERE pr.status = 'OPEN' AND dd.status IN ('PENDING','PENDING_QC')
+                                    WHERE dd.status IN ('PENDING','PENDING_QC')
                                     GROUP BY dd.id
                             ) prtbl
                             WHERE prtbl.warehouse_id = i2.warehouse_id
