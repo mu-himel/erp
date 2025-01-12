@@ -28,11 +28,14 @@ public class CsController extends BaseController {
     public ResponseEntity<?> getAllPendingCs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
-            @RequestParam("size") Optional<Integer> size
+            @RequestParam("size") Optional<Integer> size,
+            @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("status") Optional<String> status
+
             ){
 
         return new ResponseEntity<>(
-                csService.getAllPendingCs(token,page,size),
+                csService.getAllPendingCs(token,indentNo, status,page,size),
                 HttpStatus.OK);
     }
 
@@ -118,19 +121,23 @@ public class CsController extends BaseController {
     @GetMapping("/pending-verification")
     public ResponseEntity<?> getAllPendingVerificationCs(
             @AuthenticationPrincipal Jwt token,
+            Optional<String> indentNo, Optional<String> status,
             Optional<Integer> page, Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                csService.getPendingVerificationCs(token,page, size), HttpStatus.OK);
+                csService.getPendingVerificationCs(token,
+                        indentNo,status,
+                        page, size), HttpStatus.OK);
     }
 
     @GetMapping("/pending-approval")
     public ResponseEntity<?> getAllPendingApprovalCs(
             @AuthenticationPrincipal Jwt token,
+            Optional<String> indentNo, Optional<String> status,
             Optional<Integer> page, Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                csService.getPendingApprovalCs(token,page, size), HttpStatus.OK);
+                csService.getPendingApprovalCs(token,indentNo, status,page, size), HttpStatus.OK);
     }
 
     @GetMapping("/approved")
@@ -145,10 +152,11 @@ public class CsController extends BaseController {
     @GetMapping("/closed")
     public ResponseEntity<?> getAllClosedCs(
             @AuthenticationPrincipal Jwt token,
+            Optional<String> indentNo, Optional<String> status,
             Optional<Integer> page, Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                csService.getClosedCs(token,page, size), HttpStatus.OK);
+                csService.getClosedCs(token,indentNo,status,page, size), HttpStatus.OK);
     }
 
     @PutMapping("/{id}/reject")

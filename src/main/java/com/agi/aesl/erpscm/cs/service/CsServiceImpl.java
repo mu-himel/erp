@@ -132,11 +132,25 @@ public class CsServiceImpl implements CsService{
 
 
     @Override
-    public Page<?> getAllPendingCs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getAllPendingCs(Jwt token,
+                                   Optional<String> indentNo, Optional<String> status,
+                                   Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort );
-        return indentRepository.getAllIndentsByExpireDateTime(LocalDateTime.now(), pageable);
+        List<String> statuses = Arrays.asList(CsStatus.PENDING.name(),
+                CsStatus.PENDING_VERIFICATION.name(),
+                CsStatus.PENDING_APPROVAL.name(),
+                CsStatus.REVIEW.name());
+        if(status.isPresent()){
+            statuses = new ArrayList<>();
+            statuses.add(status.get());
+        }
+        System.out.println(statuses);
+        return indentRepository.getAllIndentsByExpireDateTime(LocalDateTime.now(),
+                indentNo.orElse(null),
+                statuses,
+                pageable);
     }
 
     @Override
@@ -504,19 +518,39 @@ public class CsServiceImpl implements CsService{
     }
 
     @Override
-    public Page<?> getPendingVerificationCs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getPendingVerificationCs(Jwt token, Optional<String> indentNo, Optional<String> status,
+                                            Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
-        return csRepository.findPendingVerificationCs(claimResolver.getUserId(),pageable);
+        List<String> statuses = Arrays.asList(
+                CsStatus.PENDING_VERIFICATION.name(),
+                CsStatus.REVIEW.name(),
+                CsStatus.VERIFIED.name()
+        );
+        if(status.isPresent()){
+            statuses = new ArrayList<>();
+            statuses.add(status.get());
+        }
+        return csRepository.findPendingVerificationCs(claimResolver.getUserId(),indentNo.orElse(null), statuses,pageable);
     }
 
     @Override
-    public Page<?> getPendingApprovalCs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getPendingApprovalCs(Jwt token,  Optional<String> indentNo, Optional<String> status,
+                                        Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
-        return csRepository.findPendingApprovalCs(claimResolver.getUserId(),pageable);
+        List<String> statuses = Arrays.asList(
+                CsStatus.PENDING_APPROVAL.name(),
+                CsStatus.REVIEW.name(),
+                CsStatus.APPROVED.name()
+        );
+        if(status.isPresent()){
+            statuses = new ArrayList<>();
+            statuses.add(status.get());
+        }
+        return csRepository.findPendingApprovalCs(claimResolver.getUserId(),indentNo.orElse(null),statuses,pageable);
     }
 
     @Override
@@ -527,10 +561,22 @@ public class CsServiceImpl implements CsService{
     }
 
     @Override
-    public Page<?> getClosedCs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getClosedCs(Jwt token,
+                               Optional<String> indentNo, Optional<String> status,
+                               Optional<Integer> page, Optional<Integer> size) {
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
-        return csRepository.findClosedCs(pageable);
+        List<String> statuses = Arrays.asList(
+                CsStatus.APPROVED.name(),
+                CsStatus.REJECTED.name(),
+                CsStatus.VERIFIED.name(),
+                CsStatus.COMPLETED.name()
+        );
+        if(status.isPresent()){
+            statuses = new ArrayList<>();
+            statuses.add(status.get());
+        }
+        return csRepository.findClosedCs(pageable,indentNo.orElse(null),statuses);
     }
 
     @Override

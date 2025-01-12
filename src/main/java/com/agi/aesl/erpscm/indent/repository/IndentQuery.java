@@ -336,7 +336,8 @@ public interface IndentQuery {
                         LEFT JOIN acl_users e ON e.id = i.requested_by_id
                         
                 WHERE  (i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.expire_date_time < :expiredDateTime)
-                GROUP BY i.id) r WHERE r.status IN ('PENDING','PENDING_VERIFICATION', 'PENDING_APPROVAL','REVIEW')
+                AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%'))
+                GROUP BY i.id) r WHERE r.status IN (:status)
             """;
 
     String countAllIndentsByExpireDateTimeWithSearch = "SELECT COUNT(*) FROM ("+

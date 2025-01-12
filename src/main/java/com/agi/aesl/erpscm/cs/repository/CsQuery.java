@@ -69,7 +69,7 @@ public interface CsQuery {
             """;
 
     String pendingVerifications= """
-            SELECT
+            SELECT * FROM (SELECT
             i.id as id,
             csheet.id as csId,
             CASE WHEN csheet.cs_status != 'REVIEW' AND (cvah.id IS NOT NULL AND cvah.cs_id = csheet.id 
@@ -93,19 +93,19 @@ public interface CsQuery {
             LEFT JOIN scm_item_categories c ON c.id = i.category_id
             LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
             LEFT JOIN cs_verification_approval_histories cvah ON cvah.cs_id = csheet.id
-            WHERE  (
+            WHERE  (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%'))
+            AND (
                     (csheet.next_verifier_id = :nextVerifierId AND 
                     csheet.cs_status IN ('PENDING_VERIFICATION','REVIEW','VERIFIED'))
                     OR 
                     (cvah.employee_id = :nextVerifierId AND cvah.cs_status = 'VERIFIED')
                 )
-            
-            GROUP BY csheet.id
+            GROUP BY csheet.id) r WHERE r.status IN (:statuses)
             """;
     String countPendingVerifications="SELECT COUNT(*) FROM ("+pendingVerifications+") as total";
 
     String pendingApprovals= """
-            SELECT
+            SELECT * FROM (SELECT
             i.id as id,
             csheet.id as csId,
             CASE WHEN csheet.cs_status != 'REVIEW' AND (cvah.id IS NOT NULL AND cvah.cs_id = csheet.id 
@@ -129,14 +129,14 @@ public interface CsQuery {
         LEFT JOIN scm_item_categories c ON c.id = i.category_id
         LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
         LEFT JOIN cs_verification_approval_histories cvah ON cvah.cs_id = csheet.id
-        WHERE  (
+        WHERE   (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%'))
+        AND (
                 (csheet.next_approver_id = :nextApproverId AND 
                 csheet.cs_status IN ('PENDING_APPROVAL','REVIEW','APPROVED'))
                 OR
                 (cvah.employee_id = :nextApproverId AND cvah.cs_status = 'APPROVED')
             )
-            
-            GROUP BY csheet.id
+            GROUP BY csheet.id) r WHERE r.status IN (:statuses)
             """;
 
     String countPendingApprovals="SELECT COUNT(*) FROM ("+pendingApprovals+") as total";
@@ -160,7 +160,7 @@ public interface CsQuery {
     LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id  
     LEFT JOIN scm_item_categories c ON c.id = i.category_id
     LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
-    WHERE csheet.cs_status IN ('REJECTED', 'APPROVED','VERIFIED','COMPLETED')
+    WHERE (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%')) AND csheet.cs_status IN (:statuses)
     GROUP BY csheet.id
         """;
     String countClosedCs="SELECT COUNT(*) FROM ("+closedCs+") as total";

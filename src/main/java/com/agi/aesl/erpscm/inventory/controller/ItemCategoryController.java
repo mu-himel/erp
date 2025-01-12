@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 // import javax.validation.Valid;
 import java.math.BigDecimal;
@@ -362,5 +363,29 @@ public class ItemCategoryController extends BaseController{
         @RequestBody CategoryApproveRequestDto categoryApproveRequestDto){
         categoryService.approveItemCategory(token,  id, categoryApproveRequestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<?> importItems(
+            @RequestPart("file") Optional<MultipartFile> file
+    ){
+        categoryService.importCategories(file);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/download-template")
+    public ResponseEntity<?> downloadTemplate(
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("warehouseId") Optional<Long> warehouseId,
+            @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId
+    ){
+
+        return new ResponseEntity<>(categoryService.getTemplateData(
+                    categoryId.orElse(null),
+                    warehouseId.orElse(null),
+                    warehouseStoreId.orElse(null)
+            ),
+            HttpStatus.OK
+        );
     }
 }

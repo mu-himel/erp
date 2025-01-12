@@ -963,7 +963,7 @@ public class ItemServiceImpl implements ItemService {
             fileUploadResponse = fileUploadService.uploadFile(path, fileOp.get());
             try {
                 Iterable<CSVRecord> records = getItemRecords(fileUploadResponse);
-                Map<String,Object> _item = new HashMap<>();
+//                Map<String,Object> _item = new HashMap<>();
                 for(CSVRecord r : records){
                     String catName = r.get("CATEGORY");
                     String subCatName = r.get("SUB_CATEGORY");
