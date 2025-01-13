@@ -253,7 +253,7 @@ public class CsAccountServiceImpl implements CsAccountService{
         claimResolver.setToken(token);
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
         List<String> _status = new ArrayList<>();
         _status.add(CsStatus.PENDING_APPROVAL.toString());
         _status.add(CsStatus.REVIEW.toString());
