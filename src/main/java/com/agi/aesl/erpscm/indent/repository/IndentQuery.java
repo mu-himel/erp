@@ -311,7 +311,11 @@ public interface IndentQuery {
                         csheet.id                               as csId,
                         i.indent_no                             as indentNo,
                         i.sent_date                             as sentDate,
-                        i.indent_date                           as indentDate,
+                        CASE WHEN csheet.id IS NULL THEN
+                            i.indent_date               
+                        ELSE 
+                            csheet.created_at
+                        END                                     as indentDate,
                         i.category_id                           as categoryId,
                         CONCAT(c.name,'-',sc.name)              as categoryName,
                         COUNT(ide.id)                           as itemsCount,
@@ -326,7 +330,6 @@ public interface IndentQuery {
                         CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
                         (SELECT count(*) FROM price_quotations pq 
                                 WHERE status='LOCKED' AND rfq_id = i.id) as lockedVendor
-                        
                 FROM indents i
                         LEFT JOIN indent_details ide on i.id = ide.indent_id
                         LEFT JOIN cs csheet ON csheet.indent_id = i.id
@@ -334,9 +337,10 @@ public interface IndentQuery {
                         LEFT JOIN scm_item_categories c on i.category_id = c.id
                         LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                         LEFT JOIN acl_users e ON e.id = i.requested_by_id
-                        
                 WHERE  (i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.expire_date_time < :expiredDateTime)
-                GROUP BY i.id) r WHERE r.status IN ('PENDING','PENDING_VERIFICATION', 'PENDING_APPROVAL','REVIEW')
+                AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%'))
+                GROUP BY i.id) r WHERE r.status IN (:status)
+                AND (:fromDate IS NULL OR r.indentDate BETWEEN :fromDate AND :toDate)
             """;
 
     String countAllIndentsByExpireDateTimeWithSearch = "SELECT COUNT(*) FROM ("+

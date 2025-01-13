@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CsRepository extends JpaRepository<Cs,Long>, CsQuery {
@@ -25,16 +26,27 @@ public interface CsRepository extends JpaRepository<Cs,Long>, CsQuery {
     List<ItemWiseVendorDetail> findLockedVendorsByItemName(Long tenderId, Long vendorId, String itemName);
 
     @Query(value = pendingVerifications,countQuery = countPendingVerifications, nativeQuery = true)
-    Page<CsPendingListInfo> findPendingVerificationCs(String nextVerifierId, Pageable pageable);
+    Page<CsPendingListInfo> findPendingVerificationCs(String nextVerifierId,
+                                                      String indentNo, List<String> statuses,
+                                                      LocalDateTime fromDate, LocalDateTime toDate,
+                                                      Pageable pageable);
 
     @Query(value = pendingApprovals,countQuery = countPendingApprovals, nativeQuery = true)
-    Page<CsPendingListInfo> findPendingApprovalCs(String nextApproverId, Pageable pageable);
+    Page<CsPendingListInfo> findPendingApprovalCs(String nextApproverId,
+                                                  String indentNo, List<String> statuses,
+                                                  LocalDateTime fromDate, LocalDateTime toDate,
+                                                  Pageable pageable);
 
     @Query(value = closedCs,countQuery = countClosedCs, nativeQuery = true)
-    Page<CsPendingListInfo> findClosedCs(Pageable pageable);
+    Page<CsPendingListInfo> findClosedCs(String indentNo, List<String> statuses,
+                                         LocalDateTime fromDate, LocalDateTime toDate,
+                                         Pageable pageable);
 
     @Query(value = approvedCs,countQuery = countApprovedCs, nativeQuery = true)
-    Page<CsPendingListInfo> findApprovedCs(Pageable pageable);
+    Page<CsPendingListInfo> findApprovedCs(
+            String indentNo, List<String> statuses,
+            LocalDateTime fromDate, LocalDateTime toDate,
+            Pageable pageable);
 
     @Query(value="""
                 SELECT cvdd.id as cvddId, 
