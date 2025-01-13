@@ -45,11 +45,13 @@ public class AcsController extends BaseController {
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("status") Optional<String> status,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
             ){
         return new ResponseEntity<>(csAccountService.getPendingAcs(token,
-                indentNo,status,
+                indentNo,status, fromDateStr, toDateStr,
                 page,size), HttpStatus.OK);
     }
 
@@ -57,11 +59,14 @@ public class AcsController extends BaseController {
     public ResponseEntity<?> getPendingVerificationAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("status") Optional<String> status,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(csAccountService.getPendingVerificationAcs(token,
-                indentNo,
+                indentNo,status,fromDateStr,toDateStr,
                 page,size), HttpStatus.OK);
     }
 
@@ -69,11 +74,14 @@ public class AcsController extends BaseController {
     public ResponseEntity<?> getPendingApprovalAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("status") Optional<String> status,
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(csAccountService.getPendingApprovalAcs(token,
-                indentNo,
+                indentNo,status, fromDate, toDate,
                 page,size), HttpStatus.OK);
     }
 
@@ -81,22 +89,28 @@ public class AcsController extends BaseController {
     public ResponseEntity<?> getApprovedAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("status") Optional<String> status,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(csAccountService.getApprovedAcs(token,
-                indentNo,page,size), HttpStatus.OK);
+                indentNo,status,fromDateStr,toDateStr,page,size), HttpStatus.OK);
     }
 
     @GetMapping("/rejected")
     public ResponseEntity<?> getRejectedAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("status") Optional<String> status,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(csAccountService.getRejectedAcs(token,
-                indentNo,page,size), HttpStatus.OK);
+                indentNo,status,fromDateStr,toDateStr,page,size), HttpStatus.OK);
     }
 
     @GetMapping("/closed")
@@ -104,11 +118,13 @@ public class AcsController extends BaseController {
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("status") Optional<String> status,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(csAccountService.getClosedAcs(token,
-                indentNo,status,page,size), HttpStatus.OK);
+                indentNo,status,fromDateStr,toDateStr,page,size), HttpStatus.OK);
     }
 
     @GetMapping("/active-cs")
