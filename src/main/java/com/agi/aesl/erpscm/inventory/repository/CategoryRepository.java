@@ -243,9 +243,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             "            GROUP BY ic.id",nativeQuery = true)
     List<ItemCategoryInfo> findAllSubCategories(Long storeId, String categoryCode, String name, String code);
 
-
     Optional<ItemCategory> findByUserCategoryId(Long id);
-
 
     @Query(value = getSubCategoriesTemplate, nativeQuery = true)
     List<SubcategoryTemplate> findSubCategoryTemplate(Long categoryId, Long warehouseId, Long warehouseStoreId);

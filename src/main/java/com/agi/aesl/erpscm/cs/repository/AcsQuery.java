@@ -24,8 +24,9 @@ public interface AcsQuery {
             LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id  
             LEFT JOIN scm_item_categories c ON c.id = i.category_id
             LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
-            WHERE (:indentNo IS NULL OR csheet.cs_no LIKE concat('%',:indentNo))
+            WHERE (:indentNo IS NULL OR csheet.cs_no LIKE concat('%',:indentNo,'%'))
             AND (COALESCE(:status) IS NULL OR acs.acs_status IN (:status))
+            AND (COALESCE(:fromDate) IS NULL OR acs.created_at BETWEEN :fromDate AND :toDate)
             GROUP BY acs.id
             """;
 
@@ -67,6 +68,7 @@ public interface AcsQuery {
                     OR 
                     (cavah.employee_id = :nextVerifierId AND cavah.acs_status IN ('PENDING_VERIFICATION','REVIEW','VERIFIED'))
             )
+            AND (COALESCE(:fromDate) IS NULL OR acs.created_at BETWEEN :fromDate AND :toDate)
             GROUP BY acs.id
             """;
 
@@ -109,6 +111,7 @@ public interface AcsQuery {
                     OR 
                     (cavah.employee_id = :nextApproverId AND cavah.acs_status IN ('PENDING_APPROVAL','REVIEW','APPROVED'))
             )
+            AND (COALESCE(:fromDate) IS NULL OR acs.created_at BETWEEN :fromDate AND :toDate)
             GROUP BY acs.id
             """;
 

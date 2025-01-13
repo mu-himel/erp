@@ -139,7 +139,6 @@ public interface CategoryService {
 
     Optional<ItemCategory> getItemCategoryById(Long id);
 
-
     Optional<ItemCategory> getCategoryByUserCategory(Long id);
 
     void importCategories(Optional<MultipartFile> file);

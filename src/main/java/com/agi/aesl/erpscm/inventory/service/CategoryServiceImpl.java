@@ -1219,7 +1219,6 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryRepository.findById(id);
     }
 
-
     @Override
     public Optional<ItemCategory> getCategoryByUserCategory(Long id) {
         return categoryRepository.findByUserCategoryId(id);

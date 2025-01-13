@@ -12,21 +12,29 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface CsAccountRepository extends JpaRepository<CsAccount,Long>, AcsQuery {
     @Query(value = getAllAcsByIndentNoAndStatus, countQuery = countByIndentNoAndStatusAcs, nativeQuery = true)
-    Page<AcsPendingItem> findAllAcs(Optional<String> indentNo, List<String> status, Pageable pageable);
+    Page<AcsPendingItem> findAllAcs(Optional<String> indentNo, List<String> status,
+                                    LocalDateTime fromDate, LocalDateTime toDate,
+                                    Pageable pageable);
 
     @Query(value = getAllPVAcsByIndentNoAndStatus, countQuery = countByPVAcsIndentNoAndStatusAcs, nativeQuery = true)
     Page<AcsPendingItem> findAllPendingVerificationAcs(Optional<String> indentNo,
-                                                       String nextVerifierId, List<String> status, Pageable pageable);
+                                                       String nextVerifierId, List<String> status,
+                                                       LocalDateTime fromDate,
+                                                       LocalDateTime toDate,
+                                                       Pageable pageable);
 
     @Query(value = getAllPAAcsByIndentNoAndStatus, countQuery = countByPAAcsIndentNoAndStatusAcs, nativeQuery = true)
     Page<AcsPendingItem> findAllPendingApprovalAcs(Optional<String> indentNo,String nextApproverId,
-                                                   List<String> status, Pageable pageable);
+                                                   List<String> status,
+                                                   LocalDateTime fromDate, LocalDateTime toDate,
+                                                   Pageable pageable);
 
     @Query(value = getAllActiveCsByIndentNo, countQuery = countAllActiveCsByIndentNo, nativeQuery = true)
     Page<AcsPendingItem> findAllActiveCs(String indentNo, List<String> status, Pageable pageable);

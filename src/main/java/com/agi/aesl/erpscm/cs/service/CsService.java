@@ -13,7 +13,9 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface CsService extends VerificationDomainService {
-    Page<?> getAllPendingCs(Jwt token,Optional<String> indentNo,Optional<String> status,
+    Page<?> getAllPendingCs(Jwt token,
+                            Optional<String> indentNo,Optional<String> status,
+                            Optional<String> fromDateStr,Optional<String> toDateStr,
                             Optional<Integer> page, Optional<Integer> size);
 
     void createCs(Jwt token, String uri, CsRequestDto csRequestDto);
@@ -30,15 +32,25 @@ public interface CsService extends VerificationDomainService {
     void updateCs(Jwt token, Long id, CsUpdateRequestDto csDto, CsOperation csOperation);
 
 
-    Page<?> getPendingVerificationCs(Jwt token,Optional<String> indentNo, Optional<String> status,
+    Page<?> getPendingVerificationCs(Jwt token,
+                                     Optional<String> indentNo, Optional<String> status,
+                                     Optional<String> fromDateStr, Optional<String> toDateStr,
                                      Optional<Integer> page, Optional<Integer> size);
 
-    Page<?> getPendingApprovalCs(Jwt token, Optional<String> indentNo, Optional<String> status,
+    Page<?> getPendingApprovalCs(Jwt token,
+                                 Optional<String> indentNo, Optional<String> status,
+                                 Optional<String> fromDateStr, Optional<String> toDateStr,
                                  Optional<Integer> page, Optional<Integer> size);
 
-    Page<?> getApprovedCs(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getApprovedCs(Jwt token,
+                Optional<String> indentNo, Optional<String> status,
+                Optional<String> fromDateStr, Optional<String> toDateStr,
+                Optional<Integer> page, Optional<Integer> size
+    );
 
-    Page<?> getClosedCs(Jwt loggedInUser, Optional<String> indentNo, Optional<String> status,
+    Page<?> getClosedCs(Jwt loggedInUser,
+                        Optional<String> indentNo, Optional<String> status,
+                        Optional<String> fromDateStr, Optional<String> toDateStr,
                         Optional<Integer> page, Optional<Integer> size);
 
     void rejectCs(Jwt loggedInUser, Long id, NoteDto noteDto);

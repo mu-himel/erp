@@ -51,6 +51,15 @@ public class CsAccountServiceImpl implements CsAccountService{
     @Autowired
     private CommentService commentService;
 
+    private LocalDateTime parseDate(Optional<String> dateStr,String endTime){
+        LocalDateTime date = null;
+        if(dateStr.isPresent()){
+            String time = (endTime!=null && endTime.trim().length()==8)? "T"+endTime:"T00:00:00";
+            date = LocalDateTime.parse(dateStr.get()+time);
+        }
+        return date;
+    }
+
     @Override
     @Transactional
     public void createCsAccount(Cs cs) {
@@ -184,11 +193,22 @@ public class CsAccountServiceImpl implements CsAccountService{
     @Override
     public Page<?> getPendingAcs(Jwt token,
                                  Optional<String> indentNo, Optional<String> status,
+                                 Optional<String> fromDateStr, Optional<String> toDateStr,
                                  Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
-        List<String> _status = new ArrayList<>();
-        status.ifPresent(_status::add);
-        return csAccountRepository.findAllAcs(indentNo, _status,pageable);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        List<String> _status = Arrays.asList(
+                CsStatus.PENDING.name(),
+                CsStatus.PENDING_VERIFICATION.name(),
+                CsStatus.PENDING_APPROVAL.name(),
+                CsStatus.REVIEW.name()
+        );
+        if(status.isPresent()){
+            _status = new ArrayList<>();
+            _status.add(status.get());
+        }
+        return csAccountRepository.findAllAcs(indentNo, _status, fromDate,toDate,  pageable);
     }
 
     private static Pageable getPageable(Optional<Integer> page, Optional<Integer> size) {
@@ -205,53 +225,92 @@ public class CsAccountServiceImpl implements CsAccountService{
     }
 
     @Override
-    public Page<?> getPendingVerificationAcs(Jwt token, Optional<String> indentNo, Optional<Integer> page,
-                                             Optional<Integer> size) {
+    public Page<?> getPendingVerificationAcs(Jwt token, Optional<String> indentNo, Optional<String> status,
+                                             Optional<String> fromDateStr,Optional<String> toDateStr,
+                                             Optional<Integer> page,Optional<Integer> size
+    ) {
         claimResolver.setToken(token);
         Pageable pageable = getPageable(page, size);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr, "23:59:59");
         List<String> _status = new ArrayList<>();
         _status.add(CsStatus.PENDING_VERIFICATION.toString());
         _status.add(CsStatus.REVIEW.toString());
         _status.add(CsStatus.VERIFIED.toString());
+        if(status.isPresent()){
+            _status=new ArrayList<>();
+            _status.add(status.get());
+        }
         return csAccountRepository.findAllPendingVerificationAcs(indentNo,
-                claimResolver.getUserId(),_status,pageable);
+                claimResolver.getUserId(),_status,fromDate,toDate,pageable);
     }
 
     @Override
-    public Page<?> getPendingApprovalAcs(Jwt token, Optional<String> indentNo, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getPendingApprovalAcs(Jwt token,
+                                         Optional<String> indentNo, Optional<String> status,
+                                         Optional<String> fromDateStr, Optional<String> toDateStr,
+                                         Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Pageable pageable = getPageable(page, size);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,null);
         List<String> _status = new ArrayList<>();
         _status.add(CsStatus.PENDING_APPROVAL.toString());
         _status.add(CsStatus.REVIEW.toString());
         _status.add(CsStatus.APPROVED.toString());
-        return csAccountRepository.findAllPendingApprovalAcs(indentNo,claimResolver.getUserId(), _status,pageable);
+        if(status.isPresent()){
+            _status = new ArrayList<>();
+            _status.add(status.get());
+        }
+        return csAccountRepository.findAllPendingApprovalAcs(indentNo,claimResolver.getUserId(), _status,
+                fromDate, toDate,
+                pageable);
     }
 
     @Override
     public Page<?> getApprovedAcs(Jwt token,
-                                  Optional<String> indentNo,
-                                  Optional<Integer> page,
-                                  Optional<Integer> size) {
+                                  Optional<String> indentNo, Optional<String> status,
+                                  Optional<String> fromDateStr, Optional<String> toDateStr,
+                                  Optional<Integer> page,Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(fromDateStr,"23:59:59");
         List<String> _status = new ArrayList<>();
         _status.add(CsStatus.APPROVED.toString());
+        _status.add(CsStatus.COMPLETED.toString());
         _status.add(CsStatus.VERIFIED.toString());
-        return csAccountRepository.findAllAcs(indentNo, _status,pageable);
+        if(status.isPresent()){
+            _status=new ArrayList<>();
+            _status.add(status.get());
+        }
+        return csAccountRepository.findAllAcs(indentNo, _status,fromDate, toDate, pageable);
     }
 
     @Override
-    public Page<?> getRejectedAcs(Jwt token, Optional<String> indentNo, Optional<Integer> page,
-                                  Optional<Integer> size) {
+    public Page<?> getRejectedAcs(Jwt token,
+                                  Optional<String> indentNo, Optional<String> status,
+                                  Optional<String> fromDateStr, Optional<String> toDateStr,
+                                  Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(fromDateStr,"23:59:59");
         List<String> _status = new ArrayList<>();
         _status.add(CsStatus.REJECTED.toString());
-        return csAccountRepository.findAllAcs(indentNo, _status,pageable);
+        if(status.isPresent()){
+            _status=new ArrayList<>();
+            _status.add(status.get());
+        }
+        return csAccountRepository.findAllAcs(indentNo, _status,fromDate, toDate,pageable);
     }
 
     @Override
-    public Page<?> getClosedAcs(Jwt token, Optional<String> indentNo, Optional<String> status, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getClosedAcs(Jwt token,
+                                Optional<String> indentNo, Optional<String> status,
+                                Optional<String> fromDateStr, Optional<String> toDateStr,
+                                Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(fromDateStr,"23:59:59");
         List<String> _status = new ArrayList<>();
         if(status.isEmpty()) {
             _status.add(CsStatus.APPROVED.toString());
@@ -259,8 +318,11 @@ public class CsAccountServiceImpl implements CsAccountService{
             _status.add(CsStatus.REJECTED.toString());
             _status.add(CsStatus.COMPLETED.toString());
         }
-        status.ifPresent(_status::add);
-        return csAccountRepository.findAllAcs(indentNo, _status,pageable);
+        if(status.isPresent()){
+            _status=new ArrayList<>();
+            _status.add(status.get());
+        }
+        return csAccountRepository.findAllAcs(indentNo, _status, fromDate,toDate,pageable);
     }
 
     @Override

@@ -69,6 +69,8 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
     Page<CsListInfo> getAllIndentsByExpireDateTime(@Param("expiredDateTime") LocalDateTime currentDateTime,
                                                    String indentNo,
                                                    List<String> status,
+                                                   LocalDateTime fromDate,
+                                                   LocalDateTime toDate,
                                                    Pageable pageable);
 
     @Query(value = getAllClosedRfq,

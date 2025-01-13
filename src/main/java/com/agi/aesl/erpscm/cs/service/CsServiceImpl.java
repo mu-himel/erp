@@ -130,14 +130,27 @@ public class CsServiceImpl implements CsService{
     @Autowired
     private CsAccountService csAccountService;
 
+    private LocalDateTime parseDate(Optional<String> dateStr,String endTime){
+        LocalDateTime date = null;
+        if(dateStr.isPresent()){
+            String time = (endTime!=null && endTime.trim().length()==8)? "T"+endTime:"T00:00:00";
+            date = LocalDateTime.parse(dateStr.get()+time);
+        }
+        return date;
+    }
+
 
     @Override
     public Page<?> getAllPendingCs(Jwt token,
                                    Optional<String> indentNo, Optional<String> status,
+                                   Optional<String> fromDateStr, Optional<String> toDateStr,
                                    Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort );
+
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
         List<String> statuses = Arrays.asList(CsStatus.PENDING.name(),
                 CsStatus.PENDING_VERIFICATION.name(),
                 CsStatus.PENDING_APPROVAL.name(),
@@ -150,6 +163,7 @@ public class CsServiceImpl implements CsService{
         return indentRepository.getAllIndentsByExpireDateTime(LocalDateTime.now(),
                 indentNo.orElse(null),
                 statuses,
+                fromDate,toDate,
                 pageable);
     }
 
@@ -518,11 +532,15 @@ public class CsServiceImpl implements CsService{
     }
 
     @Override
-    public Page<?> getPendingVerificationCs(Jwt token, Optional<String> indentNo, Optional<String> status,
+    public Page<?> getPendingVerificationCs(Jwt token,
+                                            Optional<String> indentNo, Optional<String> status,
+                                            Optional<String> formDateStr, Optional<String> toDateStr,
                                             Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
+        LocalDateTime fromDate = parseDate(formDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
         List<String> statuses = Arrays.asList(
                 CsStatus.PENDING_VERIFICATION.name(),
                 CsStatus.REVIEW.name(),
@@ -532,15 +550,22 @@ public class CsServiceImpl implements CsService{
             statuses = new ArrayList<>();
             statuses.add(status.get());
         }
-        return csRepository.findPendingVerificationCs(claimResolver.getUserId(),indentNo.orElse(null), statuses,pageable);
+        return csRepository.findPendingVerificationCs(claimResolver.getUserId(),
+                indentNo.orElse(null), statuses,
+                fromDate,toDate,
+                pageable);
     }
 
     @Override
-    public Page<?> getPendingApprovalCs(Jwt token,  Optional<String> indentNo, Optional<String> status,
+    public Page<?> getPendingApprovalCs(Jwt token,
+                                        Optional<String> indentNo, Optional<String> status,
+                                        Optional<String> fromDateStr, Optional<String> toDateStr,
                                         Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
         List<String> statuses = Arrays.asList(
                 CsStatus.PENDING_APPROVAL.name(),
                 CsStatus.REVIEW.name(),
@@ -550,22 +575,43 @@ public class CsServiceImpl implements CsService{
             statuses = new ArrayList<>();
             statuses.add(status.get());
         }
-        return csRepository.findPendingApprovalCs(claimResolver.getUserId(),indentNo.orElse(null),statuses,pageable);
+        return csRepository.findPendingApprovalCs(claimResolver.getUserId(),
+                indentNo.orElse(null),statuses,
+                fromDate,toDate,
+                pageable);
     }
 
     @Override
-    public Page<?> getApprovedCs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getApprovedCs(Jwt token,
+                                 Optional<String> indentNo, Optional<String> status,
+                                 Optional<String> fromDateStr, Optional<String> toDateStr,
+                                 Optional<Integer> page, Optional<Integer> size
+    ) {
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
-        return csRepository.findApprovedCs(pageable);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        List<String> statuses = Arrays.asList(
+                CsStatus.VERIFIED.name(),
+                CsStatus.APPROVED.name(),
+                CsStatus.COMPLETED.name()
+        );
+        if(status.isPresent()){
+            statuses = new ArrayList<>();
+            statuses.add(status.get());
+        }
+        return csRepository.findApprovedCs(indentNo.orElse(null),statuses,fromDate,toDate,pageable);
     }
 
     @Override
     public Page<?> getClosedCs(Jwt token,
                                Optional<String> indentNo, Optional<String> status,
+                               Optional<String> fromDateStr, Optional<String> toDateStr,
                                Optional<Integer> page, Optional<Integer> size) {
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
         List<String> statuses = Arrays.asList(
                 CsStatus.APPROVED.name(),
                 CsStatus.REJECTED.name(),
@@ -576,7 +622,9 @@ public class CsServiceImpl implements CsService{
             statuses = new ArrayList<>();
             statuses.add(status.get());
         }
-        return csRepository.findClosedCs(pageable,indentNo.orElse(null),statuses);
+        return csRepository.findClosedCs(indentNo.orElse(null),statuses,
+                fromDate,toDate,
+                pageable);
     }
 
     @Override

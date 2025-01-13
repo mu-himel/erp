@@ -30,12 +30,13 @@ public class CsController extends BaseController {
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
             @RequestParam("indentNo") Optional<String> indentNo,
-            @RequestParam("status") Optional<String> status
-
+            @RequestParam("status") Optional<String> status,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr
             ){
 
         return new ResponseEntity<>(
-                csService.getAllPendingCs(token,indentNo, status,page,size),
+                csService.getAllPendingCs(token,indentNo, status,fromDateStr,toDateStr, page,size),
                 HttpStatus.OK);
     }
 
@@ -121,42 +122,59 @@ public class CsController extends BaseController {
     @GetMapping("/pending-verification")
     public ResponseEntity<?> getAllPendingVerificationCs(
             @AuthenticationPrincipal Jwt token,
-            Optional<String> indentNo, Optional<String> status,
-            Optional<Integer> page, Optional<Integer> size
+            @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("status") Optional<String> status,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
                 csService.getPendingVerificationCs(token,
                         indentNo,status,
+                        fromDateStr,toDateStr,
                         page, size), HttpStatus.OK);
     }
 
     @GetMapping("/pending-approval")
     public ResponseEntity<?> getAllPendingApprovalCs(
             @AuthenticationPrincipal Jwt token,
-            Optional<String> indentNo, Optional<String> status,
-            Optional<Integer> page, Optional<Integer> size
+            @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("status") Optional<String> status,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                csService.getPendingApprovalCs(token,indentNo, status,page, size), HttpStatus.OK);
+                csService.getPendingApprovalCs(token,indentNo, status, fromDateStr, toDateStr,page, size), HttpStatus.OK);
     }
 
     @GetMapping("/approved")
     public ResponseEntity<?> getAllApprovedCs(
             @AuthenticationPrincipal Jwt token,
-            Optional<Integer> page, Optional<Integer> size
+            @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("status") Optional<String> status,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                csService.getApprovedCs(token,page, size), HttpStatus.OK);
+                csService.getApprovedCs(token,indentNo,status,fromDateStr,toDateStr,page, size), HttpStatus.OK);
     }
 
     @GetMapping("/closed")
     public ResponseEntity<?> getAllClosedCs(
             @AuthenticationPrincipal Jwt token,
-            Optional<String> indentNo, Optional<String> status,
-            Optional<Integer> page, Optional<Integer> size
+            @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("status") Optional<String> status,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
+            @RequestParam("page") Optional<Integer> page, @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                csService.getClosedCs(token,indentNo,status,page, size), HttpStatus.OK);
+                csService.getClosedCs(token,indentNo,status,fromDateStr, toDateStr,page, size), HttpStatus.OK);
     }
 
     @PutMapping("/{id}/reject")
