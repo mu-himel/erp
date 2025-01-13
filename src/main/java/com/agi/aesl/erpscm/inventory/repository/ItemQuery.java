@@ -99,6 +99,7 @@ public interface ItemQuery {
     String getPendingVerificationItemsWithSearch = """
                         SELECT i.id as id, i.name as name, i.code as code,
                         ic.id as subCategoryId, ic.name as subCategoryName, ic.code as subCategoryCode,
+                        i.item_attribute_name as itemAttributeName,
                         ipc.id as categoryId, ipc.name as categoryName, ipc.code as categoryCode,
                         0 as qty,
                          i.stock_threshold_qty as stockThresholdQty,
@@ -116,7 +117,7 @@ public interface ItemQuery {
                         LEFT JOIN scm_warehouse_stores ws ON s.warehouse_store_id = ws.id 
                          WHERE i.active=0 
                         AND (s.warehouse_id IN (:warehouseId) AND siil.warehouse_id IN (:warehouseId))
-                        AND s.warehouse_store_id = :warehouseStoreId 
+                        AND (:warehouseStoreId IS NULL OR s.warehouse_store_id = :warehouseStoreId) 
                            AND (:name IS NULL OR i.name LIKE concat(:name,'%')) 
                            AND (:code IS NULL OR i.code LIKE concat(:code,'%')) 
                            AND ((:subCategoryId IS NULL OR ic.id = :subCategoryId) 
