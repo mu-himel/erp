@@ -18,18 +18,34 @@ public interface CsAccountService extends VerificationDomainService {
 
     Page<?> getPendingAcs(Jwt token,
                           Optional<String> indenNo,Optional<String> status,
+                          Optional<String> fromDateStr,Optional<String> toDateStr,
                           Optional<Integer> page, Optional<Integer> size);
 
-    Page<?> getApprovedAcs(Jwt token, Optional<String> indentNo, Optional<Integer> page, Optional<Integer> size);
-    Page<?> getRejectedAcs(Jwt token, Optional<String> indentNo, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getApprovedAcs(Jwt token,
+                           Optional<String> indentNo, Optional<String> status,
+                           Optional<String> fromDateStr,Optional<String> toDateStr,
+                           Optional<Integer> page, Optional<Integer> size);
+    Page<?> getRejectedAcs(Jwt token,
+                           Optional<String> indentNo, Optional<String> status,
+                           Optional<String> fromDateStr,Optional<String> toDateStr,
+                           Optional<Integer> page, Optional<Integer> size);
 
-    Page<?> getClosedAcs(Jwt token, Optional<String> indentNo, Optional<String> status, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getClosedAcs(Jwt token,
+                         Optional<String> indentNo, Optional<String> status,
+                         Optional<String> fromDateStr,Optional<String> toDateStr,
+                         Optional<Integer> page, Optional<Integer> size);
 
     void reviewAcs(Jwt token, Long id, NoteDto noteDto);
 
-    Page<?> getPendingVerificationAcs(Jwt token, Optional<String> indentNo,  Optional<Integer> page, Optional<Integer> size);
+    Page<?> getPendingVerificationAcs(Jwt token,
+                                      Optional<String> indentNo,  Optional<String> status,
+                                      Optional<String> fromDateStr,  Optional<String> toDateStr,
+                                      Optional<Integer> page, Optional<Integer> size);
 
-    Page<?> getPendingApprovalAcs(Jwt token, Optional<String> indentNo, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getPendingApprovalAcs(Jwt token,
+                                  Optional<String> indentNo, Optional<String> status,
+                                  Optional<String> fromDateStr, Optional<String> toDateStr,
+                                  Optional<Integer> page, Optional<Integer> size);
     Page<?> getActiveCsList(Jwt token, Optional<String> indentNo, Optional<Integer> page, Optional<Integer> size);
 
     Page<?> getExpiredCsList(Jwt token, Optional<String> indentNo, Optional<Integer> page, Optional<Integer> size);
