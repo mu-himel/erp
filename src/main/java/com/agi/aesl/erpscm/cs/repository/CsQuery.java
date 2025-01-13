@@ -101,6 +101,7 @@ public interface CsQuery {
                     (cvah.employee_id = :nextVerifierId AND cvah.cs_status = 'VERIFIED')
                 )
             GROUP BY csheet.id) r WHERE r.status IN (:statuses)
+            AND (:fromDate IS NULL OR r.csDate BETWEEN :fromDate AND :toDate)
             """;
     String countPendingVerifications="SELECT COUNT(*) FROM ("+pendingVerifications+") as total";
 
@@ -137,6 +138,7 @@ public interface CsQuery {
                 (cvah.employee_id = :nextApproverId AND cvah.cs_status = 'APPROVED')
             )
             GROUP BY csheet.id) r WHERE r.status IN (:statuses)
+            AND (:fromDate IS NULL OR r.csDate BETWEEN :fromDate AND :toDate)
             """;
 
     String countPendingApprovals="SELECT COUNT(*) FROM ("+pendingApprovals+") as total";
@@ -160,7 +162,9 @@ public interface CsQuery {
     LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id  
     LEFT JOIN scm_item_categories c ON c.id = i.category_id
     LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
-    WHERE (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%')) AND csheet.cs_status IN (:statuses)
+    WHERE (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%')) 
+    AND (COALESCE(:statuses) IS NULL OR csheet.cs_status IN (:statuses))
+    AND (COALESCE(:fromDate) IS NULL OR csheet.created_at BETWEEN :fromDate AND :toDate)
     GROUP BY csheet.id
         """;
     String countClosedCs="SELECT COUNT(*) FROM ("+closedCs+") as total";
@@ -184,7 +188,10 @@ public interface CsQuery {
         LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id  
         LEFT JOIN scm_item_categories c ON c.id = i.category_id
         LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
-        WHERE csheet.cs_status IN ('APPROVED')
+        WHERE 
+        (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%'))
+        AND (COALESCE(:statuses) IS NULL OR csheet.cs_status IN (:statuses))
+        AND (COALESCE(:fromDate) IS NULL OR csheet.created_at BETWEEN :fromDate AND :toDate)
         GROUP BY csheet.id
             """;
 

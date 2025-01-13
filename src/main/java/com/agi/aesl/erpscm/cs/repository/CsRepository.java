@@ -28,18 +28,25 @@ public interface CsRepository extends JpaRepository<Cs,Long>, CsQuery {
     @Query(value = pendingVerifications,countQuery = countPendingVerifications, nativeQuery = true)
     Page<CsPendingListInfo> findPendingVerificationCs(String nextVerifierId,
                                                       String indentNo, List<String> statuses,
+                                                      LocalDateTime fromDate, LocalDateTime toDate,
                                                       Pageable pageable);
 
     @Query(value = pendingApprovals,countQuery = countPendingApprovals, nativeQuery = true)
     Page<CsPendingListInfo> findPendingApprovalCs(String nextApproverId,
                                                   String indentNo, List<String> statuses,
+                                                  LocalDateTime fromDate, LocalDateTime toDate,
                                                   Pageable pageable);
 
     @Query(value = closedCs,countQuery = countClosedCs, nativeQuery = true)
-    Page<CsPendingListInfo> findClosedCs(Pageable pageable,String indentNo, List<String> statuses);
+    Page<CsPendingListInfo> findClosedCs(String indentNo, List<String> statuses,
+                                         LocalDateTime fromDate, LocalDateTime toDate,
+                                         Pageable pageable);
 
     @Query(value = approvedCs,countQuery = countApprovedCs, nativeQuery = true)
-    Page<CsPendingListInfo> findApprovedCs(Pageable pageable);
+    Page<CsPendingListInfo> findApprovedCs(
+            String indentNo, List<String> statuses,
+            LocalDateTime fromDate, LocalDateTime toDate,
+            Pageable pageable);
 
     @Query(value="""
                 SELECT cvdd.id as cvddId, 

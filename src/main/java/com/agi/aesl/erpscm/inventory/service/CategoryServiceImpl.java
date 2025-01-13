@@ -1219,6 +1219,11 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryRepository.findById(id);
     }
 
+    @Override
+    public Optional<ItemCategory> getCategoryByUserCategory(Long id) {
+        return categoryRepository.findByUserCategoryId(id);
+    }
+    
     private Iterable<CSVRecord> getItemRecords(FileUploadResponse fileUploadResponse) throws IOException{
         FileReader in = new FileReader(fileUploadResponse.getPath()+"/"+fileUploadResponse.getFilename());
         Iterable<CSVRecord> records  = CSVFormat.RFC4180.withHeader(CategoryHeader.class).parse(in);
