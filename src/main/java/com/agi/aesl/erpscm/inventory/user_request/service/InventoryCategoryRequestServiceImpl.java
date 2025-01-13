@@ -294,6 +294,10 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         }
         Map<String,Object> detail = new HashMap<>();
         UserCategory category = catOp.get();
+        if(category.getCategoryStatus().equals(UserCategoryStatus.COMPLETED)){
+            Optional<ItemCategory> _catOp = categoryService.getCategoryByUserCategory(category.getId());
+            _catOp.ifPresent((_cat)->category.setCode(_cat.getCode()));
+        }
         detail.put("detail",category);
         detail.put("warehouse",warehouseService.getWarehouse(category.getCreatedBy().getWarehouseId()));
         List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
