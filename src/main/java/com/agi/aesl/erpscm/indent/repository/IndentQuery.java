@@ -255,7 +255,7 @@ public interface IndentQuery {
                             AND (:subCategory IS NULL OR LOWER(sc.name) LIKE CONCAT(LOWER(:subCategory),'%'))
                             AND (:priority IS NULL OR i.priority = :priority)
                             AND (:daysRemain IS NULL OR DATEDIFF(i.priority_date_time , CURRENT_DATE) = :daysRemain)
-                            AND (:fromDate IS NULL OR (i.indent_date BETWEEN :fromDate AND :toDate))
+                            AND (COALESCE(:fromDate) IS NULL OR (i.indent_date BETWEEN :fromDate AND :toDate))
                             
                     GROUP BY i.id
                                                                             """;
