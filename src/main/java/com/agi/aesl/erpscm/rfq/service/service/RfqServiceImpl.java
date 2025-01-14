@@ -264,7 +264,7 @@ public class RfqServiceImpl implements RfqService{
             throw new RuntimeException("Sorry! Indent's Sub Category not found");
         }
 
-        return getVendorCount(subCategory.getCode());
+        return getVendorCount(subCategory.getCode().substring(2));
     }
 
     private Optional<?> getVendorCount(String subCatCode){
