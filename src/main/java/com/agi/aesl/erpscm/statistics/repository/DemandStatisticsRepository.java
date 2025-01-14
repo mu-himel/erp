@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -18,6 +19,8 @@ public interface DemandStatisticsRepository extends JpaRepository<Demand,Long> {
             left join scm_demand_details sdd on sdd.demand_id = sd.id
             WHERE (:subCategoryId IS NULL OR sdd.item_category_id = :subCategoryId)
             AND (:categoryId IS NULL OR sdd.item_parent_category_id = :categoryId)
+            AND (:warehouseId IS NULL OR sd.warehouse_id = :warehouseId)
+            AND (COALESCE(:fromDate) IS NULL OR sd.created_at BETWEEN :fromDate AND :toDate)
             GROUP BY sd.id
             ) a
             LEFT JOIN (
@@ -32,7 +35,8 @@ public interface DemandStatisticsRepository extends JpaRepository<Demand,Long> {
             SELECT 'RECEIVED' as received
             ) e ON e.received = a.status
             """,nativeQuery = true)
-    List<DemandStats> getDemandStatistics(Long categoryId, Long subCategoryId);
+    List<DemandStats> getDemandStatistics(Long categoryId, Long subCategoryId,Long warehouseId, LocalDateTime fromDate,
+                                          LocalDateTime toDate);
     interface DemandStats{
         Long getPending();
         Long getInTransit();
