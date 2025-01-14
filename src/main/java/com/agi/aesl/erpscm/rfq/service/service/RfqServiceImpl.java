@@ -168,7 +168,9 @@ public class RfqServiceImpl implements RfqService{
         LocalDateTime toDate = null;
         if(fromDateOp.isPresent() && toDateOp.isPresent()){
             fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
-            toDate   = LocalDateTime.parse(fromDateOp.get()+"T23:59:59");
+            toDate   = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+            System.out.println(fromDate);
+            System.out.println(toDate);
         }
 
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
@@ -202,7 +204,7 @@ public class RfqServiceImpl implements RfqService{
         LocalDateTime toDate = null;
         if(fromDateOp.isPresent() && toDateOp.isPresent()){
             fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
-            toDate   = LocalDateTime.parse(fromDateOp.get()+"T23:59:59");
+            toDate   = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
         }
 
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
@@ -234,7 +236,7 @@ public class RfqServiceImpl implements RfqService{
         LocalDateTime toDate = null;
         if(fromDateOp.isPresent() && toDateOp.isPresent()){
             fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
-            toDate   = LocalDateTime.parse(fromDateOp.get()+"T23:59:59");
+            toDate   = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
         }
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
