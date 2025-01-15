@@ -54,10 +54,11 @@ public class WarehouseStoreController extends BaseController{
     @GetMapping
     public ResponseEntity<?> getAllStoresByWarehouse(
             @AuthenticationPrincipal Jwt token,
+            @RequestParam("name") Optional<String> name,
             @RequestParam("warehouseId") Optional<Long> warehouseId
     ){
         return new ResponseEntity<>(
-                warehouseStoreService.getStoresByWarehouse(token,warehouseId),
+                warehouseStoreService.getStoresByWarehouse(token,name,warehouseId),
                 HttpStatus.OK
         );
     }
