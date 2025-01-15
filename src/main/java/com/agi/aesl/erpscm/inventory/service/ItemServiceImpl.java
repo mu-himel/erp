@@ -1320,7 +1320,7 @@ public class ItemServiceImpl implements ItemService {
                         if(item.getUserItemId()!=null){
                             Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
                             userItemOp.ifPresent((ui)->{
-                                ui.setItemStatus(UserCategoryStatus.COMPLETED);
+                                ui.setItemStatus(UserCategoryStatus.PENDING_FROM_ACCOUNT);
                             });
                         }
                     }
@@ -1339,7 +1339,7 @@ public class ItemServiceImpl implements ItemService {
                         if(item.getUserItemId()!=null){
                             Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
                             userItemOp.ifPresent((ui)->{
-                                ui.setItemStatus(UserCategoryStatus.COMPLETED);
+                                ui.setItemStatus(UserCategoryStatus.PENDING_FROM_ACCOUNT);
                             });
                         }
                     }
@@ -1452,6 +1452,12 @@ public class ItemServiceImpl implements ItemService {
                 iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
                 Item item = iil.getItem();
                 item.setActive(true);
+                if(item.getUserItemId()!=null){
+                    Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
+                    userItemOp.ifPresent((ui)->{
+                        ui.setItemStatus(UserCategoryStatus.COMPLETED);
+                    });
+                }
             }
         }
     }
