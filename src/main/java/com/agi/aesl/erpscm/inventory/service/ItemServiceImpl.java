@@ -1339,7 +1339,7 @@ public class ItemServiceImpl implements ItemService {
                         if(item.getUserItemId()!=null){
                             Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
                             userItemOp.ifPresent((ui)->{
-                                ui.setItemStatus(UserCategoryStatus.COMPLETED);
+                                ui.setItemStatus(UserCategoryStatus.PENDING_FROM_ACCOUNT);
                             });
                         }
                     }
