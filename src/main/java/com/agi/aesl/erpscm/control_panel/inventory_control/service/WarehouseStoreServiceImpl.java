@@ -76,7 +76,7 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
     }
 
     @Override
-    public List<?> getStoresByWarehouse(Jwt token, Optional<Long> warehouseId) {
+    public List<?> getStoresByWarehouse(Jwt token,Optional<String>name, Optional<Long> warehouseId) {
         claimResolver.setToken(token);
         String uri = "inventory-control/store";
         List<Long> ids = new ArrayList<>();
@@ -87,7 +87,7 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
             dataFilter.setReaderService(integrationReaderService);
             ids = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
         }
-        return warehouseStoreRepository.findAllByWarehouseId(ids);
+        return warehouseStoreRepository.findAllByWarehouseId(name.orElse(null),ids);
     }
 
     @Override
