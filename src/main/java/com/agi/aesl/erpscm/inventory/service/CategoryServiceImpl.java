@@ -175,7 +175,7 @@ public class CategoryServiceImpl implements CategoryService {
                Optional<ItemCategory> catOp = Optional.empty();
                if(cr.getIsActive()){
                    cr.setBudgetId(Optional.empty());
-                    this.updateCategory(cr.getId(),cr);
+                    this.updateCategoryDuringImport(cr.getId(),cr);
                 }else {
                     catOp = this.addCategory(null, cr);
                 }
@@ -197,6 +197,96 @@ public class CategoryServiceImpl implements CategoryService {
                 System.out.println(response.getStatusCode().value());
             }
         }
+    }
+
+    private void updateCategoryDuringImport(Long id, CategoryRequestDto cr) {
+        Optional<ItemCategory> itemCategoryOptional = categoryRepository.findById(id);
+        if(itemCategoryOptional.isEmpty()){
+            throw new AesException("Category Not Found");
+        }
+
+        ItemCategory itemCategory = itemCategoryOptional.get();
+        if(!itemCategory.getCode().equalsIgnoreCase(cr.getCode())){
+            throw new AesException("Category Code should be unique");
+        }
+
+        if(itemCategory.getParentCategory()!=null){
+            if(cr.getParentCategory()==null || cr.getParentCategory().getId()==null){
+                throw new AesException("Parent Category Id missing");
+            }
+        }
+
+        if(cr.getName()!=null) {
+            itemCategory.setName(cr.getName());
+        }
+
+        if(cr.getBudgetId().isPresent()){
+
+            Optional<CategoryBudget> categoryBudgetOp = categoryBudgetRepository
+                    .findById(cr.getBudgetId().get());
+            if(categoryBudgetOp.isPresent()) {
+                CategoryBudget categoryBudget = categoryBudgetOp.get();
+                if(categoryBudget.getAmount().compareTo(cr.getCurrentYearBudget())<0){
+                    CategoryBudget extendedBudget = new CategoryBudget(itemCategory,
+                            cr.getCurrentYearBudget(),
+                            LocalDate.now().getYear(), BudgetType.EXTENDED);
+
+                    extendedBudget.setAmount(cr.getCurrentYearBudget()
+                            .subtract(categoryBudget.getAmount()));
+                    categoryBudgetRepository.save(extendedBudget);
+                } else {
+                    categoryBudget.setAmount(cr.getCurrentYearBudget());
+                    categoryBudgetRepository.save(categoryBudget);
+
+                }
+            }
+        }
+
+        if(cr.getAttributes()!=null && cr.getAttributes().size()>0){
+
+            itemCategory.setAttributes(cr.getAttributes().stream().map(categoryAttribute -> {
+                Optional<CategoryAttributeRepository.ICategoryAttribute> categoryAttributeOp= categoryAttributeRepository.findAllByAttributeTypeAndAttributeUnit(
+                        cr.getWarehouse().getId(), cr.getCode(), categoryAttribute.getAttributeType(),categoryAttribute.getAttributeUnit());
+                if(categoryAttributeOp.isEmpty()){
+                    categoryAttribute.setCategory(itemCategory);
+                    return categoryAttribute;
+                }else{
+                    CategoryAttributeRepository.ICategoryAttribute caExist = categoryAttributeOp.get();
+                    CategoryAttribute _categoryAttribute = new CategoryAttribute();
+                    _categoryAttribute.setCategory(itemCategory);
+                    _categoryAttribute.setId(caExist.getId());
+                    _categoryAttribute.setAttributeValue(caExist.getAttributeValue());
+                    _categoryAttribute.setAttributeType(caExist.getAttributeType());
+                    _categoryAttribute.setAttributeUnit(caExist.getAttributeUnit());
+//                    categoryAttributeRepository.save(_categoryAttribute);
+                    return _categoryAttribute;
+                }
+
+
+            }).collect(Collectors.toList()));
+//            itemCategory.setAttributes(categoryRequestDto.getAttributes().stream().filter(categoryAttribute -> {
+//                Optional<CategoryAttribute> categoryAttributeOp= categoryAttributeRepository.findAllByAttributeTypeAndAttributeUnit(categoryAttribute.getAttributeType(),categoryAttribute.getAttributeUnit());
+//                if(categoryAttributeOp.isEmpty()){
+//                    categoryAttribute.setCategory(itemCategory);
+//                    return true;
+//                }else{
+//                    CategoryAttribute categoryAttribute1 = categoryAttributeOp.get();
+//                    categoryAttribute1.setAttributeValue(categoryAttribute.getAttributeValue());
+//                    categoryAttributeRepository.save(categoryAttribute1);
+//                    return false;
+//                }
+//
+//            }).collect(Collectors.toList()));
+        }
+
+        if(cr.getEntity().getParentCategory()!=null) {
+            itemCategory.setParentCategory(cr.getEntity().getParentCategory());
+        }
+        if(cr.getVat()!=null) {
+            itemCategory.setVat(cr.getVat());
+        }
+        itemCategory.setActive(true);
+        categoryRepository.save(itemCategory);
     }
 
     @Override
@@ -397,19 +487,23 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         if(categoryRequestDto.getAttributes()!=null && categoryRequestDto.getAttributes().size()>0){
-            itemCategory.setAttributes(categoryRequestDto.getAttributes().stream().filter(categoryAttribute -> {
-                Optional<CategoryAttribute> categoryAttributeOp= categoryAttributeRepository.findAllByAttributeTypeAndAttributeUnit(categoryAttribute.getAttributeType(),categoryAttribute.getAttributeUnit());
-                if(categoryAttributeOp.isEmpty()){
-                    categoryAttribute.setCategory(itemCategory);
-                    return true;
-                }else{
-                    CategoryAttribute categoryAttribute1 = categoryAttributeOp.get();
-                    categoryAttribute1.setAttributeValue(categoryAttribute.getAttributeValue());
-                    categoryAttributeRepository.save(categoryAttribute1);
-                    return false;
-                }
-
+            itemCategory.setAttributes(categoryRequestDto.getAttributes().stream().map(categoryAttribute -> {
+                categoryAttribute.setCategory(itemCategory);
+                return categoryAttribute;
             }).collect(Collectors.toList()));
+//            itemCategory.setAttributes(categoryRequestDto.getAttributes().stream().filter(categoryAttribute -> {
+//                Optional<CategoryAttribute> categoryAttributeOp= categoryAttributeRepository.findAllByAttributeTypeAndAttributeUnit(categoryAttribute.getAttributeType(),categoryAttribute.getAttributeUnit());
+//                if(categoryAttributeOp.isEmpty()){
+//                    categoryAttribute.setCategory(itemCategory);
+//                    return true;
+//                }else{
+//                    CategoryAttribute categoryAttribute1 = categoryAttributeOp.get();
+//                    categoryAttribute1.setAttributeValue(categoryAttribute.getAttributeValue());
+//                    categoryAttributeRepository.save(categoryAttribute1);
+//                    return false;
+//                }
+//
+//            }).collect(Collectors.toList()));
         }
 
         if(categoryRequestDto.getEntity().getParentCategory()!=null) {
