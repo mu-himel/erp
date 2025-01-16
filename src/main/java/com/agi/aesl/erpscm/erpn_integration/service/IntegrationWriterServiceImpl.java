@@ -24,9 +24,7 @@ import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,6 +58,8 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     @Value("${app.acc.purchase_voucher.create}")
     private String purchaseReceivedEndpoint;
 
+    @Value("${app.acc.ledger.vendor.exist}")
+    private String vendorLedgerExist;
 
     @Value("${service.acc}")
     private String clientId;
@@ -236,7 +236,13 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
             HttpHeaders headers = networkService.setHttpHeaders(token);
             HttpEntity<PurchaseRequest> payload = new HttpEntity<>(purchaseRequest,headers);
             System.out.println(purchaseReceivedEndpoint);
-            networkService.post(purchaseReceivedEndpoint, payload, Void.class);
+            ResponseEntity<String> stringResponseEntity = networkService.get(vendorLedgerExist + "/" + receiveNote.getGrn().getVendorId(), String.class);
+            if(stringResponseEntity.getStatusCode().value() == HttpStatus.OK.value()){
+                networkService.post(purchaseReceivedEndpoint, payload, Void.class);
+            }else{
+                throw new RuntimeException(stringResponseEntity.getBody());
+            }
+
         }
     }
 

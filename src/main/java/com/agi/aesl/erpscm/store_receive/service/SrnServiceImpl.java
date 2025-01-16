@@ -387,7 +387,14 @@ public class SrnServiceImpl implements SrnService{
                     storeInItem(grn, srnd);
                     return srnd;
                 }).collect(Collectors.toList()));
-                integrationWriterService.purchaseReceived(claimResolver.getToken(),srn);
+
+                if(srn.getGrn().getGrnMode().equals(GrnMode.MANUAL)){
+                    integrationWriterService.purchaseReceivedManual(claimResolver.getToken(),srn);
+                }
+
+                if(srn.getGrn().getGrnMode().equals(GrnMode.AUTO)){
+                    integrationWriterService.purchaseReceived(claimResolver.getToken(),srn);
+                }
             }
         }
     }
@@ -414,7 +421,13 @@ public class SrnServiceImpl implements SrnService{
             svah.setSrnStatus(SrnStatus.APPROVED);
             svah.setStoreReceiveNote(srn);
             srnVerifyApprovalHistoryRepository.save(svah);
-            integrationWriterService.purchaseReceived(claimResolver.getToken(),srn);
+            if(srn.getGrn().getGrnMode().equals(GrnMode.MANUAL)){
+                integrationWriterService.purchaseReceivedManual(claimResolver.getToken(),srn);
+            }
+
+            if(srn.getGrn().getGrnMode().equals(GrnMode.AUTO)){
+                integrationWriterService.purchaseReceived(claimResolver.getToken(),srn);
+            }
         }
     }
 
