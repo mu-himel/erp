@@ -234,14 +234,22 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
             purchaseRequest.setItemList(items);
 
             HttpHeaders headers = networkService.setHttpHeaders(token);
+            HttpEntity<PurchaseRequest> getPayload = new HttpEntity<>(headers);
             HttpEntity<PurchaseRequest> payload = new HttpEntity<>(purchaseRequest,headers);
-            System.out.println(purchaseReceivedEndpoint);
-            ResponseEntity<String> stringResponseEntity = networkService.get(vendorLedgerExist + "/" + receiveNote.getGrn().getVendorId(), String.class);
+
+            String path = vendorLedgerExist + "/" + receiveNote.getGrn().getVendorId();
+            System.out.println(path);
+
+            ResponseEntity<String> stringResponseEntity = networkService.get(path, getPayload, String.class);
             if(stringResponseEntity.getStatusCode().value() == HttpStatus.OK.value()){
+                System.out.println(purchaseReceivedEndpoint);
+
                 networkService.post(purchaseReceivedEndpoint, payload, Void.class);
             }else{
                 throw new RuntimeException(stringResponseEntity.getBody());
             }
+
+
 
         }
     }
@@ -285,9 +293,23 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
             purchaseRequest.setItemList(items);
 
             HttpHeaders headers = networkService.setHttpHeaders(token);
+            HttpEntity<PurchaseRequest> getPayload = new HttpEntity<>(headers);
             HttpEntity<PurchaseRequest> payload = new HttpEntity<>(purchaseRequest,headers);
-            System.out.println(purchaseReceivedEndpoint);
-            networkService.post(purchaseReceivedEndpoint, payload, Void.class);
+
+            String path = vendorLedgerExist + "/" + receiveNote.getGrn().getVendorId();
+            System.out.println(path);
+
+            ResponseEntity<String> stringResponseEntity = networkService.get(path, getPayload, String.class);
+            if(stringResponseEntity.getStatusCode().value() == HttpStatus.OK.value()) {
+                System.out.println(purchaseReceivedEndpoint);
+                networkService.post(purchaseReceivedEndpoint, payload, Void.class);
+            }else{
+                String errorMsg = stringResponseEntity.getBody();
+                String match = "["+receiveNote.getGrn().getVendorId()+"]";
+                errorMsg = errorMsg.contains(match)?
+                errorMsg.replaceAll(match,"["+receiveNote.getGrn().getVendorId()+"]"):errorMsg;
+                throw new RuntimeException(errorMsg);
+            }
         }
     }
 
