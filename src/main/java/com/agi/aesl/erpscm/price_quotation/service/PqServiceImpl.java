@@ -33,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -105,6 +106,10 @@ public class PqServiceImpl implements PqService{
             throw new RuntimeException("Sorry! indent not found");
         }
         Indent indent = indentOp.get();
+        if(indent.getExpireDateTime().isBefore(LocalDateTime.now())){
+            throw new RuntimeException("Sorry! Tender submission time has been expired");
+        }
+
         PriceQuotation pq = new PriceQuotation();
         pq.setRfq(indent);
 
