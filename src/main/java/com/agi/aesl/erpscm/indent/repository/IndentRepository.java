@@ -20,18 +20,24 @@ import java.util.Optional;
 public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuery{
 
     @Query(value = getAllIndents, countQuery = countAllIndents, nativeQuery = true)
-    Page<IndentInfo> getAllIndents(List<Long> categoryIds, List<Long> warehouseIds,Pageable pageable);
+    Page<IndentInfo> getAllIndents(List<Long> categoryIds, List<Long> warehouseIds,
+                                   LocalDateTime fromDate, LocalDateTime toDate,
+                                   Pageable pageable);
 
     @Query(value = getIndentPendingVerifications, countQuery = countAllPendingVerifications, nativeQuery = true)
     Page<IndentInfo> getAllPendingVerifications(String nextVerifierId,
                                                 List<Long> categoryIds,
                                                 List<Long> warehouseIds,
+                                                LocalDateTime fromDate,
+                                                LocalDateTime toDate,
                                                 Pageable pageable);
 
     @Query(value = getIndentPendingApprovals, countQuery = countAllPendingVerifications, nativeQuery = true)
     Page<IndentInfo> getAllPendingApprovals(String nextApproverId,
                                                 List<Long> categoryIds,
                                                 List<Long> warehouseIds,
+                                                LocalDateTime fromDate,
+                                                LocalDateTime toDate,
                                                 Pageable pageable);
     @Query(value = getClosedIndents, countQuery = countAllClosed, nativeQuery = true)
     Page<IndentInfo> getAllClosedIndents(List<Long> categoryIds, List<Long> warehouseIds, Pageable pageable);

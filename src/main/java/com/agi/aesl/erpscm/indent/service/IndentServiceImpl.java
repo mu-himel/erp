@@ -198,13 +198,24 @@ public class IndentServiceImpl implements IndentService{
 
     }
 
+    private LocalDateTime parseDate(Optional<String> dateStr, String endTime){
+        LocalDateTime date = null;
+        if(dateStr.isPresent()){
+            String time = (endTime!=null && endTime.trim().length()==8)? "T"+endTime:"T00:00:00";
+            date = LocalDateTime.parse(dateStr.get()+time);
+        }
+        return date;
+    }
+
     @Override
     public Page<?> getAllIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
-                                 Optional<Long> subCategoryId, Optional<String> priority) {
+                                 Optional<Long> subCategoryId, Optional<String> fromDateStr,Optional<String> toDateStr) {
         claimResolver.setToken(token);
         String uri="";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
         DataFilter dataFilter = new DataFilter(uri,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> warehouseIds = dataFilter.getFilterConfig();
@@ -212,16 +223,18 @@ public class IndentServiceImpl implements IndentService{
         List<Long> categoryIds = dataFilter.getCategoryIds();
         categoryId.ifPresent(categoryIds::add);
         subCategoryId.ifPresent(categoryIds::add);
-        return indentRepository.getAllIndents(categoryIds,warehouseIds,pageable);
+        return indentRepository.getAllIndents(categoryIds,warehouseIds,fromDate,toDate,pageable);
     }
 
     @Override
     public Page<?> getAllPendingVerificationIndents(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
-                                 Optional<String> priority, Optional<Integer> page, Optional<Integer> size) {
+                                 Optional<String> fromDateStr, Optional<String> toDateStr, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         String uri="";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
         DataFilter dataFilter = new DataFilter(uri,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> warehouseIds = dataFilter.getFilterConfig();
@@ -230,15 +243,19 @@ public class IndentServiceImpl implements IndentService{
         subCategoryId.ifPresent(categoryIds::add);
         return indentRepository.getAllPendingVerifications(
                 claimResolver.getUserId(),
-                categoryIds,warehouseIds,pageable);
+                categoryIds,warehouseIds,fromDate,toDate,pageable);
     }
 
     @Override
-    public Page<?> getAllPendingApprovalIndents(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<String> priority, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getAllPendingApprovalIndents(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+
+                Optional<String> fromDateStr,Optional<String> toDateStr, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         String uri = "";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
         DataFilter dataFilter = new DataFilter(uri,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> warehouseIds = dataFilter.getFilterConfig();
@@ -246,7 +263,7 @@ public class IndentServiceImpl implements IndentService{
         categoryId.ifPresent(categoryIds::add);
         subCategoryId.ifPresent(categoryIds::add);
         return indentRepository.getAllPendingApprovals(claimResolver.getUserId(),
-                categoryIds,warehouseIds,pageable);
+                categoryIds,warehouseIds,fromDate,toDate,pageable);
     }
 
     @Override

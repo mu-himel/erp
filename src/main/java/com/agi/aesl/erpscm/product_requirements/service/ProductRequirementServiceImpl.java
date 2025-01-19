@@ -13,6 +13,7 @@ import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
 import com.agi.aesl.erpscm.product_requirements.dto.response.PrItemInfo;
 import com.agi.aesl.erpscm.product_requirements.dto.response.PrWarehouseInfo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -81,20 +82,32 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
         }
     }
 
+    private LocalDateTime parseDate(Optional<String> dateStr,String endTime){
+        LocalDateTime date = null;
+        if(dateStr.isPresent()){
+            String time = (endTime!=null && endTime.trim().length()==8)? "T"+endTime:"T00:00:00";
+            date = LocalDateTime.parse(dateStr.get()+time);
+        }
+        return date;
+    }
     @Override
     public Page<?> getAllProductRequirements(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
-            Optional<Long> subCategoryId, Optional<LocalDateTime> startDate, Optional<LocalDateTime> endDate) {
+            Optional<Long> subCategoryId, Optional<String> startDate, Optional<String> endDate,
+                                             Optional<Integer> daysRemain) {
 
         claimResolver.setToken(token);
         String uri="";
 
-        Sort sort = Sort.by(Sort.Direction.DESC, "id");
+//        Sort sort = Sort.by(Sort.Direction.DESC, "categoryId");
         Page<?> result = null;
-        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10));
+        LocalDateTime fromDate = parseDate(startDate,null);
+        LocalDateTime toDate = parseDate(startDate,"23:59:59");
         result = productRequirementRepository.findAllProductRequirements(categoryId.orElse(null),
         subCategoryId.orElse(null),
-        startDate.orElse(null),
-        endDate.orElse(null),
+            fromDate,
+            toDate,
+        daysRemain.orElse(null),
         pageable);
         return result;
     }

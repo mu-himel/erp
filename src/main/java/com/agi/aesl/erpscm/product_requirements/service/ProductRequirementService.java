@@ -19,8 +19,10 @@ public interface ProductRequirementService {
         Optional<Integer> size, 
         Optional<Long> categoryId,
         Optional<Long> subCategoryId, 
-        Optional<LocalDateTime> startDate, 
-        Optional<LocalDateTime> endDate);
+        Optional<String> startDate,
+        Optional<String> endDate,
+        Optional<Integer> daysRemain
+        );
 
     List<?> getAllProductRequirementView(Optional<Long> categoryId, Optional<Long> subCategoryId);
 

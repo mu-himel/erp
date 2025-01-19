@@ -11,6 +11,7 @@ import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
+import com.agi.aesl.erpscm.price_quotation.dto.request.CounterPqDto;
 import com.agi.aesl.erpscm.rfq.dto.*;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -291,7 +292,24 @@ public class RfqServiceImpl implements RfqService{
     @Override
     @Transactional
     public void expire(Jwt token, Long id) {
+        claimResolver.setToken(token);
         Optional<Indent> indentOp = indentRepository.findById(id);
-        indentOp.ifPresent(indent-> indent.setExpireDateTime(LocalDateTime.now()));
+        indentOp.ifPresent(indent-> {
+            indent.setExpireDateTime(LocalDateTime.now());
+            expireTender(indent);
+        });
+    }
+
+    private void expireTender(Indent indent){
+        HttpHeaders headers = new HttpHeaders();
+        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
+        if(orgOp.isPresent()){
+            System.out.println("HHHHHHHHHHHHHHHHHHH");
+            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
+        }
+        HttpEntity<CounterPqDto> payload = new HttpEntity<>(headers);
+        String url = cpsConfig.getTenderEndpoint()+"/expire/"+indent.getIndentNo();
+        System.out.println(url);
+        ResponseEntity<?> response = networkService.put(url, payload, Void.class);
     }
 }

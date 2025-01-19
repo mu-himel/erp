@@ -18,7 +18,8 @@ public interface PrIndentService {
             Optional<Integer> size,
             Optional<Long> categoryId,
             Optional<Long> subCategoryId,
-            Optional<String> priority
+            Optional<String> fromDate,
+            Optional<String> toDate
     );
 
     List<?> getPrIndentById(

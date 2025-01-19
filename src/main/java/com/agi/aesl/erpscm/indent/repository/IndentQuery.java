@@ -12,13 +12,11 @@ public interface IndentQuery {
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
                            i.priority_date_time                    as priority,
                            i.indent_status                                as status
-                     
                     FROM indents i
                              LEFT JOIN indent_details ide on i.id = ide.indent_id
                              LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
                              LEFT JOIN scm_item_categories c on i.category_id = c.id
                              LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
-                     
                     WHERE 
                     (COALESCE(:warehouseIds) IS NULL OR i.warehouse_id IN (:warehouseIds))
                     AND 
@@ -27,7 +25,7 @@ public interface IndentQuery {
                         OR 
                         (COALESCE(:categoryIds) IS NULL OR sc.id IN (:categoryIds))
                     )
-                     
+                    AND (COALESCE(:fromDate) IS NULL OR i.priority_date_time BETWEEN :fromDate AND :toDate)
                     GROUP BY i.id
                                                                                 """;
 
@@ -69,7 +67,7 @@ public interface IndentQuery {
                             OR 
                             (COALESCE(:categoryIds) IS NULL OR sc.id IN (:categoryIds))
                         )
-                     
+                        AND (COALESCE(:fromDate) IS NULL OR i.priority_date_time BETWEEN :fromDate AND :toDate)
                     GROUP BY i.id
             """;
 
@@ -111,7 +109,7 @@ public interface IndentQuery {
                             OR 
                             (COALESCE(:categoryIds) IS NULL OR sc.id IN (:categoryIds))
                         )
-                     
+                        AND (COALESCE(:fromDate) IS NULL OR i.priority_date_time BETWEEN :fromDate AND :toDate)
                     GROUP BY i.id
             """;
 

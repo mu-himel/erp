@@ -24,7 +24,8 @@ public interface PrIndentRepository extends JpaRepository<PrIndent, Long>, PrInd
     Page<PrIndentInfo> getAllPrIndents(
             @Param("categoryId") Long categoryId,
             @Param("subCategoryId") Long subCategoryId,
-            @Param("priority") String priority,
+            @Param("fromDate") LocalDateTime fromDate,
+            @Param("toDate") LocalDateTime toDate,
             Pageable pageable
     );
 

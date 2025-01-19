@@ -22,6 +22,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,18 +65,32 @@ public class PrIndentServiceImpl implements PrIndentService {
 
     }
 
+    private LocalDateTime parseDate(Optional<String> dateStr, String endTime){
+        LocalDateTime date = null;
+        if(dateStr.isPresent()){
+            String time = (endTime!=null && endTime.trim().length()==8)? "T"+endTime:"T00:00:00";
+            date = LocalDateTime.parse(dateStr.get()+time);
+        }
+        return date;
+    }
+
     @Override
     public Page<?> getAllPrIndents(Optional<Integer> page,
                                    Optional<Integer> size,
                                    Optional<Long> categoryId,
                                    Optional<Long> subCategoryId,
-                                   Optional<String> priority) {
+                                   Optional<String> fromDateStr,
+                                   Optional<String> toDateStr
+                                   ) {
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(10), sort);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
         Page<?> result = prIndentRepository.getAllPrIndents(
                 categoryId.orElse(null),
                 subCategoryId.orElse(null),
-                priority.orElse(null),
+                fromDate,
+                toDate,
                 pageable);
         return result;
     }

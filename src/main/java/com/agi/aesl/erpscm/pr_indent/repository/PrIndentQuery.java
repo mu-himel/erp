@@ -13,18 +13,15 @@ public interface PrIndentQuery {
                            pri.priority_date        as          priority,
                            pri.product_requirements_ids  as productRequirementIds,
                            piw.warehouse_id   as           warehouseId
-
                     FROM pr_indents pri
                              LEFT JOIN pr_indent_details prid on pri.id = prid.pr_indent_id
                              LEFT JOIN pr_indent_warehouses piw on piw.pr_indent_detail_id = prid.id
                              LEFT JOIN scm_item_categories c on pri.category_id = c.id
                              LEFT JOIN scm_item_categories sc on pri.sub_category_id = sc.id
-
-
                     WHERE pri.status = 'OPEN'
                       AND (:categoryId IS NULL OR c.id = :categoryId)
                       AND (:subCategoryId IS NULL OR sc.id = :subCategoryId)
-                      AND (:priority IS NULL OR pri.priority = :priority)
+                      AND (COALESCE(:fromDate) IS NULL OR pri.priority_date BETWEEN :fromDate AND :toDate)
 
                     GROUP BY pri.id
                                                                                 """;

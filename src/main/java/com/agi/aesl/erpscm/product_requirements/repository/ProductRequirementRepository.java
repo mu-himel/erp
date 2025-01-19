@@ -29,6 +29,7 @@ public interface ProductRequirementRepository extends JpaRepository<ProductRequi
             Long subCategoryId, 
             LocalDateTime startDate, 
             LocalDateTime endDate,
+            Integer daysRemain,
             Pageable pageable);
 
     @Query(value = getProductRequirementViewWithSearchV2,nativeQuery = true)

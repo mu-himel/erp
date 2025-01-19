@@ -38,10 +38,11 @@ public class PrIndentController extends BaseController {
             @RequestParam("size") Optional<Integer> size,
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("subCategoryId") Optional<Long> subCategoryId,
-            @RequestParam("startDate") Optional<String> priority){
+            @RequestParam("fromDate") Optional<String> fromDate,
+            @RequestParam("toDate") Optional<String> toDate){
 
         return new ResponseEntity<>(
-                prIndentService.getAllPrIndents(page, size, categoryId, subCategoryId, priority),
+                prIndentService.getAllPrIndents(page, size, categoryId, subCategoryId, fromDate,toDate),
                 HttpStatus.OK
         );
     }
