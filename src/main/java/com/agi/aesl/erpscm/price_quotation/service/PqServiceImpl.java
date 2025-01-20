@@ -22,6 +22,7 @@ import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -69,6 +70,9 @@ public class PqServiceImpl implements PqService{
 
     @Autowired
     private FileUploadService fileUploadService;
+
+    @Value("${upload.dir}")
+    private String uploadDir;
 
     @Override
     @Transactional
@@ -599,7 +603,7 @@ public class PqServiceImpl implements PqService{
                 "text/csv")){
             throw new RuntimeException("Sorry! not file not a valid type (pdf,odt,doc,docx,xls,xlsx,csv)");
         }
-        Path path = Path.of("./upload/"+rfqId+"/pq/", file.getOriginalFilename());
+        Path path = Path.of(uploadDir+"/"+rfqId+"/pq/", file.getOriginalFilename());
         return fileUploadService.uploadFile(path, file);
     }
 }
