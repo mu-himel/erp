@@ -48,11 +48,13 @@ public class ProductRequirementController extends BaseController{
         @RequestParam("size") Optional<Integer> size,
         @RequestParam("categoryId") Optional<Long> categoryId,
         @RequestParam("subCategoryId") Optional<Long> subCategoryId,
-        @RequestParam("fromDate") Optional<LocalDateTime> startDate,
-        @RequestParam("toDate") Optional<LocalDateTime> endDate
+        @RequestParam("fromDate") Optional<String> startDate,
+        @RequestParam("toDate") Optional<String> endDate,
+        @RequestParam("daysRemain") Optional<Integer> daysRemain
     ){
         return new ResponseEntity<>(
-            productRequirementService.getAllProductRequirements(token, page,size,categoryId,subCategoryId,startDate,endDate),
+            productRequirementService.getAllProductRequirements(token, page,size,categoryId,subCategoryId,startDate,endDate,
+                    daysRemain),
             HttpStatus.OK
         );
     }

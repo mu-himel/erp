@@ -27,14 +27,16 @@ public interface IndentService extends VerificationDomainService {
             Optional<Integer> size,
             Optional<Long> categoryId,
             Optional<Long> subCategoryId,
-            Optional<String> priority
+            Optional<String> fromDateStr,
+            Optional<String> toDateStr
     );
 
     Page<?> getAllPendingVerificationIndents(
             Jwt token,
             Optional<Long> categoryId,
             Optional<Long> subCategoryId,
-            Optional<String>priority,
+            Optional<String>fromDate,
+            Optional<String>toDate,
             Optional<Integer> page,
             Optional<Integer> size
     );
@@ -42,7 +44,8 @@ public interface IndentService extends VerificationDomainService {
     Page<?> getAllPendingApprovalIndents(Jwt token,
                                          Optional<Long> categoryId,
                                          Optional<Long> subCategoryId,
-                                         Optional<String>priority,
+                                         Optional<String> fromDate,
+                                         Optional<String> toDate,
                                          Optional<Integer> page,
                                          Optional<Integer> size);
 

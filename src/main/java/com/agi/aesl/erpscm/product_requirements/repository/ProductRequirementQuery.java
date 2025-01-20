@@ -3,14 +3,13 @@ package com.agi.aesl.erpscm.product_requirements.repository;
 public interface ProductRequirementQuery {
     
     String getProductRequirementWithSearch="""
-            SELECT GROUP_CONCAT(p.id)                                 as productRequirementIds,
+            SELECT * FROM (SELECT GROUP_CONCAT(p.id)                                 as productRequirementIds,
                     c.id                                               AS categoryId,
                     c.name                                             AS categoryName,
                     sc.id                                              AS subCategoryId,
                     sc.name                                            AS subCategoryName,
                     MIN(demand_deadline)                               as demandDeadline,
                     DATEDIFF(MIN(demand_deadline), CURRENT_DATE)       as daysRemain,
-
                     (SELECT COUNT(*) FROM (SELECT * FROM (SELECT sic.name, COALESCE(scb.name,'NA') as brandName, GROUP_CONCAT(DISTINCT scb.name,' ',
                             sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit order by  sdda.id asc separator ' - ') attr FROM product_requirements pr
                             LEFT JOIN scm_demand_details sdd ON pr.demand_detail_id = sdd.id
@@ -22,19 +21,19 @@ public interface ProductRequirementQuery {
                             ) r
                             GROUP BY r.name, r.brandName, r.attr) total
                     ) AS itemsQty
-
             FROM product_requirements AS p
                     LEFT JOIN scm_item_categories c ON p.category_id = c.id
                     LEFT JOIN scm_item_categories sc ON p.sub_category_id = sc.id
                     LEFT JOIN scm_demands d ON p.demand_id = d.id
                     LEFT JOIN scm_demand_details dd ON p.demand_detail_id = dd.id
-
             WHERE (:categoryId IS NULL OR c.id = :categoryId)
             AND (:subCategoryId IS NULL OR sc.id = :subCategoryId)
             AND (:startDate IS NULL OR :endDate IS NULL OR p.product_requirement_date BETWEEN :startDate AND :endDate)
             AND p.status = 'OPEN'
             GROUP BY c.id, sc.id
-            ORDER BY c.id, sc.id
+             ORDER BY c.id, sc.id
+            ) r WHERE (COALESCE(:daysRemain,NULL) IS NULL OR r.daysRemain <= :daysRemain)
+             
                 """;
 
     String countProductRequirementWithSearch =

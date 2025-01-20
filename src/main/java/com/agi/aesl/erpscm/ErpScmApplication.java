@@ -16,7 +16,7 @@ import java.util.TimeZone;
 public class ErpScmApplication {
 
 	public static void main(String[] args) {
-		TimeZone.setDefault(TimeZone.getTimeZone("GMT+06:00"));
+		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Dhaka"));
 		SpringApplication.run(ErpScmApplication.class, args);
 	}
 
