@@ -350,7 +350,7 @@ public class CsServiceImpl implements CsService{
         cs.setDeliveryCharge(csRequestDto.getDeliveryCharge());
         cs.setSubTotalPrice(csRequestDto.getSubTotalPrice());
         cs.setVatAmount(csRequestDto.getVatAmount());
-
+        cs.setValidityDate((csRequestDto.getValidityDate()));
         Indent indent = cs.getIndent();
         StringBuilder categories = new StringBuilder(indent.getCategory().getId().toString());
         categories.append(",").append(indent.getSubCategory().getId().toString());
@@ -374,7 +374,11 @@ public class CsServiceImpl implements CsService{
 
             csDetail.setCs(cs);
             csDetail.setIndentDetail(indentDetail);
-            csDetail.setVendorDetails(v.getVendors().stream().map(vendorDetail->{
+            v.getVendors().stream().filter(vd -> vd.getIsDeleted()).forEach(vd->{
+                csVendorDetailRepository.deleteById(vd.getId());
+            });
+
+            csDetail.setVendorDetails(v.getVendors().stream().filter(vd->!vd.getIsDeleted()).map(vendorDetail->{
                 CsVendorDetail csVendorDetail = new CsVendorDetail();
                 csVendorDetail.setId(v.getId());
                 csVendorDetail.setVendorId(vendorDetail.getVendorId());
