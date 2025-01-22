@@ -30,7 +30,7 @@ public interface AcsQuery {
             GROUP BY acs.id
             """;
 
-    String countByIndentNoAndStatusAcs="SELECT COUNT(*) as total FROM ("+getAllAcsByIndentNoAndStatus+") a t";
+    String countByIndentNoAndStatusAcs="SELECT COUNT(*) as total FROM ("+getAllAcsByIndentNoAndStatus+") as t";
 
     String getAllPVAcsByIndentNoAndStatus = """
             SELECT
