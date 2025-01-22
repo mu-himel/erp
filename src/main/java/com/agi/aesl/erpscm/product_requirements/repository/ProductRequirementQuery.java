@@ -16,7 +16,7 @@ public interface ProductRequirementQuery {
                             LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
                             LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
                             LEFT JOIN scm_item_categories sic ON sic.id = sc.id
-                            WHERE pr.status = 'OPEN'
+                            WHERE pr.status = 'OPEN' AND pr.sub_category_id = sc.id
                             GROUP BY scb.name
                             ) r
                             GROUP BY r.name, r.brandName, r.attr) total
