@@ -11,6 +11,7 @@ import java.util.List;
 public class CsVendorDetailDto {
     private Long id;
     private Long vendorId;
+    private Boolean isDeleted;
     private String transactionType;
     private BigDecimal orderQty;
     private BigDecimal vatAmount;
