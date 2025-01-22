@@ -30,7 +30,7 @@ public interface AcsQuery {
             GROUP BY acs.id
             """;
 
-    String countByIndentNoAndStatusAcs="SELECT COUNT(*) as total FROM ("+getAllAcsByIndentNoAndStatus+")";
+    String countByIndentNoAndStatusAcs="SELECT COUNT(*) as total FROM ("+getAllAcsByIndentNoAndStatus+") a t";
 
     String getAllPVAcsByIndentNoAndStatus = """
             SELECT
@@ -72,7 +72,7 @@ public interface AcsQuery {
             GROUP BY acs.id
             """;
 
-    String countByPVAcsIndentNoAndStatusAcs="SELECT COUNT(*) FROM ("+ getAllPVAcsByIndentNoAndStatus +")";
+    String countByPVAcsIndentNoAndStatusAcs="SELECT COUNT(*) FROM ("+ getAllPVAcsByIndentNoAndStatus +") as t";
 
     String getAllPAAcsByIndentNoAndStatus= """
             SELECT
@@ -115,7 +115,7 @@ public interface AcsQuery {
             GROUP BY acs.id
             """;
 
-    String countByPAAcsIndentNoAndStatusAcs="SELECT COUNT(*) FROM ("+ getAllPAAcsByIndentNoAndStatus +")";
+    String countByPAAcsIndentNoAndStatusAcs="SELECT COUNT(*) FROM ("+ getAllPAAcsByIndentNoAndStatus +") as t";
 
     String getAllActiveCsByIndentNo= """
             SELECT
@@ -145,7 +145,7 @@ public interface AcsQuery {
             GROUP BY acs.id
             """;
 
-    String countAllActiveCsByIndentNo="SELECT COUNT(*) FROM ("+getAllActiveCsByIndentNo+")";
+    String countAllActiveCsByIndentNo="SELECT COUNT(*) FROM ("+getAllActiveCsByIndentNo+") as t";
 
     String getAllExpiredCsByIndentNo= """
             SELECT
@@ -175,5 +175,5 @@ public interface AcsQuery {
             GROUP BY acs.id
             """;
 
-    String countAllExpiredCsByIndentNo = "SELECT COUNT(*) FROM ("+getAllExpiredCsByIndentNo+")";
+    String countAllExpiredCsByIndentNo = "SELECT COUNT(*) FROM ("+getAllExpiredCsByIndentNo+") as t";
 }
