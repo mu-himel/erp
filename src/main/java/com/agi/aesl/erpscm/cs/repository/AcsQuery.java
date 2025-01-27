@@ -61,12 +61,11 @@ public interface AcsQuery {
             LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
             LEFT JOIN cs_account_va_histories cavah ON cavah.cs_account_id = acs.id
             WHERE (:indentNo IS NULL OR csheet.cs_no LIKE concat('%',:indentNo))
-            AND (COALESCE(:status) IS NULL OR acs.acs_status IN (:status))
             AND
             (
-                    (acs.next_verifier_id = :nextVerifierId )
+                    (acs.next_verifier_id = :nextVerifierId AND (COALESCE(:status) IS NULL OR acs.acs_status IN (:status)))
                     OR 
-                    (cavah.employee_id = :nextVerifierId AND cavah.acs_status IN ('PENDING_VERIFICATION','REVIEW','VERIFIED'))
+                    (cavah.employee_id = :nextVerifierId AND cavah.acs_status IN ('REVIEW','VERIFIED'))
             )
             AND (COALESCE(:fromDate) IS NULL OR acs.created_at BETWEEN :fromDate AND :toDate)
             GROUP BY acs.id
@@ -104,10 +103,9 @@ public interface AcsQuery {
             LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
             LEFT JOIN cs_account_va_histories cavah ON cavah.cs_account_id = acs.id
             WHERE (:indentNo IS NULL OR csheet.cs_no LIKE concat('%',:indentNo))
-            AND (COALESCE(:status) IS NULL OR acs.acs_status IN (:status))
             AND
             (
-                    (acs.next_approver_id = :nextApproverId )
+                    (acs.next_approver_id = :nextApproverId AND (COALESCE(:status) IS NULL OR acs.acs_status IN (:status)))
                     OR 
                     (cavah.employee_id = :nextApproverId AND cavah.acs_status IN ('PENDING_APPROVAL','REVIEW','APPROVED'))
             )
