@@ -186,6 +186,21 @@ public class CsAccountServiceImpl implements CsAccountService{
     @Transactional
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
 
+        Optional<CsAccount> csAccountOp = csAccountRepository.findById(domainId);
+        if(csAccountOp.isEmpty()){
+            throw new RuntimeException("Sorry! Account Cs  not found");
+        }
+
+        CsAccount csAccount = csAccountOp.get();
+        csAccount.setReviewerId(null);
+        csAccount.setReviewDate(null);
+        csAccount.setAcsStatus(CsStatus.REJECTED);
+        csAccount.setReviewPrevStatus(null);
+
+        commentService.addComment(
+                commentService.prepareComment(verifier,
+                        DomainType.ACS,csAccount.getId(),rejectDto.getComment(),rejectDto.getAttachments())
+        );
     }
     
     
@@ -361,7 +376,9 @@ public class CsAccountServiceImpl implements CsAccountService{
         CsAccount csAccount = csAccountOp.get();
         csAccount.setReviewerId(null);
         csAccount.setReviewDate(LocalDateTime.now());
-        csAccount.setAcsStatus(csAccount.getReviewPrevStatus());
+        if(csAccount.getReviewPrevStatus()!=null) {
+            csAccount.setAcsStatus(csAccount.getReviewPrevStatus());
+        }
         csAccount.setReviewPrevStatus(null);
 
         commentService.addComment(
