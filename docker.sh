@@ -1,5 +1,5 @@
 #!/bin/bash
-image=devopsaes/scmbe:v1.5.24
+image=devopsaes/scmbe:v1.5.25
 docker build -t $image --no-cache -f /home/user/projects/erp-scm/Dockerfile /home/user/projects/erp-scm
 echo  "image $image is built"
 docker push $image
