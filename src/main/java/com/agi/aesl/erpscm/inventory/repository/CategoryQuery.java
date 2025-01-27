@@ -37,8 +37,8 @@ public interface CategoryQuery {
                             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
                             AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
                             GROUP BY ic.id) cat 
-                       WHERE (:name IS NULL OR cat.name LIKE concat(:name,'%'))
-                        AND (:code IS NULL OR cat.code LIKE concat(:code,'%'))
+                       WHERE (:name IS NULL OR cat.name LIKE concat('%',:name,'%'))
+                        AND (:code IS NULL OR cat.code LIKE concat('%',:code,'%'))
                         AND (:currentYearBudget IS NULL OR cat.currentYearBudget LIKE concat(:currentYearBudget,'%')) 
                         AND (:productCount IS NULL OR cat.productCount=:productCount)
                         ORDER BY cat.id desc
@@ -102,8 +102,8 @@ public interface CategoryQuery {
                  AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
                  AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
                  GROUP BY ic.id) cat 
-            WHERE (:name IS NULL OR cat.name LIKE concat(:name,'%')) 
-             AND (:code IS NULL OR cat.code LIKE concat(:code,'%')) 
+            WHERE (:name IS NULL OR cat.name LIKE concat('%',:name,'%')) 
+             AND (:code IS NULL OR cat.code LIKE concat('%',:code,'%')) 
              AND (:currentYearBudget IS NULL OR cat.currentYearBudget LIKE concat(:currentYearBudget,'%')) 
              AND (:categoryId IS NULL OR cat.mainCategoryId =:categoryId) 
              AND (:productCount IS NULL OR cat.productCount=:productCount) 
@@ -132,8 +132,8 @@ public interface CategoryQuery {
             AND ic.category_status IN ('APPROVED')
             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
             AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
-            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
-            AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+            AND (:name IS NULL OR ic.name LIKE concat('%',:name,'%'))
+            AND (:code IS NULL OR ic.code LIKE concat('%',:code,'%'))
             GROUP BY ic.id
             """;
     String countMainCategoriesForInventoryControl="SELECT COUNT(*) as total FROM ("+getMainCategoriesForInventoryControl+") as t";
@@ -159,8 +159,8 @@ public interface CategoryQuery {
             AND ic.cps_category_id IS NOT NULL
             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
             AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
-            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
-            AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+            AND (:name IS NULL OR ic.name LIKE concat('%',:name,'%'))
+            AND (:code IS NULL OR ic.code LIKE concat('%',:code,'%'))
             GROUP BY ic.id
             """;
 
@@ -182,8 +182,8 @@ public interface CategoryQuery {
             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
             AND (:storeId IS NULL OR cws.warehouse_store_id = :storeId)
             AND (COALESCE(:parentCategoryId) IS NULL OR ic.parent_category_id IN (:parentCategoryId))
-            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
-            AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+            AND (:name IS NULL OR ic.name LIKE concat('%',:name,'%'))
+            AND (:code IS NULL OR ic.code LIKE concat('%',:code,'%'))
             GROUP BY ic.id
             """;
     String countSubCategoriesForInventoryControl="SELECT COUNT(*) FROM ("+getSubCategoriesForInventoryControl+") as t";
@@ -205,8 +205,8 @@ public interface CategoryQuery {
             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
             AND (:storeId IS NULL OR cws.warehouse_store_id = :storeId)
             AND (:parentCategoryId IS NULL OR ic.parent_category_id = :parentCategoryId)
-            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
-            AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+            AND (:name IS NULL OR ic.name LIKE concat('%',:name,'%'))
+            AND (:code IS NULL OR ic.code LIKE concat('%',:code,'%'))
             GROUP BY ic.id
             """;
     String countPendingSubCategoriesForInventoryControl="SELECT COUNT(*) FROM ("+getPendingSubcategoriesForInventoryControl+") as t";
@@ -218,8 +218,8 @@ public interface CategoryQuery {
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id=ic.id
             WHERE ic.active=1 AND ic.category_status IN ('APPROVED') AND ic.parent_category_id IS NOT NULL
                 AND (:parentCategoryId IS NULL OR ic.parent_category_id = :parentCategoryId)
-                AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
-                AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+                AND (:name IS NULL OR ic.name LIKE concat('%',:name,'%'))
+                AND (:code IS NULL OR ic.code LIKE concat('%',:code,'%'))
                 AND (:storeId IS NULL OR cws.warehouse_store_id = :storeId)
            GROUP BY ic.id""";
 
