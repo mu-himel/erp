@@ -37,7 +37,10 @@ public interface CsAccountRepository extends JpaRepository<CsAccount,Long>, AcsQ
                                                    Pageable pageable);
 
     @Query(value = getAllActiveCsByIndentNo, countQuery = countAllActiveCsByIndentNo, nativeQuery = true)
-    Page<AcsPendingItem> findAllActiveCs(String indentNo, List<String> status, Pageable pageable);
+    Page<AcsPendingItem> findAllActiveCs(String indentNo, List<String> status,
+                                         Long categoryId, Long subCategoryId,
+                                         LocalDateTime fromDate, LocalDateTime toDate,
+                                         Pageable pageable);
 
     @Query(value = getAllExpiredCsByIndentNo, countQuery = countAllExpiredCsByIndentNo, nativeQuery = true)
     Page<AcsPendingItem> findAllExpiredCs(String indentNo, List<String> status, Pageable pageable);

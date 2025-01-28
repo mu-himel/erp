@@ -341,15 +341,24 @@ public class CsAccountServiceImpl implements CsAccountService{
     }
 
     @Override
-    public Page<?> getActiveCsList(Jwt token, Optional<String> indentNo, Optional<Integer> page,
+    public Page<?> getActiveCsList(Jwt token, Optional<String> indentNo,
+                                   Optional<Long> categoryId,
+                                   Optional<Long> subCategoryId,
+                                   Optional<String> fromDateStr,
+                                   Optional<String> toDateStr,
+                                   Optional<Integer> page,
                                    Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
         List<String> _status = new ArrayList<>();
 
         _status.add(CsStatus.APPROVED.toString());
         _status.add(CsStatus.VERIFIED.toString());
         _status.add(CsStatus.COMPLETED.toString());
-        return csAccountRepository.findAllActiveCs(indentNo.orElse(null),_status,pageable);
+        return csAccountRepository.findAllActiveCs(indentNo.orElse(null),_status,
+                categoryId.orElse(null),subCategoryId.orElse(null),
+                fromDate,toDate,pageable);
     }
 
     @Override

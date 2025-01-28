@@ -138,6 +138,9 @@ public interface AcsQuery {
             LEFT JOIN scm_item_categories c ON c.id = i.category_id
             LEFT JOIN scm_item_categories sc ON sc.id = i.sub_category_id
             WHERE (:indentNo IS NULL OR csheet.cs_no LIKE concat('%',:indentNo))
+            AND (:categoryId IS NULL OR i.category_id = :categoryId)
+            AND (:subCategoryId IS NULL OR i.sub_category_id = :subCategoryId)
+            AND (COALESCE(:fromDate) IS NULL OR (csheet.validity_date BETWEEN :fromDate AND :toDate)) 
             AND (COALESCE(:status) IS NULL OR acs.acs_status IN (:status))
             AND (COALESCE(:status) IS NULL OR csheet.cs_status IN (:status)) AND CAST(CONCAT(csheet.validity_date,' 23:59:59') as datetime) >= SYSDATE()
             GROUP BY acs.id
