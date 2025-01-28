@@ -165,7 +165,7 @@ public interface PoQuery {
                 pod.delivery_charge as deliveryCharge,
                 pod.vat_amount as vatAmount,
                 pod.sub_total as subTotal,
-                (select CONCAT(vendor_name,',',vendor_id,',',credit_payment_duration,',',pqd.unit_price,',',pqd.est_delivery_days,',',pq.remote_offer_id,
+                (select CONCAT(vendor_name,',',vendor_id,',',COALESCE(credit_payment_duration,''),',',pqd.unit_price,',',pqd.est_delivery_days,',',pq.remote_offer_id,
                 ',',pqs.delivery_charge,',',pqs.delivery_charge_amount,',',pqs.vat_percent,',',pqs.vat_amount,',',
                     pqd.item_attribute,',',
                     pqd.brand_name,',',COALESCE(pqd.extended_attributes,''),',',COALESCE(pqd.warranty_duration,''),',',COALESCE(pqd.warranty_unit,''),',',pq.vendor_type,
