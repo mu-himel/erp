@@ -483,7 +483,7 @@ public class GrnServiceImpl implements GrnService{
             GoodReceiveNote grn = grnOp.get();
             grn.setGrnStatus(GrnStatus.REJECTED);
             if(grn.getGrnMode().equals(GrnMode.AUTO)) {
-                sentGrnReceived(token, grn.getGrnNo(), GrnStatus.REJECTED, noteDto);
+                sentGrnReceived(token, grn.getPoNo(), GrnStatus.REJECTED, noteDto);
             }
         }
     }
