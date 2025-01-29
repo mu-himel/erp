@@ -136,8 +136,8 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
             AND (:storeId IS NULL OR cws.warehouse_store_id = :storeId)
             AND (COALESCE(:parentCategoryId) IS NULL OR ic.parent_category_id IN (:parentCategoryId))
-            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
-            AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+            AND (:name IS NULL OR LOWER(ic.name) LIKE concat('%',LOWER(:name),'%'))
+            AND (:code IS NULL OR LOWER(ic.code) LIKE concat('%',LOWER(:code),'%'))
             GROUP BY ic.id
             """,nativeQuery = true)
     List<ItemCategoryInfo> findAllSubCategoriesForInventoryControl(
@@ -166,7 +166,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
             AND (:storeId IS NULL OR cws.warehouse_store_id = :storeId)
             AND (:parentCategoryId IS NULL OR ic.parent_category_id = :parentCategoryId)
-            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
+            AND (:name IS NULL OR LOWER(ic.name) LIKE concat('%',LOWER(:name),'%'))
             AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
             GROUP BY ic.id
             """,nativeQuery = true)
