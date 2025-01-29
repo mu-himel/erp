@@ -19,7 +19,12 @@ public interface PoQuery {
             LEFT JOIN indents i ON csheet.indent_id = i.id
             LEFT JOIN scm_item_categories c ON i.category_id = c.id
             LEFT JOIN scm_item_categories sc ON i.sub_category_id = sc.id
-            WHERE cpo.purchase_order_status  IN ('PENDING','PENDING_VERIFICATION','PENDING_APPROVAL','REVIEW')
+            WHERE (:csNo IS NULL OR i.indent_no LIKE CONCAT('%',:csNo,'%'))
+            AND (:poNo IS NULL OR po.po_no LIKE CONCAT('%',:poNo,'%')) 
+            AND (:categoryId IS NULL OR i.category_id = :categoryId)
+            AND (:subCategoryId IS NULL OR i.sub_category_id = :subCategoryId)
+            AND (COALESCE(:fromDate) IS NULL OR cpo.po_date BETWEEN :fromDate AND :toDate)
+            AND cpo.purchase_order_status  IN (:status)
             AND csheet.cs_status IN ('APPROVED','VERIFIED','COMPLETED')
             AND (COALESCE(:csNo) IS NULL OR csheet.cs_no IN (:csNo))
             GROUP BY po.id
@@ -51,7 +56,12 @@ public interface PoQuery {
                LEFT JOIN scm_item_categories c ON i.category_id = c.id
                LEFT JOIN scm_item_categories sc ON i.sub_category_id = sc.id
                LEFT JOIN po_verification_approval_histories pvah ON pvah.po_id = po.id
-               WHERE ((cpo.next_verifier_id = :userId AND cpo.purchase_order_status IN ('PENDING_VERIFICATION','REVIEW','VERIFIED'))
+               WHERE (:csNo IS NULL OR i.indent_no LIKE CONCAT('%',:csNo,'%'))
+                AND (:poNo IS NULL OR po.po_no LIKE CONCAT('%',:poNo,'%')) 
+                AND (:categoryId IS NULL OR i.category_id = :categoryId)
+                AND (:subCategoryId IS NULL OR i.sub_category_id = :subCategoryId)
+                AND (COALESCE(:fromDate) IS NULL OR cpo.po_date BETWEEN :fromDate AND :toDate)
+                AND ((cpo.next_verifier_id = :userId AND cpo.purchase_order_status IN (:status))
                OR (pvah.employee_id=:userId AND pvah.po_status = 'VERIFIED'))
                AND csheet.cs_status IN ('VERIFIED','APPROVED','COMPLETED')
                GROUP BY cpo.id
@@ -83,7 +93,12 @@ public interface PoQuery {
                LEFT JOIN scm_item_categories c ON i.category_id = c.id
                LEFT JOIN scm_item_categories sc ON i.sub_category_id = sc.id
                LEFT JOIN po_verification_approval_histories pvah ON pvah.po_id = po.id
-               WHERE ((cpo.next_approver_id = :userId AND cpo.purchase_order_status IN ('PENDING_APPROVAL','REVIEW','APPROVED'))
+               WHERE (:csNo IS NULL OR i.indent_no LIKE CONCAT('%',:csNo,'%'))
+                AND (:poNo IS NULL OR po.po_no LIKE CONCAT('%',:poNo,'%')) 
+                AND (:categoryId IS NULL OR i.category_id = :categoryId)
+                AND (:subCategoryId IS NULL OR i.sub_category_id = :subCategoryId)
+                AND (COALESCE(:fromDate) IS NULL OR cpo.po_date BETWEEN :fromDate AND :toDate)
+                AND ((cpo.next_approver_id = :userId AND cpo.purchase_order_status IN (:status))
                OR (pvah.employee_id=:userId AND pvah.po_status = 'APPROVED'))
                AND csheet.cs_status IN ('VERIFIED','APPROVED','COMPLETED')
                GROUP BY cpo.id
@@ -110,7 +125,12 @@ public interface PoQuery {
                LEFT JOIN scm_item_categories c ON i.category_id = c.id
                LEFT JOIN scm_item_categories sc ON i.sub_category_id = sc.id
                LEFT JOIN po_verification_approval_histories pvah ON pvah.po_id = po.id
-               WHERE cpo.purchase_order_status IN ('VERIFIED','COMPLETED','APPROVED')
+               WHERE (:csNo IS NULL OR i.indent_no LIKE CONCAT('%',:csNo,'%'))
+                AND (:poNo IS NULL OR po.po_no LIKE CONCAT('%',:poNo,'%')) 
+                AND (:categoryId IS NULL OR i.category_id = :categoryId)
+                AND (:subCategoryId IS NULL OR i.sub_category_id = :subCategoryId)
+                AND (COALESCE(:fromDate) IS NULL OR cpo.po_date BETWEEN :fromDate AND :toDate)
+                AND cpo.purchase_order_status IN (:status)
                AND csheet.cs_status IN ('VERIFIED','APPROVED','COMPLETED')
                GROUP BY cpo.id
             """;
@@ -138,7 +158,12 @@ public interface PoQuery {
         LEFT JOIN indent_details ide ON  ide.indent_id = i.id
         LEFT JOIN scm_item_categories c ON i.category_id = c.id
         LEFT JOIN scm_item_categories sc ON i.sub_category_id = sc.id
-        WHERE  po.status IN ('APPROVED')
+        WHERE  (:csNo IS NULL OR i.indent_no LIKE CONCAT('%',:csNo,'%'))
+                AND (:poNo IS NULL OR po.po_no LIKE CONCAT('%',:poNo,'%')) 
+                AND (:categoryId IS NULL OR i.category_id = :categoryId)
+                AND (:subCategoryId IS NULL OR i.sub_category_id = :subCategoryId)
+                AND (COALESCE(:fromDate) IS NULL OR po.po_date BETWEEN :fromDate AND :toDate)
+                AND po.status IN (:status)
         GROUP BY po.id
             """;
 

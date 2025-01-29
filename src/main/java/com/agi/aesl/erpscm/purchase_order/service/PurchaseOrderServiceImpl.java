@@ -301,41 +301,159 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         return pendingItemAttrList;
     }
 
+    private LocalDateTime parseDate(Optional<String> dateStr,String endTime){
+        LocalDateTime date = null;
+        if(dateStr.isPresent()){
+            String time = (endTime!=null && endTime.trim().length()==8)? "T"+endTime:"T00:00:00";
+            date = LocalDateTime.parse(dateStr.get()+time);
+        }
+        return date;
+    }
+
 
     @Override
-    public Page<?> getPendingPOs(Optional<String>csNo,Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getPendingPOs(Optional<String>csNo,
+                                 Optional<String> poNo,Optional<Long> categoryId,
+                                 Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                                 Optional<String> toDateStr, Optional<String> status,
+                                 Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return purchaseOrderRepository.findAllPendingPOs(csNo.orElse(null),pageable);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        List<String> statuses = Arrays.asList(
+                PurchaseOrderStatus.PENDING.name(),
+                PurchaseOrderStatus.PENDING_VERIFICATION.name(),
+                PurchaseOrderStatus.PENDING_APPROVAL.name(),
+                PurchaseOrderStatus.REVIEW.name()
+        );
+        if(status.isPresent()){
+            statuses = new ArrayList<>();
+            statuses = statuses.stream().filter(st->{
+               return st.equals(status.get());
+            }).toList();
+
+        }
+        return purchaseOrderRepository.findAllPendingPOs(csNo.orElse(null),
+                poNo.orElse(null),
+                categoryId.orElse(null),
+                subCategoryId.orElse(null),
+                fromDate,toDate,statuses
+                ,pageable);
     }
 
     @Override
-    public Page<?> getPendingVerificationPOs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getPendingVerificationPOs(Jwt token,
+                                             Optional<String>csNo,
+                                             Optional<String> poNo,Optional<Long> categoryId,
+                                             Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                                             Optional<String> toDateStr, Optional<String> status,
+                                             Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        List<String> statuses = Arrays.asList(
+                PurchaseOrderStatus.PENDING_VERIFICATION.name(),
+                PurchaseOrderStatus.VERIFIED.name(),
+                PurchaseOrderStatus.REVIEW.name()
+        );
+        if(status.isPresent()){
+            statuses = new ArrayList<>();
+            statuses = statuses.stream().filter(st->{
+                return st.equals(status.get());
+            }).toList();
+        }
         return purchaseOrderRepository.findAllPendingVerificationPOs(
                 claimResolver.getUserId(),
+                csNo.orElse(null), poNo.orElse(null),
+                categoryId.orElse(null), subCategoryId.orElse(null),
+                fromDate,toDate,statuses,
                 pageable);
     }
 
     @Override
-    public Page<?> getPendingApprovalPOs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getPendingApprovalPOs(Jwt token,
+                                         Optional<String>csNo,
+                                         Optional<String> poNo,Optional<Long> categoryId,
+                                         Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                                         Optional<String> toDateStr, Optional<String> status,
+                                         Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        List<String> statuses = Arrays.asList(
+                PurchaseOrderStatus.PENDING_APPROVAL.name(),
+                PurchaseOrderStatus.APPROVED.name(),
+                PurchaseOrderStatus.REVIEW.name()
+        );
+        if(status.isPresent()){
+            statuses = new ArrayList<>();
+            statuses = statuses.stream().filter(st->{
+                return st.equals(status.get());
+            }).toList();
+        }
         return purchaseOrderRepository.findAllPendingApprovalPOs(
                 claimResolver.getUserId(),
+                csNo.orElse(null), poNo.orElse(null),
+                categoryId.orElse(null), subCategoryId.orElse(null),
+                fromDate,toDate,statuses,
                 pageable);
     }
 
     @Override
-    public Page<?> getApprovedPOs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getApprovedPOs(Jwt token,
+                                  Optional<String>csNo,
+                                  Optional<String> poNo,Optional<Long> categoryId,
+                                  Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                                  Optional<String> toDateStr, Optional<String> status,
+                                  Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return purchaseOrderRepository.findAllApprovedPos(pageable);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        List<String> statuses = Arrays.asList(
+                PurchaseOrderStatus.APPROVED.name(),
+                PurchaseOrderStatus.VERIFIED.name(),
+                PurchaseOrderStatus.COMPLETED.name()
+        );
+        if(status.isPresent()){
+            statuses = new ArrayList<>();
+            statuses = statuses.stream().filter(st->{
+                return st.equals(status.get());
+            }).toList();
+        }
+        return purchaseOrderRepository.findAllApprovedPos(
+                csNo.orElse(null), poNo.orElse(null),
+                categoryId.orElse(null), subCategoryId.orElse(null),
+                fromDate,toDate,statuses,
+                pageable);
     }
 
     @Override
-    public Page<?> getClosedPOs(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<?> getClosedPOs(Jwt token,
+                                Optional<String>csNo,
+                                Optional<String> poNo,Optional<Long> categoryId,
+                                Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                                Optional<String> toDateStr, Optional<String> status,
+                                Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE));
-        return purchaseOrderRepository.findAllClosedPOs(pageable);
+        LocalDateTime fromDate = parseDate(fromDateStr,null);
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        List<String> statuses = Arrays.asList(
+                PurchaseOrderStatus.APPROVED.name(),
+                PurchaseOrderStatus.VERIFIED.name(),
+                PurchaseOrderStatus.COMPLETED.name(),
+                PurchaseOrderStatus.REJECTED.name()
+        );
+        if(status.isPresent()){
+            statuses = new ArrayList<>();
+            statuses = statuses.stream().filter(st->{
+                return st.equals(status.get());
+            }).toList();
+        }
+        return purchaseOrderRepository.findAllClosedPOs(csNo.orElse(null), poNo.orElse(null),
+                categoryId.orElse(null), subCategoryId.orElse(null),
+                fromDate,toDate,statuses,pageable);
     }
 
     @Override
