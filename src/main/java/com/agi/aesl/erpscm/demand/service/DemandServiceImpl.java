@@ -1010,7 +1010,9 @@ public class DemandServiceImpl implements DemandService{
         Optional<Demand> demandOp  = demandRepository.findById(id);
         if(demandOp.isPresent()){
             Demand demand = demandOp.get();
-            if(demand.getIsCanceled()!=null && !demand.getIsCanceled()) {
+            if(demand.getIsCanceled()!=null && demand.getIsCanceled()) {
+                demand.setStatus(DemandStatus.CANCELED);
+            }else{
                 demandMailService.setClaimResolver(claimResolver);
                 demandMailService.setDemand(demand);
                 demandMailService.getStoreUsers("demand/pending");
@@ -1023,8 +1025,6 @@ public class DemandServiceImpl implements DemandService{
                             return demandDetail;
                         }).collect(Collectors.toList())
                 );
-            }else{
-                demand.setStatus(DemandStatus.CANCELED);
             }
             DemandVerificationApprovalHistory demandVAHistory = new DemandVerificationApprovalHistory();
             demandVAHistory.setDemand(demand);
@@ -1117,7 +1117,9 @@ public class DemandServiceImpl implements DemandService{
                 );
             }else {
 
-                if(demand.getIsCanceled()==null || !demand.getIsCanceled()) {
+                if(demand.getIsCanceled()!=null && demand.getIsCanceled()) {
+                    demand.setStatus(DemandStatus.CANCELED);
+                }else{
                     demandMailService.setClaimResolver(claimResolver);
                     demandMailService.setDemand(demand);
                     demandMailService.getStoreUsers("demand/pending");
@@ -1130,8 +1132,6 @@ public class DemandServiceImpl implements DemandService{
                                 return demandDetail;
                             }).collect(Collectors.toList())
                     );
-                }else{
-                    demand.setStatus(DemandStatus.CANCELED);
                 }
                 
             }
