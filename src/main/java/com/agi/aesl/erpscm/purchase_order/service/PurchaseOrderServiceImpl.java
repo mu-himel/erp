@@ -312,7 +312,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
 
     @Override
-    public Page<?> getPendingPOs(Optional<String>csNo,
+    public Page<?> getPendingPOs(Optional<String>vendor,Optional<String>csNo,
                                  Optional<String> poNo,Optional<Long> categoryId,
                                  Optional<Long> subCategoryId, Optional<String> fromDateStr,
                                  Optional<String> toDateStr, Optional<String> status,
@@ -327,13 +327,17 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 PurchaseOrderStatus.REVIEW.name()
         );
         if(status.isPresent()){
-            statuses = new ArrayList<>();
             statuses = statuses.stream().filter(st->{
-               return st.equals(status.get());
+                if(st.equals(status.get())){
+                    return true;
+                }
+               return false;
             }).toList();
 
         }
-        return purchaseOrderRepository.findAllPendingPOs(csNo.orElse(null),
+        return purchaseOrderRepository.findAllPendingPOs(
+                vendor.orElse(null),
+                csNo.orElse(null),
                 poNo.orElse(null),
                 categoryId.orElse(null),
                 subCategoryId.orElse(null),
@@ -343,7 +347,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
     @Override
     public Page<?> getPendingVerificationPOs(Jwt token,
-                                             Optional<String>csNo,
+                                             Optional<String>vendor,Optional<String>csNo,
                                              Optional<String> poNo,Optional<Long> categoryId,
                                              Optional<Long> subCategoryId, Optional<String> fromDateStr,
                                              Optional<String> toDateStr, Optional<String> status,
@@ -358,13 +362,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 PurchaseOrderStatus.REVIEW.name()
         );
         if(status.isPresent()){
-            statuses = new ArrayList<>();
             statuses = statuses.stream().filter(st->{
                 return st.equals(status.get());
             }).toList();
         }
         return purchaseOrderRepository.findAllPendingVerificationPOs(
                 claimResolver.getUserId(),
+                vendor.orElse(null),
                 csNo.orElse(null), poNo.orElse(null),
                 categoryId.orElse(null), subCategoryId.orElse(null),
                 fromDate,toDate,statuses,
@@ -373,7 +377,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
     @Override
     public Page<?> getPendingApprovalPOs(Jwt token,
-                                         Optional<String>csNo,
+                                         Optional<String>vendor,Optional<String>csNo,
                                          Optional<String> poNo,Optional<Long> categoryId,
                                          Optional<Long> subCategoryId, Optional<String> fromDateStr,
                                          Optional<String> toDateStr, Optional<String> status,
@@ -388,13 +392,12 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 PurchaseOrderStatus.REVIEW.name()
         );
         if(status.isPresent()){
-            statuses = new ArrayList<>();
             statuses = statuses.stream().filter(st->{
                 return st.equals(status.get());
             }).toList();
         }
         return purchaseOrderRepository.findAllPendingApprovalPOs(
-                claimResolver.getUserId(),
+                claimResolver.getUserId(), vendor.orElse(null),
                 csNo.orElse(null), poNo.orElse(null),
                 categoryId.orElse(null), subCategoryId.orElse(null),
                 fromDate,toDate,statuses,
@@ -403,7 +406,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
     @Override
     public Page<?> getApprovedPOs(Jwt token,
-                                  Optional<String>csNo,
+                                  Optional<String>vendor,Optional<String>csNo,
                                   Optional<String> poNo,Optional<Long> categoryId,
                                   Optional<Long> subCategoryId, Optional<String> fromDateStr,
                                   Optional<String> toDateStr, Optional<String> status,
@@ -417,12 +420,12 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 PurchaseOrderStatus.COMPLETED.name()
         );
         if(status.isPresent()){
-            statuses = new ArrayList<>();
             statuses = statuses.stream().filter(st->{
                 return st.equals(status.get());
             }).toList();
         }
         return purchaseOrderRepository.findAllApprovedPos(
+                vendor.orElse(null),
                 csNo.orElse(null), poNo.orElse(null),
                 categoryId.orElse(null), subCategoryId.orElse(null),
                 fromDate,toDate,statuses,
@@ -431,7 +434,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
     @Override
     public Page<?> getClosedPOs(Jwt token,
-                                Optional<String>csNo,
+                                Optional<String>vendor,Optional<String>csNo,
                                 Optional<String> poNo,Optional<Long> categoryId,
                                 Optional<Long> subCategoryId, Optional<String> fromDateStr,
                                 Optional<String> toDateStr, Optional<String> status,
@@ -446,12 +449,13 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 PurchaseOrderStatus.REJECTED.name()
         );
         if(status.isPresent()){
-            statuses = new ArrayList<>();
             statuses = statuses.stream().filter(st->{
                 return st.equals(status.get());
             }).toList();
         }
-        return purchaseOrderRepository.findAllClosedPOs(csNo.orElse(null), poNo.orElse(null),
+        return purchaseOrderRepository.findAllClosedPOs(
+                vendor.orElse(null),
+                csNo.orElse(null), poNo.orElse(null),
                 categoryId.orElse(null), subCategoryId.orElse(null),
                 fromDate,toDate,statuses,pageable);
     }
@@ -707,16 +711,27 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     @Transactional
     public void rejectPo(Jwt token, Long id, NoteDto noteDto) {
         claimResolver.setToken(token);
-        Optional<PurchaseOrder> poOp = purchaseOrderRepository.findById(id);
-        if(poOp.isEmpty()){
+        Optional<PoGroup> poGroupOp = poGroupRepository.findById(id);
+
+        if(poGroupOp.isEmpty()){
             throw new RuntimeException("Sorry! PO not found");
         }
-        PurchaseOrder po = poOp.get();
-        po.setStatus(PurchaseOrderStatus.REJECTED);
-        commentService.addComment(
-                commentService.prepareComment(claimResolver.getEmployee().get(),DomainType.PO,po.getId(),noteDto.getNote(),
-                        noteDto.getAttachments())
-        );
+        PoGroup poGroup = poGroupOp.get();
+        List<PurchaseOrderRepository.PurchaseOrderDetailInfo> pos = purchaseOrderRepository.findAllByPoGroupId(id);
+        if(!pos.isEmpty()){
+            pos.forEach(poTemp->{
+                Optional<PurchaseOrder> poOp = purchaseOrderRepository.findById(poTemp.getId());
+                poOp.ifPresent(po->{
+                    po.setStatus(PurchaseOrderStatus.REJECTED);
+                    commentService.addComment(
+                            commentService.prepareComment(claimResolver.getEmployee().get(),DomainType.PO,po.getId(),noteDto.getNote(),
+                                    noteDto.getAttachments())
+                    );
+                });
+            });
+        }
+        poGroup.setStatus(PurchaseOrderStatus.REJECTED.name());
+
     }
 
     @Transactional

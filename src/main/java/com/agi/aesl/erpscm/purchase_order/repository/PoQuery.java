@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.purchase_order.repository;
 
 public interface PoQuery {
     String getPendingPOs= """
+            SELECT * FROM (
             SELECT 
             po.po_group_id as id,
             cpo.po_date as poDate,
@@ -14,26 +15,26 @@ public interface PoQuery {
             COALESCE((select count(*) from purchase_orders po2 where po2.cs_id = csheet.id), 0) as totalOrderQty,
             cpo.purchase_order_status as status
             FROM purchase_orders po
-            LEFT JOIN  cs_po cpo  ON cpo.id = po.po_group_id\s
+            LEFT JOIN  cs_po cpo  ON cpo.id = po.po_group_id
             LEFT JOIN  cs csheet ON csheet.id = cpo.cs_id
             LEFT JOIN indents i ON csheet.indent_id = i.id
             LEFT JOIN scm_item_categories c ON i.category_id = c.id
             LEFT JOIN scm_item_categories sc ON i.sub_category_id = sc.id
-            WHERE (:csNo IS NULL OR i.indent_no LIKE CONCAT('%',:csNo,'%'))
+            WHERE (:csNo IS NULL OR csheet.cs_no LIKE CONCAT('%',:csNo,'%'))
             AND (:poNo IS NULL OR po.po_no LIKE CONCAT('%',:poNo,'%')) 
             AND (:categoryId IS NULL OR i.category_id = :categoryId)
             AND (:subCategoryId IS NULL OR i.sub_category_id = :subCategoryId)
             AND (COALESCE(:fromDate) IS NULL OR cpo.po_date BETWEEN :fromDate AND :toDate)
             AND cpo.purchase_order_status  IN (:status)
             AND csheet.cs_status IN ('APPROVED','VERIFIED','COMPLETED')
-            AND (COALESCE(:csNo) IS NULL OR csheet.cs_no IN (:csNo))
-            GROUP BY po.id
+            GROUP BY po.id) r 
+            WHERE (:vendor IS NULL OR LOWER(r.vendorName) LIKE CONCAT('%',LOWER(:vendor),'%'))
             """;
 
     String countPendingPOs="SELECT COUNT(*) FROM ("+ getPendingPOs + ") as total";
 
     String getPendingVerificationPOs = """
-            SELECT
+            SELECT * FROM (SELECT
                    cpo.id as id,
                    cpo.po_date as poDate,
                    (SELECT MAX(vendor_name) FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
@@ -64,13 +65,14 @@ public interface PoQuery {
                 AND ((cpo.next_verifier_id = :userId AND cpo.purchase_order_status IN (:status))
                OR (pvah.employee_id=:userId AND pvah.po_status = 'VERIFIED'))
                AND csheet.cs_status IN ('VERIFIED','APPROVED','COMPLETED')
-               GROUP BY cpo.id
+               GROUP BY cpo.id) r 
+               WHERE (:vendor IS NULL OR LOWER(r.vendorName) LIKE CONCAT('%',LOWER(:vendor),'%'))
                     """;
 
     String countGetPendingVerificationPOs = "SELECT COUNT(*) FROM ("+getPendingVerificationPOs+") as total";
 
     String getPendingApprovalPOs= """
-            SELECT
+            SELECT * FROM (SELECT
                    cpo.id as id,
                    cpo.po_date as poDate,
                    (SELECT MAX(vendor_name) FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
@@ -101,13 +103,14 @@ public interface PoQuery {
                 AND ((cpo.next_approver_id = :userId AND cpo.purchase_order_status IN (:status))
                OR (pvah.employee_id=:userId AND pvah.po_status = 'APPROVED'))
                AND csheet.cs_status IN ('VERIFIED','APPROVED','COMPLETED')
-               GROUP BY cpo.id
+               GROUP BY cpo.id) r
+               WHERE (:vendor IS NULL OR LOWER(r.vendorName) LIKE CONCAT('%',LOWER(:vendor),'%'))
             """;
 
     String countGetPendingApprovalPOs="SELECT COUNT(*) FROM ("+getPendingApprovalPOs+") as total";
 
     String getClosedPOs= """
-         SELECT
+         SELECT * FROM (SELECT
                    cpo.id as id,
                    cpo.po_date as poDate,
                    (SELECT MAX(vendor_name) FROM price_quotations pq WHERE pq.vendor_id = po.vendor_id) vendorName,
@@ -132,13 +135,14 @@ public interface PoQuery {
                 AND (COALESCE(:fromDate) IS NULL OR cpo.po_date BETWEEN :fromDate AND :toDate)
                 AND cpo.purchase_order_status IN (:status)
                AND csheet.cs_status IN ('VERIFIED','APPROVED','COMPLETED')
-               GROUP BY cpo.id
+               GROUP BY cpo.id) r
+               WHERE (:vendor IS NULL OR LOWER(r.vendorName) LIKE CONCAT('%',LOWER(:vendor),'%'))
             """;
 
     String countClosedPOs="SELECT COUNT(*) FROM ("+getClosedPOs+") as total";
 
     String getApprovedPOs= """
-            SELECT 
+        SELECT * FROM (SELECT 
         po.id as id,
         po.po_date                       as poDate,
         i.indent_no                      as indentNo,
@@ -164,7 +168,8 @@ public interface PoQuery {
                 AND (:subCategoryId IS NULL OR i.sub_category_id = :subCategoryId)
                 AND (COALESCE(:fromDate) IS NULL OR po.po_date BETWEEN :fromDate AND :toDate)
                 AND po.status IN (:status)
-        GROUP BY po.id
+        GROUP BY po.id) r
+        WHERE (:vendor IS NULL OR LOWER(r.vendorName) LIKE CONCAT('%', LOWER(:vendor), '%'))
             """;
 
     String countApprovedPOs="SELECT COUNT(*) FROM ("+ getApprovedPOs+") as total";

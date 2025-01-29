@@ -24,7 +24,7 @@ import java.util.List;
 @Repository
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Long>, PoQuery {
     @Query(value = getPendingPOs, countQuery = countPendingPOs, nativeQuery = true)
-    Page<PendingPOItemDetail> findAllPendingPOs(String csNo,
+    Page<PendingPOItemDetail> findAllPendingPOs(String vendor,String csNo,
                                                 String poNo,Long categoryId,
                                                 Long subCategoryId,
                                                 LocalDateTime fromDate,
@@ -32,7 +32,7 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
                                                 List<String> status,Pageable pageable);
 
     @Query(value = getPendingVerificationPOs, countQuery = countGetPendingVerificationPOs, nativeQuery = true)
-    Page<PendingPOItemDetail> findAllPendingVerificationPOs(String userId,
+    Page<PendingPOItemDetail> findAllPendingVerificationPOs(String userId,String vendor,
                                         String csNo, String poNo,
                                         Long categoryId, Long subCategoryId,
                                         LocalDateTime fromDate, LocalDateTime toDate,
@@ -40,14 +40,14 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
 
 
     @Query(value = getPendingApprovalPOs, countQuery = countGetPendingApprovalPOs, nativeQuery = true)
-    Page<PendingPOItemDetail> findAllPendingApprovalPOs(String userId,
+    Page<PendingPOItemDetail> findAllPendingApprovalPOs(String userId,String vendor,
                                                         String csNo, String poNo,
                                                         Long categoryId, Long subCategoryId,
                                                         LocalDateTime fromDate, LocalDateTime toDate,
                                                         List<String> status, Pageable pageable);
 
     @Query(value = getClosedPOs, countQuery = countClosedPOs, nativeQuery = true)
-    Page<PendingPOItemDetail> findAllClosedPOs(
+    Page<PendingPOItemDetail> findAllClosedPOs( String vendor,
             String csNo, String poNo, Long categoryId, Long subCategoryId,
             LocalDateTime fromDate, LocalDateTime toDate,
             List<String> status,
@@ -55,6 +55,7 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
 
     @Query(value = getApprovedPOs, countQuery = countApprovedPOs, nativeQuery = true)
     Page<ClosedPOListItem> findAllApprovedPos(
+            String vendor,
             String csNo, String poNo, Long categoryId, Long subCategoryId,
             LocalDateTime fromDate, LocalDateTime toDate,
             List<String> status,

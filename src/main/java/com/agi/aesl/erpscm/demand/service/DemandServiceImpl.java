@@ -1010,7 +1010,7 @@ public class DemandServiceImpl implements DemandService{
         Optional<Demand> demandOp  = demandRepository.findById(id);
         if(demandOp.isPresent()){
             Demand demand = demandOp.get();
-            if(!demand.getIsCanceled()) {
+            if(demand.getIsCanceled()!=null && !demand.getIsCanceled()) {
                 demandMailService.setClaimResolver(claimResolver);
                 demandMailService.setDemand(demand);
                 demandMailService.getStoreUsers("demand/pending");
