@@ -1350,9 +1350,9 @@ public class CategoryServiceImpl implements CategoryService {
                         throw new RuntimeException("Amount field should not be blank or empty string");
                     }
                     Integer budgetYear = Integer.parseInt(budgetYearStr);
-                    Optional<CategoryBudget> categoryBudgetOp = categoryBudgetRepository.findByCategoryIdAndBudgetTypeAndCurrentYear(id,BudgetType.REGULAR,budgetYear);
-                    if(categoryBudgetOp.isPresent()){
-                        CategoryBudget categoryBudget = categoryBudgetOp.get();
+                    List<CategoryBudget> categoryBudgetOp = categoryBudgetRepository.findByCategoryIdAndBudgetTypeAndCurrentYear(id,BudgetType.REGULAR,budgetYear);
+                    if(!categoryBudgetOp.isEmpty()){
+                        CategoryBudget categoryBudget = categoryBudgetOp.get(categoryBudgetOp.size()-1);
                         if(categoryBudget.getAmount().compareTo(new BigDecimal(amount))<0){
                             CategoryBudget extendedBudget = new CategoryBudget(categoryBudget.getCategory(),
                                     new BigDecimal(amount),
