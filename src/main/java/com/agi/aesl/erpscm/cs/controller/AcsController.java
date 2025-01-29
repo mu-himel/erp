@@ -131,11 +131,15 @@ public class AcsController extends BaseController {
     public ResponseEntity<?> getActiveAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(csAccountService.getActiveCsList(token,
-                indentNo,page,size), HttpStatus.OK);
+                indentNo,categoryId,subCategoryId,fromDateStr,toDateStr,page,size), HttpStatus.OK);
     }
 
     @GetMapping("/expired-cs")

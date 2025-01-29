@@ -34,12 +34,21 @@ public class PurchaseController extends BaseController {
 
     @GetMapping("/pending")
     public ResponseEntity<?> getPendingPurchaseOrders(
+            @RequestParam("vendor") Optional<String> vendor,
             @RequestParam("csNo") Optional<String> csNo,
+            @RequestParam("poNo") Optional<String> poNo,
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
+            @RequestParam("status") Optional<String> status,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                purchaseOrderService.getPendingPOs(csNo,page,size),
+                purchaseOrderService.getPendingPOs(vendor,csNo,
+                        poNo,categoryId,subCategoryId,fromDateStr,toDateStr,status,
+                        page,size),
                 HttpStatus.OK
         );
     }
@@ -47,11 +56,21 @@ public class PurchaseController extends BaseController {
     @GetMapping("/pending-verification")
     public ResponseEntity<?> getPendingVerificationPurchaseOrders(
             @AuthenticationPrincipal Jwt token,
+            @RequestParam("csNo") Optional<String> csNo,
+            @RequestParam("poNo") Optional<String> poNo,
+            @RequestParam("vendor") Optional<String> vendor,
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
+            @RequestParam("status") Optional<String> status,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
             ){
         return new ResponseEntity<>(
-                purchaseOrderService.getPendingVerificationPOs(token,page,size),
+                purchaseOrderService.getPendingVerificationPOs(token,vendor,
+                        csNo,poNo,categoryId,subCategoryId,fromDateStr,toDateStr,status,
+                        page,size),
                 HttpStatus.OK
         );
     }
@@ -59,11 +78,21 @@ public class PurchaseController extends BaseController {
     @GetMapping("/pending-approval")
     public ResponseEntity<?> getPendingApprovalPurchaseOrders(
             @AuthenticationPrincipal Jwt token,
+            @RequestParam("csNo") Optional<String> csNo,
+            @RequestParam("poNo") Optional<String> poNo,
+            @RequestParam("vendor") Optional<String> vendor,
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
+            @RequestParam("status") Optional<String> status,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                purchaseOrderService.getPendingApprovalPOs(token, page, size),
+                purchaseOrderService.getPendingApprovalPOs(token,vendor,
+                        csNo,poNo,categoryId,subCategoryId,
+                        fromDateStr,toDateStr,status,page, size),
                 HttpStatus.OK
         );
     }
@@ -71,11 +100,22 @@ public class PurchaseController extends BaseController {
     @GetMapping("/approved")
     public ResponseEntity<?> getApprovedPurchaseOrders(
             @AuthenticationPrincipal Jwt token,
+            @RequestParam("vendor") Optional<String> vendor,
+            @RequestParam("csNo") Optional<String> csNo,
+            @RequestParam("poNo") Optional<String> poNo,
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
+            @RequestParam("status") Optional<String> status,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                purchaseOrderService.getApprovedPOs(token,page,size),
+                purchaseOrderService.getApprovedPOs(token,
+                        vendor,csNo,poNo,categoryId,subCategoryId,
+                        fromDateStr,toDateStr, status,
+                        page,size),
                 HttpStatus.OK
         );
     }
@@ -83,11 +123,22 @@ public class PurchaseController extends BaseController {
     @GetMapping("/closed")
     public ResponseEntity<?> getClosedPurchaseOrders(
             @AuthenticationPrincipal Jwt token,
+            @RequestParam("vendor") Optional<String> vendor,
+            @RequestParam("csNo") Optional<String> csNo,
+            @RequestParam("poNo") Optional<String> poNo,
+            @RequestParam("categoryId") Optional<Long> categoryId,
+            @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+            @RequestParam("fromDate") Optional<String> fromDateStr,
+            @RequestParam("toDate") Optional<String> toDateStr,
+            @RequestParam("status") Optional<String> status,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
     ){
         return new ResponseEntity<>(
-                purchaseOrderService.getClosedPOs(token,page, size),
+                purchaseOrderService.getClosedPOs(token,
+                        vendor,csNo,poNo,categoryId,subCategoryId,
+                        fromDateStr,toDateStr,status,
+                        page, size),
                 HttpStatus.OK
         );
     }

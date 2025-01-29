@@ -17,15 +17,42 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface PurchaseOrderService extends VerificationDomainService {
-    Page<?> getPendingPOs(Optional<String>csNo,Optional<Integer> page, Optional<Integer> size);
+    Page<?> getPendingPOs(Optional<String>vendor,Optional<String>csNo,
+                          Optional<String> poNo,
+                          Optional<Long> categoryId,
+                          Optional<Long> subCategoryId,
+                          Optional<String> fromDateStr,
+                          Optional<String> toDateStr,
+                          Optional<String> status,
+                          Optional<Integer> page, Optional<Integer> size);
 
-    Page<?> getPendingVerificationPOs(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getPendingVerificationPOs(Jwt token,
+                                      Optional<String>vendor,Optional<String>csNo,
+                                      Optional<String> poNo,Optional<Long> categoryId,
+                                      Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                                      Optional<String> toDateStr, Optional<String> status,
+                                      Optional<Integer> page, Optional<Integer> size);
 
-    Page<?> getPendingApprovalPOs(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getPendingApprovalPOs(Jwt token,
+                                  Optional<String>vendor,Optional<String>csNo,
+                                  Optional<String> poNo,Optional<Long> categoryId,
+                                  Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                                  Optional<String> toDateStr, Optional<String> status,
+                                  Optional<Integer> page, Optional<Integer> size);
 
-    Page<?> getApprovedPOs(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getApprovedPOs(Jwt token,
+                           Optional<String>vendor,Optional<String>csNo,
+                           Optional<String> poNo,Optional<Long> categoryId,
+                           Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                           Optional<String> toDateStr, Optional<String> status,
+                           Optional<Integer> page, Optional<Integer> size);
 
-    Page<?> getClosedPOs(Jwt token, Optional<Integer> page, Optional<Integer> size);
+    Page<?> getClosedPOs(Jwt token,
+                         Optional<String>vendor,Optional<String>csNo,
+                         Optional<String> poNo,Optional<Long> categoryId,
+                         Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                         Optional<String> toDateStr, Optional<String> status,
+                         Optional<Integer> page, Optional<Integer> size);
     Map<String, Object> getPurchaseOrderDetail(Long csId);
 
     void setVerificationAndApproval(Jwt token, String uri, Long csId);
