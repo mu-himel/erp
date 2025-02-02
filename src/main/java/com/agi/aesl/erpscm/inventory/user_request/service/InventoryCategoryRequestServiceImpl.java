@@ -302,7 +302,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         detail.put("warehouse",warehouseService.getWarehouse(category.getCreatedBy().getWarehouseId()));
         List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
         List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
-        DomainType domainType = (category.getParentCategory()!=null)? DomainType.INVENTORY_REQ_SUB_CATEGORY:
+        DomainType domainType = (category.getActiveParentCategory()!=null)? DomainType.INVENTORY_REQ_SUB_CATEGORY:
                 DomainType.INVENTORY_REQ_CATEGORY;
         List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
                 .getVerificationsByDomainTypeAndDomainId(domainType, category.getId());
