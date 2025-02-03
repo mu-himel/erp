@@ -117,8 +117,8 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             AND ic.category_status IN ('APPROVED')
             AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
             AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
-            AND (:name IS NULL OR ic.name LIKE concat(:name,'%'))
-            AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))
+            AND (:name IS NULL OR ic.name LIKE concat('%',:name,'%'))
+            AND (:code IS NULL OR ic.code LIKE concat('%',:code,'%'))
             GROUP BY ic.id
             """, nativeQuery = true)
     List<ItemCategoryInfo> findAllMainCategoriesForInventoryControl(List<Long> warehouseId, Long warehouseStoreId,
