@@ -249,14 +249,13 @@ public interface IndentQuery {
                             
                     WHERE  i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.rfq_status = 'INIT'
                             AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo))
-                            AND (:category IS NULL OR  LOWER(c.name) LIKE  CONCAT(LOWER(:category),'%'))
-                            AND (:subCategory IS NULL OR LOWER(sc.name) LIKE CONCAT(LOWER(:subCategory),'%'))
+                            AND (:category IS NULL OR  c.id = :category)
+                            AND (:subCategory IS NULL OR sc.id = :subCategory)
                             AND (:priority IS NULL OR i.priority = :priority)
                             AND (:daysRemain IS NULL OR DATEDIFF(i.priority_date_time , CURRENT_DATE) = :daysRemain)
                             AND (COALESCE(:fromDate) IS NULL OR (i.indent_date BETWEEN :fromDate AND :toDate))
-                            
                     GROUP BY i.id
-                                                                            """;
+            """;
 
     String countPendingRfqs="SELECT COUNT(*) FROM ("+getIndentApprovedAndPendingRFqWithSearch+") as total";
 
@@ -282,23 +281,20 @@ public interface IndentQuery {
                                 0 as totalReceivedPq,
                                 CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
                                 DATEDIFF(i.priority_date_time , CURRENT_DATE) as daysRemain
-                                
                         FROM indents i
                                         LEFT JOIN indent_details ide on i.id = ide.indent_id
                                         LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
                                         LEFT JOIN scm_item_categories c on i.category_id = c.id
                                         LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                                         LEFT JOIN acl_users e ON e.id = i.requested_by_id
-                                
                         WHERE  i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.rfq_status = 'OPEN'
                                 AND i.expire_date_time > SYSDATE()
                                 AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo))
-                                AND (:category IS NULL OR LOWER(c.name) LIKE  CONCAT(LOWER(:category),'%'))
-                                AND (:subCategory IS NULL OR LOWER(sc.name) LIKE CONCAT(LOWER(:subCategory),'%'))
+                                AND (:category IS NULL OR c.id = :category)
+                                AND (:subCategory IS NULL OR sc.id = :subCategory)
                                 AND (:priority IS NULL OR i.priority = :priority)
                                 AND (:daysRemain IS NULL OR DATEDIFF(i.priority_date_time , CURRENT_DATE) = :daysRemain)
                                 AND (:fromDate IS NULL OR (i.sent_date BETWEEN :fromDate AND :toDate))
-                                
                         GROUP BY i.id
             """;
 

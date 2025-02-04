@@ -33,8 +33,8 @@ public class RfqController extends BaseController {
     public ResponseEntity<?> getAllPendingRFQs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam Optional<String> indentNo,
-            @RequestParam Optional<String> category,
-            @RequestParam Optional<String> subCategory,
+            @RequestParam Optional<Long> categoryId,
+            @RequestParam Optional<Long> subCategoryId,
             @RequestParam Optional<String> priority,
             @RequestParam Optional<Integer> daysRemain,
             @RequestParam Optional<String> fromDate,
@@ -44,7 +44,7 @@ public class RfqController extends BaseController {
     ){
 
         return new ResponseEntity<>(
-                rfqService.getAllPendingRFQs(token, indentNo, category, subCategory, priority,
+                rfqService.getAllPendingRFQs(token, indentNo, categoryId, subCategoryId, priority,
                         daysRemain, fromDate, toDate, page, size
                 ),
                 HttpStatus.OK);
@@ -54,8 +54,8 @@ public class RfqController extends BaseController {
     public ResponseEntity<?> getAllOpenRfqs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
-            @RequestParam("category") Optional<String> category,
-            @RequestParam("subCategory") Optional<String> subCategory,
+            @RequestParam("categoryId") Optional<Long> category,
+            @RequestParam("subCategoryId") Optional<Long> subCategory,
             @RequestParam("priority") Optional<String> priority,
             @RequestParam("daysRemain") Optional<Integer> daysRemain,
             @RequestParam("fromDate") Optional<String> fromDate,

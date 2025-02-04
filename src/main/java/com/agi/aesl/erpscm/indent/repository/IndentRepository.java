@@ -58,12 +58,12 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
     Optional<Long> findMaxIndentById();
 
     @Query(value = getIndentApprovedAndPendingRFqWithSearch, countQuery = countPendingRfqs, nativeQuery = true)
-    Page<IndentInfo> getAllApprovedIndents(String indentNo, String category, String subCategory, String priority,
+    Page<IndentInfo> getAllApprovedIndents(String indentNo, Long category, Long subCategory, String priority,
                                   Integer daysRemain, LocalDateTime fromDate, LocalDateTime toDate,
                                   Pageable pageable);
 
     @Query(value = getApprovedIndentWithOpenRfq, countQuery = countApprovedIndentWithOpenRfq, nativeQuery = true)
-    Page<SentRfqListItem> getAllIndentsWithOpenRfqStatus(String indentNo, String category, String subCategory,
+    Page<SentRfqListItem> getAllIndentsWithOpenRfqStatus(String indentNo, Long category, Long subCategory,
                                                          String priority, Integer daysRemain, LocalDateTime fromDate,
                                                          LocalDateTime toDate, Pageable pageable);
 
