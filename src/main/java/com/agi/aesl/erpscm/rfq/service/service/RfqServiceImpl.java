@@ -152,8 +152,8 @@ public class RfqServiceImpl implements RfqService{
     }
 
     @Override
-    public Page<?> getAllPendingRFQs(Jwt token, Optional<String> indentNo, Optional<String> category,
-                                     Optional<String> subCategory, Optional<String> priority,
+    public Page<?> getAllPendingRFQs(Jwt token, Optional<String> indentNo, Optional<Long> categoryId,
+                                     Optional<Long> subCategoryId, Optional<String> priority,
                                      Optional<Integer> daysRemain, Optional<String> fromDateOp,
                                      Optional<String> toDateOp, Optional<Integer> page, Optional<Integer> size) {
 
@@ -179,8 +179,8 @@ public class RfqServiceImpl implements RfqService{
 
         return indentRepository.getAllApprovedIndents(
                 indentNo.orElse(null),
-                category.orElse(null),
-                subCategory.orElse(null),
+                categoryId.orElse(null),
+                subCategoryId.orElse(null),
                 priority.orElse(null),
                 daysRemain.orElse(null),
                 fromDate,
@@ -189,8 +189,8 @@ public class RfqServiceImpl implements RfqService{
     }
 
     @Override
-    public Page<?> getAllSentRfqs(Jwt token, Optional<String> indentNo, Optional<String> category,
-                                  Optional<String> subCategory, Optional<String> priority, Optional<Integer> daysRemain,
+    public Page<?> getAllSentRfqs(Jwt token, Optional<String> indentNo, Optional<Long> category,
+                                  Optional<Long> subCategory, Optional<String> priority, Optional<Integer> daysRemain,
                                   Optional<String> fromDateOp, Optional<String> toDateOp, Optional<Integer> page,
                                   Optional<Integer> size) {
 
