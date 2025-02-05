@@ -67,9 +67,9 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
         String getName();
         String getCode();
         String getSpecification();
-        Integer getRequestQuantity();
-        Integer getApprovedQuantity();
-        Integer getCurrentStockQty();
+        BigDecimal getRequestQuantity();
+        BigDecimal getApprovedQuantity();
+        BigDecimal getCurrentStockQty();
         Integer getStockThresholdQty();
         Integer getInTransit();
         LocalDateTime getDemandDate();
