@@ -41,7 +41,7 @@ interface DemandQuery {
                 ELSE 
                 (SELECT COALESCE(SUM(pr_qty),0) FROM (SELECT sdd.pr_qty  as pr_qty, sd.id as demandId, sdd.id as ddId,
             			CASE WHEN scb.id IS NOT NULL THEN
-            			concat (scb.name, ' - ',GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - '))\s
+            			concat (scb.name, ' - ',GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - '))
             			ELSE
             			GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - ')
             			END as pr_attrs
@@ -79,13 +79,13 @@ interface DemandQuery {
                 GROUP_CONCAT(dda.attribute_type) as attributeTypes,
                 GROUP_CONCAT(dda.attribute_value) as attributeValues,
                 CASE WHEN dd.brand_id  IS NULL THEN
-                  GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ')
+                  GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - ')
                 WHEN dd.brand_id IS NOT NULL AND dda.id IS NOT NULL THEN
-                  CONCAT(cb.name,' - ',GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - '))
+                  CONCAT(cb.name,' - ',GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - '))
                 WHEN dd.brand_id IS NOT NULL AND dda.id IS NULL THEN
                     cb.name
                 ELSE
-                  GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ')
+                  GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - ')
                 END as name,
                 w.id as warehouseId,
                 w.name as warehouseName,
@@ -167,9 +167,9 @@ interface DemandQuery {
                         LEFT JOIN scm_items i2 ON i2.id = ia.item_id
                         WHERE i2.brand_id = dd.brand_id AND i2.active = 1
                         GROUP BY ia.item_id ) stockResulSet
-                         WHERE stockResulSet.item_attributes\s
+                         WHERE stockResulSet.item_attributes
                             LIKE CONCAT('%',GROUP_CONCAT(attribute_type,' ',attribute_value ,
-                                ' ',attribute_unit separator ' - '),'%')),0)
+                                ' ',attribute_unit order by dda.id asc separator ' - '),'%')),0)
                 
                 END as currentStockQty,
                 d.delivery_date as deliveryDate,
@@ -202,7 +202,7 @@ interface DemandQuery {
                ) p WHERE p.attribute_name like GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ')
                GROUP BY p.brand_name, p.attribute_name)
             	END as inTransit,
-            	GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ') deamndAttributes
+            	GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - ') deamndAttributes
             FROM scm_demand_details dd
             LEFT JOIN scm_demand_detail_attributes dda on dda.demand_detail_id = dd.id
             LEFT JOIN scm_demands d on d.id=dd.demand_id
