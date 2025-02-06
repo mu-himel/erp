@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.demand.dto.response;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.agi.aesl.erpscm.demand.entity.DemandDetailAttribute;
@@ -41,9 +42,9 @@ public class DemandDetailItemResDto {
     DemandStatus demandItemStatus;
     String specification;
     DemandPriority demandPriority;
-    Integer approvedQuantity;
-    Integer requestedQuantity;
-    Integer currentStock;
+    BigDecimal approvedQuantity;
+    BigDecimal requestedQuantity;
+    BigDecimal currentStock;
     Integer stockThresholdQty;
     String itemUnit;
     Integer inTransit;

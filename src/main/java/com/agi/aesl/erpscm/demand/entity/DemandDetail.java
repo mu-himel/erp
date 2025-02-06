@@ -51,10 +51,13 @@ public class DemandDetail {
     private CategoryBrand brand;
 
     @NotNull(message = "Quantity is required")
+    @Column(precision = 38,scale = 4)
     private BigDecimal requestQuantity;
 
+    @Column(precision = 38,scale = 4)
     private BigDecimal approvedQuantity;
 
+    @Column(precision = 38,scale = 4)
     private BigDecimal currentStock;
 
     private String specification;
