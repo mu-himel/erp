@@ -140,7 +140,7 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
         Long getPiwId();
         Long getPdId();
         LocalDate getPdDate();
-        Long getPdQty();
+        BigDecimal getPdQty();
         String getIndentNo();
         Long getCategoryId();
         String getCategoryName();
@@ -153,8 +153,8 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
         String getItemName();
 
         BigDecimal getOrderQty();
-        Long getRfqQty();
-        Long getPrQty();
+        BigDecimal getRfqQty();
+        BigDecimal getPrQty();
         String getPriority();
         LocalDate getPriorityDate();
         Long getDaysRemain();

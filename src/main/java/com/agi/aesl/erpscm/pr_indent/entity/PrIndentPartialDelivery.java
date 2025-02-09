@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
@@ -21,5 +22,6 @@ public class PrIndentPartialDelivery {
 
     private LocalDate pdDate;
 
-    private Long qty;
+    @Column(precision = 38, scale = 4)
+    private BigDecimal qty;
 }

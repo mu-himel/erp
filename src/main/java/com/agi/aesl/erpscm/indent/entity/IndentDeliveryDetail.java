@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -25,11 +26,14 @@ public class IndentDeliveryDetail {
     @ManyToOne
     private Warehouse warehouse;
 
-    private Long prQty;
+    @Column(precision = 38,scale = 4)
+    private BigDecimal prQty;
 
-    private Long orderQty;
+    @Column(precision = 38,scale = 4)
+    private BigDecimal orderQty;
 
-    private Long rfqQty;
+    @Column(precision = 38,scale = 4)
+    private BigDecimal rfqQty;
 
     @OneToMany(mappedBy = "indentDeliveryDetail", cascade = CascadeType.ALL)
     private List<IndentPartialDelivery> partialDeliveries;
