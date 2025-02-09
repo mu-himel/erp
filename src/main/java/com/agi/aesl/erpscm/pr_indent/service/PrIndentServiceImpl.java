@@ -124,8 +124,13 @@ public class PrIndentServiceImpl implements PrIndentService {
             String warehouseKey = prIndentViewInfo.getBrandName()+"_"+prIndentViewInfo.getPrAttribute() + "_" + prIndentViewInfo.getWarehouseId();
 
             Optional<Map<String, Object>> anyItemOp = items.stream().filter(_item -> {
+                if (_item.get("brandName") != null) {
+
                 return _item.get("brandName").equals(prIndentViewInfo.getBrandName()) &&
-                _item.get("itemName").equals(prIndentViewInfo.getPrAttribute());
+                        _item.get("itemName").equals(prIndentViewInfo.getPrAttribute());
+                }else{
+                    return _item.get("itemName").equals(prIndentViewInfo.getPrAttribute());
+                }
             }).findAny();
 
             if (anyItemOp.isEmpty()) {
@@ -259,7 +264,10 @@ public class PrIndentServiceImpl implements PrIndentService {
                 String itemName = (String) _item.get("itemName");
                 String brandName = (String) _item.get("brandName");
                 String prAttribute = prIndentViewInfo.getPrAttribute();
-                return brandName.equals(prIndentViewInfo.getBrandName()) && itemName.equals(prAttribute);
+                if(brandName!=null){
+                    return brandName.equals(prIndentViewInfo.getBrandName()) && itemName.equals(prAttribute);
+                }
+                return itemName.equals(prAttribute);
             }).findAny();
 
             if (anyItemOp.isEmpty()) {
@@ -315,14 +323,26 @@ public class PrIndentServiceImpl implements PrIndentService {
                 String _prIds = (String) existItem.get("productRequirementsIds");
                 String brandName = (String) existItem.get("brandName");
                 String prAttribute = (String) existItem.get("itemName");
-                if (brandName.equals(prIndentViewInfo.getBrandName()) && prAttribute.equals(prIndentViewInfo.getPrAttribute())) {
-                    existItem.put("prQty", existingPrQty + prIndentViewInfo.getPrQty());
-                    existItem.put("orderQty", existingOrderQty + prIndentViewInfo.getOrderQty());
+                if(brandName!=null){
+                    if (brandName.equals(prIndentViewInfo.getBrandName()) && prAttribute.equals(prIndentViewInfo.getPrAttribute())) {
+                        existItem.put("prQty", existingPrQty + prIndentViewInfo.getPrQty());
+                        existItem.put("orderQty", existingOrderQty + prIndentViewInfo.getOrderQty());
 
-                    List<String> prIds = new ArrayList<>();
-                    prIds.add(_prIds);
-                    prIds.add(prIndentViewInfo.getProductRequirementsIds());
-                    existItem.put("productRequirementsIds", String.join(",", prIds));
+                        List<String> prIds = new ArrayList<>();
+                        prIds.add(_prIds);
+                        prIds.add(prIndentViewInfo.getProductRequirementsIds());
+                        existItem.put("productRequirementsIds", String.join(",", prIds));
+                    }
+                }else {
+                    if (prAttribute.equals(prIndentViewInfo.getPrAttribute())) {
+                        existItem.put("prQty", existingPrQty + prIndentViewInfo.getPrQty());
+                        existItem.put("orderQty", existingOrderQty + prIndentViewInfo.getOrderQty());
+
+                        List<String> prIds = new ArrayList<>();
+                        prIds.add(_prIds);
+                        prIds.add(prIndentViewInfo.getProductRequirementsIds());
+                        existItem.put("productRequirementsIds", String.join(",", prIds));
+                    }
                 }
                 if (existItem.containsKey("warehouses")) {
                     Map<String, Object> existWarehouseProp = (Map<String, Object>) existItem.get("warehouses");
