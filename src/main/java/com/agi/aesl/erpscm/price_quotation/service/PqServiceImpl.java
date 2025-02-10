@@ -238,10 +238,12 @@ public class PqServiceImpl implements PqService{
 
         }
         if(pqDto.getPriceQuotationSummary()!=null && pqDto.getPriceQuotationSummary().getVatPercent() !=null){
-            pqs.setVatPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatPercent())));
+            String vatPercent = pqDto.getPriceQuotationSummary().getVatPercent();
+            pqs.setVatPercent(BigDecimal.valueOf(Double.parseDouble(vatPercent)));
         }
         if(pqDto.getPriceQuotationSummary()!=null && pqDto.getPriceQuotationSummary().getAitPercent() !=null){
-            pqs.setAitPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getAitPercent())));
+            String aitPercent = pqDto.getPriceQuotationSummary().getAitPercent();
+            pqs.setAitPercent(BigDecimal.valueOf(Double.parseDouble(aitPercent)));
         }
         pqs.setSubTotalPrice(pqDto.getPriceQuotationSummary().getSubTotalPrice());
         pqs.setTotalPrice(pqDto.getPriceQuotationSummary().getTotalPrice());
