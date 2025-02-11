@@ -320,8 +320,8 @@ public class PqServiceImpl implements PqService{
         offerRequestDto.setCreditType(pqDto.getPaymentMethod());
         offerRequestDto.setVatIncluded(pqDto.getPriceQuotationSummary().getIsVatAdded());
         offerRequestDto.setAitIncluded(pqDto.getPriceQuotationSummary().getIsAitAdded());
-        offerRequestDto.setVatPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatPercent())));
-        offerRequestDto.setAitPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getAitPercent())));
+        offerRequestDto.setVatPercent(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getVatPercent())));
+        offerRequestDto.setAitPercent(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getAitPercent())));
         if(pqDto.getPriceQuotationSummary().getVatAmount().contains(".")){
             offerRequestDto.setVatAmount(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getVatAmount())));
         }else{
