@@ -165,7 +165,7 @@ public class PqServiceImpl implements PqService{
             pqd.setExtendedAttributes(detail.getExtendedAttributes());
             pqd.setRfqQty(detail.getRfqQty());
             pqd.setUnitPrice(detail.getUnitPrice());
-            pqd.setTotalPrice(pqd.getUnitPrice().multiply(BigDecimal.valueOf(detail.getRfqQty())));
+            pqd.setTotalPrice(pqd.getUnitPrice().multiply(detail.getRfqQty()));
             pqd.setEstDeliveryDays(detail.getEstDeliveryDays());
             pqd.setDeliveryDetails(detail.getDeliveryDetails().stream().map(_pqdd->{
                 PriceQuotationDeliveryDetail pqdd = new PriceQuotationDeliveryDetail();
@@ -289,7 +289,7 @@ public class PqServiceImpl implements PqService{
             offerItemDto.setProductDescription(desc);
             offerItemDto.setSpecification("Must be a good condition");
             CounterPriceQuotation opq = new CounterPriceQuotation();
-            opq.setTotalPrice(d.getUnitPrice().multiply(BigDecimal.valueOf(d.getRfqQty())));
+            opq.setTotalPrice(d.getUnitPrice().multiply(d.getRfqQty()));
             opq.setPricePerUnit(d.getUnitPrice());
             offerItemDto.setPriceQuotation(opq);
             offerItems.add(offerItemDto);
@@ -358,7 +358,7 @@ public class PqServiceImpl implements PqService{
             offerItemDto.setProductDescription(d.getItemAttributeName());
             offerItemDto.setSpecification("Must be a good condition");
             CounterPriceQuotation opq = new CounterPriceQuotation();
-            opq.setTotalPrice(d.getUnitPrice().multiply(BigDecimal.valueOf(d.getRfqQty())));
+            opq.setTotalPrice(d.getUnitPrice().multiply(d.getRfqQty()));
             opq.setPricePerUnit(d.getUnitPrice());
             offerItemDto.setPriceQuotation(opq);
             offerItems.add(offerItemDto);
