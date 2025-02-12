@@ -121,6 +121,7 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
         String getCategoryName();
         String getSubCategoryName();
         Long getItemsCount();
+        Long getReceivedQty();
         BigDecimal getRfqQty();
         String getStatus();
         Long getLockedVendor();
