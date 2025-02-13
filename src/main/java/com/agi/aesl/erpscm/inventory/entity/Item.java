@@ -72,6 +72,7 @@ public class Item implements ItemInterface {
     private List<ItemFunctionalUnit>itemFunctionalUnits;
 
     private Integer stockThresholdQty;
+    @Column(precision = 38, scale = 4)
     private BigDecimal reorderPercentage;
 
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)

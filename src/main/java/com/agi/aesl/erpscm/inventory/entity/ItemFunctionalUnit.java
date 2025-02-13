@@ -17,7 +17,7 @@ public class ItemFunctionalUnit implements FunctionalUnitInterface{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(precision = 38, scale = 4)
     private BigDecimal value;
 
     private String unit;

@@ -23,7 +23,9 @@ public class PurchaseOrderWarehouseDetail {
     @JsonIgnore
     private PurchaseOrderDetail purchaseOrderDetail;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal qty;
+    @Column(precision = 38, scale = 4)
     private BigDecimal deliveryCharge;
 
 }
