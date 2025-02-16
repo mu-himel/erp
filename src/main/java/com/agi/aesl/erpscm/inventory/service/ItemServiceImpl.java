@@ -1028,7 +1028,7 @@ public class ItemServiceImpl implements ItemService {
                                     stockIn(itemOp.get(), new BigDecimal(Double.parseDouble(currentStock)), ws.getWarehouse().getId(), ws.getId());
                                 }
                                 if(!safetyStock.isEmpty()){
-                                    item.setStockThresholdQty(Integer.parseInt(safetyStock));
+                                    item.setStockThresholdQty(new BigDecimal(Double.parseDouble(safetyStock)));
                                 }
                                 if(!unitMeasurement.isEmpty()){
                                     item.setItemUnit(unitMeasurement);

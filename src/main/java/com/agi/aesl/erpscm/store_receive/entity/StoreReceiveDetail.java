@@ -29,6 +29,7 @@ public class StoreReceiveDetail {
     @ManyToOne
     private Item item;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal stockInQty;
 
     @ManyToOne

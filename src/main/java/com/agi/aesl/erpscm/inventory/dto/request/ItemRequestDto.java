@@ -43,7 +43,7 @@ public class ItemRequestDto implements EntityConvertable<Item> {
 
     private List<ItemFunctionalUnit> functionalUnits = new ArrayList<>();
 
-    private Integer stockThresholdQty;
+    private BigDecimal stockThresholdQty;
 
     private BigDecimal currentStockQty;
 

@@ -20,6 +20,7 @@ public class CsDeliveryDetail {
     private CsVendorDetail vendorDeliveryDetail;
 
     private Long warehouseId;
+    @Column(precision = 38, scale = 4)
     private BigDecimal deliveryQty;
     private LocalDate deliveryDate;
 }
