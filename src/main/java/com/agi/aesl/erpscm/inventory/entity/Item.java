@@ -5,26 +5,12 @@ import com.agi.aesl.erpscm.common.CategoryInterface;
 import com.agi.aesl.erpscm.common.ItemAttributeInterface;
 import com.agi.aesl.erpscm.common.ItemInterface;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
-import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-// import com.agi.aesl.erpscm.user_management.entity.User;
-// import io.swagger.annotations.ApiModelProperty;
-import lombok.*;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -71,7 +57,8 @@ public class Item implements ItemInterface {
     @OneToMany(mappedBy="item",cascade=CascadeType.ALL)
     private List<ItemFunctionalUnit>itemFunctionalUnits;
 
-    private Integer stockThresholdQty;
+    @Column(precision = 38, scale = 4)
+    private BigDecimal stockThresholdQty;
     @Column(precision = 38, scale = 4)
     private BigDecimal reorderPercentage;
 

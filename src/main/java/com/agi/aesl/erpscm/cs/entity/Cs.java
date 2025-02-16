@@ -48,6 +48,7 @@ public class Cs extends VerifyableEntity {
     private String csNo;
     @Column(precision = 38, scale = 4)
     private BigDecimal vatAmount;
+    @Column(precision = 38, scale = 4)
     private BigDecimal deliveryCharge;
     @Column(precision = 38, scale = 4)
     private BigDecimal totalPrice;
