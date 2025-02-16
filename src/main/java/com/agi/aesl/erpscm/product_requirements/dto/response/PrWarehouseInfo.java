@@ -13,12 +13,12 @@ public class PrWarehouseInfo
     private String warehouseName;
     private BigDecimal currentStock;
 
-    private Long safetyStock;
+    private BigDecimal safetyStock;
     private BigDecimal prQty;
-    private Long transitQty;
+    private BigDecimal transitQty;
     private BigDecimal itemQty;
     public PrWarehouseInfo(String warehouseIds, String warehouseName, BigDecimal currentStock,
-                           Long safetyStock, BigDecimal prQty, Long transitQty, BigDecimal itemQty){
+                           BigDecimal safetyStock, BigDecimal prQty, BigDecimal transitQty, BigDecimal itemQty){
         this.warehouseIds = warehouseIds;
         this.warehouseName = warehouseName;
         this.currentStock = currentStock;

@@ -22,6 +22,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -124,8 +125,13 @@ public class PrIndentServiceImpl implements PrIndentService {
             String warehouseKey = prIndentViewInfo.getBrandName()+"_"+prIndentViewInfo.getPrAttribute() + "_" + prIndentViewInfo.getWarehouseId();
 
             Optional<Map<String, Object>> anyItemOp = items.stream().filter(_item -> {
+                if (_item.get("brandName") != null) {
+
                 return _item.get("brandName").equals(prIndentViewInfo.getBrandName()) &&
-                _item.get("itemName").equals(prIndentViewInfo.getPrAttribute());
+                        _item.get("itemName").equals(prIndentViewInfo.getPrAttribute());
+                }else{
+                    return _item.get("itemName").equals(prIndentViewInfo.getPrAttribute());
+                }
             }).findAny();
 
             if (anyItemOp.isEmpty()) {
@@ -173,11 +179,11 @@ public class PrIndentServiceImpl implements PrIndentService {
             } else {
                 Map<String, Object> existItem = anyItemOp.get();
                 Long prDetailId = (Long) existItem.get("prDetailId");
-                Long existingPrQty = (Long) existItem.get("prQty");
+                BigDecimal existingPrQty = (BigDecimal) existItem.get("prQty");
 
                 if (prDetailId.equals(prIndentViewInfo.getPrDetailId())) {
 //                    prQty.getAndUpdate(v -> v + prIndentViewInfo.getPrQty());
-                    existItem.put("prQty", existingPrQty + prIndentViewInfo.getPrQty());
+                    existItem.put("prQty", existingPrQty.add(prIndentViewInfo.getPrQty()));
 
                 }
                 if (existItem.containsKey("warehouses")) {
@@ -189,13 +195,13 @@ public class PrIndentServiceImpl implements PrIndentService {
                         String currentkey = prIndentViewInfo.getPrDetailId() + "_" + prIndentViewInfo.getPiwId();
                         System.out.println(String.valueOf(!key.contains(currentkey)));
                         if (!key.contains(currentkey)) {
-                            Long orderQty = (Long) warehousKeyMap.get("orderQty");
-                            orderQty += prIndentViewInfo.getOrderQty();
+                            BigDecimal orderQty = (BigDecimal) warehousKeyMap.get("orderQty");
+                            orderQty = orderQty.add(prIndentViewInfo.getOrderQty());
                             warehousKeyMap.replace("orderQty", orderQty);
-                            Long _prQty = (Long) warehousKeyMap.get("prQty");
-                            Long existingVal = (item.get("prQty") != null) ? (long) item.get("prQty") : 0L;
-                            existItem.put("prQty", ((item.get("prQty") != null) ? (long) item.get("prQty") : 0) + _prQty);
-                            _prQty += prIndentViewInfo.getPrQty();
+                            BigDecimal _prQty = (BigDecimal) warehousKeyMap.get("prQty");
+                            BigDecimal existingVal = (item.get("prQty") != null) ? (BigDecimal) item.get("prQty") : new BigDecimal(0L);
+                            existItem.put("prQty", existingVal.add(_prQty));
+                            _prQty = _prQty.add(prIndentViewInfo.getPrQty());
                             warehousKeyMap.replace("prQty", _prQty);
 
                             warehousKeyMap.replace("key", currentkey);
@@ -259,7 +265,10 @@ public class PrIndentServiceImpl implements PrIndentService {
                 String itemName = (String) _item.get("itemName");
                 String brandName = (String) _item.get("brandName");
                 String prAttribute = prIndentViewInfo.getPrAttribute();
-                return brandName.equals(prIndentViewInfo.getBrandName()) && itemName.equals(prAttribute);
+                if(brandName!=null){
+                    return brandName.equals(prIndentViewInfo.getBrandName()) && itemName.equals(prAttribute);
+                }
+                return itemName.equals(prAttribute);
             }).findAny();
 
             if (anyItemOp.isEmpty()) {
@@ -310,19 +319,31 @@ public class PrIndentServiceImpl implements PrIndentService {
             } else {
                 Map<String, Object> existItem = anyItemOp.get();
                 Long prDetailId = (Long) existItem.get("prDetailId");
-                Long existingPrQty = (Long) existItem.get("prQty");
-                Long existingOrderQty = (Long) existItem.get("orderQty");
+                BigDecimal existingPrQty = (BigDecimal) existItem.get("prQty");
+                BigDecimal existingOrderQty = (BigDecimal) existItem.get("orderQty");
                 String _prIds = (String) existItem.get("productRequirementsIds");
                 String brandName = (String) existItem.get("brandName");
                 String prAttribute = (String) existItem.get("itemName");
-                if (brandName.equals(prIndentViewInfo.getBrandName()) && prAttribute.equals(prIndentViewInfo.getPrAttribute())) {
-                    existItem.put("prQty", existingPrQty + prIndentViewInfo.getPrQty());
-                    existItem.put("orderQty", existingOrderQty + prIndentViewInfo.getOrderQty());
+                if(brandName!=null){
+                    if (brandName.equals(prIndentViewInfo.getBrandName()) && prAttribute.equals(prIndentViewInfo.getPrAttribute())) {
+                        existItem.put("prQty", existingPrQty.add(prIndentViewInfo.getPrQty()));
+                        existItem.put("orderQty", existingOrderQty.add( prIndentViewInfo.getOrderQty()));
 
-                    List<String> prIds = new ArrayList<>();
-                    prIds.add(_prIds);
-                    prIds.add(prIndentViewInfo.getProductRequirementsIds());
-                    existItem.put("productRequirementsIds", String.join(",", prIds));
+                        List<String> prIds = new ArrayList<>();
+                        prIds.add(_prIds);
+                        prIds.add(prIndentViewInfo.getProductRequirementsIds());
+                        existItem.put("productRequirementsIds", String.join(",", prIds));
+                    }
+                }else {
+                    if (prAttribute.equals(prIndentViewInfo.getPrAttribute())) {
+                        existItem.put("prQty", existingPrQty.add(prIndentViewInfo.getPrQty()));
+                        existItem.put("orderQty", existingOrderQty.add(prIndentViewInfo.getOrderQty()));
+
+                        List<String> prIds = new ArrayList<>();
+                        prIds.add(_prIds);
+                        prIds.add(prIndentViewInfo.getProductRequirementsIds());
+                        existItem.put("productRequirementsIds", String.join(",", prIds));
+                    }
                 }
                 if (existItem.containsKey("warehouses")) {
                     Map<String, Object> existWarehouseProp = (Map<String, Object>) existItem.get("warehouses");
@@ -333,13 +354,13 @@ public class PrIndentServiceImpl implements PrIndentService {
                         String currentkey = prIndentViewInfo.getBrandName() + " " + prIndentViewInfo.getPrAttribute();
                         System.out.println(String.valueOf(!key.contains(currentkey)));
                         if (!key.contains(currentkey)) {
-                            Long orderQty = (Long) warehousKeyMap.get("orderQty");
-                            orderQty += prIndentViewInfo.getOrderQty();
+                            BigDecimal orderQty = (BigDecimal) warehousKeyMap.get("orderQty");
+                            orderQty = orderQty.add(prIndentViewInfo.getOrderQty());
                             warehousKeyMap.replace("orderQty", orderQty);
-                            Long _prQty = (Long) warehousKeyMap.get("prQty");
-                            Long existingVal = (item.get("prQty") != null) ? (long) item.get("prQty") : 0L;
-                            existItem.put("prQty", ((item.get("prQty") != null) ? (long) item.get("prQty") : 0) + _prQty);
-                            _prQty += prIndentViewInfo.getPrQty();
+                            BigDecimal _prQty = (BigDecimal) warehousKeyMap.get("prQty");
+                            BigDecimal existingVal = (item.get("prQty") != null) ? (BigDecimal) item.get("prQty") : new BigDecimal(0L);
+                            existItem.put("prQty", existingVal.add(_prQty));
+                            _prQty = _prQty.add(prIndentViewInfo.getPrQty());
                             warehousKeyMap.replace("prQty", _prQty);
 
                             warehousKeyMap.replace("key", currentkey);

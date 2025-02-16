@@ -4,6 +4,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -17,9 +18,11 @@ public class PrIndentWarehouseDetail {
     @ManyToOne
     private Warehouse warehouse;
 
-    private Long prQty;
+    @Column(precision = 38,scale = 4)
+    private BigDecimal prQty;
 
-    private Long orderQty;
+    @Column(precision = 38, scale = 4)
+    private BigDecimal orderQty;
 
     @ManyToOne
     private PrIndentDetail prIndentDetail;

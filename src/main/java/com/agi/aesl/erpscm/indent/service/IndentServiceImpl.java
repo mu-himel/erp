@@ -340,13 +340,16 @@ public class IndentServiceImpl implements IndentService{
 
     private List<?> getProcessedResult(List<IndentRepository.IndentViewInfo> result){
         List<Map<String,Object>> items = new ArrayList<>();
-        AtomicReference<Long> prQty= new AtomicReference<>(0L);
+        AtomicReference<BigDecimal> prQty= new AtomicReference<>(new BigDecimal(0L));
         result.stream().forEach(indentViewInfo->{
             Map<String,Object> item = new HashMap<>();
             String warehouseKey = indentViewInfo.getBrandName()+"_"+indentViewInfo.getItemName()+"_"+indentViewInfo.getWarehouseId();
 
             Optional<Map<String,Object>> anyItemOp = items.stream().filter(_item->{
-                return _item.get("brandName").equals(indentViewInfo.getBrandName()) && _item.get("itemName").equals(indentViewInfo.getItemName());
+                if(_item.get("brandName") !=null) {
+                    return _item.get("brandName").equals(indentViewInfo.getBrandName()) && _item.get("itemName").equals(indentViewInfo.getItemName());
+                }
+                return _item.get("itemName").equals(indentViewInfo.getItemName());
             }).findAny();
 
             if(anyItemOp.isEmpty()){
@@ -355,7 +358,7 @@ public class IndentServiceImpl implements IndentService{
                 item.put("prDetailId",indentViewInfo.getDetailId());
 
 
-                prQty.getAndUpdate(v -> v + indentViewInfo.getPrQty());
+                prQty.getAndUpdate(v -> v.add(indentViewInfo.getPrQty()));
 
                 item.put("prQty",prQty);
 
@@ -399,7 +402,7 @@ public class IndentServiceImpl implements IndentService{
                 items.add(item);
             }else{
                 Map<String,Object> existItem = (Map<String,Object>)anyItemOp.get();
-                prQty.getAndUpdate(v -> v + indentViewInfo.getPrQty());
+                prQty.getAndUpdate(v -> v.add(indentViewInfo.getPrQty()));
                 existItem.put("prQty",prQty);
                 if(existItem.containsKey("warehouses")){
                     Map<String,Object> existWarehouseProp = (Map<String,Object>)existItem.get("warehouses");
@@ -415,8 +418,8 @@ public class IndentServiceImpl implements IndentService{
                             BigDecimal orderQty = (BigDecimal)warehousKeyMap.get("orderQty");
                             orderQty =indentViewInfo.getOrderQty().add(orderQty);
                             warehousKeyMap.replace("orderQty",orderQty);
-                            Long _prQty = (Long) warehousKeyMap.get("prQty");
-                            _prQty += indentViewInfo.getPrQty();
+                            BigDecimal _prQty = (BigDecimal) warehousKeyMap.get("prQty");
+                            _prQty = _prQty.add( indentViewInfo.getPrQty());
                             warehousKeyMap.replace("prQty",_prQty);
 
                             warehousKeyMap.replace("key", currentkey);

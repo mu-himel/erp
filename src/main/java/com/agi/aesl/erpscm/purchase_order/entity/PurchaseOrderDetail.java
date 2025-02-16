@@ -28,21 +28,30 @@ public class PurchaseOrderDetail {
 
     private String itemName;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal unitPrice;
+    @Column(precision = 38, scale = 4)
     private BigDecimal deliveryQty;
+    @Column(precision = 38, scale = 4)
     private BigDecimal remainingQty;
+
 
     private LocalDate deliveryDate;
 
     private String transactionType;
     private String estimatedDeliveryDays;
     private String creditDays;
+    @Column(precision = 38, scale = 4)
     private BigDecimal totalPrice;
     private String warrantyUnit;
     private String warrantyDuration;
+    @Column(precision = 38, scale = 4)
     private BigDecimal vatPercent;
+    @Column(precision = 38, scale = 4)
     private BigDecimal vatAmount;
+    @Column(precision = 38, scale = 4)
     private BigDecimal deliveryCharge;
+    @Column(precision = 38, scale = 4)
     private BigDecimal subTotal;
 
     @ManyToOne

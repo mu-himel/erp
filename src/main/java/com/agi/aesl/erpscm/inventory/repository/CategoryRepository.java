@@ -92,8 +92,8 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             "FROM scm_item_categories ic " +
             "LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id " +
             "WHERE ic.active = 1 AND ic.category_status IN ('APPROVED') AND ic.parent_category_id IS NULL " +
-            " AND (:name IS NULL OR ic.name LIKE concat(:name,'%')) " +
-            " AND (:code IS NULL OR ic.code LIKE concat(:code,'%'))" +
+            " AND (:name IS NULL OR ic.name LIKE concat('%',:name,'%')) " +
+            " AND (:code IS NULL OR ic.code LIKE concat('%',:code,'%'))" +
             " AND (:warehouseId IS NULL OR cws.warehouse_id IN (:warehouseId)) " +
             " AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id IN (:warehouseStoreId)) " +
             "GROUP BY ic.id ", nativeQuery = true)

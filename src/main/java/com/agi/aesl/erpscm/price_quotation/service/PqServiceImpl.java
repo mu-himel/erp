@@ -165,7 +165,7 @@ public class PqServiceImpl implements PqService{
             pqd.setExtendedAttributes(detail.getExtendedAttributes());
             pqd.setRfqQty(detail.getRfqQty());
             pqd.setUnitPrice(detail.getUnitPrice());
-            pqd.setTotalPrice(pqd.getUnitPrice().multiply(BigDecimal.valueOf(detail.getRfqQty())));
+            pqd.setTotalPrice(pqd.getUnitPrice().multiply(detail.getRfqQty()));
             pqd.setEstDeliveryDays(detail.getEstDeliveryDays());
             pqd.setDeliveryDetails(detail.getDeliveryDetails().stream().map(_pqdd->{
                 PriceQuotationDeliveryDetail pqdd = new PriceQuotationDeliveryDetail();
@@ -238,10 +238,12 @@ public class PqServiceImpl implements PqService{
 
         }
         if(pqDto.getPriceQuotationSummary()!=null && pqDto.getPriceQuotationSummary().getVatPercent() !=null){
-            pqs.setVatPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatPercent())));
+            String vatPercent = pqDto.getPriceQuotationSummary().getVatPercent();
+            pqs.setVatPercent(BigDecimal.valueOf(Double.parseDouble(vatPercent)));
         }
         if(pqDto.getPriceQuotationSummary()!=null && pqDto.getPriceQuotationSummary().getAitPercent() !=null){
-            pqs.setAitPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getAitPercent())));
+            String aitPercent = pqDto.getPriceQuotationSummary().getAitPercent();
+            pqs.setAitPercent(BigDecimal.valueOf(Double.parseDouble(aitPercent)));
         }
         pqs.setSubTotalPrice(pqDto.getPriceQuotationSummary().getSubTotalPrice());
         pqs.setTotalPrice(pqDto.getPriceQuotationSummary().getTotalPrice());
@@ -287,7 +289,7 @@ public class PqServiceImpl implements PqService{
             offerItemDto.setProductDescription(desc);
             offerItemDto.setSpecification("Must be a good condition");
             CounterPriceQuotation opq = new CounterPriceQuotation();
-            opq.setTotalPrice(d.getUnitPrice().multiply(BigDecimal.valueOf(d.getRfqQty())));
+            opq.setTotalPrice(d.getUnitPrice().multiply(d.getRfqQty()));
             opq.setPricePerUnit(d.getUnitPrice());
             offerItemDto.setPriceQuotation(opq);
             offerItems.add(offerItemDto);
@@ -318,8 +320,8 @@ public class PqServiceImpl implements PqService{
         offerRequestDto.setCreditType(pqDto.getPaymentMethod());
         offerRequestDto.setVatIncluded(pqDto.getPriceQuotationSummary().getIsVatAdded());
         offerRequestDto.setAitIncluded(pqDto.getPriceQuotationSummary().getIsAitAdded());
-        offerRequestDto.setVatPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatPercent())));
-        offerRequestDto.setAitPercent(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getAitPercent())));
+        offerRequestDto.setVatPercent(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getVatPercent())));
+        offerRequestDto.setAitPercent(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getAitPercent())));
         if(pqDto.getPriceQuotationSummary().getVatAmount().contains(".")){
             offerRequestDto.setVatAmount(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getVatAmount())));
         }else{
@@ -356,7 +358,7 @@ public class PqServiceImpl implements PqService{
             offerItemDto.setProductDescription(d.getItemAttributeName());
             offerItemDto.setSpecification("Must be a good condition");
             CounterPriceQuotation opq = new CounterPriceQuotation();
-            opq.setTotalPrice(d.getUnitPrice().multiply(BigDecimal.valueOf(d.getRfqQty())));
+            opq.setTotalPrice(d.getUnitPrice().multiply(d.getRfqQty()));
             opq.setPricePerUnit(d.getUnitPrice());
             offerItemDto.setPriceQuotation(opq);
             offerItems.add(offerItemDto);

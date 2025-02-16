@@ -10,7 +10,7 @@ public class PriceQuotationDetailReqDto {
     private String itemAttributeName;
     private String extendedAttributes;
     private String brandName;
-    private Long rfqQty;
+    private BigDecimal rfqQty;
     private BigDecimal unitPrice;
     private Integer estDeliveryDays;
     private Integer warrantyDuration;

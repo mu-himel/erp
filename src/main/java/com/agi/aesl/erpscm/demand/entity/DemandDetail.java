@@ -77,6 +77,7 @@ public class DemandDetail {
     @Enumerated(EnumType.STRING)
     private DemandStatus status;
 
+    @Column(precision = 38,scale = 4)
     private BigDecimal prQty;
 
 

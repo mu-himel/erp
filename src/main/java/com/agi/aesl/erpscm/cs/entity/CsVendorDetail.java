@@ -29,9 +29,13 @@ public class CsVendorDetail {
     private PriceQuotation priceQuotation;
 
     private String transactionType;
+    @Column(precision = 38, scale = 4)
     private BigDecimal orderQty;
+    @Column(precision = 38, scale = 4)
     private BigDecimal vatAmount;
+    @Column(precision = 38, scale = 4)
     private BigDecimal discountAmount;
+    @Column(precision = 38, scale = 4)
     private BigDecimal totalPrice;
 
     @OneToMany(mappedBy = "vendorDeliveryDetail", cascade = CascadeType.ALL)

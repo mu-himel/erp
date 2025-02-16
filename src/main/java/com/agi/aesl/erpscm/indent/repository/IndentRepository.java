@@ -91,7 +91,7 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
         LocalDateTime getSentDate();
         Integer getReceivedQty();
         Integer getTotalReceivedPq();
-        Long getRfqQty();
+        BigDecimal getRfqQty();
     }
     interface IndentInfo {
         Long getId();
@@ -102,7 +102,7 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
         String getSubCategoryNames();
         String getSubCategoryName();
         Long getItemsCount();
-        Long getOrderQty();
+        BigDecimal getOrderQty();
         String getPriority();
         Long getDaysRemain();
         String getStatus();
@@ -121,7 +121,8 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
         String getCategoryName();
         String getSubCategoryName();
         Long getItemsCount();
-        Long getRfqQty();
+        Long getReceivedQty();
+        BigDecimal getRfqQty();
         String getStatus();
         Long getLockedVendor();
         @JsonFormat(pattern = "yyyy-MM-dd")
@@ -140,7 +141,7 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
         Long getPiwId();
         Long getPdId();
         LocalDate getPdDate();
-        Long getPdQty();
+        BigDecimal getPdQty();
         String getIndentNo();
         Long getCategoryId();
         String getCategoryName();
@@ -153,8 +154,8 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
         String getItemName();
 
         BigDecimal getOrderQty();
-        Long getRfqQty();
-        Long getPrQty();
+        BigDecimal getRfqQty();
+        BigDecimal getPrQty();
         String getPriority();
         LocalDate getPriorityDate();
         Long getDaysRemain();

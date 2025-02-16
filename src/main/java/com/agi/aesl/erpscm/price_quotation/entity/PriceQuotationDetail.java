@@ -28,10 +28,13 @@ public class PriceQuotationDetail {
 
     private String extendedAttributes;
 
-    private Long rfqQty;
+    @Column(precision = 38,scale = 4)
+    private BigDecimal rfqQty;
 
+    @Column(precision = 38,scale = 4)
     private BigDecimal unitPrice;
 
+    @Column(precision = 38,scale = 4)
     private BigDecimal totalPrice;
 
     private Integer estDeliveryDays;

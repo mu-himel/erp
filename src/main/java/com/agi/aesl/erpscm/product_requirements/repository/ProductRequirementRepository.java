@@ -100,9 +100,9 @@ public interface ProductRequirementRepository extends JpaRepository<ProductRequi
 
         BigDecimal getCurrentStock();
 
-        Long getSafetytStock();
+        BigDecimal getSafetytStock();
 
-        Long getTransitQty();
+        BigDecimal getTransitQty();
 
         Long getDaysRemain();
 

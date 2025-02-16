@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
@@ -21,7 +22,8 @@ public class IndentPartialDelivery {
 
     private LocalDate pdDate;
 
-    private Long qty;
+    @Column(precision = 38, scale = 4)
+    private BigDecimal qty;
 
 
     public IndentPartialDelivery(Long id) {
