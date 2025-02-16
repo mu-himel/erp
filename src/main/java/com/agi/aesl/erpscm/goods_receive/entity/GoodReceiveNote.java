@@ -62,14 +62,19 @@ public class GoodReceiveNote {
 
     private String deliveryCharge;
     private String mushak;
+    @Column(precision = 38, scale = 4)
     private BigDecimal deliveryChargeAmount;
     private Integer days;
     private String vatOption;
     private String vatType;
     private String aitOption;
+    @Column(precision = 38, scale = 4)
     private BigDecimal totalPrice;
+    @Column(precision = 38, scale = 4)
     private BigDecimal vat;
+    @Column(precision = 38, scale = 4)
     private BigDecimal vatPctg;
+    @Column(precision = 38, scale = 4)
     private BigDecimal subTotal;
     private String paymentType;
 

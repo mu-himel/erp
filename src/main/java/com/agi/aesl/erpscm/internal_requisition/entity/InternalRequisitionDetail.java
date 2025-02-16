@@ -34,6 +34,7 @@ public class InternalRequisitionDetail {
     @ManyToOne
     private Item item;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal qty;
 
     private String description;

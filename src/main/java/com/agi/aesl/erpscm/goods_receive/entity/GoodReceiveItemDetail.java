@@ -51,22 +51,30 @@ public class GoodReceiveItemDetail {
 
     private LocalDate expireDate;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal receiveQty;
 
     private QcType qcType;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal declaredQty;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal inspectedQty;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal totalApprovedQty;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal totalDeclinedQty;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal pricePerUnit;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal deliveryCharge;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal vatAmount;
 
     @Column(length = 500)

@@ -21,18 +21,22 @@ public class InternalRequisitionDetailWarehouse {
 
     @ManyToOne
     private Warehouse toWarehouse;
-
+    @Column(precision = 38, scale = 4)
     private BigDecimal qty;
-
+    @Column(precision = 38, scale = 4)
     private BigDecimal currentStock;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal safetyStock;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal transferQty;
-
+    @Column(precision = 38, scale = 4)
     private BigDecimal inTransit;
+    @Column(precision = 38, scale = 4)
     private BigDecimal inTransitReturn;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal receivedQty;
 
     private Boolean isDecline;

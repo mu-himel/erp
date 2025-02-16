@@ -7,14 +7,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore
 import com.agi.aesl.erpscm.inventory.enums.StockType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -37,6 +30,7 @@ public class ItemStock {
     @CreationTimestamp
     private LocalDate stockDate;
 
+    @Column(precision = 38, scale = 4)
     private BigDecimal stockQty;
 
     @Enumerated(EnumType.STRING)
