@@ -904,11 +904,12 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     @Override
     @Transactional
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
-        Optional<PurchaseOrder> poOp = purchaseOrderRepository.findById(domainId);
+        Optional<PoGroup> poOp = poGroupRepository.findById(domainId);
         if(poOp.isEmpty()){
             throw new RuntimeException("Sorry! PO not found");
         }
-        PurchaseOrder po = poOp.get();
-        po.setStatus(PurchaseOrderStatus.REJECTED);
+        PoGroup po = poOp.get();
+        po.setStatus(PurchaseOrderStatus.REJECTED.name());
+        commentService.addComment(commentService.prepareComment(verifier,DomainType.PO,domainId, rejectDto.getComment(),new ArrayList<>()));
     }
 }
