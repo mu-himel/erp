@@ -205,14 +205,16 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
             if(csAccountOp.isEmpty()){
                 throw new RuntimeException("Sorry! Vat Type not found in Account Cs");
             }
+            CsAccount csAccount = csAccountOp.get();
             PurchaseRequest purchaseRequest = new PurchaseRequest();
             purchaseRequest.setSrnNo(receiveNote.getSrnNo());
             purchaseRequest.setPoNo(receiveNote.getGrn().getPoNo());
             GoodReceiveNote grn = receiveNote.getGrn();
             purchaseRequest.setVendorCpsId(grn.getVendorId().toString());
             List<PurchaseRequestItem> items = new ArrayList<>();
-
-            purchaseRequest.setVatType(csAccountOp.get().getVatType().replaceAll("_","").trim().toUpperCase());
+            if(csAccount.getVatType()!=null) {
+                purchaseRequest.setVatType(csAccount.getVatType().replaceAll("_", "").trim().toUpperCase());
+            }
             purchaseRequest.setInvoice(grn.getInvoicePath());
             receiveNote.getSrnDetails().stream().forEach(srnd->{
                 Item item = srnd.getItem();
