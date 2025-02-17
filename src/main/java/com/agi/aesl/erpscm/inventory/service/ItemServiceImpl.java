@@ -829,7 +829,10 @@ public class ItemServiceImpl implements ItemService {
            List<ItemStock> filteredItemStocks = itemStocks.stream().filter(stock->stock.getWarehouse().getId()
                             .equals(itemRequestDto.getWarehouse().getId())
             ).collect(Collectors.toList());
-           if(filteredItemStocks.size()==1 && filteredItemStocks.get(0).getStockQty().equals(new BigDecimal("0.00"))){
+           if(filteredItemStocks.size()==1 &&
+                   (filteredItemStocks.get(0).getStockQty().equals(new BigDecimal("0.00")) ||
+                           filteredItemStocks.get(0).getStockQty().equals(new BigDecimal("0.0000"))
+                   )){
                 itemStocks.add(new ItemStock(
                         itemRequestDto.getCurrentStockQty(),
                         item,

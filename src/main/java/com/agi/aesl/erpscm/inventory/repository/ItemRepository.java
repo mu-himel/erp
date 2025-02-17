@@ -248,8 +248,8 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
         String getSku();
         String getManufacturer();
         String getItemUnit();
-        Integer getStockThresholdQty();
-        Integer getReorderPercentage();
+        BigDecimal getStockThresholdQty();
+        BigDecimal getReorderPercentage();
         List<ItemAttribute> getAttributes();
         List<ItemFunctionalUnit> getFunctionalUnits();
         Boolean getActive();

@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -24,8 +25,8 @@ public class ItemDetail {
     ItemRepository.RefInfo brand;
     ItemRepository.RefInfo itemCategory;
     ItemRepository.RefInfo itemParentCategory;
-    Integer stockThresholdQty;
-    Integer reorderPercentage;
+    BigDecimal stockThresholdQty;
+    BigDecimal reorderPercentage;
     List<ItemAttribute> attributes;
     List<ItemFunctionalUnit> functionalUnits;
 //    List<ItemStock> stocks;
