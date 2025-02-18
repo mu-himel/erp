@@ -155,13 +155,16 @@ public class CategoryServiceImpl implements CategoryService {
                         ItemCategory itemCategory = codeExist.get();
                         itemCategory.setActive(true);
                         cr.setId(itemCategory.getId());
+                        cr.setParentCategory(itemCategory.getParentCategory());
                         cr.setIsActive(true);
 
                     }
                     cr.setCode(code);
                     cr.setCpsCategoryId(categoryRequestDto.getCpsCategoryId());
                     cr.setName(categoryRequestDto.getName());
-                    cr.setParentCategory(categoryRequestDto.getParentCategory());
+                    if(categoryRequestDto.getParentCategory()!=null) {
+                        cr.setParentCategory(categoryRequestDto.getParentCategory());
+                    }
                     cr.setRequestedBy(categoryRequestDto.getRequestedBy());
                     cr.setVat(categoryRequestDto.getVat());
                     cr.setWarehouse(categoryRequestDto.getWarehouse());
@@ -242,6 +245,19 @@ public class CategoryServiceImpl implements CategoryService {
             }
         }
 
+        if(cr.getBrands().size()>0){
+            cr.getBrands().stream().forEach(b->{
+                Optional<CategoryBrand> cbOp = itemCategory.getBrands().stream()
+                                            .filter(cb-> b.equals(cb.getName())).findFirst();
+                if(cbOp.isEmpty()){
+                    CategoryBrand cb1 = new CategoryBrand();
+                    cb1.setCategory(itemCategory);
+                    cb1.setName(b);
+                    categoryBrandRepository.save(cb1);
+                }
+
+            });
+        }
         if(cr.getAttributes()!=null && cr.getAttributes().size()>0){
 
             itemCategory.setAttributes(cr.getAttributes().stream().map(categoryAttribute -> {
@@ -255,7 +271,13 @@ public class CategoryServiceImpl implements CategoryService {
                     CategoryAttribute _categoryAttribute = new CategoryAttribute();
                     _categoryAttribute.setCategory(itemCategory);
                     _categoryAttribute.setId(caExist.getId());
-                    _categoryAttribute.setAttributeValue(caExist.getAttributeValue());
+
+                    if(categoryAttribute.getAttributeValue().length() > caExist.getAttributeValue().length()){
+                        _categoryAttribute.setAttributeValue(categoryAttribute.getAttributeValue());
+                    }else {
+                        _categoryAttribute.setAttributeValue(caExist.getAttributeValue());
+                    }
+
                     _categoryAttribute.setAttributeType(caExist.getAttributeType());
                     _categoryAttribute.setAttributeUnit(caExist.getAttributeUnit());
 //                    categoryAttributeRepository.save(_categoryAttribute);
@@ -1382,5 +1404,35 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public List<?> getTemplateData(Long categoryId, Long warehouseId, Long warehouseStoreId) {
         return categoryRepository.findSubCategoryTemplate(categoryId,warehouseId,warehouseStoreId);
+    }
+
+    @Override
+    @Transactional
+    public void syncCategories(Jwt token,
+                               CpsServerConfig cpsServerConfig,
+                               Long warehouseId,
+                               Long warehouseStoreId, List<Long> categoryIds) {
+
+        claimResolver.setToken(token);
+        String userId = claimResolver.getUserId();
+
+        Map<String,Object> data = new HashMap<>();
+        data.put("id",categoryIds);
+        data.put("userId",userId);
+        data.put("warehouseId",warehouseId);
+        data.put("warehouseStoreId",warehouseStoreId);
+        data.put("isForCps",false);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(token.getTokenValue());
+        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
+        if(orgOp.isPresent()){
+            headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
+        }
+        HttpEntity<Map<String,Object>> payload = new HttpEntity<>(data,headers);
+        String url = cpsServerConfig.getItemCategoriesEndpoint().concat("/bulk");
+        System.out.println(url);
+        ResponseEntity<?> response = networkService.post(url,payload,Void.class);
     }
 }
