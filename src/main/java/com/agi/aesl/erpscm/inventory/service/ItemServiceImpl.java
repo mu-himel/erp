@@ -1064,8 +1064,16 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public void syncItemsBySubCatCode(Jwt token, Long warehouseId, Long warehouseStoreId, String subCatCode) {
-        
-        List<SyncItemDetail> items = this.fetchItemsBySubCat(token,subCatCode);
+
+        Optional<ItemCategory> categoryOp = categoryService.getCategoryByCode(subCatCode);
+
+        if(categoryOp.isEmpty()) {
+            throw new AesException("Sorry! Category Not found");
+        }
+        ItemCategory category = categoryOp.get();
+        categoryService.syncCategories(token, cpsConfig, warehouseId, warehouseStoreId,
+                Collections.singletonList(category.getCpsCategoryId()));
+        List<SyncItemDetail> items = this.fetchItemsBySubCat(token,subCatCode.substring(2));
         List<ScmItemUpdateDto> dtos = new ArrayList<>();
         items.stream().forEach(i->{
            ScmItemUpdateDto scmItemUpdateDto = new ScmItemUpdateDto();

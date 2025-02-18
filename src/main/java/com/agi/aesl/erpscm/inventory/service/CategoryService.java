@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.inventory.service;
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 
 import com.agi.aesl.erpscm.common.CategoryInterface;
+import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDtoCustom;
@@ -144,4 +145,7 @@ public interface CategoryService {
     void importCategories(Optional<MultipartFile> file);
 
     List<?> getTemplateData(Long categoryId,  Long warehouseId, Long warehouseStoreId);
+
+    void syncCategories(Jwt token, CpsServerConfig cpsServerConfig,Long warehouseId,
+                        Long warehouseStoreId,List<Long> categoryIds);
 }

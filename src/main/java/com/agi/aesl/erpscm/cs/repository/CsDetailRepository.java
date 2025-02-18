@@ -40,12 +40,18 @@ public interface CsDetailRepository extends JpaRepository<CsDetail, Long> {
                            csinfo.cvdId as cvdId,
                            CASE WHEN pqd.extended_attributes IS NOT NULL THEN
                                   (select csinfo.order_qty-COALESCE (SUM(pod.delivery_qty),0) FROM purchase_orders po
+                                  LEFT JOIN cs_po cpo ON cpo.id = po.po_group_id 
                                 LEFT JOIN purchase_order_details pod ON pod.purchase_order_id  = po.id
-                                WHERE vendor_id = :vendorId AND po.cs_id = csinfo.csId AND pod.item_name = CONCAT(pqd.brand_name,'-',pqd.item_attribute,'-',pqd.extended_attributes))
+                                WHERE po.vendor_id = :vendorId AND po.cs_id = csinfo.csId
+                                 AND cpo.purchase_order_status NOT IN ('REJECTED')
+                                 AND pod.item_name = CONCAT(pqd.brand_name,'-',pqd.item_attribute,'-',pqd.extended_attributes))
                                 ELSE
                                 (select csinfo.order_qty-COALESCE (SUM(pod.delivery_qty),0) FROM purchase_orders po
+                                LEFT JOIN cs_po cpo ON cpo.id = po.po_group_id
                                 LEFT JOIN purchase_order_details pod ON pod.purchase_order_id  = po.id
-                                WHERE vendor_id = :vendorId  AND po.cs_id = csinfo.csId  AND pod.item_name = CONCAT(pqd.brand_name,'-',pqd.item_attribute))
+                                WHERE po.vendor_id = :vendorId  AND po.cs_id = csinfo.csId
+                                 AND cpo.purchase_order_status NOT IN ('REJECTED')
+                                 AND pod.item_name = CONCAT(pqd.brand_name,'-',pqd.item_attribute))
                                 END as remainingQty
                            FROM price_quotation_details pqd
                            LEFT JOIN price_quotation_summary pqs ON pqs.price_quotation_id = pqd.price_quotation_id
