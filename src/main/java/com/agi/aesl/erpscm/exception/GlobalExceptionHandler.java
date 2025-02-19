@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import javax.xml.bind.ValidationException;
+import java.nio.file.AccessDeniedException;
 import java.util.HashMap;
 import java.util.Map;
 /**
@@ -59,6 +60,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({ExpiredJwtException.class})
     public ResponseEntity<Object> handleValidationExceptions(ExpiredJwtException ve) {
+        Map<String,Object> response = new HashMap<>();
+        response.put("message", ve.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({AccessDeniedException.class})
+    public ResponseEntity<Object> handleValidationExceptions(AccessDeniedException ve) {
         Map<String,Object> response = new HashMap<>();
         response.put("message", ve.getMessage());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
