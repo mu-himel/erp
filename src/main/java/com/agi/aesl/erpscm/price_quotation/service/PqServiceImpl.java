@@ -103,7 +103,7 @@ public class PqServiceImpl implements PqService{
     }
 
     @Transactional
-    private void _savePq(Optional<Indent> indentOp, PriceQuotationReqDto pqDto,
+    private Long _savePq(Optional<Indent> indentOp, PriceQuotationReqDto pqDto,
                          PriceQuotationStatus priceQuotationStatus,
                          PriceQuotationStateStatus priceQuotationStateStatus){
         if(indentOp.isEmpty()){
@@ -199,7 +199,7 @@ public class PqServiceImpl implements PqService{
             return pqd;
         }).collect(Collectors.toList()));
 
-        pqRepository.save(pq);
+        PriceQuotation pqSaved =pqRepository.save(pq);
 
         this._savePriceQuotationSummary(pq,pqDto);
 
@@ -208,6 +208,7 @@ public class PqServiceImpl implements PqService{
             Optional<Long> remoteOfferIdOp = tenderService.sentCounterOffer(claimResolver, indent, offerRequestDto);
             pq.setRemoteOfferId(remoteOfferIdOp.orElse(null));
         }
+        return pqSaved.getId();
     }
 
     @Transactional
@@ -507,9 +508,9 @@ public class PqServiceImpl implements PqService{
         if(status.equals(PriceQuotationStateStatus.DECLINED)){
             priceQuotation.setDeclinedMessage(noteDto.getNote());
         }
-
-        setRemoteOfferStatus(status, priceQuotation.getRemoteOfferId(),priceQuotation.getVendorId(),noteDto);
-
+        if(priceQuotation.getRemoteOfferId()!=null) {
+            setRemoteOfferStatus(status, priceQuotation.getRemoteOfferId(), priceQuotation.getVendorId(), noteDto);
+        }
 
     }
 
@@ -558,7 +559,8 @@ public class PqServiceImpl implements PqService{
     public void addManualPq(Jwt token, PriceQuotationReqDto pqDto) {
         claimResolver.setToken(token);
         Optional<Indent> indentOp = indentService.getIndentFactory(pqDto);
-        this._savePq(indentOp,pqDto,PriceQuotationStatus.INIT,PriceQuotationStateStatus.RECEIVED);
+        Long id = this._savePq(indentOp,pqDto,PriceQuotationStatus.INIT,PriceQuotationStateStatus.RECEIVED);
+        lockPq(token,id, PriceQuotationStateStatus.LOCKED);
     }
 
     @Override

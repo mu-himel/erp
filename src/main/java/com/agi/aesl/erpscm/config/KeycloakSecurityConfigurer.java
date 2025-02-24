@@ -1,6 +1,8 @@
 package com.agi.aesl.erpscm.config;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.keycloak.adapters.authorization.integration.jakarta.ServletPolicyEnforcerFilter;
@@ -36,6 +38,7 @@ public class KeycloakSecurityConfigurer {
         return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
     }
 
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception{
         DelegatingJwtGrantedAuthoritiesConverter djgac = new DelegatingJwtGrantedAuthoritiesConverter(
             new JwtGrantedAuthoritiesConverter(),
@@ -51,7 +54,7 @@ public class KeycloakSecurityConfigurer {
 
         httpSecurity
                 .csrf(csrf -> csrf.disable()).authorizeHttpRequests((authorize) -> {
-            authorize.requestMatchers("/api/v1/**").authenticated();
+            authorize.requestMatchers("/warehouses").permitAll().anyRequest().authenticated();
         }).addFilterBefore(createServletPolicyFilter(), BearerTokenAuthenticationFilter.class)
         
                 .sessionManagement(management -> management
@@ -62,11 +65,30 @@ public class KeycloakSecurityConfigurer {
         return httpSecurity.build();
     }
 
+    private void addExcludedPaths(PolicyEnforcerConfig config) {
+        List<String> excludeUrls = List.of("/warehouses");
+        List<PolicyEnforcerConfig.PathConfig> paths = new ArrayList<>();
+        List<PolicyEnforcerConfig.MethodConfig> methods = new ArrayList<>();
+        for (String url : excludeUrls) {
+            PolicyEnforcerConfig.PathConfig excludedPath = new PolicyEnforcerConfig.PathConfig();
+            excludedPath.setPath(url);
+            PolicyEnforcerConfig.MethodConfig m = new PolicyEnforcerConfig.MethodConfig();
+            PolicyEnforcerConfig.MethodConfig m1 = new PolicyEnforcerConfig.MethodConfig();
+            m.setMethod("GET");
+            m1.setMethod("POST");
+            methods.add(m);
+            methods.add(m1);
+            excludedPath.setMethods(methods);
+            excludedPath.setEnforcementMode(PolicyEnforcerConfig.EnforcementMode.DISABLED);
+            paths.add(excludedPath);
+        }
+        config.setPaths(paths);
+    }
     private ServletPolicyEnforcerFilter createServletPolicyFilter(){
         PolicyEnforcerConfig config;
-
         try {
             config = JsonSerialization.readValue(getClass().getResourceAsStream("/policy-enforcer.json"), PolicyEnforcerConfig.class);
+            addExcludedPaths(config);
         } catch (IOException e) {
             
             throw new RuntimeException(e);
@@ -78,15 +100,6 @@ public class KeycloakSecurityConfigurer {
                 if(request.getPrincipal() == null){
                     throw new RuntimeException("Sorry! Token not valid");
                 }
-                if(request.getPrincipal().getToken().getRealmAccess()!=null){
-                    // HttpServletRequest req = (HttpServletRequest) request;
-                    
-                    Set<String> roles = request.getPrincipal().getToken().getRealmAccess().getRoles();
-                    // System.out.println("ROLES"+roles);
-                    // if(!roles.contains("ADMIN")){
-                    //     throw new RuntimeException("Sorry! Need Admin Profile to access this");
-                    // }
-                };
                 return config;
             }
             

@@ -65,7 +65,7 @@ public interface CsDetailRepository extends JpaRepository<CsDetail, Long> {
             LEFT JOIN scm_category_brands scb ON scb.id = idd.brand_id
             LEFT JOIN indents i ON i.id = idd.indent_id
             WHERE cst.cs_no IN (:csNo) AND cvd.vendor_id=:vendorId) csinfo ON csinfo.item_attribute=pqd.item_attribute 
-            AND csinfo.brand_name = pqd.brand_name 
+            AND csinfo.brand_name IS NULL OR csinfo.brand_name = pqd.brand_name 
             WHERE pqd.price_quotation_id = csinfo.price_quotation_id
             GROUP BY pqd.brand_name, pqd.item_attribute ,csinfo.order_qty
               """, nativeQuery = true)
@@ -76,14 +76,18 @@ public interface CsDetailRepository extends JpaRepository<CsDetail, Long> {
             idd.warehouse_id as warehouseId,
             pr_qty as prQty,
             rfq_qty as rfqQty,
-            concat(scb.name,' - ',id.item_attribute) as itemAttributeName
+            CASE WHEN scb.id IS NULL THEN
+                id.item_attribute
+            ELSE
+                concat(scb.name,' - ',id.item_attribute)
+            END as itemAttributeName
             FROM cs_vendor_details cvd
                         LEFT JOIN cs_details cd ON cvd.cs_detail_id =cd.id
                         LEFT JOIN cs ON cs.id = cd.cs_id
-                        LEFT JOIN indent_details id ON id.id = cd.indent_detail_id\s
+                        LEFT JOIN indent_details id ON id.id = cd.indent_detail_id
                         LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = id.id
                         LEFT JOIN scm_warehouses sw ON sw.id = idd.warehouse_id
-                        LEFT JOIN scm_category_brands scb ON scb.id = id.brand_id\s
+                        LEFT JOIN scm_category_brands scb ON scb.id = id.brand_id
             			where cvd.vendor_id = :vendorId AND cs.cs_no = :csNo
             """,nativeQuery = true)
     List<VendorWarehouseList> findAllVendorWarehouses(String csNo,Long vendorId);
