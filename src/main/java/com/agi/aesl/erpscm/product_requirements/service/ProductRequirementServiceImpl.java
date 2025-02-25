@@ -102,7 +102,7 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
         Page<?> result = null;
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10));
         LocalDateTime fromDate = parseDate(startDate,null);
-        LocalDateTime toDate = parseDate(startDate,"23:59:59");
+        LocalDateTime toDate = parseDate(endDate,"23:59:59");
         result = productRequirementRepository.findAllProductRequirements(categoryId.orElse(null),
         subCategoryId.orElse(null),
             fromDate,
