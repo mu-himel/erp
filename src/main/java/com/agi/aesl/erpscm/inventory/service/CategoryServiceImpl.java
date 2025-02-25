@@ -141,7 +141,7 @@ public class CategoryServiceImpl implements CategoryService {
                     cr.setCategoryStatus(CategoryStatus.APPROVED);
                     cr.setAttributes(categoryRequestDto.getAttributes());
                     cr.setIsActive(false);
-                    Optional<ItemCategory> codeExist = categoryRepository.findByCode(code);
+                    Optional<ItemCategory> codeExist = categoryRepository.findByCodeContaining(categoryRequestDto.getCode());
                     if(codeExist.isPresent()){
                         Optional<CategoryWarehouseStore> cwsOp =  categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseId(codeExist.get().getId() ,categoryRequestDto.getWarehouse().getId());
 
