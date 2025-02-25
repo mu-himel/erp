@@ -58,7 +58,7 @@ public interface ItemQuery {
                        LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
                        WHERE sdd.item_id IS NOT NULL AND sd.warehouse_id = :warehouseId
                         AND sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
-                        group by sdd.id
+                        group by sdd.item_id
                        ) p WHERE p.item_id = :itemId
                    GROUP BY p.brand_name, p.item_id
             """;
