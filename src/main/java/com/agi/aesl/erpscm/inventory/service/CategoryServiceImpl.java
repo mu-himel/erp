@@ -169,7 +169,7 @@ public class CategoryServiceImpl implements CategoryService {
                     cr.setVat(categoryRequestDto.getVat());
                     cr.setWarehouse(categoryRequestDto.getWarehouse());
                     cr.setWarehouseStore(categoryRequestDto.getWarehouseStore());
-                    if(categoryRequestDto.getBrands()!=null && categoryRequestDto.getBrands().size()>0){
+                    if(!categoryRequestDto.getBrands().isEmpty()){
                         cr.setBrands(categoryRequestDto.getBrands());
                     }
                 cr.setCurrentYearBudget(new BigDecimal(0));
