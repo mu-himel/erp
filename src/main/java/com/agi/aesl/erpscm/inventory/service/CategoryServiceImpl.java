@@ -151,7 +151,10 @@ public class CategoryServiceImpl implements CategoryService {
                             categoryWarehouseStore.setWarehouse(new Warehouse(categoryRequestDto.getWarehouse().getId()));
                             categoryWarehouseStore.setWarehouseStore(new WarehouseStore(categoryRequestDto.getWarehouseStore().getId()));
                             categoryWarehouseStoreRepository.save(categoryWarehouseStore);
+                        }else{
+                            throw new AesException("Sorry! This Category["+codeExist.get().getName()+"] Already Imported in this Warehouse");
                         }
+
                         ItemCategory itemCategory = codeExist.get();
                         itemCategory.setActive(true);
                         cr.setId(itemCategory.getId());
@@ -169,7 +172,7 @@ public class CategoryServiceImpl implements CategoryService {
                     cr.setVat(categoryRequestDto.getVat());
                     cr.setWarehouse(categoryRequestDto.getWarehouse());
                     cr.setWarehouseStore(categoryRequestDto.getWarehouseStore());
-                    if(!categoryRequestDto.getBrands().isEmpty()){
+                    if(categoryRequestDto.getBrands()!=null && !categoryRequestDto.getBrands().isEmpty()){
                         cr.setBrands(categoryRequestDto.getBrands());
                     }
                 cr.setCurrentYearBudget(new BigDecimal(0));
@@ -245,7 +248,7 @@ public class CategoryServiceImpl implements CategoryService {
             }
         }
 
-        if(cr.getBrands().size()>0){
+        if(cr.getBrands()!=null && !cr.getBrands().isEmpty()){
             cr.getBrands().stream().forEach(b->{
                 Optional<CategoryBrand> cbOp = itemCategory.getBrands().stream()
                                             .filter(cb-> b.equals(cb.getName())).findFirst();
