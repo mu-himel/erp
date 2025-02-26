@@ -31,6 +31,7 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
                                                 List<Long> warehouseIds,
                                                 LocalDateTime fromDate,
                                                 LocalDateTime toDate,
+                                                String indentNo,
                                                 Pageable pageable);
 
     @Query(value = getIndentPendingApprovals, countQuery = countAllPendingVerifications, nativeQuery = true)

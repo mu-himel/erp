@@ -61,6 +61,7 @@ public interface IndentQuery {
                      
                     WHERE  ((i.next_verifier_id = :nextVerifierId AND i.indent_status IN ('PENDING_VERIFICATION', 'REVIEW','VERIFIED'))
                         OR (ivah.employee_id = :nextVerifierId AND ivah.indent_status = 'VERIFIED'))
+                        AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%'))
                         AND (COALESCE(:warehouseIds) IS NULL OR i.warehouse_id IN (:warehouseIds))
                         AND 
                         (

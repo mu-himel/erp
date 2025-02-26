@@ -90,10 +90,12 @@ public class IndentController extends BaseController {
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("subCategoryId") Optional<Long> subCategoryId,
             @RequestParam("fromDate") Optional<String> fromDate,
-            @RequestParam("toDate") Optional<String> toDate
+            @RequestParam("toDate") Optional<String> toDate,
+            @RequestParam("indentNo") Optional<String> indentNo
     ){
         return new ResponseEntity<>(
-                indentService.getAllPendingVerificationIndents(token,categoryId,subCategoryId, fromDate,toDate ,page, size),
+                indentService.getAllPendingVerificationIndents(token,categoryId,subCategoryId, fromDate,toDate ,
+                        indentNo, page, size),
                 HttpStatus.OK
         );
     }
@@ -106,7 +108,8 @@ public class IndentController extends BaseController {
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("subCategoryId") Optional<Long> subCategoryId,
             @RequestParam("fromDate") Optional<String> fromDate,
-            @RequestParam("toDate") Optional<String> toDate
+            @RequestParam("toDate") Optional<String> toDate,
+            @RequestParam("indentNo") Optional<String> indentNo
     ){
         return new ResponseEntity<>(
                 indentService.getAllPendingApprovalIndents(
@@ -124,7 +127,8 @@ public class IndentController extends BaseController {
         @RequestParam("size") Optional<Integer> size,
         @RequestParam("categoryId") Optional<Long> categoryId,
         @RequestParam("subCategoryId") Optional<Long> subCategoryId,
-        @RequestParam("startDate") Optional<String> priority
+        @RequestParam("startDate") Optional<String> priority,
+        @RequestParam("indentNo") Optional<String> indentNo
     ){
         return new ResponseEntity<>(
                 indentService.getAllClosedIndents(token,page,size,categoryId,subCategoryId,priority),
