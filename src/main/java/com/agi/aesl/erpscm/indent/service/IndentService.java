@@ -28,7 +28,8 @@ public interface IndentService extends VerificationDomainService {
             Optional<Long> categoryId,
             Optional<Long> subCategoryId,
             Optional<String> fromDateStr,
-            Optional<String> toDateStr
+            Optional<String> toDateStr,
+            Optional<String> indentNo
     );
 
     Page<?> getAllPendingVerificationIndents(

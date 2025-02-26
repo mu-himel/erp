@@ -72,11 +72,12 @@ public class IndentController extends BaseController {
                                         @RequestParam("categoryId") Optional<Long> categoryId,
                                         @RequestParam("subCategoryId") Optional<Long> subCategoryId,
                                         @RequestParam("fromDate") Optional<String> fromDate,
-                                        @RequestParam("toDate") Optional<String> toDate
+                                        @RequestParam("toDate") Optional<String> toDate,
+                                        @RequestParam("indentNo") Optional<String> indentNo
                                         ){
 
         return new ResponseEntity<>(
-            indentService.getAllIndents(token, page, size, categoryId, subCategoryId, fromDate,toDate),
+            indentService.getAllIndents(token, page, size, categoryId, subCategoryId, fromDate,toDate,indentNo),
             HttpStatus.OK
         );
     }

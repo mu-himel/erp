@@ -22,6 +22,7 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
     @Query(value = getAllIndents, countQuery = countAllIndents, nativeQuery = true)
     Page<IndentInfo> getAllIndents(List<Long> categoryIds, List<Long> warehouseIds,
                                    LocalDateTime fromDate, LocalDateTime toDate,
+                                   String indentNo,
                                    Pageable pageable);
 
     @Query(value = getIndentPendingVerifications, countQuery = countAllPendingVerifications, nativeQuery = true)

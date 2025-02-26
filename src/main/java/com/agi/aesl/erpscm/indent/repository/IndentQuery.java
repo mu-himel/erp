@@ -18,7 +18,8 @@ public interface IndentQuery {
                              LEFT JOIN scm_item_categories c on i.category_id = c.id
                              LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                     WHERE 
-                    (COALESCE(:warehouseIds) IS NULL OR i.warehouse_id IN (:warehouseIds))
+                    (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%'))
+                    AND (COALESCE(:warehouseIds) IS NULL OR i.warehouse_id IN (:warehouseIds))
                     AND 
                     (
                         (COALESCE(:categoryIds) IS NULL OR c.id IN (:categoryIds))
