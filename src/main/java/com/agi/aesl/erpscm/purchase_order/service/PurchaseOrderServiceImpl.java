@@ -6,6 +6,7 @@ import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.common.enums.DeliveryCharge;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
+import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseRepository;
 import com.agi.aesl.erpscm.cs.entity.Cs;
 import com.agi.aesl.erpscm.cs.entity.CsVendorDetail;
 import com.agi.aesl.erpscm.cs.repository.CsRepository;
@@ -111,6 +112,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
     @Autowired
     private PqRepository pqRepository;
+
+    @Autowired
+    private WarehouseRepository warehouseRepository;
 
 
     @Override
@@ -611,6 +615,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     poDetailList.add(detailMap);
                 }
                 // poItem.put("vendor",po.get)
+                Optional<Warehouse> warehosue = warehouseRepository.findById(po.getRequestedBy().getWarehouseId());
+                map.put("warehouse",warehosue);
                 map.put("requestedBy",po.getRequestedBy());
                 poItem.put("details",poDetailList);
                 poItem.put("termsAndConditions", termsAndConditions);
