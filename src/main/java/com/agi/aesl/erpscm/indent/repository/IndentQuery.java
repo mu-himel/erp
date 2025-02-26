@@ -135,10 +135,11 @@ public interface IndentQuery {
                              LEFT JOIN scm_item_categories c on i.category_id = c.id
                              LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                              LEFT JOIN acl_users e ON e.id = i.requested_by_id
-                    WHERE i.indent_status IN ('COMPLETED','REJECTED','APPROVED','VERIFIED') 
+                    WHERE i.indent_status IN ('COMPLETED','REJECTED','APPROVED','VERIFIED')
+                        AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%'))
                         AND (
                             (COALESCE(:categoryIds) IS NULL OR c.id IN (:categoryIds))
-                            OR 
+                            OR
                             (COALESCE(:categoryIds) IS NULL OR sc.id IN (:categoryIds))
                         )
                       AND (COALESCE(:warehouseIds) IS NULL OR i.warehouse_id IN (:warehouseIds))

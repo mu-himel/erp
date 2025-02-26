@@ -272,7 +272,9 @@ public class IndentServiceImpl implements IndentService{
     }
 
     @Override
-    public Page<?> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<String> priority) {
+    public Page<?> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                       Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                       Optional<String> priority, Optional<String> indentNo) {
         claimResolver.setToken(token);
         String uri = "";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
@@ -283,7 +285,8 @@ public class IndentServiceImpl implements IndentService{
         List<Long> categoryIds = dataFilter.getCategoryIds();
         categoryId.ifPresent(categoryIds::add);
         subCategoryId.ifPresent(categoryIds::add);
-        return indentRepository.getAllClosedIndents(categoryIds,warehouseIds,pageable);
+        return indentRepository.getAllClosedIndents(categoryIds,warehouseIds,
+                indentNo.orElse(null),pageable);
     }
 
     @Override

@@ -63,7 +63,8 @@ public interface IndentService extends VerificationDomainService {
     int moveIndentByIds(MoveIndentRequestDto moveIndent);
 
 
-    Page<?> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<String> priority);
+    Page<?> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
+                                Optional<Long> subCategoryId, Optional<String> priority,Optional<String> indentNo);
 
     void reviewIndent(Jwt token, Long id, ReviewDto reviewDto);
 

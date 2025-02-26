@@ -43,7 +43,8 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
                                                 String indentNo,
                                                 Pageable pageable);
     @Query(value = getClosedIndents, countQuery = countAllClosed, nativeQuery = true)
-    Page<IndentInfo> getAllClosedIndents(List<Long> categoryIds, List<Long> warehouseIds, Pageable pageable);
+    Page<IndentInfo> getAllClosedIndents(List<Long> categoryIds, List<Long> warehouseIds,
+                                         String indentNo,Pageable pageable);
 
     @Query(value = getIndentDetail, nativeQuery = true)
     List<IndentViewInfo> getIndentById(Long id);

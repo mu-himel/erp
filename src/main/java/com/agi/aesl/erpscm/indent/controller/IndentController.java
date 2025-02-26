@@ -131,7 +131,7 @@ public class IndentController extends BaseController {
         @RequestParam("indentNo") Optional<String> indentNo
     ){
         return new ResponseEntity<>(
-                indentService.getAllClosedIndents(token,page,size,categoryId,subCategoryId,priority),
+                indentService.getAllClosedIndents(token,page,size,categoryId,subCategoryId,priority,indentNo),
                 HttpStatus.OK
         );
     }
