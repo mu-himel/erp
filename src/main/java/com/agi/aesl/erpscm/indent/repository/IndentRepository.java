@@ -40,6 +40,7 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
                                                 List<Long> warehouseIds,
                                                 LocalDateTime fromDate,
                                                 LocalDateTime toDate,
+                                                String indentNo,
                                                 Pageable pageable);
     @Query(value = getClosedIndents, countQuery = countAllClosed, nativeQuery = true)
     Page<IndentInfo> getAllClosedIndents(List<Long> categoryIds, List<Long> warehouseIds, Pageable pageable);

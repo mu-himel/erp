@@ -104,6 +104,7 @@ public interface IndentQuery {
                      
                     WHERE  ((i.next_approver_id = :nextApproverId AND i.indent_status IN ('PENDING_APPROVAL', 'REVIEW','APPROVED'))
                         OR (ivah.employee_id = :nextApproverId AND ivah.indent_status = 'APPROVED'))
+                        AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%'))
                         AND (COALESCE(:warehouseIds) IS NULL OR i.warehouse_id IN (:warehouseIds))
                         AND 
                         (

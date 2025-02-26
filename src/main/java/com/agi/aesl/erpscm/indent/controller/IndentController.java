@@ -115,7 +115,7 @@ public class IndentController extends BaseController {
                 indentService.getAllPendingApprovalIndents(
                         token,
                         categoryId,subCategoryId,
-                        fromDate,toDate,page, size),
+                        fromDate,toDate,indentNo, page, size),
                 HttpStatus.OK
         );
     }

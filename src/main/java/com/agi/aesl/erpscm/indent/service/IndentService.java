@@ -48,6 +48,7 @@ public interface IndentService extends VerificationDomainService {
                                          Optional<Long> subCategoryId,
                                          Optional<String> fromDate,
                                          Optional<String> toDate,
+                                         Optional<String> indentNo,
                                          Optional<Integer> page,
                                          Optional<Integer> size);
 
