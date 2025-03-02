@@ -29,7 +29,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
 
 
     Optional<ItemCategory> findByCode(String code);
-    Optional<ItemCategory> findByCodeContaining(String code);
+    List<ItemCategory> findByCodeContaining(String code);
 
 
     @Query("SELECT ic FROM ItemCategory ic LEFT JOIN FETCH ic.budgets b " +
