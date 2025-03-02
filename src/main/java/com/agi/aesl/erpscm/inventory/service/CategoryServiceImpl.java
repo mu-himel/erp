@@ -304,6 +304,25 @@ public class CategoryServiceImpl implements CategoryService {
 //            }).collect(Collectors.toList()));
         }
 
+        Optional<CategoryWarehouseStore> cwsOp =  categoryWarehouseStoreRepository
+                                    .findByCategoryIdAndWarehouseId(itemCategory.getId() ,cr.getWarehouse().getId());
+        Optional<Warehouse> warehouseOp = warehouseRepository.findById(cr.getWarehouse().getId());
+
+        if(warehouseOp.isEmpty()){
+            throw new RuntimeException("Sorry! Warehouse not found");
+        }
+        Optional<WarehouseStore> warehouseStoreOp = warehouseStoreRepository.findById(cr.getWarehouseStore().getId());
+        if(warehouseStoreOp.isEmpty()){
+            throw new RuntimeException("Sorry! Store not found");
+        }
+        if(cwsOp.isEmpty()){
+            CategoryWarehouseStore categoryWarehouseStore = new CategoryWarehouseStore();
+            categoryWarehouseStore.setCategory(itemCategory);
+            categoryWarehouseStore.setWarehouse(new Warehouse(cr.getWarehouse().getId()));
+            categoryWarehouseStore.setWarehouseStore(new WarehouseStore(cr.getWarehouseStore().getId()));
+            categoryWarehouseStoreRepository.save(categoryWarehouseStore);
+        }
+
         if(cr.getEntity().getParentCategory()!=null) {
             itemCategory.setParentCategory(cr.getEntity().getParentCategory());
         }
