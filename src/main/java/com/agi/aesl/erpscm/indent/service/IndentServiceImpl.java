@@ -209,7 +209,8 @@ public class IndentServiceImpl implements IndentService{
 
     @Override
     public Page<?> getAllIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
-                                 Optional<Long> subCategoryId, Optional<String> fromDateStr,Optional<String> toDateStr) {
+                                 Optional<Long> subCategoryId, Optional<String> fromDateStr,Optional<String> toDateStr,
+                                 Optional<String> indentNo) {
         claimResolver.setToken(token);
         String uri="";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
@@ -223,12 +224,14 @@ public class IndentServiceImpl implements IndentService{
         List<Long> categoryIds = dataFilter.getCategoryIds();
         categoryId.ifPresent(categoryIds::add);
         subCategoryId.ifPresent(categoryIds::add);
-        return indentRepository.getAllIndents(categoryIds,warehouseIds,fromDate,toDate,pageable);
+        return indentRepository.getAllIndents(categoryIds,warehouseIds,fromDate,toDate,indentNo.orElse(null),pageable);
     }
 
     @Override
     public Page<?> getAllPendingVerificationIndents(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
-                                 Optional<String> fromDateStr, Optional<String> toDateStr, Optional<Integer> page, Optional<Integer> size) {
+                                 Optional<String> fromDateStr, Optional<String> toDateStr,
+                                 Optional<String> indentNo,
+                                 Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         String uri="";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
@@ -243,13 +246,15 @@ public class IndentServiceImpl implements IndentService{
         subCategoryId.ifPresent(categoryIds::add);
         return indentRepository.getAllPendingVerifications(
                 claimResolver.getUserId(),
-                categoryIds,warehouseIds,fromDate,toDate,pageable);
+                categoryIds,warehouseIds,fromDate,toDate,indentNo.orElse(null),pageable);
     }
 
     @Override
     public Page<?> getAllPendingApprovalIndents(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
 
-                Optional<String> fromDateStr,Optional<String> toDateStr, Optional<Integer> page, Optional<Integer> size) {
+                Optional<String> fromDateStr,Optional<String> toDateStr,
+                Optional<String> indentNo,
+                Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         String uri = "";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
@@ -263,11 +268,13 @@ public class IndentServiceImpl implements IndentService{
         categoryId.ifPresent(categoryIds::add);
         subCategoryId.ifPresent(categoryIds::add);
         return indentRepository.getAllPendingApprovals(claimResolver.getUserId(),
-                categoryIds,warehouseIds,fromDate,toDate,pageable);
+                categoryIds,warehouseIds,fromDate,toDate,indentNo.orElse(null), pageable);
     }
 
     @Override
-    public Page<?> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<String> priority) {
+    public Page<?> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                       Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                       Optional<String> priority, Optional<String> indentNo) {
         claimResolver.setToken(token);
         String uri = "";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
@@ -278,7 +285,8 @@ public class IndentServiceImpl implements IndentService{
         List<Long> categoryIds = dataFilter.getCategoryIds();
         categoryId.ifPresent(categoryIds::add);
         subCategoryId.ifPresent(categoryIds::add);
-        return indentRepository.getAllClosedIndents(categoryIds,warehouseIds,pageable);
+        return indentRepository.getAllClosedIndents(categoryIds,warehouseIds,
+                indentNo.orElse(null),pageable);
     }
 
     @Override

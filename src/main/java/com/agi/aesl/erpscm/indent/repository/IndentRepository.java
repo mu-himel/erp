@@ -22,6 +22,7 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
     @Query(value = getAllIndents, countQuery = countAllIndents, nativeQuery = true)
     Page<IndentInfo> getAllIndents(List<Long> categoryIds, List<Long> warehouseIds,
                                    LocalDateTime fromDate, LocalDateTime toDate,
+                                   String indentNo,
                                    Pageable pageable);
 
     @Query(value = getIndentPendingVerifications, countQuery = countAllPendingVerifications, nativeQuery = true)
@@ -30,6 +31,7 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
                                                 List<Long> warehouseIds,
                                                 LocalDateTime fromDate,
                                                 LocalDateTime toDate,
+                                                String indentNo,
                                                 Pageable pageable);
 
     @Query(value = getIndentPendingApprovals, countQuery = countAllPendingVerifications, nativeQuery = true)
@@ -38,9 +40,11 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
                                                 List<Long> warehouseIds,
                                                 LocalDateTime fromDate,
                                                 LocalDateTime toDate,
+                                                String indentNo,
                                                 Pageable pageable);
     @Query(value = getClosedIndents, countQuery = countAllClosed, nativeQuery = true)
-    Page<IndentInfo> getAllClosedIndents(List<Long> categoryIds, List<Long> warehouseIds, Pageable pageable);
+    Page<IndentInfo> getAllClosedIndents(List<Long> categoryIds, List<Long> warehouseIds,
+                                         String indentNo,Pageable pageable);
 
     @Query(value = getIndentDetail, nativeQuery = true)
     List<IndentViewInfo> getIndentById(Long id);

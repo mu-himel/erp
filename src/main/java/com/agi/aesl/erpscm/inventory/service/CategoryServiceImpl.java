@@ -145,21 +145,27 @@ public class CategoryServiceImpl implements CategoryService {
                     if(codeExist.isPresent()){
                         Optional<CategoryWarehouseStore> cwsOp =  categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseId(codeExist.get().getId() ,categoryRequestDto.getWarehouse().getId());
 
-                        if(cwsOp.isEmpty()){
-                            CategoryWarehouseStore categoryWarehouseStore = new CategoryWarehouseStore();
-                            categoryWarehouseStore.setCategory(codeExist.get());
-                            categoryWarehouseStore.setWarehouse(new Warehouse(categoryRequestDto.getWarehouse().getId()));
-                            categoryWarehouseStore.setWarehouseStore(new WarehouseStore(categoryRequestDto.getWarehouseStore().getId()));
-                            categoryWarehouseStoreRepository.save(categoryWarehouseStore);
-                        }else{
+                        if(cwsOp.isPresent()){
+//                            CategoryWarehouseStore categoryWarehouseStore = new CategoryWarehouseStore();
+//                            categoryWarehouseStore.setCategory(codeExist.get());
+//                            categoryWarehouseStore.setWarehouse(new Warehouse(categoryRequestDto.getWarehouse().getId()));
+//                            categoryWarehouseStore.setWarehouseStore(new WarehouseStore(categoryRequestDto.getWarehouseStore().getId()));
+//                            categoryWarehouseStoreRepository.save(categoryWarehouseStore);
+//                        }else{
                             throw new AesException("Sorry! This Category["+codeExist.get().getName()+"] Already Imported in this Warehouse");
                         }
 
                         ItemCategory itemCategory = codeExist.get();
-                        itemCategory.setActive(true);
-                        cr.setId(itemCategory.getId());
-                        cr.setParentCategory(itemCategory.getParentCategory());
-                        cr.setIsActive(true);
+                        System.out.println("store base Code "+code+ " existing"+itemCategory.getCode() );
+                        if(itemCategory.getCode().equals(code)){
+                            itemCategory.setActive(true);
+                            cr.setIsActive(true);
+                            cr.setParentCategory(itemCategory.getParentCategory());
+                            cr.setId(itemCategory.getId());
+                        }
+
+
+
 
                     }
                     cr.setCode(code);

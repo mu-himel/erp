@@ -370,6 +370,7 @@ public class ItemServiceImpl implements ItemService {
         List<Long> warehouseIds = new ArrayList<>();
         List<Long> categoryIds = new ArrayList<>();
         if(warehouseId.isPresent()){
+            warehouseIds.clear();
             warehouseIds.add(warehouseId.get());
         }else{
             warehouseIds = filterBy;

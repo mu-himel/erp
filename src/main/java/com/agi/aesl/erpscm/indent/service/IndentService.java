@@ -28,7 +28,8 @@ public interface IndentService extends VerificationDomainService {
             Optional<Long> categoryId,
             Optional<Long> subCategoryId,
             Optional<String> fromDateStr,
-            Optional<String> toDateStr
+            Optional<String> toDateStr,
+            Optional<String> indentNo
     );
 
     Page<?> getAllPendingVerificationIndents(
@@ -37,6 +38,7 @@ public interface IndentService extends VerificationDomainService {
             Optional<Long> subCategoryId,
             Optional<String>fromDate,
             Optional<String>toDate,
+            Optional<String>indentNo,
             Optional<Integer> page,
             Optional<Integer> size
     );
@@ -46,6 +48,7 @@ public interface IndentService extends VerificationDomainService {
                                          Optional<Long> subCategoryId,
                                          Optional<String> fromDate,
                                          Optional<String> toDate,
+                                         Optional<String> indentNo,
                                          Optional<Integer> page,
                                          Optional<Integer> size);
 
@@ -60,7 +63,8 @@ public interface IndentService extends VerificationDomainService {
     int moveIndentByIds(MoveIndentRequestDto moveIndent);
 
 
-    Page<?> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<String> priority);
+    Page<?> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
+                                Optional<Long> subCategoryId, Optional<String> priority,Optional<String> indentNo);
 
     void reviewIndent(Jwt token, Long id, ReviewDto reviewDto);
 
