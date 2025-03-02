@@ -145,11 +145,11 @@ public class CategoryServiceImpl implements CategoryService {
                     if(!codeExists.isEmpty()){
                         Optional<ItemCategory> codeExist = codeExists.stream().filter(ce->ce.getCode().equals(code)).findAny();
                         if(codeExist.isPresent()) {
-                            Optional<CategoryWarehouseStore> cwsOp = categoryWarehouseStoreRepository
-                                    .findByCategoryIdAndWarehouseId(codeExist.get().getId(),
+                            int cwsOp = categoryWarehouseStoreRepository
+                                    .getCountCategoryCodeExistsInWarehouse(categoryRequestDto.getCode(),
                                             categoryRequestDto.getWarehouse().getId());
 
-                            if (cwsOp.isPresent()) {
+                            if (cwsOp>0) {
                                 throw new AesException("Sorry! This Category[" + codeExist.get().getName() + "] Already Imported in this Warehouse");
                             }
 
