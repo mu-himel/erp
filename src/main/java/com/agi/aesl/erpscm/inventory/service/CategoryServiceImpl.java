@@ -141,32 +141,26 @@ public class CategoryServiceImpl implements CategoryService {
                     cr.setCategoryStatus(CategoryStatus.APPROVED);
                     cr.setAttributes(categoryRequestDto.getAttributes());
                     cr.setIsActive(false);
-                    Optional<ItemCategory> codeExist = categoryRepository.findByCodeContaining(categoryRequestDto.getCode());
-                    if(codeExist.isPresent()){
-                        Optional<CategoryWarehouseStore> cwsOp =  categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseId(codeExist.get().getId() ,categoryRequestDto.getWarehouse().getId());
+                    List<ItemCategory> codeExists = categoryRepository.findByCodeContaining(categoryRequestDto.getCode());
+                    if(!codeExists.isEmpty()){
+                        Optional<ItemCategory> codeExist = codeExists.stream().filter(ce->ce.getCode().equals(code)).findAny();
+                        if(codeExist.isPresent()) {
+                            Optional<CategoryWarehouseStore> cwsOp = categoryWarehouseStoreRepository
+                                    .findByCategoryIdAndWarehouseId(codeExist.get().getId(),
+                                            categoryRequestDto.getWarehouse().getId());
 
-                        if(cwsOp.isPresent()){
-//                            CategoryWarehouseStore categoryWarehouseStore = new CategoryWarehouseStore();
-//                            categoryWarehouseStore.setCategory(codeExist.get());
-//                            categoryWarehouseStore.setWarehouse(new Warehouse(categoryRequestDto.getWarehouse().getId()));
-//                            categoryWarehouseStore.setWarehouseStore(new WarehouseStore(categoryRequestDto.getWarehouseStore().getId()));
-//                            categoryWarehouseStoreRepository.save(categoryWarehouseStore);
-//                        }else{
-                            throw new AesException("Sorry! This Category["+codeExist.get().getName()+"] Already Imported in this Warehouse");
+                            if (cwsOp.isPresent()) {
+                                throw new AesException("Sorry! This Category[" + codeExist.get().getName() + "] Already Imported in this Warehouse");
+                            }
+
+                            ItemCategory itemCategory = codeExist.get();
+                            if (itemCategory.getCode().equals(code)) {
+                                itemCategory.setActive(true);
+                                cr.setIsActive(true);
+                                cr.setParentCategory(itemCategory.getParentCategory());
+                                cr.setId(itemCategory.getId());
+                            }
                         }
-
-                        ItemCategory itemCategory = codeExist.get();
-                        System.out.println("store base Code "+code+ " existing"+itemCategory.getCode() );
-                        if(itemCategory.getCode().equals(code)){
-                            itemCategory.setActive(true);
-                            cr.setIsActive(true);
-                            cr.setParentCategory(itemCategory.getParentCategory());
-                            cr.setId(itemCategory.getId());
-                        }
-
-
-
-
                     }
                     cr.setCode(code);
                     cr.setCpsCategoryId(categoryRequestDto.getCpsCategoryId());
