@@ -18,6 +18,7 @@ public class DemandDetailDto {
     private ReferenceObjectDto category;
     private BigDecimal requestQuantity;
     private String specification;
+    private String itemUnit;
     private DemandPriority priority;
 
     private List<DemandDetailAttribute> attributes;
