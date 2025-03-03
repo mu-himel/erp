@@ -23,6 +23,11 @@ interface DemandQuery {
             SELECT
             	i.id as id,
             	dd.id as demandDetailId,
+            	CASE WHEN dd.item_id IS NULL THEN
+            	    dd.item_unit
+            	ELSE
+                    i.item_unit
+                END as itemUnit,
             	CASE WHEN dd.brand_id  IS NULL THEN
                 (SELECT COALESCE(SUM(pr_qty),0) FROM (SELECT sdd.pr_qty  as pr_qty, sd.id as demandId, sdd.id as ddId,
             			CASE WHEN scb.id IS NOT NULL THEN
@@ -91,7 +96,6 @@ interface DemandQuery {
                 w.name as warehouseName,
                 w.location as warehouseLocation,
                 i.code as code,
-                i.item_unit as itemUnit,
                 CASE WHEN dda.id IS NULL THEN
                     COALESCE((SELECT COALESCE(sum(distinct i3.stock_threshold_qty),0) as stockThresholdQty
                     FROM scm_items i3 WHERE i3.item_category_id = dd.item_category_id),0)
