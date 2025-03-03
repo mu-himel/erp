@@ -183,7 +183,8 @@ interface DemandQuery {
                                             LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
                                             LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
                                             WHERE sdd.status IN ('PENDING_QC') AND sd.warehouse_id = d.warehouse_id AND sdd.approved_quantity > 0
-                                            	group by sdd.item_id) p ) as inTransit,
+                                            	GROUP BY sdd.item_id) p WHERE p.attribute_name LIKE GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value,' ',dda.attribute_unit order by dda.id asc separator ' - ') 
+                                            GROUP BY p.brand_name, p.attribute_name) as inTransit,
             	GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - ') deamndAttributes
             FROM scm_demand_details dd
             LEFT JOIN scm_demand_detail_attributes dda on dda.demand_detail_id = dd.id
