@@ -308,6 +308,9 @@ public class DemandServiceImpl implements DemandService{
                         return demandDetailAttribute;
                     }).collect(Collectors.toList()));
 
+            if(demandDetailDto.getItemUnit()!=null){
+                demandDetail.setItemUnit(demandDetailDto.getItemUnit());
+            }
             demandDetail.setRequestQuantity(demandDetailDto.getRequestQuantity());
             demandDetail.setDemand(demand);
             demandDetail.setPriority(demandDetailDto.getPriority());

@@ -23,6 +23,11 @@ interface DemandQuery {
             SELECT
             	i.id as id,
             	dd.id as demandDetailId,
+            	CASE WHEN dd.item_id IS NULL THEN
+            	    dd.item_unit
+            	ELSE
+                    i.item_unit
+                END as itemUnit,
             	CASE WHEN dd.brand_id  IS NULL THEN
                 (SELECT COALESCE(SUM(pr_qty),0) FROM (SELECT sdd.pr_qty  as pr_qty, sd.id as demandId, sdd.id as ddId,
             			CASE WHEN scb.id IS NOT NULL THEN
@@ -91,7 +96,6 @@ interface DemandQuery {
                 w.name as warehouseName,
                 w.location as warehouseLocation,
                 i.code as code,
-                i.item_unit as itemUnit,
                 CASE WHEN dda.id IS NULL THEN
                     COALESCE((SELECT COALESCE(sum(distinct i3.stock_threshold_qty),0) as stockThresholdQty
                     FROM scm_items i3 WHERE i3.item_category_id = dd.item_category_id),0)
@@ -177,13 +181,14 @@ interface DemandQuery {
             	(SELECT sum(p.approved_quantity) FROM (SELECT
                                             	sdd.approved_quantity,
                                             	scb.name as brand_name,
-                                            	GROUP_CONCAT(DISTINCT sdda.attribute_type,' ',sdda.attribute_value , ' ',sdda.attribute_unit order by sdda.id asc separator ' - ') attribute_name	
+                                            	GROUP_CONCAT(DISTINCT sdda.attribute_type,' ',sdda.attribute_value , ' ',sdda.attribute_unit order by sdda.id asc separator ' - ') attribute_name,	
+                                                sdd.item_category_id as categoryId
                                             FROM scm_demand_details sdd
                                             LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
                                             LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
                                             LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
                                             WHERE sdd.status IN ('PENDING_QC') AND sd.warehouse_id = d.warehouse_id AND sdd.approved_quantity > 0
-                                            	GROUP BY sdd.item_id) p WHERE p.attribute_name LIKE GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value,' ',dda.attribute_unit order by dda.id asc separator ' - ') 
+                                            	GROUP BY sdd.item_id) p WHERE (p.categoryId = dd.item_category_id) AND (cb.name IS NULL OR p.brand_name = cb.name) AND p.attribute_name LIKE GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value,' ',dda.attribute_unit order by dda.id asc separator ' - ') 
                                             GROUP BY p.brand_name, p.attribute_name) as inTransit,
             	GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - ') deamndAttributes
             FROM scm_demand_details dd

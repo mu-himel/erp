@@ -60,6 +60,9 @@ public class DemandDetail {
     @Column(precision = 38,scale = 4)
     private BigDecimal currentStock;
 
+    @Column(length = 20)
+    private String itemUnit;
+
     private String specification;
 
     @Column(length = 500)
