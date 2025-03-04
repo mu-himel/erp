@@ -732,7 +732,7 @@ public class CsServiceImpl implements CsService{
         if(csOp.isPresent()){
             Cs cs = csOp.get();
             cs.setNextApproverId(nextApprover.getVerifier().getId());
-            cs.setCsStatus(CsStatus.APPROVED);
+//            cs.setCsStatus(CsStatus.APPROVED);
             setVAHistory(cs, CsStatus.APPROVED);
         }
     }
