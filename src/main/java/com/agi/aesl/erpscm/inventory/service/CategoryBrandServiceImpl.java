@@ -56,7 +56,7 @@ public class CategoryBrandServiceImpl implements CategoryBrandService{
             }
             return false;
         }).map(filteredBrand->{
-            return new CategoryBrand(null,filteredBrand.getName(),new ItemCategory(filteredBrand.getCategory().getId()),true);
+            return new CategoryBrand(null,filteredBrand.getName(),new ItemCategory(filteredBrand.getCategory().getId()),true,false);
         }).collect(Collectors.toList());
         return categoryBrandRepository.saveAll(cBrands);
     }
