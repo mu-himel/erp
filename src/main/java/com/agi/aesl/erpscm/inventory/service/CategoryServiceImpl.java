@@ -261,6 +261,9 @@ public class CategoryServiceImpl implements CategoryService {
                     cb1.setCategory(itemCategory);
                     cb1.setName(b);
                     categoryBrandRepository.save(cb1);
+                }else{
+                    CategoryBrand cb = cbOp.get();
+                    cb.setIsActive(true);
                 }
 
             });

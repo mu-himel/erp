@@ -33,6 +33,7 @@ public class CategoryBrand implements BrandInterface {
     private ItemCategory category;
 
     private Boolean isCustom;
+    private Boolean isActive;
 
     public CategoryBrand(Long id) {
         this.id = id;
