@@ -45,7 +45,7 @@ public class DemandDetailItemResDto {
     BigDecimal approvedQuantity;
     BigDecimal requestedQuantity;
     BigDecimal currentStock;
-    Integer stockThresholdQty;
+    BigDecimal stockThresholdQty;
     String itemUnit;
-    Integer inTransit;
+    BigDecimal inTransit;
 }
