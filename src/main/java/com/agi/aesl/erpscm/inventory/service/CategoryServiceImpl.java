@@ -149,7 +149,7 @@ public class CategoryServiceImpl implements CategoryService {
                                     .getCountCategoryCodeExistsInWarehouse(categoryRequestDto.getCode(),
                                             categoryRequestDto.getWarehouse().getId());
 
-                            if (cwsOp>0) {
+                            if (cwsOp>0 && !categoryRequestDto.getIsSync()) {
                                 throw new AesException("Sorry! This Category[" + codeExist.get().getName() + "] Already Imported in this Warehouse");
                             }
 
@@ -205,6 +205,7 @@ public class CategoryServiceImpl implements CategoryService {
         }
     }
 
+    @Transactional
     private void updateCategoryDuringImport(Long id, CategoryRequestDto cr) {
         Optional<ItemCategory> itemCategoryOptional = categoryRepository.findById(id);
         if(itemCategoryOptional.isEmpty()){
@@ -263,12 +264,13 @@ public class CategoryServiceImpl implements CategoryService {
         }
         if(cr.getAttributes()!=null && cr.getAttributes().size()>0){
 
-            itemCategory.setAttributes(cr.getAttributes().stream().map(categoryAttribute -> {
+            cr.getAttributes().stream().forEach(categoryAttribute -> {
                 Optional<CategoryAttributeRepository.ICategoryAttribute> categoryAttributeOp= categoryAttributeRepository.findAllByAttributeTypeAndAttributeUnit(
                         cr.getWarehouse().getId(), cr.getCode(), categoryAttribute.getAttributeType(),categoryAttribute.getAttributeUnit());
                 if(categoryAttributeOp.isEmpty()){
                     categoryAttribute.setCategory(itemCategory);
-                    return categoryAttribute;
+                    categoryAttributeRepository.save(categoryAttribute);
+//                    return categoryAttribute;
                 }else{
                     CategoryAttributeRepository.ICategoryAttribute caExist = categoryAttributeOp.get();
                     CategoryAttribute _categoryAttribute = new CategoryAttribute();
@@ -283,12 +285,13 @@ public class CategoryServiceImpl implements CategoryService {
 
                     _categoryAttribute.setAttributeType(caExist.getAttributeType());
                     _categoryAttribute.setAttributeUnit(caExist.getAttributeUnit());
-//                    categoryAttributeRepository.save(_categoryAttribute);
-                    return _categoryAttribute;
+                    categoryAttributeRepository.save(_categoryAttribute);
+//                    return _categoryAttribute;
                 }
 
 
-            }).collect(Collectors.toList()));
+            });
+//                    .collect(Collectors.toList()));
 //            itemCategory.setAttributes(categoryRequestDto.getAttributes().stream().filter(categoryAttribute -> {
 //                Optional<CategoryAttribute> categoryAttributeOp= categoryAttributeRepository.findAllByAttributeTypeAndAttributeUnit(categoryAttribute.getAttributeType(),categoryAttribute.getAttributeUnit());
 //                if(categoryAttributeOp.isEmpty()){
@@ -1444,6 +1447,7 @@ public class CategoryServiceImpl implements CategoryService {
         data.put("warehouseId",warehouseId);
         data.put("warehouseStoreId",warehouseStoreId);
         data.put("isForCps",false);
+        data.put("isSync",true);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

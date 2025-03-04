@@ -33,6 +33,8 @@ public class CategoryRequestDtoCustom implements EntityConvertable<ItemCategory>
     // @ApiModelProperty(required = true)
     private String code;
 
+    private Boolean isSync;
+
     private BigDecimal currentYearBudget;
     private Optional<Long> budgetId;
 
