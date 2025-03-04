@@ -1459,6 +1459,9 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     public void approveItemFromAcc(Long id, Long warehouseId) {
         List<ItemImportLog> itemImportLogs = itemImportLogRepository.findByItemId(id);
+        if(itemImportLogs.isEmpty()){
+            throw new RuntimeException("Sorry! Item doesn't exist");
+        }
         if(!itemImportLogs.isEmpty()){
             for(ItemImportLog iil : itemImportLogs) {
                 iil.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
