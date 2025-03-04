@@ -20,4 +20,6 @@ public interface ItemImportLogRepository extends JpaRepository<ItemImportLog,Lon
             WHERE siil.item_inactive_status IN ('PENDING','PENDING_VERIFICATION')
             """,nativeQuery = true)
     void forceActive();
+
+    void deleteByItemId(Long id);
 }

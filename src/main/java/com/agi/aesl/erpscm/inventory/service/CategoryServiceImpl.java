@@ -88,6 +88,9 @@ public class CategoryServiceImpl implements CategoryService {
     private ItemRepository itemRepository;
 
     @Autowired
+    private ItemImportLogRepository itemImportLogRepository;
+
+    @Autowired
     private ItemStockRepository itemStockRepository;
 
     @Autowired
@@ -938,28 +941,46 @@ public class CategoryServiceImpl implements CategoryService {
 
 
             List<Item> items = itemRepository.findAllByItemCategoryIdAndActive(itemCategory.getId(),true);
+            if(items.isEmpty()){
+                categoryAttributeRepository.deleteByCategoryId(itemCategory.getId());
+                List<Item> inactiveItems = itemRepository.findAllByItemCategoryIdAndActive(itemCategory.getId(),false);
+                for(Item item : inactiveItems){
+                    itemImportLogRepository.deleteByItemId(item.getId());
+                    itemRepository.deleteById(item.getId());
+                }
+                if (warehouseId != null && storeId != null) {
+                    categoryWarehouseStoreRepository
+                            .deleteByCategoryIdAndWarehouseIdAndWarehouseStoreId(
+                                    itemCategory.getId(),
+                                    warehouseId,
+                                    storeId
+                            );
+                }
+                categoryRepository.deleteById(itemCategory.getId());
+            }else {
 
-            List<Long> itemIds = items.stream().map(i->i.getId()).collect(Collectors.toList());
-            List<ItemStock> stockExist = itemStockRepository.findByItemsAndWarehosueId(itemIds,warehouseId);
-            if(!stockExist.isEmpty()){
-                throw new RuntimeException("Sorry! Item exist under this category in this warehouse");
+                List<Long> itemIds = items.stream().map(i -> i.getId()).collect(Collectors.toList());
+                List<ItemStock> stockExist = itemStockRepository.findByItemsAndWarehosueId(itemIds, warehouseId);
+                if (!stockExist.isEmpty()) {
+                    throw new RuntimeException("Sorry! Item exist under this category in this warehouse");
+                }
+                List<DemandDetail> demandDetails = demandDetailRepository.findAllByItemIdAndWarehouseId(itemIds, warehouseId);
+                if (demandDetails.size() > 0) {
+                    throw new RuntimeException("Sorry! Item under this category has some demand in this warehouse, so unable to remove");
+                }
+
+                if (warehouseId != null && storeId != null) {
+                    categoryWarehouseStoreRepository
+                            .deleteByCategoryIdAndWarehouseIdAndWarehouseStoreId(
+                                    itemCategory.getId(),
+                                    warehouseId,
+                                    storeId
+                            );
+                }
+                categoryRepository.save(itemCategory);
             }
-            List<DemandDetail> demandDetails  = demandDetailRepository.findAllByItemIdAndWarehouseId(itemIds,warehouseId);
-            if(demandDetails.size()>0){
-                throw new RuntimeException("Sorry! Item under this category has some demand in this warehouse, so unable to remove");
-            }
-
-            if(warehouseId!=null && storeId!=null){
-                categoryWarehouseStoreRepository
-                        .deleteByCategoryIdAndWarehouseIdAndWarehouseStoreId(
-                                itemCategory.getId(),
-                                warehouseId,
-                                storeId
-                        );
-            }
 
 
-            categoryRepository.save(itemCategory);
         }
     }
 
