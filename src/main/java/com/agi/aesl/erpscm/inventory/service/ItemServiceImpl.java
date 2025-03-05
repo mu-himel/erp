@@ -1475,6 +1475,28 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
+    public void rejectItemFromAcc(Long id, Long warehouseId) {
+        List<ItemImportLog> itemImportLogs = itemImportLogRepository.findByItemId(id);
+        if(itemImportLogs.isEmpty()){
+            throw new RuntimeException("Sorry! Item doesn't exist");
+        }
+        if(!itemImportLogs.isEmpty()){
+            for(ItemImportLog iil : itemImportLogs) {
+                iil.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
+                Item item = iil.getItem();
+                item.setActive(true);
+                if(item.getUserItemId()!=null){
+                    Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
+                    userItemOp.ifPresent((ui)->{
+                        ui.setItemStatus(UserCategoryStatus.REJECTED);
+                    });
+                }
+            }
+        }
+    }
+
+    @Override
     public List<Item> getByCode(String itemCode) {
         return itemRepository.findByCodeLikeCode(itemCode);
     }
