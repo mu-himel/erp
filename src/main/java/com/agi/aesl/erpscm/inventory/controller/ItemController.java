@@ -230,6 +230,15 @@ public class ItemController extends BaseController{
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @PutMapping("/reject/{warehouseId}/acc/{id}")
+    public ResponseEntity<?> rejectItemFromAcc(
+            @PathVariable("warehouseId") Long warehouseId,
+            @PathVariable("id") Long id
+    ){
+        itemService.rejectItemFromAcc(id,warehouseId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
     @PutMapping("/approve/{id}")
     public ResponseEntity<?> approveItemFromCps(
                     @AuthenticationPrincipal Jwt token,

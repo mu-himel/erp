@@ -124,4 +124,6 @@ public interface ItemService {
 
     void forceActivev2(Jwt token,ForceActiveRequestDto forceActiveRequestDto);
     void forceActive();
+
+    void rejectItemFromAcc(Long id, Long warehouseId);
 }
