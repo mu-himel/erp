@@ -76,4 +76,20 @@ public interface WarehouseQuery {
         String getLocation();
         Integer getStoreQty();
     }
+
+    String getFinishGoodsWarehouse="""
+        SELECT sw.id, name,sws.id as storeId,
+        (SELECT COUNT(*) FROM scm_category_warehouse_stores scws 
+            	LEFT JOIN scm_item_categories sic ON sic.id = scws.category_id
+            	WHERE scws.warehouse_store_id = sws.id
+            	AND sic.parent_category_id IS NULL
+            	AND sic.active=1
+        )  as categoriesCount from scm_warehouses sw
+        LEFT JOIN scm_warehouse_stores sws ON sws.warehouse_id =sw.id
+        WHERE 
+        (:name IS NULL OR LOWER(sw.name) LIKE CONCAT('%',LOWER(:name),'%'))
+        AND LOWER(sws.store_name) LIKE CONCAT('%','finish','%') AND sws.active=true
+    """;
+
+    String countFinishGoodsWarehouse = "SELECT COUNT(*) FROM ("+getFinishGoodsWarehouse+") as total";
 }

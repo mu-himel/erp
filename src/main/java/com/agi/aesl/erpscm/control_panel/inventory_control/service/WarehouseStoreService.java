@@ -5,6 +5,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.dto.StoreDto;
 
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.List;
@@ -23,6 +24,8 @@ public interface WarehouseStoreService {
     Optional<WarehouseStore> getStoreById(Long warehouseStoreId);
 
     // void copyToStore(Long wId, CopyToStoreDto copyToStoreDto);
+
+    Page<?> getFinishedGoodsStoreWarehouses(Optional<String> name, Pageable pageable);
 
     List<?> getStoreSubCategories(Long warehouseId, Long storeId);
 

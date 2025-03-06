@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.inventory.service;
 
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseStoreService;
@@ -7,6 +8,9 @@ import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.repository.CategoryRepository;
 import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +24,8 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
     @Autowired
     private WarehouseStoreService warehouseStoreService;
 
+    
+
     @Autowired
     private CategoryRepository categoryRepository;
 
@@ -27,18 +33,27 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
     private ItemRepository itemRepository;
 
     @Override
-    public List<CategoryInfo> getCategories(Long warehouseId) {
+    public Page<?> getWarehouses(Optional<String> name, Optional<Integer>page,
+                                                                Optional<Integer>size){
+
+         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(Integer.MAX_VALUE));
+        return warehouseStoreService.getFinishedGoodsStoreWarehouses(name,pageable);
+    }
+
+    @Override
+    public List<CategoryInfo> getCategories(Long warehouseId,Optional<Integer>page,Optional<Integer>size) {
         List<WarehouseStore> stores = warehouseStoreService.getStoresByWarehouseId(warehouseId);
         Optional<WarehouseStore> finish_good = stores.stream().filter(s -> {
           return  s.getStoreName().toLowerCase().contains("finish");
         }).findFirst();
         if(finish_good.isPresent()){
+            Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(Integer.MAX_VALUE));
             List<CategoryInfo> mainCategories = new ArrayList<>();
-            List<CategoryRepository.MainCategoriesInfo> allMainCategories = categoryRepository
-                        .findAllMainCategories(warehouseId, finish_good.get().getId(), null, null);
-            allMainCategories.stream().forEach(mc->{
-                mainCategories.add(new CategoryInfo(mc.getId(),mc.getName(),mc.getCode()));
-            });
+            Page<CategoryRepository.MainCategoriesInfo> allMainCategories = categoryRepository
+                        .findAllMainCategoriesForSales(warehouseId, finish_good.get().getId(), null, null,pageable);
+                allMainCategories.stream().forEach(mc->{
+                    mainCategories.add(new CategoryInfo(mc.getId(),mc.getName(),mc.getCode(),mc.getWarehouseName(),0L));
+                });
             return mainCategories;
         }
 

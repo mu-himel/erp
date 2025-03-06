@@ -193,6 +193,15 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
         
     }
 
+    @Override
+    public Page<?> getFinishedGoodsStoreWarehouses(Optional<String> name, Pageable pageable) {
+        
+        return warehouseRepository.findOnlyFinishedGoodsWarehouse(name.orElse(null), pageable);
+    }
+
+
+    
+
         
 
     

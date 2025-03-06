@@ -35,4 +35,15 @@ public interface WarehouseRepository extends JpaRepository<Warehouse,Long>, Ware
 
     @Query(value = getWarehousesWithFilter, countQuery = countWarehouseWithPaginationFilter, nativeQuery = true)
     Page<WarehouseInfo> findAllByNameAndId(List<Long> warehouseIds, String name, Pageable pageable);
+
+    @Query(value = getFinishGoodsWarehouse, countQuery=countFinishGoodsWarehouse,nativeQuery = true)
+    Page<WarehouseInfoExt> findOnlyFinishedGoodsWarehouse(String name, Pageable pageable);
+
+    public interface WarehouseInfoExt {
+    
+        Long getId();
+        String getName();
+        Long getStoreId();
+        Long getCategoriesCount();
+    }
 }

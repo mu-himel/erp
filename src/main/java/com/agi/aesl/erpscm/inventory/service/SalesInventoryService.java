@@ -4,13 +4,18 @@ package com.agi.aesl.erpscm.inventory.service;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 
 public interface SalesInventoryService {
 
 
 
 
-    record CategoryInfo(Long id, String name,String code){}
+    record CategoryInfo(Long id, String name,String code, String warehouseName,Long subcategoriesCount){}
     record SubCategoryInfo(Long id, String name,String code, String categoryCode){}
     record ProductInfo(Long id, String brand,
                        String categoryCode,
@@ -20,7 +25,9 @@ public interface SalesInventoryService {
                        String itemUnit,
                        String itemCode,String itemName,
                        BigInteger stockQty){}
-    List<CategoryInfo> getCategories(Long warehouseId);
+
+    Page<?> getWarehouses(Optional<String>name,Optional<Integer> page, Optional<Integer> size);
+    List<CategoryInfo> getCategories(Long warehouseId,Optional<Integer> page, Optional<Integer> size);
     List<SubCategoryInfo> getSubCategories(Long warehouseId,Long categoryId);
 
     List<SubCategoryInfo> getSubCategories(Long warehouseId, String categoryCode);
