@@ -741,14 +741,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     }
 
     @Transactional
-    private void setVAHistory(PoGroup po, PurchaseOrderStatus status){
+    private void setVAHistory(PoGroup po, Employee employee,PurchaseOrderStatus status){
         PoVerificationApprovalHistory poVaHistory = new PoVerificationApprovalHistory();
         poVaHistory.setPo(po);
-        if(status.equals(PurchaseOrderStatus.VERIFIED)) {
-            poVaHistory.setEmployee(new Employee(po.getNextVerifierId()));
-        }else if(status.equals(PurchaseOrderStatus.APPROVED)){
-            poVaHistory.setEmployee(new Employee(po.getNextApproverId()));
-        }
+        poVaHistory.setEmployee(employee);
         poVaHistory.setPoStatus(status);
         poVaHistoryRepository.save(poVaHistory);
     }
@@ -762,7 +758,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             PoGroup po = poGroupOp.get();
             po.setNextVerifierId(nextVerifier.getVerifier().getId());
 //            po.setPurchaseOrderStatus(PurchaseOrderStatus.VERIFIED);
-            setVAHistory(po,PurchaseOrderStatus.VERIFIED);
+            setVAHistory(po,verification.getVerifier(),PurchaseOrderStatus.VERIFIED);
         }
     }
 
@@ -774,7 +770,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         if(poGroupOp.isPresent()){
             PoGroup po = poGroupOp.get();
             po.setNextApproverId(nextApprover.getVerifier().getId());
-            setVAHistory(po, PurchaseOrderStatus.APPROVED);
+            setVAHistory(po,verification.getVerifier(), PurchaseOrderStatus.APPROVED);
         }
     }
 
@@ -791,7 +787,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 poGroup.setPurchaseOrderStatus(PurchaseOrderStatus.VERIFIED);
                 sentPoToVendors(poGroup);
             }
-            setVAHistory(poGroup,PurchaseOrderStatus.VERIFIED);
+            setVAHistory(poGroup,new Employee(poGroup.getNextVerifierId()),PurchaseOrderStatus.VERIFIED);
         }
     }
 
@@ -802,7 +798,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         if(poGroup.isPresent()){
             PoGroup po = poGroup.get();
             po.setPurchaseOrderStatus(PurchaseOrderStatus.APPROVED);
-            setVAHistory(po,PurchaseOrderStatus.APPROVED);
+            setVAHistory(po,new Employee(po.getNextApproverId()),PurchaseOrderStatus.APPROVED);
             sentPoToVendors(po);
         }
     }
