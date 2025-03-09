@@ -36,4 +36,6 @@ public interface SalesInventoryService {
     List<SubCategoryInfo> getSubCategories(Long warehouseId, String categoryCode);
 
     List<ProductInfo> getProducts(Long warehouseId, Long categoryId, Long subCategoryId);
+    Page<?> getProducts(Optional<Long> warehouseId, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                        Optional<Integer> page, Optional<Integer> size);
 }

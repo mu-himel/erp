@@ -61,13 +61,15 @@ public class SalesInventoryController extends BaseController {
                 HttpStatus.OK);
     }
 
-    @GetMapping("/products/{warehouseId}")
-    public ResponseEntity<?> getProducts(@PathVariable  Long warehouseId,
-                                         @RequestParam("categoryId") Long categoryId,
-                                         @RequestParam("subCategoryId") Long subCategoryId
+    @GetMapping("/products")
+    public ResponseEntity<?> getProducts(@RequestParam("warehouseId")  Optional<Long> warehouseId,
+                                         @RequestParam("categoryId") Optional<Long> categoryId,
+                                         @RequestParam("subCategoryId") Optional<Long> subCategoryId,
+                                         @RequestParam("page") Optional<Integer> page,
+                                         @RequestParam("size") Optional<Integer> size
     ){
         return  new ResponseEntity<>(
-                salesInventoryService.getProducts(warehouseId,categoryId,subCategoryId),
+                salesInventoryService.getProducts(warehouseId,categoryId,subCategoryId,page,size),
                 HttpStatus.OK);
     }
 }

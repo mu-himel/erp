@@ -172,4 +172,48 @@ public interface ItemQuery {
             AND (:attributeType IS NULL OR p.attribute_types LIKE CONCAT('%',:attributeType,'%'))
             AND (:attributeValue IS NULL OR p.attribute_values LIKE CONCAT('%',:attributeValue,'%'))
         """;
+
+    String getItemsWithSearchForSales = """
+            SELECT i.id as id, i.name as brand, i.code as itemCode, i.item_unit as itemUnit,
+            ic.id as subCategoryId, ic.name as subCategoryName, ic.code as subCategoryCode,
+            ipc.id as categoryId, ipc.name as categoryName, ipc.code as categoryCode,
+            w.id as warehouseId, w.name as warehouseName,
+            ws.id as warehouseStoreId, ws.store_name as warehouseStoreName,
+            SUM(s.stock_qty) as stockQty,
+            (SELECT sum(p.approved_quantity) FROM (SELECT
+                        sdd.approved_quantity,
+                        scb.name as brand_name,
+                        sdd.item_id	
+                       FROM scm_demand_details sdd
+                       LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
+                       LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+                       LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
+                       WHERE sdd.item_id IS NOT NULL AND sd.warehouse_id = w.id
+                        AND sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
+                        group by sdd.item_id
+                       ) p WHERE p.item_id = i.id
+                   GROUP BY p.brand_name, p.item_id) as inTransit,
+            i.stock_threshold_qty as stockThresholdQty,
+            i.reorder_percentage as reorderPercentage,
+            i.item_attribute_name as itemName
+            FROM scm_items i
+            LEFT JOIN scm_item_stocks s ON s.item_id = i.id
+            LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id
+            LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
+            LEFT JOIN scm_warehouse_stores ws ON ws.id = s.warehouse_store_id
+            LEFT JOIN scm_warehouses w ON w.id = s.warehouse_id
+            LEFT JOIN scm_item_import_logs siil ON siil.item_id = i.id
+            WHERE (COALESCE(:warehouseId) IS NULL OR siil.warehouse_id IN (:warehouseId))
+            AND siil.item_inactive_status IN ('APPROVED')
+            AND i.active=1 AND (:name IS NULL OR i.name LIKE concat('%',:name,'%'))
+            AND (:code IS NULL OR i.code LIKE concat('%',:code,'%'))
+            AND (COALESCE(:subCategoryId) IS NULL OR ic.id IN (:subCategoryId))
+            AND (COALESCE(:categoryId) IS NULL OR ipc.id IN (:categoryId))
+            AND (:reorderPercentage IS NULL OR i.reorder_percentage = :reorderPercentage)
+            AND (:stockThresholdQty IS NULL OR i.stock_threshold_qty = :stockThresholdQty)
+            AND (COALESCE(:warehouseId) IS NULL OR w.id IN (:warehouseId))
+            AND (COALESCE(:warehouseStoreId) IS NULL OR ws.id IN (:warehouseStoreId))
+            GROUP BY i.id ORDER BY i.name, i.item_attribute_name ASC""";
+
+    String countItemsWithSearchForSales = "SELECT count(*) FROM ("+getItemsWithSearchForSales+") as p";
 }
