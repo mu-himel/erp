@@ -721,7 +721,7 @@ public class CsServiceImpl implements CsService{
             Cs cs = csOp.get();
             cs.setNextVerifierId(nextVerifier.getVerifier().getId());
 //            cs.setCsStatus(CsStatus.VERIFIED);
-            setVAHistory(cs, CsStatus.VERIFIED);
+            setVAHistory(cs, verification.getVerifier(),CsStatus.VERIFIED);
         }
     }
 
@@ -733,7 +733,7 @@ public class CsServiceImpl implements CsService{
             Cs cs = csOp.get();
             cs.setNextApproverId(nextApprover.getVerifier().getId());
 //            cs.setCsStatus(CsStatus.APPROVED);
-            setVAHistory(cs, CsStatus.APPROVED);
+            setVAHistory(cs, verification.getVerifier(),CsStatus.APPROVED);
         }
     }
 
@@ -746,12 +746,12 @@ public class CsServiceImpl implements CsService{
             if(firstApprover.isPresent()){
                 cs.setNextApproverId(firstApprover.get().getVerifier().getId());
                 cs.setCsStatus(CsStatus.PENDING_APPROVAL);
-                setVAHistory(cs,CsStatus.VERIFIED);
+                setVAHistory(cs,new Employee(cs.getNextVerifierId()),CsStatus.VERIFIED);
 
             }else {
 
                 cs.setCsStatus(CsStatus.VERIFIED);
-                setVAHistory(cs,CsStatus.VERIFIED);
+                setVAHistory(cs,new Employee(cs.getNextVerifierId()),CsStatus.VERIFIED);
                 csAccountService.createCsAccount(cs);
 //                generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
             }
@@ -766,7 +766,7 @@ public class CsServiceImpl implements CsService{
         if(csOp.isPresent()){
             Cs cs = csOp.get();
             cs.setCsStatus(CsStatus.APPROVED);
-            setVAHistory(cs,CsStatus.APPROVED);
+            setVAHistory(cs,new Employee(cs.getNextApproverId()),CsStatus.APPROVED);
 
             csAccountService.createCsAccount(cs);
 //            generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
@@ -793,16 +793,12 @@ public class CsServiceImpl implements CsService{
     }
 
     @Transactional
-    private void setVAHistory(Cs cs, CsStatus status){
+    private void setVAHistory(Cs cs, Employee employee, CsStatus status){
         CsVerificationApprovalHistory csVaHistory = new CsVerificationApprovalHistory();
         String empId = null;
-        if (status.equals(CsStatus.VERIFIED)){
-            empId =cs.getNextVerifierId();
-        }else if(status.equals(CsStatus.APPROVED)){
-            empId = cs.getNextApproverId();
-        }
+
         csVaHistory.setCs(cs);
-        csVaHistory.setEmployee(new Employee(empId));
+        csVaHistory.setEmployee(employee);
         csVaHistory.setCsStatus(status);
         csVaHistoryRepository.save(csVaHistory);
     }

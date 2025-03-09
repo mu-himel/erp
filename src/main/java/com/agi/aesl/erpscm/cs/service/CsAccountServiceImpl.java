@@ -109,21 +109,21 @@ public class CsAccountServiceImpl implements CsAccountService{
             CsAccount cs = csAccOp.get();
             cs.setNextVerifierId(nextVerifier.getVerifier().getId());
 //            cs.setAcsStatus(CsStatus.VERIFIED);
-            setVAHistory(cs, CsStatus.VERIFIED);
+            setVAHistory(cs, verification.getVerifier(),CsStatus.VERIFIED);
         }
     }
 
     @Transactional
-    private void setVAHistory(CsAccount csAccount, CsStatus status){
+    private void setVAHistory(CsAccount csAccount, Employee employee, CsStatus status){
         CsAccountVAHistory csVaHistory = new CsAccountVAHistory();
-        String empId = null;
-        if (status.equals(CsStatus.VERIFIED)){
-            empId =csAccount.getNextVerifierId();
-        }else if(status.equals(CsStatus.APPROVED)){
-            empId = csAccount.getNextApproverId();
-        }
+//        String empId = null;
+//        if (status.equals(CsStatus.VERIFIED)){
+//            empId =csAccount.getNextVerifierId();
+//        }else if(status.equals(CsStatus.APPROVED)){
+//            empId = csAccount.getNextApproverId();
+//        }
         csVaHistory.setCsAccount(csAccount);
-        csVaHistory.setEmployee(new Employee(empId));
+        csVaHistory.setEmployee(employee);
         csVaHistory.setAcsStatus(status);
         csAccountVAHistoryRepo.save(csVaHistory);
     }
@@ -136,7 +136,7 @@ public class CsAccountServiceImpl implements CsAccountService{
             CsAccount csAccount = csAccountOp.get();
             csAccount.setNextApproverId(nextApprover.getVerifier().getId());
 //            csAccount.setAcsStatus(CsStatus.APPROVED);
-            setVAHistory(csAccount, CsStatus.APPROVED);
+            setVAHistory(csAccount,verification.getVerifier(), CsStatus.APPROVED);
         }
     }
 
@@ -152,7 +152,7 @@ public class CsAccountServiceImpl implements CsAccountService{
             }else {
                 csAccount.setAcsStatus(CsStatus.VERIFIED);
             }
-            setVAHistory(csAccount,CsStatus.VERIFIED);
+            setVAHistory(csAccount,new Employee(csAccount.getNextVerifierId()),CsStatus.VERIFIED);
 
         }
     }
@@ -164,7 +164,7 @@ public class CsAccountServiceImpl implements CsAccountService{
         if(csAccountOp.isPresent()){
             CsAccount csAccount = csAccountOp.get();
             csAccount.setAcsStatus(CsStatus.APPROVED);
-            setVAHistory(csAccount,CsStatus.APPROVED);
+            setVAHistory(csAccount,new Employee(csAccount.getNextApproverId()),CsStatus.APPROVED);
 
         }
     }
