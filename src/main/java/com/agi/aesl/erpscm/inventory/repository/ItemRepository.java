@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -283,5 +284,30 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
 
     List<Item> findByBrandIdAndItemCategoryIdAndItemAttributeName(Long id, Long id2, String itemAttributeName);
 
+    @Query(value = getItemsWithSearchForSales,countQuery = countItemsWithSearchForSales,nativeQuery = true)
+    Page<SalesItems> findAllItemListForSales(
+            @Param("name") String name,
+            @Param("code") String code,
+            @Param("reorderPercentage") Integer reorderPercentage,
+            @Param("stockThresholdQty") Integer stockThresholdQty,
+            @Param("categoryId") List<Long> categoryId,
+            @Param("subCategoryId") List<Long> subCategoryId,
+            @Param("warehouseId") List<Long> warehouseId,
+            @Param("warehouseStoreId") List<Long> warehouseStoreId,
+            Pageable pageable
+    );
 
+    interface SalesItems{
+        Long getId();
+        String getBrand();
+
+        String getCategoryCode();
+        String getCategoryName();
+        String getSubCategoryCode();
+        String getSubcategoryName();
+        String getItemUnit();
+        String getItemCode();
+        String getItemName();
+        BigInteger getStockQty();
+    }
 }
