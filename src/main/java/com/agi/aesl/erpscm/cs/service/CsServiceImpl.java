@@ -720,7 +720,7 @@ public class CsServiceImpl implements CsService{
         if(csOp.isPresent()){
             Cs cs = csOp.get();
             cs.setNextVerifierId(nextVerifier.getVerifier().getId());
-            cs.setCsStatus(CsStatus.VERIFIED);
+//            cs.setCsStatus(CsStatus.VERIFIED);
             setVAHistory(cs, CsStatus.VERIFIED);
         }
     }

@@ -108,7 +108,7 @@ public class CsAccountServiceImpl implements CsAccountService{
         if(csAccOp.isPresent()){
             CsAccount cs = csAccOp.get();
             cs.setNextVerifierId(nextVerifier.getVerifier().getId());
-            cs.setAcsStatus(CsStatus.VERIFIED);
+//            cs.setAcsStatus(CsStatus.VERIFIED);
             setVAHistory(cs, CsStatus.VERIFIED);
         }
     }
@@ -135,7 +135,7 @@ public class CsAccountServiceImpl implements CsAccountService{
         if(csAccountOp.isPresent()){
             CsAccount csAccount = csAccountOp.get();
             csAccount.setNextApproverId(nextApprover.getVerifier().getId());
-            csAccount.setAcsStatus(CsStatus.APPROVED);
+//            csAccount.setAcsStatus(CsStatus.APPROVED);
             setVAHistory(csAccount, CsStatus.APPROVED);
         }
     }

@@ -3,6 +3,9 @@ package com.agi.aesl.erpscm.inventory.controller;
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.inventory.service.SalesInventoryService;
 import jakarta.validation.constraints.NotNull;
+
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,17 +18,39 @@ public class SalesInventoryController extends BaseController {
     @Autowired
     private SalesInventoryService salesInventoryService;
 
-    @GetMapping("/categories/{warehouseId}")
-    public ResponseEntity<?> getCategories(@PathVariable  Long warehouseId){
+    @GetMapping("/warehouses")
+    public ResponseEntity<?> getWarehouses(
+                @RequestParam("name") Optional<String> name,
+                @RequestParam("page") Optional<Integer> page,
+                @RequestParam("size") Optional<Integer> size
+                ){
+        return new ResponseEntity<>(salesInventoryService.getWarehouses(name,page,size),HttpStatus.OK);
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<?> getCategories(
+                @RequestParam("warehouseId")  Optional<Long> warehouseId,
+                @RequestParam("name") Optional<String> name,
+                @RequestParam("code") Optional<String> code,
+                @RequestParam("page") Optional<Integer> page,
+                @RequestParam("size") Optional<Integer> size
+    ){
         return  new ResponseEntity<>(
-                salesInventoryService.getCategories(warehouseId),
+                salesInventoryService.getCategories(warehouseId,name,code,page,size),
                 HttpStatus.OK);
     }
 
-    @GetMapping("/sub-categories/{warehouseId}")
-    public ResponseEntity<?> getCategories(@PathVariable  Long warehouseId,@RequestParam("categoryId") Long categoryId){
+    @GetMapping("/sub-categories")
+    public ResponseEntity<?> getCategories(
+            @RequestParam("warehouseId") Optional<Long> warehouseId,
+            @RequestParam("categoryId")  Optional<Long> categoryId,
+            @RequestParam("name")  Optional<String> name,
+            @RequestParam("code")  Optional<String> code,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+            ){
         return  new ResponseEntity<>(
-                salesInventoryService.getSubCategories(warehouseId,categoryId),
+                salesInventoryService.getSubCategories(warehouseId,categoryId,name,code,page,size),
                 HttpStatus.OK);
     }
 

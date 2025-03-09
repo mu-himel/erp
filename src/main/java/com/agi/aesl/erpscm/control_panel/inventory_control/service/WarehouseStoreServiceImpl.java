@@ -96,6 +96,11 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
     }
 
     @Override
+    public List<WarehouseStore> getStoresByWarehouseIdIn(List<Long> warehouseId) {
+        return warehouseStoreRepository.findAllByWarehouseIdIn(warehouseId);
+    }
+
+    @Override
     public Optional<?> getStore(Long warehouseStoreId) {
         return warehouseStoreRepository.findStoreById(warehouseStoreId);
     }
@@ -193,7 +198,14 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
         
     }
 
+    @Override
+    public Page<?> getFinishedGoodsStoreWarehouses(Optional<String> name, Pageable pageable) {
         
+        return warehouseRepository.findOnlyFinishedGoodsWarehouse(name.orElse(null), pageable);
+    }
 
-    
+    @Override
+    public List<Long> getFinishedGoodsStoreWarehousesIs() {
+        return warehouseRepository.findOnlyFinishedGoodsWarehouse(null);
+    }
 }

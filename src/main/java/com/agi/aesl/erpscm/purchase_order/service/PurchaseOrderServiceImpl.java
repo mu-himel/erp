@@ -761,7 +761,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         if(poGroupOp.isPresent()){
             PoGroup po = poGroupOp.get();
             po.setNextVerifierId(nextVerifier.getVerifier().getId());
-            po.setPurchaseOrderStatus(PurchaseOrderStatus.VERIFIED);
+//            po.setPurchaseOrderStatus(PurchaseOrderStatus.VERIFIED);
             setVAHistory(po,PurchaseOrderStatus.VERIFIED);
         }
     }
@@ -774,7 +774,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         if(poGroupOp.isPresent()){
             PoGroup po = poGroupOp.get();
             po.setNextApproverId(nextApprover.getVerifier().getId());
-            po.setPurchaseOrderStatus(PurchaseOrderStatus.APPROVED);
             setVAHistory(po, PurchaseOrderStatus.APPROVED);
         }
     }

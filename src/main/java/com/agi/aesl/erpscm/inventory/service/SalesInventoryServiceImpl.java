@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.inventory.service;
 
+import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseStoreService;
@@ -7,6 +8,10 @@ import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.repository.CategoryRepository;
 import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +25,8 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
     @Autowired
     private WarehouseStoreService warehouseStoreService;
 
+    
+
     @Autowired
     private CategoryRepository categoryRepository;
 
@@ -27,41 +34,71 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
     private ItemRepository itemRepository;
 
     @Override
-    public List<CategoryInfo> getCategories(Long warehouseId) {
-        List<WarehouseStore> stores = warehouseStoreService.getStoresByWarehouseId(warehouseId);
-        Optional<WarehouseStore> finish_good = stores.stream().filter(s -> {
-          return  s.getStoreName().toLowerCase().contains("finish");
-        }).findFirst();
-        if(finish_good.isPresent()){
-            List<CategoryInfo> mainCategories = new ArrayList<>();
-            List<CategoryRepository.MainCategoriesInfo> allMainCategories = categoryRepository
-                        .findAllMainCategories(warehouseId, finish_good.get().getId(), null, null);
-            allMainCategories.stream().forEach(mc->{
-                mainCategories.add(new CategoryInfo(mc.getId(),mc.getName(),mc.getCode()));
-            });
-            return mainCategories;
-        }
+    public Page<?> getWarehouses(Optional<String> name, Optional<Integer>page,
+                                                                Optional<Integer>size){
 
-        return new ArrayList<>();
+         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(Integer.MAX_VALUE));
+        return warehouseStoreService.getFinishedGoodsStoreWarehouses(name,pageable);
     }
 
     @Override
-    public List<SubCategoryInfo> getSubCategories(Long warehouseId, Long categoryId) {
-        List<WarehouseStore> stores = warehouseStoreService.getStoresByWarehouseId(warehouseId);
-        Optional<WarehouseStore> finishGood = stores.stream().filter(s -> {
-            return  s.getStoreName().toLowerCase().contains("finish");
-        }).findFirst();
-        if(finishGood.isPresent()){
-            List<SubCategoryInfo> subCategories = new ArrayList<>();
-            List<CategoryRepository.ItemCategoryInfo> allSubCategories = categoryRepository
-                    .findAllSubCategories(finishGood.get().getId(), categoryId, null, null);
-
-            allSubCategories.stream().forEach(sc->{
-                subCategories.add(new SubCategoryInfo(sc.getId(),sc.getName(),sc.getCode(),sc.getParentCategoryCode()));
-            });
-            return subCategories;
+    public Page<?> getCategories(Optional<Long> warehouseId, Optional<String> name, Optional<String> code,
+                                 Optional<Integer>page,Optional<Integer>size) {
+        List<Long> warehouseIds = new ArrayList<>();
+        if(warehouseId.isPresent()) {
+            warehouseIds.add(warehouseId.get());
+        }else{
+            warehouseIds = warehouseStoreService.getFinishedGoodsStoreWarehousesIs();
         }
-        return new ArrayList<>();
+
+        List<WarehouseStore> stores = warehouseStoreService.getStoresByWarehouseIdIn(warehouseIds);
+        List<Long> finisGoodStoreIds = new ArrayList<>();
+        stores.stream().forEach(s -> {
+          if( s.getStoreName().toLowerCase().contains("finish")){
+              finisGoodStoreIds.add(s.getId());
+          }
+        });
+        if(!finisGoodStoreIds.isEmpty()){
+            Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(Integer.MAX_VALUE));
+//            List<CategoryInfo> mainCategories = new ArrayList<>();
+            Page<CategoryRepository.SalesCategoryInfo> allMainCategories = categoryRepository
+                        .findAllMainCategoriesForSales(warehouseIds, finisGoodStoreIds, name.orElse(null),
+                                code.orElse(null),pageable);
+//                allMainCategories.stream().forEach(mc->{
+//                    mainCategories.add(new CategoryInfo(mc.getId(),mc.getName(),mc.getCode(),mc.getWarehouseName(),0L));
+//                });
+            return allMainCategories;
+        }
+
+        return Page.empty();
+    }
+
+    @Override
+    public Page<?> getSubCategories(Optional<Long> warehouseId, Optional<Long> categoryId,
+                                    Optional<String> name, Optional<String> code,
+                                    Optional<Integer> page, Optional<Integer> size) {
+        List<Long> warehouseIds = new ArrayList<>();
+        if(warehouseId.isPresent()) {
+            warehouseIds.add(warehouseId.get());
+        }else{
+            warehouseIds = warehouseStoreService.getFinishedGoodsStoreWarehousesIs();
+        }
+        List<WarehouseStore> stores = warehouseStoreService.getStoresByWarehouseIdIn(warehouseIds);
+        List<Long> finisGoodStoreIds = new ArrayList<>();
+         stores.stream().forEach(s -> {
+            if(s.getStoreName().toLowerCase().contains("finish")){
+                finisGoodStoreIds.add(s.getId());
+            }
+        });
+        if(!finisGoodStoreIds.isEmpty()){
+            Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(Integer.MAX_VALUE));
+            List<SubCategoryInfo> subCategories = new ArrayList<>();
+            Page<CategoryRepository.SalesSubCategoryInfo> allSubCategories = categoryRepository
+                    .findAllSubCategories(finisGoodStoreIds, categoryId,name.orElse(null),
+                            code.orElse(null), pageable);
+            return allSubCategories;
+        }
+        return Page.empty();
     }
 
     @Override

@@ -87,9 +87,10 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
     boolean existsByCode(String code);
 
     @Query(value = "SELECT ic.cps_category_id as cpsCategoryId, ic.id as id, ic.name as name, ic.code as code, " +
-            "ic.active as active,cws.warehouse_id as warehouseId, cws.warehouse_store_id as storeId " +
+            "ic.active as active,cws.warehouse_id as warehouseId, sw.name as warehouseName, cws.warehouse_store_id as storeId " +
             "FROM scm_item_categories ic " +
             "LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id " +
+            "LEFT JOIN scm_warehouses sw ON sw.id = cws.warehouse_id " +
             "WHERE ic.active = 1 AND ic.category_status IN ('APPROVED') AND ic.parent_category_id IS NULL " +
             " AND (:name IS NULL OR ic.name LIKE concat('%',:name,'%')) " +
             " AND (:code IS NULL OR ic.code LIKE concat('%',:code,'%'))" +
@@ -98,6 +99,32 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             "GROUP BY ic.id ", nativeQuery = true)
     List<MainCategoriesInfo> findAllMainCategories(Long warehouseId,Long warehouseStoreId, String name, String code);
 
+
+    @Query(value = getCategoriesForSales, countQuery = countCategoriesForSales, nativeQuery = true)
+    Page<SalesCategoryInfo> findAllMainCategoriesForSales(List<Long> warehouseIds,List<Long> warehouseStoreId, String name, String code, Pageable pageable);
+
+    @Query(value = getSubCategoriesForSales, countQuery = countSubCategoriesForSales,nativeQuery = true)
+    Page<SalesSubCategoryInfo> findAllSubCategories(List<Long> finisGoodStoreIds,
+                                                Optional<Long> categoryId, String name, String code,
+                                                Pageable pageable);
+
+    interface SalesCategoryInfo{
+        Long getId();
+        String getName();
+        Long getWarehouseId();
+        String getCode();
+        String getWarehouseName();
+        Long getSubCategoryCount();
+    }
+
+    interface SalesSubCategoryInfo{
+        Long getId();
+        String getName();
+        String getCode();
+        String getWarehouseName();
+        String getCategoryName();
+        Long getProductCount();
+    }
     @Query(value = getMainCategoriesForInventoryControl,countQuery = countMainCategoriesForInventoryControl, nativeQuery = true)
     Page<ItemCategoryInfo> findAllMainCategoriesForInventoryControl(List<Long> warehouseId,Long warehouseStoreId, String name, String code,Pageable pageable);
     @Query(value = """
@@ -262,6 +289,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
 
     interface MainCategoriesInfo extends ItemCategoryInfo{
         Long getWarehouseId();
+        String getWarehouseName();
         Long getStoreId();
     }
     interface ItemCategoryInfo {
