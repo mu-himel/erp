@@ -92,4 +92,12 @@ public interface WarehouseQuery {
     """;
 
     String countFinishGoodsWarehouse = "SELECT COUNT(*) FROM ("+getFinishGoodsWarehouse+") as total";
+
+    String getFinishGoodsWarehouseForIds="""
+        SELECT sw.id  from scm_warehouses sw
+        LEFT JOIN scm_warehouse_stores sws ON sws.warehouse_id =sw.id
+        WHERE 
+        (:name IS NULL OR LOWER(sw.name) LIKE CONCAT('%',LOWER(:name),'%'))
+        AND LOWER(sws.store_name) LIKE CONCAT('%','finish','%') AND sws.active=true
+    """;
 }

@@ -27,8 +27,11 @@ public interface SalesInventoryService {
                        BigInteger stockQty){}
 
     Page<?> getWarehouses(Optional<String>name,Optional<Integer> page, Optional<Integer> size);
-    List<CategoryInfo> getCategories(Long warehouseId,Optional<Integer> page, Optional<Integer> size);
-    List<SubCategoryInfo> getSubCategories(Long warehouseId,Long categoryId);
+    Page<?> getCategories(Optional<Long> warehouseId,Optional<String> name,Optional<String> code,
+                          Optional<Integer> page, Optional<Integer> size);
+    Page<?> getSubCategories(Optional<Long> warehouseId,Optional<Long> categoryId,
+                             Optional<String> name, Optional<String> code,
+                             Optional<Integer> page, Optional<Integer> size);
 
     List<SubCategoryInfo> getSubCategories(Long warehouseId, String categoryCode);
 

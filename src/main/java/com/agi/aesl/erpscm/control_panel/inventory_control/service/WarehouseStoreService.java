@@ -19,6 +19,7 @@ public interface WarehouseStoreService {
 
     List<?> getStoresByWarehouse(Jwt token,Optional<String> name, Optional<Long> warehouseId);
     List<WarehouseStore> getStoresByWarehouseId( Long warehouseId);
+    List<WarehouseStore> getStoresByWarehouseIdIn( List<Long> warehouseId);
 
     Optional<?> getStore(Long warehouseStoreId);
     Optional<WarehouseStore> getStoreById(Long warehouseStoreId);
@@ -32,4 +33,6 @@ public interface WarehouseStoreService {
     void createStore(StoreDto storeDto);
 
     void updateStore(Long id, StoreDto storeDto);
+
+    List<Long> getFinishedGoodsStoreWarehousesIs();
 }

@@ -34,6 +34,8 @@ public interface WarehouseStoreRepository extends JpaRepository<WarehouseStore,L
             """,nativeQuery = true)
     Page<WarehouseStoreInfoV2> findAllByActiveAndWarehouseId(Boolean active, Long warehouseId, Pageable pageable);
 
+    List<WarehouseStore> findAllByWarehouseIdIn(List<Long> warehouseId);
+
     interface WarehouseStoreInfoV2{
         Long getId();
         Boolean getActive();

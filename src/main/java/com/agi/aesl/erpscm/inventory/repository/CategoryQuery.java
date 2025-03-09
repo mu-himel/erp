@@ -263,17 +263,40 @@ public interface CategoryQuery {
             """;
 
     String getCategoriesForSales="""
-                SELECT ic.cps_category_id as cpsCategoryId, ic.id as id, ic.name as name, ic.code as code, 
-            ic.active as active,cws.warehouse_id as warehouseId, sw.name as warehouseName, cws.warehouse_store_id as storeId 
+                SELECT ic.cps_category_id as cpsCategoryId, ic.id as id, ic.name as name, ic.code as code,
+            ic.active as active,cws.warehouse_id as warehouseId, sw.name as warehouseName, cws.warehouse_store_id as storeId,
+            (select count(*) from scm_item_categories ic3 
+            LEFT JOIN scm_category_warehouse_stores cws2 ON cws2.category_id =ic3.id
+            where ic3.parent_category_id = ic.id AND ic3.active=true
+             AND ic3.category_status = 'APPROVED'
+              AND (COALESCE(:warehouseIds) IS NULL OR cws2.warehouse_id IN (:warehouseIds))
+             ) as subCategoryCount
             FROM scm_item_categories ic 
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id 
             LEFT JOIN scm_warehouses sw ON sw.id = cws.warehouse_id 
             WHERE ic.active = 1 AND ic.category_status IN ('APPROVED') AND ic.parent_category_id IS NULL 
-             AND (:name IS NULL OR ic.name LIKE concat('%',:name,'%')) 
+             AND (:name IS NULL OR LOWER(ic.name) LIKE concat('%',LOWER(:name),'%'))
              AND (:code IS NULL OR ic.code LIKE concat('%',:code,'%'))
-             AND (:warehouseId IS NULL OR cws.warehouse_id IN (:warehouseId)) 
-             AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id IN (:warehouseStoreId)) 
+             AND (COALESCE(:warehouseIds) IS NULL OR cws.warehouse_id IN (:warehouseIds)) 
+             AND (COALESCE(:warehouseStoreId) IS NULL OR cws.warehouse_store_id IN (:warehouseStoreId)) 
             GROUP BY ic.id """;
 
     String countCategoriesForSales="SELECT COUNT(*) FROM ("+getCategoriesForSales+") as total";
+
+    String getSubCategoriesForSales="""
+                SELECT ic.cps_category_id as cpsCategoryId, ic.id as id, ic.name as name, ic.code as code,
+            ic.active as active,cws.warehouse_id as warehouseId, sw.name as warehouseName,
+            cws.warehouse_store_id as storeId,0 as productCount,
+            (SELECT name from scm_item_categories ic1 WHERE ic1.id = ic.parent_category_id) as categoryName
+            FROM scm_item_categories ic
+            LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id 
+            LEFT JOIN scm_warehouses sw ON sw.id = cws.warehouse_id 
+            WHERE ic.active = 1 AND ic.category_status IN ('APPROVED') AND ic.parent_category_id IS NOT NULL 
+             AND (:categoryId IS NULL OR ic.parent_category_id = :categoryId)
+             AND (:name IS NULL OR LOWER(ic.name) LIKE concat('%',LOWER(:name),'%'))
+             AND (:code IS NULL OR ic.code LIKE concat('%',:code,'%'))
+             AND (COALESCE(:finisGoodStoreIds) IS NULL OR cws.warehouse_store_id IN (:finisGoodStoreIds)) 
+            GROUP BY ic.id """;
+
+    String countSubCategoriesForSales="SELECT COUNT(*) FROM ("+getSubCategoriesForSales+") as total";
 }

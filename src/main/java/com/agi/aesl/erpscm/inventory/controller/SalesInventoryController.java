@@ -27,20 +27,30 @@ public class SalesInventoryController extends BaseController {
         return new ResponseEntity<>(salesInventoryService.getWarehouses(name,page,size),HttpStatus.OK);
     }
 
-    @GetMapping("/categories/{warehouseId}")
-    public ResponseEntity<?> getCategories(@PathVariable  Long warehouseId,
+    @GetMapping("/categories")
+    public ResponseEntity<?> getCategories(
+                @RequestParam("warehouseId")  Optional<Long> warehouseId,
+                @RequestParam("name") Optional<String> name,
+                @RequestParam("code") Optional<String> code,
                 @RequestParam("page") Optional<Integer> page,
                 @RequestParam("size") Optional<Integer> size
     ){
         return  new ResponseEntity<>(
-                salesInventoryService.getCategories(warehouseId,page,size),
+                salesInventoryService.getCategories(warehouseId,name,code,page,size),
                 HttpStatus.OK);
     }
 
-    @GetMapping("/sub-categories/{warehouseId}")
-    public ResponseEntity<?> getCategories(@PathVariable  Long warehouseId,@RequestParam("categoryId") Long categoryId){
+    @GetMapping("/sub-categories")
+    public ResponseEntity<?> getCategories(
+            @RequestParam("warehouseId") Optional<Long> warehouseId,
+            @RequestParam("categoryId")  Optional<Long> categoryId,
+            @RequestParam("name")  Optional<String> name,
+            @RequestParam("code")  Optional<String> code,
+            @RequestParam("page") Optional<Integer> page,
+            @RequestParam("size") Optional<Integer> size
+            ){
         return  new ResponseEntity<>(
-                salesInventoryService.getSubCategories(warehouseId,categoryId),
+                salesInventoryService.getSubCategories(warehouseId,categoryId,name,code,page,size),
                 HttpStatus.OK);
     }
 

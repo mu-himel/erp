@@ -39,6 +39,8 @@ public interface WarehouseRepository extends JpaRepository<Warehouse,Long>, Ware
     @Query(value = getFinishGoodsWarehouse, countQuery=countFinishGoodsWarehouse,nativeQuery = true)
     Page<WarehouseInfoExt> findOnlyFinishedGoodsWarehouse(String name, Pageable pageable);
 
+    @Query(value = getFinishGoodsWarehouseForIds,nativeQuery = true)
+    List<Long> findOnlyFinishedGoodsWarehouse(String name);
     public interface WarehouseInfoExt {
     
         Long getId();
