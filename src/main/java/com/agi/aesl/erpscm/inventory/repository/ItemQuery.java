@@ -10,9 +10,11 @@ public interface ItemQuery {
             ws.id as warehouseStoreId, ws.store_name as warehouseStoreName,
             SUM(s.stock_qty) as qty,
             (SELECT sum(p.approved_quantity) FROM (SELECT
-                        sdd.approved_quantity,
+                        sum(sdd.approved_quantity) as approved_quantity,
                         scb.name as brand_name,
-                        sdd.item_id	
+                        sdd.item_id,
+                        sdd.item_category_id,
+                        sdd.brand_id
                        FROM scm_demand_details sdd
                        LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
                        LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
@@ -21,6 +23,8 @@ public interface ItemQuery {
                         AND sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
                         group by sdd.item_id
                        ) p WHERE p.item_id = i.id
+                       AND  (p.brand_id IS NULL OR p.brand_id = i.brand_id)
+                       AND p.item_category_id = i.item_category_id
                    GROUP BY p.brand_name, p.item_id) as inTransit,
             i.stock_threshold_qty as stockThresholdQty,
             i.reorder_percentage as reorderPercentage,
@@ -49,18 +53,20 @@ public interface ItemQuery {
 
     String getItemInTransit= """
             SELECT sum(p.approved_quantity) FROM (SELECT
-                        sdd.approved_quantity,
+                        sum(sdd.approved_quantity) as approved_quantity,
                         scb.name as brand_name,
-                        sdd.item_id
+                        sdd.item_id,
+                        sdd.brand_id,
+                        sdd.item_category_id
                        FROM scm_demand_details sdd
                        LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
                        LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
                        LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
-                       WHERE sdd.item_id IS NOT NULL AND sd.warehouse_id = :warehouseId
+                       WHERE sdd.item_id =:itemId AND sd.warehouse_id = :warehouseId
                         AND sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
                         group by sdd.item_id
                        ) p WHERE p.item_id = :itemId
-                   GROUP BY p.brand_name, p.item_id
+                   GROUP BY p.item_id
             """;
 
 
