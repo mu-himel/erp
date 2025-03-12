@@ -5,11 +5,9 @@ import com.agi.aesl.erpscm.common.EntityConvertable;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
-import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
 
 import jakarta.validation.constraints.NotBlank;
-// import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,10 +26,8 @@ public class RemoteItemRequestDto implements EntityConvertable<Item> {
     private Long id;
 
     @NotBlank(message = "name is required")
-    // @ApiModelProperty(required = true)
     private String name;
 
-    // @ApiModelProperty(required = true)
     private String code;
 
     private String sku;
@@ -55,7 +51,6 @@ public class RemoteItemRequestDto implements EntityConvertable<Item> {
     private String storeType;
 
     @Override
-    // @ApiModelProperty(hidden = true)
     public Item getEntity() {
         Item item = new Item(id);
         BeanUtils.copyProperties(this,item);

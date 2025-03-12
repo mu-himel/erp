@@ -1,7 +1,6 @@
 package com.agi.aesl.erpscm.inventory.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
-// import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ForceActiveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
@@ -10,8 +9,6 @@ import com.agi.aesl.erpscm.inventory.service.ItemService;
 
 import jakarta.validation.Valid;
 
-// import io.swagger.annotations.ApiOperation;
-// import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +32,6 @@ public class ItemController extends BaseController{
     private record SyncItemReqDto(Long warehouseId, Long warehouseStoreId, String subCatCode){};
 
     @PostMapping
-    // @ApiOperation(value = "Create Item")
     public ResponseEntity<?> addItem(
             @AuthenticationPrincipal Jwt loggedInUser,
             @RequestBody @Valid ItemRequestDto itemRequestDto){
@@ -53,9 +49,7 @@ public class ItemController extends BaseController{
     }
 
     @PutMapping("/{id}")
-    // @ApiOperation(value = "Update Item")
     public ResponseEntity<?> updateItem(
-        // @ApiParam(value = "Item Id",example = "1", required = true)
                                         @PathVariable("id") Long id,
                                         @RequestBody ItemRequestDto itemRequestDto){
         itemService.updateItem(id,itemRequestDto);
@@ -135,7 +129,6 @@ public class ItemController extends BaseController{
     }
 
     @GetMapping("/list")
-    // @ApiOperation(value = "Get Items as List with search by name and code")
     public ResponseEntity<?> getItems(@RequestParam("categoryId") Optional<Long> categoryId,
                                       @RequestParam("name") Optional<String> name,
                                       @RequestParam("code") Optional<String> code){
@@ -146,7 +139,6 @@ public class ItemController extends BaseController{
     }
 
     @GetMapping("/search")
-    // @ApiOperation(value = "Get Items as List with search by name and code")
     public ResponseEntity<?> getItems(
                                     @RequestParam("warehouseId") Optional<Long> warehouseId,
                                     @RequestParam("brandId") Optional<Long> brandId,
@@ -155,9 +147,7 @@ public class ItemController extends BaseController{
                                     @RequestParam("code") Optional<String> code,
                                     @RequestParam("attributes") Optional<String> attributes,
                                     @RequestParam("attributeType")
-                                    // @ApiParam(value = "Comma Separated Value, ie. COLOR,SIZE")
                                       Optional<String> attributeType,
-                                    // @ApiParam(value = "Comma Separated Value, ie. RED,MEDIUM")
                                           @RequestParam("attributeValue") Optional<String> attributeValue
                                       ){
         return new ResponseEntity<>(
@@ -167,9 +157,7 @@ public class ItemController extends BaseController{
     }
 
     @GetMapping("/{id}")
-    // @ApiOperation(value = "Get Item Detail")
     public ResponseEntity<?> getItem(
-        // @ApiParam(value = "Item Id", example = "1", required = true)
                                      @PathVariable("id") Long id){
         return new ResponseEntity<>(
                 itemService.getItemDetailWithWarehouse(id),
@@ -178,9 +166,7 @@ public class ItemController extends BaseController{
     }
 
     @DeleteMapping("/{id}")
-    // @ApiOperation(value = "Delete Item")
     public ResponseEntity<?>  deleteItem(
-        // @ApiParam(value = "Item Id", example = "1", required = true)
                 @PathVariable("id") Long id,
                 @RequestParam("warehouseId") Long warehouseId,
                 @RequestParam("warehouseStoreId") Long warehouseStoreId
@@ -203,7 +189,6 @@ public class ItemController extends BaseController{
    }
 
     @GetMapping("/next-id")
-    // @ApiOperation(value = "Get New Product Id")
     public ResponseEntity<?> getNextId(){
         Map<String,Object> response = new HashMap<>();
         response.put("code",itemService.getNextItemCode());

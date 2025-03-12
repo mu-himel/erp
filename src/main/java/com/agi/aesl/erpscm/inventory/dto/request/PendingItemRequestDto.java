@@ -1,7 +1,5 @@
 package com.agi.aesl.erpscm.inventory.dto.request;
 
-import com.agi.aesl.erpscm.demand.dto.request.PendingAttributeDto;
-import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import lombok.Data;
 
 import java.util.List;

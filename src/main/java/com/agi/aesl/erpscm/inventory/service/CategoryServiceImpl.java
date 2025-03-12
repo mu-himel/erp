@@ -1,17 +1,13 @@
 package com.agi.aesl.erpscm.inventory.service;
 
 import com.agi.aesl.erpscm.common.BrandInterface;
-import com.agi.aesl.erpscm.common.CategoryInterface;
 import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 
-// import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 
-//import com.agi.aesl.erpscm.demand.entity.DemandDetail;
-//import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseRepository;
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseStoreRepository;
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
@@ -25,7 +21,6 @@ import com.agi.aesl.erpscm.inventory.entity.*;
 import com.agi.aesl.erpscm.inventory.enums.BudgetType;
 import com.agi.aesl.erpscm.inventory.enums.CategoryHeader;
 import com.agi.aesl.erpscm.inventory.enums.CategoryStatus;
-import com.agi.aesl.erpscm.inventory.enums.ItemHeader;
 import com.agi.aesl.erpscm.inventory.repository.*;
 
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
@@ -34,7 +29,6 @@ import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategoryBrand;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryAttributeRepository;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryRepository;
-import com.agi.aesl.erpscm.inventory.user_request.repository.UserItemRepository;
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
@@ -46,12 +40,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -62,7 +54,6 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 @Service
