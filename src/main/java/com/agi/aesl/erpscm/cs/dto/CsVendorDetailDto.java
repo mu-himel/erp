@@ -1,7 +1,6 @@
 package com.agi.aesl.erpscm.cs.dto;
 
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
-import com.agi.aesl.erpscm.cs.entity.CsDeliveryDetail;
 import lombok.Data;
 
 import java.math.BigDecimal;

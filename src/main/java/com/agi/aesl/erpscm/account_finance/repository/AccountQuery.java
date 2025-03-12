@@ -1,6 +1,6 @@
 package com.agi.aesl.erpscm.account_finance.repository;
 
-import com.agi.aesl.erpscm.common.IResponse;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
@@ -270,7 +270,7 @@ public interface AccountQuery {
     String COUNT_ALL_FILTERED_PA_WITH_NEXT_APPROVER = COUNT_INIT+GET_ALL_FILTERED_PA_WITH_NEXT_APPROVER+COUNT_END;
 
 
-    interface PendingAccount extends IResponse {
+    interface PendingAccount {
         Long getId();
         String getAccountNo();
         String getStore();

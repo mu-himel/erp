@@ -1,8 +1,6 @@
 package com.agi.aesl.erpscm.control_panel.inventory_control.service;
 
 import com.agi.aesl.erpscm.common.DataFilter;
-import com.agi.aesl.erpscm.common.ReferenceObjectDto;
-// import com.agi.aesl.erpscm.control_panel.inventory_control.dto.CopyToStoreDto;
 import com.agi.aesl.erpscm.control_panel.inventory_control.dto.StoreDto;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
@@ -12,7 +10,6 @@ import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.entity.CategoryWarehouseStore;
 import com.agi.aesl.erpscm.inventory.entity.ItemStock;
-import com.agi.aesl.erpscm.inventory.repository.CategoryBrandRepository;
 import com.agi.aesl.erpscm.inventory.repository.CategoryWarehouseStoreRepository;
 import com.agi.aesl.erpscm.inventory.repository.ItemStockRepository;
 import com.agi.aesl.erpscm.inventory.service.CategoryService;
@@ -60,11 +57,11 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
         Optional<WarehouseStore> warehouseStoreOptional = warehouseStoreRepository.findById(id);
         List<CategoryWarehouseStore> warehouseStoreOp = cwsRepository.findByWarehouseStoreId(id);
         if(!warehouseStoreOp.isEmpty()){
-            throw new RuntimeException("Sorry! Store has some category or sub category ");
+            throw new AesException("Sorry! Store has some category or sub category ");
         }
         List<ItemStock> itemStockOp = itemStockRepository.findByWarehouseStoreId(id);
         if(!itemStockOp.isEmpty()){
-            throw new RuntimeException("Sorry! Store has some items");
+            throw new AesException("Sorry! Store has some items");
         }
         warehouseStoreOptional.ifPresent(warehouseStore -> warehouseStore.setActive(false));
     }
@@ -110,31 +107,6 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
         return warehouseStoreRepository.findById(warehouseStoreId);
     }
 
-    // @Override
-    // Deprecated
-    // public void copyToStore(Long wId, CopyToStoreDto copyToStoreDto) {
-
-    //     Optional<WarehouseStoreRepository.WarehouseStoreInfoSingle> warehouseStoreOptional = warehouseStoreRepository
-    //                                         .findByIdAndWarehouseId(copyToStoreDto.getStore().getId(), wId);
-
-    //     if(warehouseStoreOptional.isEmpty()){
-    //         throw new AesException("Store Not Found");
-    //     }
-    //     WarehouseStoreRepository.WarehouseStoreInfoSingle warehouseStoreInfoSingle = warehouseStoreOptional.get();
-
-    //     copyToStoreDto.getSubCategories().stream().forEach(categoryRequestDto -> {
-    //         Optional<CategoryWarehouseStore> itemCategoryOptional = categoryService
-    //                 .getCategoryByCodeAndStore(wId,copyToStoreDto,categoryRequestDto, warehouseStoreInfoSingle.getId());
-
-    //         if(itemCategoryOptional.isEmpty()){
-    //             categoryRequestDto.setWarehouse(new ReferenceObjectDto(wId));
-    //             categoryRequestDto.setWarehouseStore(new ReferenceObjectDto(copyToStoreDto.getStore().getId()));
-    //             categoryService.addCategory(null,categoryRequestDto);
-    //         }
-    //     });
-
-    // }
-
     @Override
     public List<?> getStoreSubCategories(Long warehouseId ,Long storeId) {
         Optional<WarehouseStoreRepository.WarehouseStoreInfoSingle> warehouseStoreOptional = warehouseStoreRepository
@@ -161,7 +133,7 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
         Optional<WarehouseStore> storeOp = warehouseStoreRepository.findByStoreNameAndWarehouseIdAndActive(storeDto.getName(),
                 warehouse.getId(),true);
         if(storeOp.isPresent()){
-            throw new RuntimeException("Sorry! Store already exist with this name in this warehouse");
+            throw new AesException("Sorry! Store already exist with this name in this warehouse");
         }
         warehouseStore.setStoreName(storeDto.getName());
         warehouseStore.setWarehouse(warehouse);
@@ -186,7 +158,7 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
                 warehouse.getId(),true);
         if(storeOp.isPresent()){
             if(!storeOp.get().getId().equals(id)){
-                throw new RuntimeException("Sorry! This store name already exist with different #ID["+storeOp.get().getId()+"]");
+                throw new AesException("Sorry! This store name already exist with different #ID["+storeOp.get().getId()+"]");
             }
         }
 

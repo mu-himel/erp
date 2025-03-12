@@ -6,11 +6,11 @@ import com.agi.aesl.erpscm.cs.dto.AcsUpdateDto;
 import com.agi.aesl.erpscm.cs.entity.Cs;
 import com.agi.aesl.erpscm.cs.entity.CsAccount;
 import com.agi.aesl.erpscm.cs.entity.CsAccountVAHistory;
-import com.agi.aesl.erpscm.cs.entity.CsVerificationApprovalHistory;
 import com.agi.aesl.erpscm.cs.enums.CsStatus;
 import com.agi.aesl.erpscm.cs.repository.CsAccountRepository;
 import com.agi.aesl.erpscm.cs.repository.CsAccountVAHistoryRepository;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
@@ -20,12 +20,11 @@ import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicatio
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -33,23 +32,25 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class CsAccountServiceImpl implements CsAccountService{
 
     private static final Integer PAGE_SIZE = 20;
-    @Autowired
-    private ClaimResolver claimResolver;
 
-    @Autowired
-    private CsAccountRepository csAccountRepository;
+    private final ClaimResolver claimResolver;
 
-    @Autowired
-    private CsAccountVAHistoryRepository csAccountVAHistoryRepo;
 
-    @Autowired
-    private UserApplicationValidatorService<CsAccount> verificationService;
+    private final CsAccountRepository csAccountRepository;
 
-    @Autowired
-    private CommentService commentService;
+
+    private final CsAccountVAHistoryRepository csAccountVAHistoryRepo;
+
+
+    private final UserApplicationValidatorService<CsAccount> verificationService;
+
+    private final CommentService commentService;
+
+    private static final String DATE_TIME_END="23:59:59";
 
     private LocalDateTime parseDate(Optional<String> dateStr,String endTime){
         LocalDateTime date = null;
@@ -108,7 +109,6 @@ public class CsAccountServiceImpl implements CsAccountService{
         if(csAccOp.isPresent()){
             CsAccount cs = csAccOp.get();
             cs.setNextVerifierId(nextVerifier.getVerifier().getId());
-//            cs.setAcsStatus(CsStatus.VERIFIED);
             setVAHistory(cs, verification.getVerifier(),CsStatus.VERIFIED);
         }
     }
@@ -116,12 +116,6 @@ public class CsAccountServiceImpl implements CsAccountService{
     @Transactional
     private void setVAHistory(CsAccount csAccount, Employee employee, CsStatus status){
         CsAccountVAHistory csVaHistory = new CsAccountVAHistory();
-//        String empId = null;
-//        if (status.equals(CsStatus.VERIFIED)){
-//            empId =csAccount.getNextVerifierId();
-//        }else if(status.equals(CsStatus.APPROVED)){
-//            empId = csAccount.getNextApproverId();
-//        }
         csVaHistory.setCsAccount(csAccount);
         csVaHistory.setEmployee(employee);
         csVaHistory.setAcsStatus(status);
@@ -135,7 +129,6 @@ public class CsAccountServiceImpl implements CsAccountService{
         if(csAccountOp.isPresent()){
             CsAccount csAccount = csAccountOp.get();
             csAccount.setNextApproverId(nextApprover.getVerifier().getId());
-//            csAccount.setAcsStatus(CsStatus.APPROVED);
             setVAHistory(csAccount,verification.getVerifier(), CsStatus.APPROVED);
         }
     }
@@ -188,7 +181,7 @@ public class CsAccountServiceImpl implements CsAccountService{
 
         Optional<CsAccount> csAccountOp = csAccountRepository.findById(domainId);
         if(csAccountOp.isEmpty()){
-            throw new RuntimeException("Sorry! Account Cs  not found");
+            throw new AesException("Sorry! Account Cs  not found");
         }
 
         CsAccount csAccount = csAccountOp.get();
@@ -212,31 +205,30 @@ public class CsAccountServiceImpl implements CsAccountService{
                                  Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
-        List<String> _status = Arrays.asList(
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
+        List<String> csStatus = Arrays.asList(
                 CsStatus.PENDING.name(),
                 CsStatus.PENDING_VERIFICATION.name(),
                 CsStatus.PENDING_APPROVAL.name(),
                 CsStatus.REVIEW.name()
         );
         if(status.isPresent()){
-            _status = new ArrayList<>();
-            _status.add(status.get());
+            csStatus = new ArrayList<>();
+            csStatus.add(status.get());
         }
-        return csAccountRepository.findAllAcs(indentNo, _status, fromDate,toDate,  pageable);
+        return csAccountRepository.findAllAcs(indentNo, csStatus, fromDate,toDate,  pageable);
     }
 
-    private static Pageable getPageable(Optional<Integer> page, Optional<Integer> size) {
+    private static Pageable getPageable(Optional<Integer> page, Optional<Integer> sizeOp) {
         if(page.isEmpty()){
-            throw new RuntimeException("Sorry! Page number Required");
+            throw new AesException("Sorry! Page number Required");
         }
-        if(size.isEmpty()){
-            throw new RuntimeException("Sorry! Page Size Required");
+        if(sizeOp.isEmpty()){
+            throw new AesException("Sorry! Page Size Required");
         }
-        Sort sort = Sort.by(Sort.Direction.DESC,"id");
-        Integer _size = (size.get().equals(-1))? Integer.MAX_VALUE: size.orElse(PAGE_SIZE);
-        Pageable pageable = PageRequest.of(page.orElse(0),_size);
-        return pageable;
+        Integer size = (sizeOp.get().equals(-1))? Integer.MAX_VALUE: sizeOp.orElse(PAGE_SIZE);
+        return PageRequest.of(page.orElse(0),size);
+
     }
 
     @Override
@@ -247,17 +239,17 @@ public class CsAccountServiceImpl implements CsAccountService{
         claimResolver.setToken(token);
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr, "23:59:59");
-        List<String> _status = new ArrayList<>();
-        _status.add(CsStatus.PENDING_VERIFICATION.toString());
-        _status.add(CsStatus.REVIEW.toString());
-        _status.add(CsStatus.VERIFIED.toString());
+        LocalDateTime toDate = parseDate(toDateStr, DATE_TIME_END);
+        List<String> csStatus = new ArrayList<>();
+        csStatus.add(CsStatus.PENDING_VERIFICATION.toString());
+        csStatus.add(CsStatus.REVIEW.toString());
+        csStatus.add(CsStatus.VERIFIED.toString());
         if(status.isPresent()){
-            _status=new ArrayList<>();
-            _status.add(status.get());
+            csStatus=new ArrayList<>();
+            csStatus.add(status.get());
         }
         return csAccountRepository.findAllPendingVerificationAcs(indentNo,
-                claimResolver.getUserId(),_status,fromDate,toDate,pageable);
+                claimResolver.getUserId(),csStatus,fromDate,toDate,pageable);
     }
 
     @Override
@@ -268,16 +260,16 @@ public class CsAccountServiceImpl implements CsAccountService{
         claimResolver.setToken(token);
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
-        List<String> _status = new ArrayList<>();
-        _status.add(CsStatus.PENDING_APPROVAL.toString());
-        _status.add(CsStatus.REVIEW.toString());
-        _status.add(CsStatus.APPROVED.toString());
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
+        List<String> csStatus = new ArrayList<>();
+        csStatus.add(CsStatus.PENDING_APPROVAL.toString());
+        csStatus.add(CsStatus.REVIEW.toString());
+        csStatus.add(CsStatus.APPROVED.toString());
         if(status.isPresent()){
-            _status = new ArrayList<>();
-            _status.add(status.get());
+            csStatus = new ArrayList<>();
+            csStatus.add(status.get());
         }
-        return csAccountRepository.findAllPendingApprovalAcs(indentNo,claimResolver.getUserId(), _status,
+        return csAccountRepository.findAllPendingApprovalAcs(indentNo,claimResolver.getUserId(), csStatus,
                 fromDate, toDate,
                 pageable);
     }
@@ -290,15 +282,15 @@ public class CsAccountServiceImpl implements CsAccountService{
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
         LocalDateTime toDate = parseDate(fromDateStr,"23:59:59");
-        List<String> _status = new ArrayList<>();
-        _status.add(CsStatus.APPROVED.toString());
-        _status.add(CsStatus.COMPLETED.toString());
-        _status.add(CsStatus.VERIFIED.toString());
+        List<String> csStatus = new ArrayList<>();
+        csStatus.add(CsStatus.APPROVED.toString());
+        csStatus.add(CsStatus.COMPLETED.toString());
+        csStatus.add(CsStatus.VERIFIED.toString());
         if(status.isPresent()){
-            _status=new ArrayList<>();
-            _status.add(status.get());
+            csStatus=new ArrayList<>();
+            csStatus.add(status.get());
         }
-        return csAccountRepository.findAllAcs(indentNo, _status,fromDate, toDate, pageable);
+        return csAccountRepository.findAllAcs(indentNo, csStatus,fromDate, toDate, pageable);
     }
 
     @Override
@@ -309,13 +301,13 @@ public class CsAccountServiceImpl implements CsAccountService{
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
         LocalDateTime toDate = parseDate(fromDateStr,"23:59:59");
-        List<String> _status = new ArrayList<>();
-        _status.add(CsStatus.REJECTED.toString());
+        List<String> csStatus = new ArrayList<>();
+        csStatus.add(CsStatus.REJECTED.toString());
         if(status.isPresent()){
-            _status=new ArrayList<>();
-            _status.add(status.get());
+            csStatus=new ArrayList<>();
+            csStatus.add(status.get());
         }
-        return csAccountRepository.findAllAcs(indentNo, _status,fromDate, toDate,pageable);
+        return csAccountRepository.findAllAcs(indentNo, csStatus,fromDate, toDate,pageable);
     }
 
     @Override
@@ -326,18 +318,18 @@ public class CsAccountServiceImpl implements CsAccountService{
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
         LocalDateTime toDate = parseDate(fromDateStr,"23:59:59");
-        List<String> _status = new ArrayList<>();
+        List<String> csStatus = new ArrayList<>();
         if(status.isEmpty()) {
-            _status.add(CsStatus.APPROVED.toString());
-            _status.add(CsStatus.VERIFIED.toString());
-            _status.add(CsStatus.REJECTED.toString());
-            _status.add(CsStatus.COMPLETED.toString());
+            csStatus.add(CsStatus.APPROVED.toString());
+            csStatus.add(CsStatus.VERIFIED.toString());
+            csStatus.add(CsStatus.REJECTED.toString());
+            csStatus.add(CsStatus.COMPLETED.toString());
         }
         if(status.isPresent()){
-            _status=new ArrayList<>();
-            _status.add(status.get());
+            csStatus=new ArrayList<>();
+            csStatus.add(status.get());
         }
-        return csAccountRepository.findAllAcs(indentNo, _status, fromDate,toDate,pageable);
+        return csAccountRepository.findAllAcs(indentNo, csStatus, fromDate,toDate,pageable);
     }
 
     @Override
@@ -351,12 +343,12 @@ public class CsAccountServiceImpl implements CsAccountService{
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
         LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
-        List<String> _status = new ArrayList<>();
+        List<String> csStatus = new ArrayList<>();
 
-        _status.add(CsStatus.APPROVED.toString());
-        _status.add(CsStatus.VERIFIED.toString());
-        _status.add(CsStatus.COMPLETED.toString());
-        return csAccountRepository.findAllActiveCs(indentNo.orElse(null),_status,
+        csStatus.add(CsStatus.APPROVED.toString());
+        csStatus.add(CsStatus.VERIFIED.toString());
+        csStatus.add(CsStatus.COMPLETED.toString());
+        return csAccountRepository.findAllActiveCs(indentNo.orElse(null),csStatus,
                 categoryId.orElse(null),subCategoryId.orElse(null),
                 fromDate,toDate,pageable);
     }
@@ -365,12 +357,12 @@ public class CsAccountServiceImpl implements CsAccountService{
     public Page<?> getExpiredCsList(Jwt token, Optional<String> indentNo,
                                     Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
-        List<String> _status = new ArrayList<>();
+        List<String> csStatus = new ArrayList<>();
 
-        _status.add(CsStatus.APPROVED.toString());
-        _status.add(CsStatus.VERIFIED.toString());
-        _status.add(CsStatus.COMPLETED.toString());
-        return csAccountRepository.findAllExpiredCs(indentNo.orElse(null),_status,pageable);
+        csStatus.add(CsStatus.APPROVED.toString());
+        csStatus.add(CsStatus.VERIFIED.toString());
+        csStatus.add(CsStatus.COMPLETED.toString());
+        return csAccountRepository.findAllExpiredCs(indentNo.orElse(null),csStatus,pageable);
     }
 
     @Override
@@ -379,7 +371,7 @@ public class CsAccountServiceImpl implements CsAccountService{
         claimResolver.setToken(token);
         Optional<CsAccount> csAccountOp = csAccountRepository.findById(id);
         if(csAccountOp.isEmpty()){
-            throw new RuntimeException("Sorry! Account Cs  not found");
+            throw new AesException("Sorry! Account Cs  not found");
         }
 
         CsAccount csAccount = csAccountOp.get();
@@ -400,7 +392,7 @@ public class CsAccountServiceImpl implements CsAccountService{
     public Optional<?> getDetailById(Long id) {
         Optional<CsAccount> csAccountOp = csAccountRepository.findById(id);
         if(csAccountOp.isEmpty()){
-            throw new RuntimeException("Sorry! Account Cs not found");
+            throw new AesException("Sorry! Account Cs not found");
         }
 
         CsAccount csAccount = csAccountOp.get();
@@ -408,8 +400,8 @@ public class CsAccountServiceImpl implements CsAccountService{
         List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
         List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
                 .getVerificationsByDomainTypeAndDomainId(DomainType.ACS, csAccount.getId());
-        vrs.stream().forEach(verifier->{
-            if(verifier.getIsApproval()==false){
+        vrs.forEach(verifier->{
+            if(Boolean.FALSE.equals(verifier.getIsApproval())){
                 verifiers.add(verifier);
             }else{
                 approvers.add(verifier);
@@ -427,6 +419,6 @@ public class CsAccountServiceImpl implements CsAccountService{
         result.put("verifiers",verifiers);
         result.put("approvers",approvers);
         result.put("comments",comments);
-        return Optional.ofNullable(result);
+        return Optional.of(result);
     }
 }

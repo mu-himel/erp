@@ -5,7 +5,7 @@ import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationWriterService;
-import com.agi.aesl.erpscm.goods_receive.dto.request.GoodReceiveNoteDto;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
@@ -33,6 +33,7 @@ import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationVal
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -48,50 +49,50 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class SrnServiceImpl implements SrnService{
 
-    @Autowired
-    private SrnRepository srnRepository;
 
-    @Autowired
-    private ItemService itemService;
+    private final SrnRepository srnRepository;
 
-    @Autowired
-    private GrnService grnService;
 
-    @Autowired
-    private ClaimResolver claimResolver;
+    private final ItemService itemService;
 
-    @Autowired
-    private CommentService commentService;
 
-    @Autowired
-    private ModuleService moduleService;
+    private final GrnService grnService;
 
-    @Autowired
-    private SrnVerifyApprovalHistoryRepository srnVerifyApprovalHistoryRepository;
 
-    @Autowired
-    private UserApplicationValidatorService<StoreReceiveNote> verificationService;
+    private final ClaimResolver claimResolver;
 
-    @Autowired
-    private IntegrationWriterService integrationWriterService;
+    private final CommentService commentService;
 
-    @Autowired
-    private GrnDetailRepository grnDetailRepository;
+    private final ModuleService moduleService;
+
+    private final SrnVerifyApprovalHistoryRepository srnVerifyApprovalHistoryRepository;
+
+    private final UserApplicationValidatorService<StoreReceiveNote> verificationService;
+
+    private final IntegrationWriterService integrationWriterService;
+
+    private final GrnDetailRepository grnDetailRepository;
+
+    private static final String DATE_TIME_START="T00:00:00";
+    private static final String DATE_TIME_END="T23:59:59";
 
     @Override
     @Transactional
     public void addSrn(Jwt token, SrnDto srnDto) {
         claimResolver.setToken(token);
+
         StoreReceiveNote storeReceiveNote = new StoreReceiveNote();
         List<String> ids = new ArrayList<>();
         storeReceiveNote.setSrnNo(srnDto.getSrnNo());
         storeReceiveNote.setComment(srnDto.getComment());
-        storeReceiveNote.setEmployee(new Employee(claimResolver.getEmployee().get().getId()));
+        claimResolver.getEmployee().ifPresent(storeReceiveNote::setEmployee);
+        ;
         Optional<GoodReceiveNote> goodReceiveNoteOp = grnService.getByGrnNo(srnDto.getSrnNo());
         if(goodReceiveNoteOp.isEmpty()){
-            throw new RuntimeException("Grn not found");
+            throw new AesException("Grn not found");
         }
         GoodReceiveNote grn = goodReceiveNoteOp.get();
         storeReceiveNote.setCostCenter(srnDto.getCostCenter());
@@ -100,11 +101,11 @@ public class SrnServiceImpl implements SrnService{
             StoreReceiveDetail storeReceiveDetail = new StoreReceiveDetail();
             Optional<Item> itemOp = itemService.getItemDetail(storeReceiveDetailDto.getItem().getId());
             if(itemOp.isEmpty()) {
-                throw new RuntimeException("Sorry! Item not found");
+                throw new AesException("Sorry! Item not found");
             }
             Optional<GoodReceiveItemDetail> goodReceiveItemDetailOptional = grnDetailRepository.findById(storeReceiveDetailDto.getGoodReceiveItemDetail().getId());
             if(goodReceiveItemDetailOptional.isEmpty()){
-                throw new RuntimeException("Good Receive Detail not found");
+                throw new AesException("Good Receive Detail not found");
             }
             Item item = itemOp.get();
             storeReceiveDetail.setItem(item);
@@ -119,33 +120,14 @@ public class SrnServiceImpl implements SrnService{
             ids.add(item.getItemCategory().getId().toString());
             ids.add(item.getItemParentCategory().getId().toString());
 
-//              stock in process
-//            Optional<ItemDetail> itemDetailOp = (Optional<ItemDetail>)itemService.getItemDetailWithWarehouse(item.getId());
-//
-//            if(itemDetailOp.isPresent()) {
-            //        grn.setIsReceivedByStore(true);
-//               grn.setGrnStatus(GrnStatus.COMPLETED);
-//                ItemDetail itemDetail = itemDetailOp.get();
-//                List<Map<String,Object>> stores = itemDetail
-//                        .getWarehouses().get(claimResolver.getEmployee().get().getWarehouseId().toString());
-//                Optional<Map<String,Object>> store = stores.stream().filter(
-//                        stringObjectMap -> !((String)stringObjectMap.get("warehouseStoreName"))
-//                                .toLowerCase().contains("finish goods")
-//                ).findFirst();
-//                store.ifPresent(stringObjectMap -> {
-//                    Long warehouseStoreId = (Long)stringObjectMap.get("warehouseStoreId");
-//                    itemService.stockIn(item, storeReceiveDetailDto.getStockInQty(),
-//                            claimResolver.getEmployee().get().getWarehouseId(),
-//                            warehouseStoreId);
-//                });
-//            }
+
             return storeReceiveDetail;
-        }).collect(Collectors.toList()));
+        }).toList());
 
         srnRepository.save(storeReceiveNote);
 
         String uri="inventory-management/good-receive/store-receive-note";
-        if(ids.size()>0 && !uri.isBlank()) {
+        if(ids.isEmpty() && !uri.isBlank()) {
 
             AppliedVADto result = verificationService.applyVerifyApprovalProcess(storeReceiveNote, DomainType.SRN,
                     SrnStatus.APPROVED.toString(), uri,
@@ -158,7 +140,7 @@ public class SrnServiceImpl implements SrnService{
                     srnd.setStockInQty(srnd.getStockInQty());
                     storeInItem(grn, srnd);
                     return srnd;
-                }).collect(Collectors.toList()));
+                }).toList());
 
                 if(storeReceiveNote.getGrn().getGrnMode().equals(GrnMode.MANUAL)){
                     integrationWriterService.purchaseReceivedManual(claimResolver.getToken(),storeReceiveNote);
@@ -168,25 +150,6 @@ public class SrnServiceImpl implements SrnService{
                     integrationWriterService.purchaseReceived(claimResolver.getToken(),storeReceiveNote);
                 }
             }
-
-//            Optional<VerifierConfig> verifierOp = verificationService.getVerifiers(claimResolver, uri,
-//                    "CATEGORY", String.join(",", ids));
-//
-//            List<VerifierInfo> verifiers = getVerifiers(storeReceiveNote, verifierOp);
-//            List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, String.join(",", ids));
-//            verificationService.setVerifiers(storeReceiveNote, verifiers, DomainType.SRN,
-//                    null);
-//            if (verifiers.size() == 0 && panels.size() > 0) {
-//                storeReceiveNote.setSrnStatus(SrnStatus.PENDING_APPROVAL);
-//                Optional<ApprovalPanel> firstPanel = panels.stream().findFirst();
-//                if (firstPanel.isPresent()) {
-//                    ApprovalPanel panel = firstPanel.get();
-////                    demandMailService.prepareMailContent(panel.getName(), "Approval", demand);
-////                    demandMailService.sentMail(panel.getEmail(),"Pending Demand Approval Request");
-//                    storeReceiveNote.setNextApproverId(panel.getUserId());
-//                }
-//            }
-//            verificationService.setApprovers(storeReceiveNote, verifiers,panels, DomainType.SRN,null);
         }
 
     }
@@ -198,7 +161,7 @@ public class SrnServiceImpl implements SrnService{
             VerifierConfig verification = verifierOp.get();
             verifiers = verification.getVerifiers();
             Boolean verificationRequired = verification.getVerificationRequired();
-            if(verificationRequired!=null && verificationRequired==true && verifiers!=null && verifiers.size()>0){
+            if(Boolean.TRUE.equals(verificationRequired) && !verifiers.isEmpty()){
                 storeReceiveNote.setSrnStatus(SrnStatus.PENDING_VERIFICATION);
             }else{
                 storeReceiveNote.setSrnStatus(SrnStatus.VERIFIED);
@@ -212,9 +175,8 @@ public class SrnServiceImpl implements SrnService{
 
     @Transactional
     private List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories) {
-        List<ApprovalPanel> approvalPanels = moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
+        return moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
                 Optional.ofNullable(categories),Optional.empty());
-        return approvalPanels;
     }
 
     @Override
@@ -227,10 +189,11 @@ public class SrnServiceImpl implements SrnService{
         claimResolver.setToken(token);
         Long warehouseId=null;
         if(claimResolver.getEmployee().isPresent()){
-            warehouseId = claimResolver.getEmployee().get().getWarehouseId();
+            Employee emp = claimResolver.getEmployee().get();
+            warehouseId = emp.getWarehouseId();
         }
         if(warehouseId==null){
-            throw new RuntimeException("Sorry! warehouse information missing for user");
+            throw new AesException("Sorry! warehouse information missing for user");
         }
         return srnRepository.getPendingDemandsBySrnForSrnItems(warehouseId,attributes);
     }
@@ -241,7 +204,7 @@ public class SrnServiceImpl implements SrnService{
                           Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
-            throw new RuntimeException("Sorry! Store Profile Required");
+            throw new AesException("Sorry! Store Profile Required");
         }
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
@@ -249,8 +212,8 @@ public class SrnServiceImpl implements SrnService{
         LocalDateTime toDateObj = null;
 
         if(fromDate.isPresent() && toDate.isPresent()) {
-            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
-            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+            fromDateObj = LocalDateTime.parse(fromDate.get() + DATE_TIME_START);
+            toDateObj = LocalDateTime.parse(toDate.get() + DATE_TIME_END);
         }
         List<String> status = new ArrayList<>();
         status.add(SrnStatus.PENDING_VERIFICATION.toString());
@@ -268,15 +231,14 @@ public class SrnServiceImpl implements SrnService{
     public Page<?> getPendingVerifications(Jwt token, Optional<String> fromDate, Optional<String> toDate,
                                            Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
-        String uri="";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
         LocalDateTime fromDateObj = null;
         LocalDateTime toDateObj = null;
 
         if(fromDate.isPresent() && toDate.isPresent()) {
-            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
-            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+            fromDateObj = LocalDateTime.parse(fromDate.get() + DATE_TIME_START);
+            toDateObj = LocalDateTime.parse(toDate.get() + DATE_TIME_END);
         }
         return srnRepository.findAllPendingVerification(claimResolver.getUserId(),fromDateObj,toDateObj,pageable);
     }
@@ -292,8 +254,8 @@ public class SrnServiceImpl implements SrnService{
         LocalDateTime toDateObj = null;
 
         if(fromDate.isPresent() && toDate.isPresent()) {
-            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
-            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+            fromDateObj = LocalDateTime.parse(fromDate.get() + DATE_TIME_START);
+            toDateObj = LocalDateTime.parse(toDate.get() + DATE_TIME_END);
         }
         return srnRepository.findAllPendingApproval(claimResolver.getUserId(),fromDateObj,toDateObj,pageable);
 
@@ -304,17 +266,16 @@ public class SrnServiceImpl implements SrnService{
                                   Optional<String> grnNo, Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
-            throw new RuntimeException("Sorry! Store Profile Required");
+            throw new AesException("Sorry! Store Profile Required");
         }
-        String uri="";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
         LocalDateTime fromDateObj = null;
         LocalDateTime toDateObj = null;
 
         if(fromDate.isPresent() && toDate.isPresent()) {
-            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
-            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+            fromDateObj = LocalDateTime.parse(fromDate.get() + DATE_TIME_START);
+            toDateObj = LocalDateTime.parse(toDate.get() + DATE_TIME_END);
         }
         List<String> status = new ArrayList<>();
         status.add(GrnStatus.COMPLETED.toString());
@@ -332,8 +293,6 @@ public class SrnServiceImpl implements SrnService{
         Optional<StoreReceiveNote> srnOp = srnRepository.findById(id);
         if(srnOp.isPresent()){
             StoreReceiveNote srn = srnOp.get();
-//            demandMailService.prepareMailContent(verificationResponse.getVerifier().getEmployeeName(),"Approval",demand);
-//            demandMailService.sentMail(verificationResponse.getVerifier().getEmailAddress(),"Pending Demand Approval Request");
             SrnVerifyApprovalHistory svah = new SrnVerifyApprovalHistory();
             svah.setEmployee(verification.getVerifier());
             svah.setSrnStatus(SrnStatus.VERIFIED);
@@ -351,8 +310,6 @@ public class SrnServiceImpl implements SrnService{
         Optional<StoreReceiveNote> srnOp = srnRepository.findById(id);
         if(srnOp.isPresent()) {
             StoreReceiveNote srn = srnOp.get();
-//            demandMailService.prepareMailContent(verificationResponse.getVerifier().getEmployeeName(),"Approval",demand);
-//            demandMailService.sentMail(verificationResponse.getVerifier().getEmailAddress(),"Pending Demand Approval Request");
             SrnVerifyApprovalHistory svah = new SrnVerifyApprovalHistory();
             svah.setEmployee(verification.getVerifier());
             svah.setSrnStatus(SrnStatus.APPROVED);
@@ -386,7 +343,7 @@ public class SrnServiceImpl implements SrnService{
                     srnd.setStockInQty(srnd.getStockInQty());
                     storeInItem(grn, srnd);
                     return srnd;
-                }).collect(Collectors.toList()));
+                }).toList());
 
                 if(srn.getGrn().getGrnMode().equals(GrnMode.MANUAL)){
                     integrationWriterService.purchaseReceivedManual(claimResolver.getToken(),srn);
@@ -412,7 +369,7 @@ public class SrnServiceImpl implements SrnService{
                 srnd.setStockInQty(srnd.getStockInQty());
                 storeInItem(grn, srnd);
                 return srnd;
-            }).collect(Collectors.toList()));
+            }).toList());
 
 
 
@@ -435,7 +392,7 @@ public class SrnServiceImpl implements SrnService{
     private void storeInItem(GoodReceiveNote grn, StoreReceiveDetail srnd) {
         Optional<Item> itemOp = itemService.getItemDetail(srnd.getItem().getId());
         if(itemOp.isEmpty()) {
-            throw new RuntimeException("Sorry! Item not found");
+            throw new AesException("Sorry! Item not found");
         }
         Item item = itemOp.get();
         Optional<ItemDetail> itemDetailOp = (Optional<ItemDetail>)itemService.getItemDetailWithWarehouseWithoutInTransit(item.getId());
@@ -498,7 +455,7 @@ public class SrnServiceImpl implements SrnService{
         claimResolver.setToken(token);
         Optional<StoreReceiveNote> srnOp = srnRepository.findById(id);
         if(srnOp.isEmpty()){
-            throw new RuntimeException("QC not found");
+            throw new AesException("QC not found");
         }
         StoreReceiveNote srn = srnOp.get();
         srn.setReviewerId(null);
@@ -508,14 +465,15 @@ public class SrnServiceImpl implements SrnService{
         srn.setReviewPrevStatus(null);
         srn.setReviewDate(LocalDateTime.now());
 
+        claimResolver.getEmployee().ifPresent(employee->
         commentService.addComment(commentService.prepareComment(
-                claimResolver.getEmployee().get(),
+                employee,
                 reviewDto.getDomainType(),
                 reviewDto.getActionType(),
                 srn.getId(),
                 reviewDto.getMessage(),
                 reviewDto.getAttachments()
-        ));
+        )));
     }
 
     @Override
@@ -528,8 +486,8 @@ public class SrnServiceImpl implements SrnService{
         List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
         List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
                 .getVerificationsByDomainTypeAndDomainId(DomainType.SRN, srn.getId());
-        vrs.stream().forEach(verifier->{
-            if(verifier.getIsApproval()==false){
+        vrs.forEach(verifier->{
+            if(Boolean.FALSE.equals(verifier.getIsApproval())){
                 verifiers.add(verifier);
             }else{
                 approvers.add(verifier);
@@ -543,7 +501,7 @@ public class SrnServiceImpl implements SrnService{
         detail.put("comments",comments);
         detail.put("verifiers",verifiers);
         detail.put("detail",srn);
-        return Optional.ofNullable(detail);
+        return Optional.of(detail);
         }
         return Optional.empty();
     }
