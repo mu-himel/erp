@@ -502,7 +502,7 @@ public class ItemServiceImpl implements ItemService {
                 if(_attr.contains(itemListWithAttributesDto.getBrandName()) &&  itemListWithAttributesDto.getBrandName()!=null){
                     _perItemAttr = itemListWithAttributesDto.getBrandName() + " - " + itemListWithAttributesDto.getItemAttribute().replaceAll("  ", " ");
                 }else{
-                    _perItemAttr = itemListWithAttributesDto.getItemAttribute();;
+                    _perItemAttr = itemListWithAttributesDto.getItemAttribute();
                 }
                 return (_attr.contains(_perItemAttr) || _perItemAttr.contains(_attr));
             }).collect(Collectors.toList());
