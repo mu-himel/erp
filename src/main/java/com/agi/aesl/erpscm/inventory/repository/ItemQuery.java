@@ -19,7 +19,7 @@ public interface ItemQuery {
                        LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
                        LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
                        LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
-                       WHERE sdd.item_id IS NOT NULL AND sd.warehouse_id = w.id
+                       WHERE sdd.item_id = i.id AND sd.warehouse_id = w.id
                         AND sdd.status IN ('PENDING_QC')  AND sdd.approved_quantity > 0
                         group by sdd.item_id
                        ) p WHERE p.item_id = i.id
