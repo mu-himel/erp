@@ -2,8 +2,7 @@ package com.agi.aesl.erpscm.control_panel.inventory_control.service.filter;
 
 import com.agi.aesl.erpscm.common.DataFilterService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseRepository;
-import com.agi.aesl.erpscm.control_panel.inventory_control.service.filter.WarehouseFilterService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -11,12 +10,12 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class WarehouseFilterServiceImpl implements WarehouseFilterService, DataFilterService {
 
     private String name;
 
-    @Autowired
-    private WarehouseRepository warehouseRepository;
+    private final WarehouseRepository warehouseRepository;
 
     @Override
     public Page<?> getFilteredData(List<Long> ids, Pageable pageable) {

@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.common;
 
+import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import lombok.Data;
@@ -21,11 +22,11 @@ public class DataFilter {
     private DataFilterService dataFilterService;
 
 
-    public Pageable pageable;
+    private Pageable pageable;
 
 
-     public static String FILTER_BY_WAREHOUSE = "warehouse_id";
-     public static String FILTER_BY_CATEGORY = "category_id";
+     public static final String FILTER_BY_WAREHOUSE = "warehouse_id";
+     public static final String FILTER_BY_CATEGORY = "category_id";
 
 
      List<Long> ids=new ArrayList<>();
@@ -43,19 +44,18 @@ public class DataFilter {
     }
 
     public List<Long> getFilterConfig(){
+        if(claimResolver.getEmployee().isPresent()){
+            Optional<Map<String, List<Long>>> modulePermission = readerService
+                    .getModuleFilterByUri(claimResolver.getToken(), uri);
 
-        Optional<Map<String, List<Long>>> modulePermission = readerService
-                .getModuleFilterByUri(claimResolver.getToken(), uri);
-
-        if(modulePermission.isPresent()){
-            ids =  modulePermission.get().get(DataFilter.FILTER_BY_WAREHOUSE);
-            categoryIds = modulePermission.get().get(DataFilter.FILTER_BY_CATEGORY);
-        }
-        if(ids.isEmpty()){
-            if(claimResolver.getEmployee().isPresent()) {
-                ids.add(claimResolver.getEmployee().get().getWarehouseId());
+            if(modulePermission.isPresent()){
+                ids =  modulePermission.get().get(DataFilter.FILTER_BY_WAREHOUSE);
+                categoryIds = modulePermission.get().get(DataFilter.FILTER_BY_CATEGORY);
             }
+            if(ids.isEmpty()){
+                claimResolver.getEmployee().ifPresent(e->ids.add(e.getWarehouseId()));
 
+            }
         }
         return ids;
     }
@@ -71,22 +71,17 @@ public class DataFilter {
             ids =  modulePermission.get().get(warehouseKey);
             categoryIds = modulePermission.get().get(DataFilter.FILTER_BY_CATEGORY);
         }
-        if(ids.size()==0){
-            if(claimResolver.getEmployee().isPresent()) {
-                ids.add(claimResolver.getEmployee().get().getWarehouseId());
-            }
-
+        if(ids.isEmpty()){
+            claimResolver.getEmployee().ifPresent(e-> ids.add(e.getWarehouseId()));
         }
         return ids;
     }
 
-    public List<Long> getCategoryIds(){
-        return this.categoryIds;
-    }
+
 
     public Page<?> fetchData(){
         this.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
-        if(this.ids.size()>0) {
+        if(!this.ids.isEmpty()) {
             return dataFilterService.getFilteredData(ids, pageable);
         }
         return Page.empty();

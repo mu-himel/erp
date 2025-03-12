@@ -1,7 +1,6 @@
 package com.agi.aesl.erpscm.account_finance.service;
 
 import com.agi.aesl.erpscm.account_finance.dto.request.LedgerAccountRequestDto;
-import com.agi.aesl.erpscm.account_finance.dto.request.RemoteLedgerAccountDto;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccountVerifyApprovalHistory;
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
@@ -14,33 +13,27 @@ import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
-import com.agi.aesl.erpscm.demand.dto.request.DemandRequestDto;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
-import com.agi.aesl.erpscm.demand.entity.Demand;
-import com.agi.aesl.erpscm.demand.entity.DemandVerificationApprovalHistory;
 import com.agi.aesl.erpscm.demand.enums.DemandStatus;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationWriterService;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.entity.Item;
-import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.entity.ItemImportLog;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import com.agi.aesl.erpscm.inventory.repository.ItemImportLogRepository;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
-import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
-import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
-import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -51,41 +44,39 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService{
 
     private static final Integer PAGE_SIZE = 10;
-    @Autowired
-    private AccountRepository accountRepository;
 
-    @Autowired
-    private ClaimResolver claimResolver;
+    private final AccountRepository accountRepository;
 
-    @Autowired
-    private IntegrationWriterService integrationWriterService;
 
-    @Autowired
-    private ModuleService moduleService;
+    private final ClaimResolver claimResolver;
 
-    @Autowired
-    private UserApplicationValidatorService<LedgerAccount> verificationService;
+    private final IntegrationWriterService integrationWriterService;
 
-    @Autowired
-    private AccountVerificationApprovalRepository accountVerificationApprovalRepository;
 
-    @Autowired
-    private CommentService commentService;
+    private final ModuleService moduleService;
 
-    @Autowired
-    private WarehouseService warehouseService;
 
-    @Autowired
-    private IntegrationReaderService integrationReaderService;
+    private final UserApplicationValidatorService<LedgerAccount> verificationService;
 
-    @Autowired
-    private ItemImportLogRepository itemImportLogRepository;
+
+    private final AccountVerificationApprovalRepository accountVerificationApprovalRepository;
+
+    private final CommentService commentService;
+
+
+    private final WarehouseService warehouseService;
+
+
+    private final IntegrationReaderService integrationReaderService;
+
+
+    private final ItemImportLogRepository itemImportLogRepository;
 
 
     private ItemService itemService;
@@ -109,8 +100,8 @@ public class AccountServiceImpl implements AccountService{
 
 
     @Override
-    public Page<?> getAllPendingAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                                         Optional<Long> warehouseId) {
+    public Page<AccountQuery.PendingAccount> getAllPendingAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                                   Optional<Long> warehouseId) {
         claimResolver.setToken(token);
         String uri = "/app/accounts/asset-management/asset-ledger/asset-ledger-request";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
@@ -120,16 +111,12 @@ public class AccountServiceImpl implements AccountService{
         List<Long> ids = new ArrayList<>();
         // code commented after Demo 30 Sep, 2024
         // pending item requests of ledger should not be warehouse specific to account user
-//        if(warehouseId.isPresent()){
-//            ids.add(warehouseId.get());
-//        }else{
-//            ids = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
-//        }
+
         return accountRepository.getPendingLedgerAccounts(ids,pageable);
     }
 
     @Override
-    public Page<?> getClosedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+    public Page<AccountQuery.PendingAccount> getClosedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                      Optional<Long> warehouseId) {
 
         String uri = "/app/accounts/asset-management/asset-ledger/asset-ledger-request";
@@ -139,16 +126,12 @@ public class AccountServiceImpl implements AccountService{
         DataFilter dataFilter = new DataFilter(uri,claimResolver,pageable);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> ids = new ArrayList<>();
-//        if(warehouseId.isPresent()){
-//            ids.add(warehouseId.get());
-//        }else{
-//            ids = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
-//        }
+
         return accountRepository.getClosedLedgerAccounts(ids,pageable);
     }
 
     @Override
-    public Page<?> getAllPendingVerifications(Jwt token, Optional<Integer> page,
+    public Page<AccountQuery.PendingAccount> getAllPendingVerifications(Jwt token, Optional<Integer> page,
                                               Optional<Integer> size,
                                               Optional<String> fromDateStr,
                                               Optional<String> toDateStr) {
@@ -158,7 +141,7 @@ public class AccountServiceImpl implements AccountService{
         Optional<Map<String,List<Long>>> modulePermission = integrationReaderService
                 .getModuleFilterByUri(token, moduleUri);
 
-        List<Long> categoryIds = new ArrayList<>();
+        List<Long> categoryIds;
 
         LocalDateTime fromDate = null;
         LocalDateTime toDate = null;
@@ -189,7 +172,7 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public Page<?> getAllPendingApprovals(Jwt token, Optional<Integer> page, Optional<Integer> size,
+    public Page<AccountQuery.PendingAccount> getAllPendingApprovals(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                           Optional<String> fromDateStr, Optional<String> toDateStr) {
         claimResolver.setToken(token);
         String moduleUri = "demand/pending-approval";
@@ -209,7 +192,7 @@ public class AccountServiceImpl implements AccountService{
         List<String> demandStatuses = new ArrayList<>();
         demandStatuses.add(DemandStatus.PENDING_APPROVAL.toString());
         demandStatuses.add(DemandStatus.REVIEW.toString());
-        List<Long> categoryIds = new ArrayList<>();
+        List<Long> categoryIds;
 
         if(modulePermission.isPresent()){
             categoryIds = modulePermission.get().get("category_id");
@@ -229,7 +212,7 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public Optional<?> getLedgerDetailById(Long id) {
+    public Optional<Map<String,Object>> getLedgerDetailById(Long id) {
         Optional<AccountQuery.PendingAccountDetail>  accountOp = accountRepository.findLedgerAccountById(id);
         if(accountOp.isPresent()){
 
@@ -238,8 +221,8 @@ public class AccountServiceImpl implements AccountService{
             List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
             verificationService
                     .getVerificationsByDomainTypeAndDomainId(DomainType.ACCOUNT_LEDGER, pendingAccount.getId())
-                    .stream().forEach(verifier->{
-                        if(verifier.getIsApproval()==false){
+                    .forEach(verifier->{
+                        if(Boolean.FALSE.equals(verifier.getIsApproval())){
                             verifiers.add(verifier);
                         }else{
                             approvers.add(verifier);
@@ -258,7 +241,7 @@ public class AccountServiceImpl implements AccountService{
             List<?> comments = commentService.getCommentsByDomain(DomainType.ACCOUNT_LEDGER, pendingAccount.getId());
             resDto.put("comments",comments);
 
-            return Optional.ofNullable(resDto);
+            return Optional.of(resDto);
         }
 
 
@@ -267,7 +250,7 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public Page<?> getAllApprovedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+    public Page<AccountQuery.PendingAccount> getAllApprovedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                           Optional<Long> warehouseId) {
         claimResolver.setToken(token);
         String uri="/app/accounts/asset-management/asset-ledger/approved";
@@ -284,7 +267,7 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public Page<?> getAllRejectedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+    public Page<AccountQuery.PendingAccount> getAllRejectedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                           Optional<Long> warehouseId) {
         String uri="/app/accounts/asset-management/asset-ledger/reject";
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
@@ -307,9 +290,9 @@ public class AccountServiceImpl implements AccountService{
         Employee employee = employeeOp.orElse(null);
 
 
-        Optional<LedgerAccount> update_data = accountRepository.findById(id);
-        if(update_data.isPresent()){
-            LedgerAccount ledgerAccount = update_data.get();
+        Optional<LedgerAccount> updateData = accountRepository.findById(id);
+        if(updateData.isPresent()){
+            LedgerAccount ledgerAccount = updateData.get();
             ledgerAccount.setGroupAccount(ledgerAccountRequestDto.getGroupAccount());
             ledgerAccount.setMasterAccount(ledgerAccountRequestDto.getMasterAccount());
             ledgerAccount.setSubGroupAccount(ledgerAccountRequestDto.getSubGroupAccount());
@@ -335,7 +318,7 @@ public class AccountServiceImpl implements AccountService{
                     null);
 
 
-            if(appliedVADto.getVerifiers().size()==0 && appliedVADto.getPanels().size()==0){
+            if(appliedVADto.getVerifiers().isEmpty() && appliedVADto.getPanels().isEmpty()){
                 integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
 
                 Warehouse warehouse = ledgerAccount.getWarehouse();
@@ -358,9 +341,6 @@ public class AccountServiceImpl implements AccountService{
         if(ledgerAccountOp.isPresent()){
             LedgerAccount ledgerAccount = ledgerAccountOp.get();
 
-//            demandMailService.prepareMailContent(nextVerifier.getVerifier().getEmployeeName(),"Verification",demand);
-//            demandMailService.sentMail(nextVerifier.getVerifier().getEmailAddress(),"Pending Demand Verification Request");
-
 
             LedgerAccountVerifyApprovalHistory ledgerAccountVerifyApprovalHistory = new LedgerAccountVerifyApprovalHistory();
             ledgerAccountVerifyApprovalHistory.setLedgerAccount(ledgerAccount);
@@ -377,8 +357,7 @@ public class AccountServiceImpl implements AccountService{
         Optional<LedgerAccount> ledgerAccountOp  = accountRepository.findById(id);
         if(ledgerAccountOp.isPresent()){
             LedgerAccount ledgerAccount = ledgerAccountOp.get();
-//            demandMailService.prepareMailContent(verificationResponse.getVerifier().getEmployeeName(),"Approval",demand);
-//            demandMailService.sentMail(verificationResponse.getVerifier().getEmailAddress(),"Pending Demand Approval Request");
+
             LedgerAccountVerifyApprovalHistory ledgerAccountVAHistory = new LedgerAccountVerifyApprovalHistory();
             ledgerAccountVAHistory.setLedgerAccount(ledgerAccount);
             ledgerAccountVAHistory.setEmployee(verification.getVerifier());
@@ -402,8 +381,7 @@ public class AccountServiceImpl implements AccountService{
             accountVerificationApprovalRepository.save(ledgerAccountVAHistory);
 
             if(firstApprover.isPresent()){
-//                demandMailService.prepareMailContent(firstApprover.get().getVerifier().getEmployeeName(),"Approval",demand);
-//                demandMailService.sentMail(firstApprover.get().getVerifier().getEmailAddress(),"Pending Demand Approval Request");
+
                 ledgerAccount.setNextApproverId(firstApprover.get().getVerifier().getId());
                 ledgerAccount.setAccountStatus(AccountType.PENDING_APPROVAL);
             }else{
@@ -498,7 +476,7 @@ public class AccountServiceImpl implements AccountService{
         ledgerAccount.setWarehouse(warehouse);
         ledgerAccount.setWarehouseStore(warehouseStore);
         integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
-//        accountRepository.save(ledgerAccount);
+
     }
 
     @Override
@@ -518,7 +496,7 @@ public class AccountServiceImpl implements AccountService{
         claimResolver.setToken(token);
         Optional<LedgerAccount> ledgerAccountOp = accountRepository.findById(id);
         if(ledgerAccountOp.isEmpty()){
-            throw new RuntimeException("Ledger Account not found");
+            throw new AesException("Ledger Account not found");
         }
         LedgerAccount ledgerAccount = ledgerAccountOp.get();
         ledgerAccount.setReviewerId(null);
@@ -529,7 +507,7 @@ public class AccountServiceImpl implements AccountService{
         ledgerAccount.setReviewDate(LocalDateTime.now());
 
         commentService.addComment(commentService.prepareComment(
-                claimResolver.getEmployee().get(),
+                claimResolver.getEmployee().orElse(null),
                 reviewDto.getDomainType(),
                 reviewDto.getActionType(),
                 ledgerAccount.getId(),

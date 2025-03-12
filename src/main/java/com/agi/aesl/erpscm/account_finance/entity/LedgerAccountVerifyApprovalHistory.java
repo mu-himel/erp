@@ -1,7 +1,6 @@
 package com.agi.aesl.erpscm.account_finance.entity;
 
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
-import com.agi.aesl.erpscm.demand.enums.DemandStatus;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
