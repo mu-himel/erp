@@ -33,9 +33,9 @@ import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -54,79 +54,82 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
     private static final Integer PAGE_SIZE = 20;
-    @Autowired
-    private CategoryRepository categoryRepository;
 
-    @Autowired
-    private CategoryBudgetRepository categoryBudgetRepository;
+    private final CategoryRepository categoryRepository;
 
-    @Autowired
-    private CategoryAttributeRepository categoryAttributeRepository;
 
-    @Autowired
-    private CategoryBrandRepository categoryBrandRepository;
+    private final CategoryBudgetRepository categoryBudgetRepository;
 
-    @Autowired
-    private CategoryWarehouseStoreRepository categoryWarehouseStoreRepository;
 
-    @Autowired
-    private ItemRepository itemRepository;
+    private final CategoryAttributeRepository categoryAttributeRepository;
 
-    @Autowired
-    private ItemImportLogRepository itemImportLogRepository;
 
-    @Autowired
-    private ItemStockRepository itemStockRepository;
+    private final CategoryBrandRepository categoryBrandRepository;
 
-    @Autowired
-    private CpsServerConfig cpsServerConfig;
 
-    @Autowired
-    private OrgService orgService;
+    private final CategoryWarehouseStoreRepository categoryWarehouseStoreRepository;
 
-    @Autowired
-    private ClaimResolver claimResolver;
 
-    @Autowired
-    private IntegrationReaderService integrationReaderService;
-    @Autowired
-    private DemandDetailRepository demandDetailRepository;
+    private final ItemRepository itemRepository;
 
-    @Autowired
-    private WarehouseRepository warehouseRepository;
 
-    @Autowired
-    private WarehouseStoreRepository warehouseStoreRepository;
+    private final ItemImportLogRepository itemImportLogRepository;
 
-    @Autowired
-    private NetworkService networkService;
 
-    @Autowired
-    private UserCategoryRepository userCategoryRepository;
+    private final ItemStockRepository itemStockRepository;
 
-    @Autowired
-    private UserCategoryAttributeRepository userCategoryAttributeRepository;
-    @Autowired
+
+    private final CpsServerConfig cpsServerConfig;
+
+
+    private final OrgService orgService;
+
+
+    private final ClaimResolver claimResolver;
+
+
+    private final IntegrationReaderService integrationReaderService;
+
+    private final DemandDetailRepository demandDetailRepository;
+
+
+    private final WarehouseRepository warehouseRepository;
+
+
+    private final WarehouseStoreRepository warehouseStoreRepository;
+
+
+    private final NetworkService networkService;
+
+
+    private final UserCategoryRepository userCategoryRepository;
+
+
+    private final UserCategoryAttributeRepository userCategoryAttributeRepository;
+
     private FileUploadService fileUploadService;
     @Value("${upload.dir}")
     private String uploadDir;
 
+    private static final String ERR_STORE_NOT_FOUND="Sorry! Store not found";
+    private static final String URI_INVENTORY_CONTROL_SUBCATEGORIES="inventory-control/sub-categories";
+
     @Override
     @Transactional
     public void addCategories(Jwt token,List<CategoryRequestDtoCustom> categoryRequestDtos) {
-        if(categoryRequestDtos!=null && categoryRequestDtos.size()>0){
+        if(categoryRequestDtos!=null && !categoryRequestDtos.isEmpty()){
             List<ScmIdUpdateDto> dtos = new ArrayList<>();
            for(CategoryRequestDtoCustom categoryRequestDto : categoryRequestDtos){
                Optional<WarehouseStore> warehouseStoreOp = warehouseStoreRepository
                                         .findById(categoryRequestDto.getWarehouseStore().getId());
                 if(warehouseStoreOp.isEmpty()){
-                    throw new RuntimeException("Sorry! Store not found");
+                    throw new AesException(ERR_STORE_NOT_FOUND);
                 }
                WarehouseStore ws = warehouseStoreOp.get();
                String code = ws.getStoreName().substring(0,1).toUpperCase().concat("-").concat(categoryRequestDto.getCode());
@@ -173,29 +176,24 @@ public class CategoryServiceImpl implements CategoryService {
                 cr.setIsForCps(categoryRequestDto.getIsForCps());
                 scmIdUpdateDto.setCategoryIdCps(categoryRequestDto.getCpsCategoryId());
                Optional<ItemCategory> catOp = Optional.empty();
-               if(cr.getIsActive()){
+               if(Boolean.TRUE.equals(cr.getIsActive())){
                    cr.setBudgetId(Optional.empty());
                     this.updateCategoryDuringImport(cr.getId(),cr);
                 }else {
                     catOp = this.addCategory(null, cr);
                 }
-                if(catOp.isPresent()){
-                    scmIdUpdateDto.setCategoryIdScm(catOp.get().getId());
-                }
+               catOp.ifPresent(itemCategory -> scmIdUpdateDto.setCategoryIdScm(itemCategory.getId()));
                 dtos.add(scmIdUpdateDto);
             }
-            if(dtos.size()>0){
+
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
-                if(orgOp.isPresent()){
-                    headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
-                }
+                orgOp.ifPresent(organization -> headers.set("orgId", organization.getCpsVendorRegistrationId().toString()));
                 HttpEntity<List<ScmIdUpdateDto>> payload = new HttpEntity<>(dtos,headers);
                 String url = cpsServerConfig.getItemCategoriesEndpoint().concat("/update-scm-id");
-                ResponseEntity<?> response = networkService.put(url,payload,Void.class);
-                System.out.println(response.getStatusCode().value());
-            }
+                networkService.put(url,payload,Void.class);
+
         }
     }
 
@@ -211,10 +209,8 @@ public class CategoryServiceImpl implements CategoryService {
             throw new AesException("Category Code should be unique");
         }
 
-        if(itemCategory.getParentCategory()!=null){
-            if(cr.getParentCategory()==null || cr.getParentCategory().getId()==null){
+        if(itemCategory.getParentCategory()!=null && cr.getParentCategory()==null || cr.getParentCategory().getId()==null){
                 throw new AesException("Parent Category Id missing");
-            }
         }
 
         if(cr.getName()!=null) {
@@ -259,49 +255,33 @@ public class CategoryServiceImpl implements CategoryService {
 
             });
         }
-        if(cr.getAttributes()!=null && cr.getAttributes().size()>0){
+        if(cr.getAttributes()!=null && !cr.getAttributes().isEmpty()){
 
-            cr.getAttributes().stream().forEach(categoryAttribute -> {
+            cr.getAttributes().forEach(categoryAttribute -> {
                 Optional<CategoryAttributeRepository.ICategoryAttribute> categoryAttributeOp= categoryAttributeRepository.findAllByAttributeTypeAndAttributeUnit(
                         cr.getWarehouse().getId(), cr.getCode(), categoryAttribute.getAttributeType(),categoryAttribute.getAttributeUnit());
                 if(categoryAttributeOp.isEmpty()){
                     categoryAttribute.setCategory(itemCategory);
                     categoryAttributeRepository.save(categoryAttribute);
-//                    return categoryAttribute;
                 }else{
                     CategoryAttributeRepository.ICategoryAttribute caExist = categoryAttributeOp.get();
-                    CategoryAttribute _categoryAttribute = new CategoryAttribute();
-                    _categoryAttribute.setCategory(itemCategory);
-                    _categoryAttribute.setId(caExist.getId());
+                    CategoryAttribute categoryAttr = new CategoryAttribute();
+                    categoryAttr.setCategory(itemCategory);
+                    categoryAttr.setId(caExist.getId());
 
                     if(categoryAttribute.getAttributeValue().length() > caExist.getAttributeValue().length()){
-                        _categoryAttribute.setAttributeValue(categoryAttribute.getAttributeValue());
+                        categoryAttr.setAttributeValue(categoryAttribute.getAttributeValue());
                     }else {
-                        _categoryAttribute.setAttributeValue(caExist.getAttributeValue());
+                        categoryAttr.setAttributeValue(caExist.getAttributeValue());
                     }
 
-                    _categoryAttribute.setAttributeType(caExist.getAttributeType());
-                    _categoryAttribute.setAttributeUnit(caExist.getAttributeUnit());
-                    categoryAttributeRepository.save(_categoryAttribute);
-//                    return _categoryAttribute;
+                    categoryAttr.setAttributeType(caExist.getAttributeType());
+                    categoryAttr.setAttributeUnit(caExist.getAttributeUnit());
+                    categoryAttributeRepository.save(categoryAttr);
                 }
 
 
             });
-//                    .collect(Collectors.toList()));
-//            itemCategory.setAttributes(categoryRequestDto.getAttributes().stream().filter(categoryAttribute -> {
-//                Optional<CategoryAttribute> categoryAttributeOp= categoryAttributeRepository.findAllByAttributeTypeAndAttributeUnit(categoryAttribute.getAttributeType(),categoryAttribute.getAttributeUnit());
-//                if(categoryAttributeOp.isEmpty()){
-//                    categoryAttribute.setCategory(itemCategory);
-//                    return true;
-//                }else{
-//                    CategoryAttribute categoryAttribute1 = categoryAttributeOp.get();
-//                    categoryAttribute1.setAttributeValue(categoryAttribute.getAttributeValue());
-//                    categoryAttributeRepository.save(categoryAttribute1);
-//                    return false;
-//                }
-//
-//            }).collect(Collectors.toList()));
         }
 
         if(cr.getEntity().getParentCategory()!=null) {
@@ -334,15 +314,15 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
 
-        if(categoryRequestDto.getAttributes()!=null && categoryRequestDto.getAttributes().size()>0){
+        if(categoryRequestDto.getAttributes()!=null && !categoryRequestDto.getAttributes().isEmpty()){
             
             
             ItemCategory finalCategory = category;
             
             category.setAttributes(categoryRequestDto.getAttributes().stream().map(categoryAttribute -> {
-                Optional<CategoryAttribute> catAttrOp = finalCategory.getAttributes().stream().filter(fca->{
-                    return fca.getAttributeType().trim().equals(categoryAttribute.getAttributeType().trim());
-                }).findFirst();
+                Optional<CategoryAttribute> catAttrOp = finalCategory.getAttributes().stream().filter(fca->
+                    fca.getAttributeType().trim().equals(categoryAttribute.getAttributeType().trim())
+                ).findFirst();
                 if(catAttrOp.isPresent()){
                     CategoryAttribute catAttribute = catAttrOp.get();
                     categoryAttribute.setId(catAttribute.getId());
@@ -359,23 +339,18 @@ public class CategoryServiceImpl implements CategoryService {
                     categoryAttribute.setCategory(finalCategory);
                     return categoryAttribute;
                 }
-                
-                
-            }).collect(Collectors.toList()));
+            }).toList());
         }
 
-        if(itemCategoryOptional.isEmpty() && categoryRequestDto.getBrands()!=null && categoryRequestDto.getBrands().size()>0){
+        if(itemCategoryOptional.isEmpty() && categoryRequestDto.getBrands()!=null && !categoryRequestDto.getBrands().isEmpty()){
             ItemCategory finalCategory = category;
 
             category.setBrands(categoryRequestDto.getBrands().stream().map(categoryBrand -> {
 
-//                if(categoryRequestDto.getId()==null){
-//                    categoryBrand.setId(null);
-//                }
                 CategoryBrand categoryBrand1 = new CategoryBrand(categoryBrand);
                 categoryBrand1.setCategory(finalCategory);
                 return categoryBrand1;
-            }).collect(Collectors.toList()));
+            }).toList());
         }
 
         if(categoryRequestDto.getCpsCategoryId()!=null){
@@ -383,11 +358,7 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
 
-        if(categoryRequestDto.getIsForCps()==false){
-            category.setActive(true);
-        }else{
-            category.setActive(false);
-        }
+        category.setActive(Boolean.FALSE.equals(categoryRequestDto.getIsForCps()));
 
         if(categoryRequestDto.getCategoryStatus()!=null){
             category.setCategoryStatus(categoryRequestDto.getCategoryStatus());
@@ -399,9 +370,13 @@ public class CategoryServiceImpl implements CategoryService {
         
         Optional<CategoryWarehouseStore> cwsOp =  categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseId(category.getId() ,categoryRequestDto.getWarehouse().getId());
         Optional<Warehouse> warehouseOp = warehouseRepository.findById(categoryRequestDto.getWarehouse().getId());
+        if(warehouseOp.isEmpty()){
+            throw new AesException("Sorry! Warehouse not found");
+        }
+
         Optional<WarehouseStore> warehouseStoreOp = warehouseStoreRepository.findById(categoryRequestDto.getWarehouseStore().getId());
         if(warehouseStoreOp.isEmpty()){
-            throw new RuntimeException("Sorry! Store not found");
+            throw new AesException(ERR_STORE_NOT_FOUND);
         }
         if(cwsOp.isEmpty()){
             CategoryWarehouseStore categoryWarehouseStore = new CategoryWarehouseStore();
@@ -440,8 +415,9 @@ public class CategoryServiceImpl implements CategoryService {
                 ca.setAttributeUnit(attr.getAttributeUnit());
                 ca.setAttributeValue(attr.getAttributeValue());
                 return ca;
-            }).collect(Collectors.toList()));
-            remoteCategoryRequestDto.setBrands(category.getBrandInterfaces().stream().map((BrandInterface::getName)).collect(Collectors.toList()));
+            }).toList());
+            remoteCategoryRequestDto.setBrands(category.getBrandInterfaces().stream().map((BrandInterface::getName))
+                    .toList());
             remoteCategoryRequestDto.setVat(category.getVat());
         }
         remoteCategoryRequestDto.setScmCategoryId(category.getId());
@@ -460,7 +436,7 @@ public class CategoryServiceImpl implements CategoryService {
         HttpHeaders httpHeaders = response.getHeaders();
         List<String> headerId = httpHeaders.get("id");
         List<String> headerCode = httpHeaders.get("code");
-        if(headerId.size()>0){
+        if(headerId!=null && !headerId.isEmpty() &&  headerCode!=null && !headerCode.isEmpty()){
             category.setCode(storePrefix.concat("-").concat(headerCode.get(0)));
             category.setCpsCategoryId(Long.parseLong(headerId.get(0)));
         }
@@ -479,10 +455,8 @@ public class CategoryServiceImpl implements CategoryService {
             throw new AesException("Category Code should be unique");
         }
 
-        if(itemCategory.getParentCategory()!=null){
-            if(categoryRequestDto.getParentCategory()==null || categoryRequestDto.getParentCategory().getId()==null){
+        if(itemCategory.getParentCategory()!=null && categoryRequestDto.getParentCategory()==null || categoryRequestDto.getParentCategory().getId()==null){
                 throw new AesException("Parent Category Id missing");
-            }
         }
 
         if(categoryRequestDto.getName()!=null) {
@@ -511,24 +485,12 @@ public class CategoryServiceImpl implements CategoryService {
             }
         }
 
-        if(categoryRequestDto.getAttributes()!=null && categoryRequestDto.getAttributes().size()>0){
+        if(categoryRequestDto.getAttributes()!=null && !categoryRequestDto.getAttributes().isEmpty()){
             itemCategory.setAttributes(categoryRequestDto.getAttributes().stream().map(categoryAttribute -> {
                 categoryAttribute.setCategory(itemCategory);
                 return categoryAttribute;
-            }).collect(Collectors.toList()));
-//            itemCategory.setAttributes(categoryRequestDto.getAttributes().stream().filter(categoryAttribute -> {
-//                Optional<CategoryAttribute> categoryAttributeOp= categoryAttributeRepository.findAllByAttributeTypeAndAttributeUnit(categoryAttribute.getAttributeType(),categoryAttribute.getAttributeUnit());
-//                if(categoryAttributeOp.isEmpty()){
-//                    categoryAttribute.setCategory(itemCategory);
-//                    return true;
-//                }else{
-//                    CategoryAttribute categoryAttribute1 = categoryAttributeOp.get();
-//                    categoryAttribute1.setAttributeValue(categoryAttribute.getAttributeValue());
-//                    categoryAttributeRepository.save(categoryAttribute1);
-//                    return false;
-//                }
-//
-//            }).collect(Collectors.toList()));
+            }).toList());
+
         }
 
         if(categoryRequestDto.getEntity().getParentCategory()!=null) {
@@ -566,35 +528,6 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryRepository.findById(id);
     }
 
-//    @Override
-//    public Optional<CategoryWarehouseStore> getCategoryByCodeAndStore(Long warehouseId, CopyToStoreDto copyToStoreDto, CategoryRequestDto categoryRequestDto, Long storeId) {
-//        Optional<ItemCategory> itemCategoryOptional = categoryRepository.findByCode(categoryRequestDto.getCode());
-//        if(itemCategoryOptional.isPresent()){
-//            ItemCategory category = itemCategoryOptional.get();
-//            Optional<CategoryWarehouseStore> catWsOptional = categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseStoreId(copyToStoreDto.getCategory().getId(), storeId);
-//            Optional<CategoryWarehouseStore> subCatWsOptional = categoryWarehouseStoreRepository.findByCategoryIdAndWarehouseStoreId(category.getId(),storeId);
-//
-//            if(subCatWsOptional.isEmpty()){
-//                if(catWsOptional.isEmpty()){
-//                    CategoryWarehouseStore cws = new CategoryWarehouseStore();
-////                    cws.setCategory(new ItemCategory(copyToStoreDto.getCategory().getId()));
-////                    cws.setWarehouse(new Warehouse(warehouseId));
-////                    cws.setWarehouseStore(new WarehouseStore(storeId));
-//                    categoryWarehouseStoreRepository.save(cws);
-//                }
-//                CategoryWarehouseStore cws = new CategoryWarehouseStore();
-//                cws.setCategory(category);
-////                cws.setWarehouse(new Warehouse(warehouseId));
-////                cws.setWarehouseStore(new WarehouseStore(storeId));
-//                categoryWarehouseStoreRepository.save(cws);
-//                return Optional.ofNullable(cws);
-//            }else {
-//                return catWsOptional;
-//            }
-//        }
-//        return Optional.ofNullable(null);
-//    }
-
     @Override
     public Page<?> getItemCategories(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                         Optional<String> name, Optional<String> code,
@@ -608,8 +541,6 @@ public class CategoryServiceImpl implements CategoryService {
         claimResolver.setToken(token);
         String uri = "inventory-management/main-category";
 
-//        Integer year  = LocalDate.now().getYear();
-//        Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(10));
 
         List<Long> warehouseIds = new ArrayList<>();
@@ -642,9 +573,7 @@ public class CategoryServiceImpl implements CategoryService {
         claimResolver.setToken(token);
         String uri = "inventory-management/sub-category";
 
-//        Integer year  = LocalDateTime.now().getYear();
-//        Sort sort = Sort.by(Sort.Direction.DESC,"id");
-        
+
         Page<?> result = null;
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(10));
 
@@ -687,9 +616,9 @@ public class CategoryServiceImpl implements CategoryService {
 
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE));
-        String uri="inventory-control/categories";
+        String uri=URI_INVENTORY_CONTROL_SUBCATEGORIES;
         List<Long> warehouseIds = new ArrayList<>();
-        List<Long> categoryIds = new ArrayList<>();
+
 
         DataFilter dataFilter = new DataFilter(uri,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
@@ -756,11 +685,10 @@ public class CategoryServiceImpl implements CategoryService {
             Optional<String> name, Optional<String> code) {
 
         claimResolver.setToken(token);
-        String uri="inventory-control/sub-categories";
         List<Long> warehouseIds = new ArrayList<>();
         List<Long> categoryIds = new ArrayList<>();
 
-        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        DataFilter dataFilter = new DataFilter(URI_INVENTORY_CONTROL_SUBCATEGORIES,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> filterBy = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
         if(warehouseId.isPresent()){
@@ -787,11 +715,11 @@ public class CategoryServiceImpl implements CategoryService {
     public Page<?> getSubCategoriesForInventoryControl(Jwt token, Optional<Long> categoryId, Optional<Long> warehouseId, Optional<Long> storeId, Optional<String> name, Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        String uri="inventory-control/sub-categories";
+
         List<Long> warehouseIds = new ArrayList<>();
         List<Long> categoryIds = new ArrayList<>();
 
-        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        DataFilter dataFilter = new DataFilter(URI_INVENTORY_CONTROL_SUBCATEGORIES,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> filterBy = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
         if(warehouseId.isPresent()){
@@ -824,8 +752,7 @@ public class CategoryServiceImpl implements CategoryService {
                                                               Optional<String> code) {
 
         claimResolver.setToken(token);
-        String uri = "inventory-control/sub-categories";
-        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        DataFilter dataFilter = new DataFilter(URI_INVENTORY_CONTROL_SUBCATEGORIES,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> warehouseIds = new ArrayList<>();
         if(warehouseId.isPresent()){
@@ -846,9 +773,8 @@ public class CategoryServiceImpl implements CategoryService {
     public Page<?> getPendingSubCategoriesForInventoryControl(Jwt token, Optional<Long> categoryId, Optional<Long> warehouseId, Optional<Long> storeId, Optional<String> name, Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
 
-        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE) );
-        String uri = "inventory-control/sub-categories";
-        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
+        DataFilter dataFilter = new DataFilter(URI_INVENTORY_CONTROL_SUBCATEGORIES,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> warehouseIds = new ArrayList<>();
         if(warehouseId.isPresent()){
@@ -934,14 +860,14 @@ public class CategoryServiceImpl implements CategoryService {
                 categoryRepository.deleteById(itemCategory.getId());
             }else {
 
-                List<Long> itemIds = items.stream().map(i -> i.getId()).collect(Collectors.toList());
+                List<Long> itemIds = items.stream().map(i -> i.getId()).toList();
                 List<ItemStock> stockExist = itemStockRepository.findByItemsAndWarehosueId(itemIds, warehouseId);
                 if (!stockExist.isEmpty()) {
-                    throw new RuntimeException("Sorry! Item exist under this category in this warehouse");
+                    throw new AesException("Sorry! Item exist under this category in this warehouse");
                 }
                 List<DemandDetail> demandDetails = demandDetailRepository.findAllByItemIdAndWarehouseId(itemIds, warehouseId);
-                if (demandDetails.size() > 0) {
-                    throw new RuntimeException("Sorry! Item under this category has some demand in this warehouse, so unable to remove");
+                if (!demandDetails.isEmpty()) {
+                    throw new AesException("Sorry! Item under this category has some demand in this warehouse, so unable to remove");
                 }
 
                 if (warehouseId != null && storeId != null) {
@@ -980,26 +906,6 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
     }
-
-//    @Override
-//    public void validateCategorySubCategoryRelation(ItemCategory _category, ItemCategory _subCategory) {
-//        Optional<ItemCategory> itemCatOp = getItemCategory(_category.getId());
-//        if(itemCatOp.isEmpty()){
-//            throw new AesException("Sorry! Category not found");
-//        }
-//
-//        Optional<ItemCategory> itemSubCatOp = getItemCategory(_subCategory.getId());
-//        if(itemSubCatOp.isEmpty()){
-//            throw new AesException("Sorry! SubCategory not found");
-//        }
-//
-//        ItemCategory category = itemCatOp.get();
-//        ItemCategory subCategory = itemSubCatOp.get();
-//        if(!subCategory.getParentCategory().getId().equals(category.getId())){
-//            throw new AesException("Sorry! " + subCategory.getName()+ " is not under category "+category.getName());
-//        }
-//
-//    }
 
     @Override
     public Optional<ItemCategory> getItemCategoryByName(String catName) {
@@ -1090,9 +996,9 @@ public class CategoryServiceImpl implements CategoryService {
                 }else{
                     if(category.getUserCategoryId()!=null){
                         Optional<UserCategory> userCategoryOp = userCategoryRepository.findById(category.getUserCategoryId());
-                        userCategoryOp.ifPresent((uc->{
-                            uc.setCategoryStatus(UserCategoryStatus.REJECTED);
-                        }));
+                        userCategoryOp.ifPresent((uc->
+                            uc.setCategoryStatus(UserCategoryStatus.REJECTED)
+                        ));
                     }
                 }
                 category.setActive(false);
@@ -1106,20 +1012,18 @@ public class CategoryServiceImpl implements CategoryService {
                                   MergePendingCategoryDto mergePendingCategoryDto){
         Optional<WarehouseStore> wsOp = warehouseStoreRepository.findById(categoryApproveRequestDto.getWarehouseStoreId());
         if(wsOp.isEmpty()){
-            throw new RuntimeException("Sorry! Warehouse Store not found");
+            throw new AesException("Sorry! Warehouse Store not found");
         }
         WarehouseStore ws = wsOp.get();
         String storeWisePrefixCode = ws.getStoreName().substring(0,1)+"-"+mergePendingCategoryDto.getCode();
-        if (categoryApproveRequestDto.getCode() == null && mergePendingCategoryDto != null) {
+        if (categoryApproveRequestDto.getCode() == null ) {
             Optional<ItemCategory> replacedCatOp = categoryRepository.findByCode(storeWisePrefixCode);
-            if (categoryApproveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-                if (replacedCatOp.isPresent()) {
+            if (categoryApproveRequestDto.getApproveStatus()
+                    .equals(ApproveStatus.APPROVED) && replacedCatOp.isPresent()) {
                     ItemCategory replacedCategory = replacedCatOp.get();
                     replacedCategory.setCategoryStatus(CategoryStatus.APPROVED);
                     replacedCategory.setActive(true);
                     approveAndUpdateCategory(mergePendingCategoryDto, replacedCategory);
-
-                }
             }
         }
     }
@@ -1129,12 +1033,12 @@ public class CategoryServiceImpl implements CategoryService {
 
             Optional<WarehouseStore> wsOp = warehouseStoreRepository.findById(warehouseStoreId);
             if(wsOp.isEmpty()){
-                throw new RuntimeException("Sorry! Warehouse Store not found");
+                throw new AesException("Sorry! Warehouse Store not found");
             }
 
             WarehouseStore ws = wsOp.get();
             String storeWisePrefixCode = ws.getStoreName().substring(0,1)+"-"+mergePendingCategoryDto.getCode();
-            System.out.println(storeWisePrefixCode);
+
             // merge category
             Optional<ItemCategory> existCatOp = categoryRepository.findByCode(storeWisePrefixCode);
             if(existCatOp.isPresent()){
@@ -1147,7 +1051,7 @@ public class CategoryServiceImpl implements CategoryService {
                 for(CategoryWarehouseStore cw : cws){
                     categoryWarehouseStoreRepository.delete(cw);
                 }
-            } else if (existCatOp.isEmpty()) {
+            } else {
                 ItemCategory newCat = new ItemCategory();
                 newCat.setCode(mergePendingCategoryDto.getCode());
                 approveAndUpdateCategory(mergePendingCategoryDto, newCat);
@@ -1160,9 +1064,9 @@ public class CategoryServiceImpl implements CategoryService {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
-                if(orgOp.isPresent()){
-                    headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
-                }
+                orgOp.ifPresent(org->
+                    headers.set("orgId", org.getCpsVendorRegistrationId().toString())
+                );
                 List<ScmIdUpdateDto> dtos  = new ArrayList<>();
                 ScmIdUpdateDto scmIdUpdateDto = new ScmIdUpdateDto();
                 scmIdUpdateDto.setCategoryIdScm(newCat.getId());
@@ -1170,8 +1074,7 @@ public class CategoryServiceImpl implements CategoryService {
                 dtos.add(scmIdUpdateDto);
                 HttpEntity<List<ScmIdUpdateDto>> payload = new HttpEntity<>(dtos,headers);
                 String url = cpsServerConfig.getItemCategoriesEndpoint().concat("/update-scm-id");
-                ResponseEntity<?> response = networkService.put(url,payload,Void.class);
-//                System.out.println(response.getStatusCode().value());
+                networkService.put(url,payload,Void.class);
             }
     }
 
@@ -1180,7 +1083,6 @@ public class CategoryServiceImpl implements CategoryService {
     private void approveAndUpdateCategory(MergePendingCategoryDto mergePendingCategoryDto, ItemCategory replacedCategory) {
 
 
-//                    if(categoryApproveRequestDto.getMergePendingCategoryDto()!=null){
 
         if(mergePendingCategoryDto.getName()!=null){
             replacedCategory.setName(mergePendingCategoryDto.getName());
@@ -1215,14 +1117,14 @@ public class CategoryServiceImpl implements CategoryService {
             }
             replacedCategory.setAttributes(attributes);
         }
-        if(mergePendingCategoryDto.getBrands()!=null && mergePendingCategoryDto.getBrands().size()>0){
+        if(mergePendingCategoryDto.getBrands()!=null && !mergePendingCategoryDto.getBrands().isEmpty()){
             List<String> brands = mergePendingCategoryDto.getBrands();
             List<CategoryBrand> cbs = new ArrayList<>();
             for(String brandName : brands) {
                 Optional<CategoryBrand> catBrandOp = categoryBrandRepository
                                 .findByCategoryIdAndName(replacedCategory.getId(), brandName);
                 cbs= (replacedCategory.getBrands()!=null)? replacedCategory.getBrands(): new ArrayList<>();
-                if(!catBrandOp.isPresent()){
+                if(catBrandOp.isEmpty()){
                     CategoryBrand cb = new CategoryBrand();
                     cb.setCategory(replacedCategory);
                     cb.setName(brandName);
@@ -1236,8 +1138,6 @@ public class CategoryServiceImpl implements CategoryService {
     @Transactional
     private void approveAndUpdateCategory(MergePendingCategoryDto mergePendingCategoryDto, UserCategory replacedCategory) {
 
-
-//                    if(categoryApproveRequestDto.getMergePendingCategoryDto()!=null){
 
         if(mergePendingCategoryDto.getName()!=null){
             replacedCategory.setName(mergePendingCategoryDto.getName());
@@ -1273,14 +1173,14 @@ public class CategoryServiceImpl implements CategoryService {
             }
             replacedCategory.setAttributes(attributes);
         }
-        if(mergePendingCategoryDto.getBrands()!=null && mergePendingCategoryDto.getBrands().size()>0){
+        if(mergePendingCategoryDto.getBrands()!=null && !mergePendingCategoryDto.getBrands().isEmpty()){
             List<String> brands = mergePendingCategoryDto.getBrands();
             List<UserCategoryBrand> cbs = new ArrayList<>();
             for(String brandName : brands) {
                 Optional<CategoryBrand> catBrandOp = categoryBrandRepository
                         .findByCategoryIdAndName(replacedCategory.getId(), brandName);
                 cbs= (replacedCategory.getBrands()!=null)? replacedCategory.getBrands(): new ArrayList<>();
-                if(!catBrandOp.isPresent()){
+                if(catBrandOp.isEmpty()){
                     UserCategoryBrand cb = new UserCategoryBrand();
                     cb.setCategory(replacedCategory);
                     cb.setName(brandName);
@@ -1292,14 +1192,14 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public void validateCategorySubCategoryRelation(ItemCategory _category, ItemCategory _subCategory) {
+    public void validateCategorySubCategoryRelation(ItemCategory cat, ItemCategory subCat) {
 
-        Optional<ItemCategory> itemCatOp = getAnyItemCategory(_category.getId());
+        Optional<ItemCategory> itemCatOp = getAnyItemCategory(cat.getId());
         if(itemCatOp.isEmpty()){
             throw new AesException("Sorry! Category not found");
         }
 
-        Optional<ItemCategory> itemSubCatOp = getAnyItemCategory(_subCategory.getId());
+        Optional<ItemCategory> itemSubCatOp = getAnyItemCategory(subCat.getId());
         if(itemSubCatOp.isEmpty()){
             throw new AesException("Sorry! SubCategory not found");
         }
@@ -1328,11 +1228,11 @@ public class CategoryServiceImpl implements CategoryService {
         if(catOp.isPresent()) {
 
             ItemCategory category = catOp.get();
-            List<CategoryWarehouseStore> cws = categoryWarehouseStoreRepository.findByCategoryId(category.getId());
-            List<CategoryWarehouse> cwses = cws.stream().map(_cws->{
-                Warehouse warehouse = _cws.getWarehouse();
-                return new CategoryWarehouse(warehouse.getId(), _cws.getWarehouse().getName(),_cws.getWarehouseStore().getStoreName());
-            }).collect(Collectors.toList());
+            List<CategoryWarehouseStore> cwsList = categoryWarehouseStoreRepository.findByCategoryId(category.getId());
+            List<CategoryWarehouse> cwses = cwsList.stream().map(cws->{
+                Warehouse warehouse = cws.getWarehouse();
+                return new CategoryWarehouse(warehouse.getId(), cws.getWarehouse().getName(),cws.getWarehouseStore().getStoreName());
+            }).toList();
             Map<String, Object> detailMap = new HashMap<>();
             detailMap.put("id",category.getId());
             detailMap.put("categoryStatus",category.getCategoryStatus());
@@ -1346,7 +1246,7 @@ public class CategoryServiceImpl implements CategoryService {
             detailMap.put("budgets",category.getBudgets());
             detailMap.put("vat",category.getVat());
             detailMap.put("cws",cwses);
-            return Optional.ofNullable(detailMap);
+            return Optional.of(detailMap);
         }
         return Optional.empty();
     }
@@ -1380,17 +1280,14 @@ public class CategoryServiceImpl implements CategoryService {
                 for(CSVRecord r : records){
 
                     Long id = Long.valueOf(r.get("ID"));
-                    Long warehouseId = Long.valueOf(r.get("WAREHOUSE_ID"));
-                    Long warehouseStoreId = Long.valueOf(r.get("WAREHOUSE_STORE_ID"));
-                    String warehosueName = (r.get("WAREHOUSE_NAME"));
-                    String warehouseStoreName = (r.get("WAREHOUSE_STORE_NAME"));
+
                     String budgetYearStr = (r.get("BUDGET_YEAR")).trim();
                     String amount = (r.get("AMOUNT")).trim();
-                    if(budgetYearStr.length()==0){
-                        throw new RuntimeException("Budget Year field should not be blank or empty string");
+                    if(budgetYearStr.isEmpty()){
+                        throw new AesException("Budget Year field should not be blank or empty string");
                     }
-                    if(amount.length()==0){
-                        throw new RuntimeException("Amount field should not be blank or empty string");
+                    if(amount.isEmpty()){
+                        throw new AesException("Amount field should not be blank or empty string");
                     }
                     Integer budgetYear = Integer.parseInt(budgetYearStr);
                     List<CategoryBudget> categoryBudgetOp = categoryBudgetRepository.findByCategoryIdAndBudgetTypeAndCurrentYear(id,BudgetType.REGULAR,budgetYear);
@@ -1413,7 +1310,7 @@ public class CategoryServiceImpl implements CategoryService {
 
                 }
             } catch (NumberFormatException e){
-                throw new RuntimeException("Sorry! Number fields might not have number value pls check (ID, WAREHOUSE ID, WAREHOUSE STORE ID)");
+                throw new AesException("Sorry! Number fields might not have number value pls check (ID, WAREHOUSE ID, WAREHOUSE STORE ID)");
             }
             catch (FileNotFoundException e) {
                 throw new AesException(e.getMessage());
@@ -1450,12 +1347,9 @@ public class CategoryServiceImpl implements CategoryService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(token.getTokenValue());
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
-        if(orgOp.isPresent()){
-            headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
-        }
+        orgOp.ifPresent(organization -> headers.set("orgId", organization.getCpsVendorRegistrationId().toString()));
         HttpEntity<Map<String,Object>> payload = new HttpEntity<>(data,headers);
         String url = cpsServerConfig.getItemCategoriesEndpoint().concat("/bulk");
-        System.out.println(url);
-        ResponseEntity<?> response = networkService.post(url,payload,Void.class);
+        networkService.post(url,payload,Void.class);
     }
 }
