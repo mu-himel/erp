@@ -2,9 +2,9 @@ package com.agi.aesl.erpscm.comment.service;
 
 import java.util.List;
 
+import com.agi.aesl.erpscm.comment.dto.CommentInfo;
 import com.agi.aesl.erpscm.comment.enums.ActionType;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.agi.aesl.erpscm.comment.dto.CommentDto;
@@ -25,7 +25,7 @@ public interface CommentService {
     Comment prepareComment(Employee employee, DomainType domainType, ActionType actionType, Long domainId, String msg,
                            List<CommentAttachment> attachments);
 
-    List<?> getCommentsByDomain(DomainType domainType, Long domainId);
+    List<CommentInfo> getCommentsByDomain(DomainType domainType, Long domainId);
     List<FileUploadResponse> uploadAttachment(String domainType, Long domainId, List<MultipartFile> attachment);
 
     ByteArrayResource load(String domainType, Long domainId, Long id, String filename);

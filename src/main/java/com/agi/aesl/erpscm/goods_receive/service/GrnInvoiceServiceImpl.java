@@ -39,7 +39,7 @@ public class GrnInvoiceServiceImpl implements GrnInvoiceService{
         if(fileOp.isPresent()){
             MultipartFile file = fileOp.get();
 
-            if(!fileUploadService.validFileSize(file.getSize(), Long.valueOf(5*(1024*1024)))){
+            if(!fileUploadService.validFileSize(file.getSize(), Long.valueOf(5L*(1024*1024)))){
                 throw new RuntimeException("Sorry! Valid file size upto 5M");
             }
 

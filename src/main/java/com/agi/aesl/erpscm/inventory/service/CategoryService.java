@@ -2,21 +2,16 @@ package com.agi.aesl.erpscm.inventory.service;
 
 // import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
 
-import com.agi.aesl.erpscm.common.CategoryInterface;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDtoCustom;
-import com.agi.aesl.erpscm.inventory.entity.CategoryBudget;
-import com.agi.aesl.erpscm.inventory.entity.CategoryWarehouseStore;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
-import com.agi.aesl.erpscm.inventory.enums.BudgetType;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,7 +23,7 @@ public interface CategoryService {
 
     void updateCategory(Long id, CategoryRequestDto categoryRequestDto);
 
-    Optional<ItemCategory> existByCode(String Code);
+    Optional<ItemCategory> existByCode(String code);
 
     Optional<ItemCategory> getItemCategory(Long id);
 
@@ -94,9 +89,6 @@ public interface CategoryService {
 
     Optional<ItemCategory> getItemCategoryForInventoryControl(Long id);
 
-//    Optional<CategoryWarehouseStore> getCategoryByCodeAndStore(Long warehouseId, CopyToStoreDto copyToStoreDto, CategoryRequestDto categoryRequestDto, Long storeId);
-
-//    void validateCategorySubCategoryRelation(ItemCategory category, ItemCategory subCategory);
 
     Optional<ItemCategory> getItemCategoryByName(String catName);
 

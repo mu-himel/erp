@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.inventory.controller;
 
 
 import com.agi.aesl.erpscm.common.BaseController;
+import com.agi.aesl.erpscm.inventory.entity.AttributeUnit;
 import com.agi.aesl.erpscm.inventory.repository.AttributeUnitRepository;
 import com.agi.aesl.erpscm.inventory.service.CategoryAttributeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 @CrossOrigin(value = "*")
 @RestController
 @RequestMapping("/api/v1/attributes")
-public class AttributeController{
+public class AttributeController extends BaseController{
 
     @Autowired
     private CategoryAttributeService categoryAttributeService;
@@ -38,9 +39,7 @@ public class AttributeController{
 
     @GetMapping("/units")
     public ResponseEntity<?> getAttributeUnits(){
-        List<String> attributes = attributeUnitRepository.findAll().stream().map(attributeUnit -> {
-            return attributeUnit.getName();
-        }).collect(Collectors.toList());
+        List<String> attributes = attributeUnitRepository.findAll().stream().map(AttributeUnit::getName).toList();
         return new ResponseEntity<>(
                 attributes,
                 HttpStatus.OK);

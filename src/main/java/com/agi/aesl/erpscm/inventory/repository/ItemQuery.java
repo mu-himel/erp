@@ -211,7 +211,12 @@ public interface ItemQuery {
             LEFT JOIN scm_item_import_logs siil ON siil.item_id = i.id
             WHERE (COALESCE(:warehouseId) IS NULL OR siil.warehouse_id IN (:warehouseId))
             AND siil.item_inactive_status IN ('APPROVED')
-            AND i.active=1 AND (:name IS NULL OR i.name LIKE concat('%',:name,'%'))
+            AND i.active=1 
+            AND (
+                (:name IS NULL OR LOWER(i.name) LIKE CONCAT('%',LOWER(:name),'%'))
+                OR 
+                (:name IS NULL OR LOWER(i.item_attribute_name) LIKE CONCAT('%',LOWER(:name),'%'))
+            )
             AND (:code IS NULL OR i.code LIKE concat('%',:code,'%'))
             AND (COALESCE(:subCategoryId) IS NULL OR ic.id IN (:subCategoryId))
             AND (COALESCE(:categoryId) IS NULL OR ipc.id IN (:categoryId))

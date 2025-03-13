@@ -1,10 +1,8 @@
 package com.agi.aesl.erpscm.account_finance.entity;
 
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
-import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
-import com.agi.aesl.erpscm.demand.enums.DemandStatus;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
@@ -13,7 +11,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -42,15 +39,8 @@ public class LedgerAccount extends VerifyableEntity {
     @Enumerated(EnumType.STRING)
     private AccountType accountStatus;
 
-//    private String nextVerifierId;
-//    private String nextApproverId;
-
     @Enumerated(EnumType.STRING)
     private AccountType reviewPrevStatus;
-
-    private String reviewerId;
-
-    private LocalDateTime reviewDate;
 
     @ManyToOne
     private Warehouse warehouse;
@@ -75,8 +65,6 @@ public class LedgerAccount extends VerifyableEntity {
     public void setStatus(String status) {
         this.accountStatus = AccountType.valueOf(status);
     }
-
-
 
 
 }

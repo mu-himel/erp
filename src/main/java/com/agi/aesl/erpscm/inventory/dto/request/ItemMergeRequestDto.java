@@ -1,6 +1,5 @@
 package com.agi.aesl.erpscm.inventory.dto.request;
 
-import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import lombok.Data;

@@ -1,15 +1,12 @@
 package com.agi.aesl.erpscm.user_application_validation.service;
 
-import java.util.Optional;
-
 import com.agi.aesl.erpscm.employee.entity.Employee;
-import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
-import org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyProperties.AssertingParty.Verification;
-
-import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
+import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository.VerificationResponse;
+
+import java.util.Optional;
 
 public interface VerificationDomainService {
     void onVerify(Long id,UserApplicationValidation verification, VerificationResponse nextVerifier);

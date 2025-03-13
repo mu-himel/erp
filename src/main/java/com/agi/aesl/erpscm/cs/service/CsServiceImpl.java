@@ -14,8 +14,8 @@ import com.agi.aesl.erpscm.cs.repository.CsDetailRepository;
 import com.agi.aesl.erpscm.cs.repository.CsRepository;
 import com.agi.aesl.erpscm.cs.repository.CsVaHistoryRepository;
 import com.agi.aesl.erpscm.cs.repository.CsVendorDetailRepository;
-import com.agi.aesl.erpscm.demand.dto.request.PendingAttributeDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.indent.entity.IndentDetail;
 import com.agi.aesl.erpscm.indent.repository.IndentDetailRepository;
@@ -50,8 +50,8 @@ import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicatio
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -65,75 +65,76 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class CsServiceImpl implements CsService{
 
     private static final Integer PAGE_SIZE = 20;
 
-    @Autowired
-    private ClaimResolver claimResolver;
-    @Autowired
-    private IndentRepository indentRepository;
 
-    @Autowired
-    private IndentDetailRepository indentDetailRepository;
+    private final ClaimResolver claimResolver;
 
-    @Autowired
-    private CsRepository csRepository;
+    private final IndentRepository indentRepository;
 
-    @Autowired
-    private CsDetailRepository csDetailRepository;
 
-    @Autowired
-    private CsVaHistoryRepository csVaHistoryRepository;
+    private final IndentDetailRepository indentDetailRepository;
 
-    @Autowired
-    private UserApplicationValidatorService<Cs> verificationService;
 
-    @Autowired
-    private CommentService commentService;
+    private final CsRepository csRepository;
 
-    @Autowired
-    private ProductRequirementService productRequirementService;
 
-    @Autowired
-    private PqTermAndConditionRepository pqTermAndConditionRepository;
+    private final CsDetailRepository csDetailRepository;
 
-    @Autowired
-    private CsVendorDetailRepository csVendorDetailRepository;
 
-    @Autowired
-    private OrgService orgService;
+    private final CsVaHistoryRepository csVaHistoryRepository;
+    private final UserApplicationValidatorService<Cs> verificationService;
 
-    @Autowired
-    private NetworkService networkService;
 
-    @Autowired
-    private CpsServerConfig cpsServerConfig;
+    private final CommentService commentService;
 
-    @Autowired
-    private ItemService itemService;
-    @Autowired
-    private CategoryService categoryService;
 
-    @Autowired
-    private PoGroupRepository poGroupRepository;
+    private final ProductRequirementService productRequirementService;
 
-    @Autowired
-    private PqRepository pqRepository;
 
-    @Autowired
-    private PurchaseOrderService purchaseOrderService;
+    private final PqTermAndConditionRepository pqTermAndConditionRepository;
 
-    @Autowired
-    private CsAccountService csAccountService;
+
+    private final CsVendorDetailRepository csVendorDetailRepository;
+    private final OrgService orgService;
+
+
+    private final NetworkService networkService;
+
+
+    private final CpsServerConfig cpsServerConfig;
+
+
+    private final ItemService itemService;
+
+    private final CategoryService categoryService;
+
+
+    private final PoGroupRepository poGroupRepository;
+
+
+    private final PqRepository pqRepository;
+
+
+    private final PurchaseOrderService purchaseOrderService;
+
+
+    private final CsAccountService csAccountService;
+
+    private static final String DATE_TIME_START="00:00:00";
+    private static final String DATE_TIME_END="23:59:59";
+    private static final String ERR_RFQ_NOT_FOUND="Sorry! Rfq not found";
 
     private LocalDateTime parseDate(Optional<String> dateStr,String endTime){
         LocalDateTime date = null;
         if(dateStr.isPresent()){
-            String time = (endTime!=null && endTime.trim().length()==8)? "T"+endTime:"T00:00:00";
+            String time = (endTime!=null && endTime.trim().length()==8)? "T"+endTime:"T"+DATE_TIME_START;
             date = LocalDateTime.parse(dateStr.get()+time);
         }
         return date;
@@ -150,7 +151,7 @@ public class CsServiceImpl implements CsService{
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort );
 
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> statuses = Arrays.asList(CsStatus.PENDING.name(),
                 CsStatus.PENDING_VERIFICATION.name(),
                 CsStatus.PENDING_APPROVAL.name(),
@@ -176,7 +177,7 @@ public class CsServiceImpl implements CsService{
 
         Optional<Indent> indentOp = indentRepository.findById(csRequestDto.getIndentId());
         if(indentOp.isEmpty()){
-            throw new RuntimeException("Sorry! Rfq not found");
+            throw new AesException(ERR_RFQ_NOT_FOUND);
         }
 
         Indent indent = indentOp.get();
@@ -190,12 +191,11 @@ public class CsServiceImpl implements CsService{
         cs.setValidityDate(csRequestDto.getValidityDate());
         Optional<Employee> empOp = claimResolver.getEmployee();
         if(empOp.isEmpty()){
-            throw new RuntimeException("Sorry! requested by information missing");
+            throw new AesException("Sorry! requested by information missing");
         }
         Employee employee = empOp.get();
         cs.setRequestedBy(employee);
-        StringBuilder categories = new StringBuilder(indent.getCategory().getId().toString());
-        categories.append(",").append(indent.getSubCategory().getId().toString());
+
 
         // add details cs info here
         List<String> ids =new ArrayList<>();
@@ -204,7 +204,7 @@ public class CsServiceImpl implements CsService{
             csDetail.setCs(cs);
             Optional<IndentDetail> indentDetailOp = indentDetailRepository.findById(v.getIndentDetailId());
             if(indentDetailOp.isEmpty()){
-                throw new RuntimeException("Sorry! Indent Detail not found");
+                throw new AesException("Sorry! Indent Detail not found");
             }
             IndentDetail indentDetail = indentDetailOp.get();
             ids.add(indentDetail.getSubCategory().getId().toString());
@@ -228,11 +228,11 @@ public class CsServiceImpl implements CsService{
                     csDeliveryDetail.setDeliveryQty(w.getDeliveryQty());
                     csDeliveryDetail.setVendorDeliveryDetail(csVendorDetail);
                     return csDeliveryDetail;
-                }).collect(Collectors.toList()));
+                }).toList());
                 return csVendorDetail;
-            }).collect(Collectors.toList()));
+            }).toList());
             return csDetail;
-        }).collect(Collectors.toList()));
+        }).toList());
 
         csRepository.save(cs);
 
@@ -245,33 +245,6 @@ public class CsServiceImpl implements CsService{
             csAccountService.createCsAccount(cs);
         }
 
-//        @SuppressWarnings("unchecked")
-//        Optional<Map<String, Object>> verifierOp = (Optional<Map<String, Object>>) verificationService.getVerifiers(loggedInUser, uri, categories.toString());
-
-//        List<Verifier> verifiers = new ArrayList<>();
-//        if (verifierOp.isPresent()) {
-//            Map<String, Object> verification = verifierOp.get();
-//
-//            verifiers = (List<Verifier>) verification.get("verifiers");
-//
-//            Boolean verificationRequired = (Boolean) verification.get("verificationRequired");
-//            if (verificationRequired != null && verificationRequired == true && verifiers != null && verifiers.size() > 0) {
-//                cs.setStatus(CsStatus.PENDING_VERIFICATION);
-//            } else {
-//                cs.setStatus(CsStatus.PENDING);
-//
-//            }
-//
-//        }else{
-//            cs.setStatus(CsStatus.APPROVED);
-//            generatePO(cs.getRequestedBy(),cs);
-//        }
-//
-//        List<ApprovalSettingQuery.ApprovalPanel> approvalPanels = approvalSettingService.getModuleWiseApprovalSetting(uri,
-//                Optional.ofNullable(categories.toString()),Optional.empty());
-//
-//        verificationService.setVerifiers(cs, verifiers, DomainType.CS);
-//        verificationService.setApprovers(cs, approvalPanels, DomainType.CS);
     }
 
     @Override
@@ -280,7 +253,7 @@ public class CsServiceImpl implements CsService{
         if(csOp.isPresent()){
             Cs cs = csOp.get();
             List<Map<String,Object>> result = new ArrayList<>();
-            cs.getCsDetails().stream().forEach(csd->{
+            cs.getCsDetails().forEach(csd->{
                 Map<String,Object> csdMap = new HashMap<>();
                 csdMap.put("indentDetailId",csd.getIndentDetail().getId());
 
@@ -297,14 +270,13 @@ public class CsServiceImpl implements CsService{
                         pdMap.put("qty",pd.getDeliveryQty());
                         pdMap.put("deliveryDate", pd.getDeliveryDate());
                         return pdMap;
-                    }).collect(Collectors.toList()));
+                    }).toList());
                     return wMap;
-                }).collect(Collectors.toList()));
+                }).toList());
                 csdMap.put("csDetailId",csd.getId());
 
-                csdMap.put("vendors",csd.getVendorDetails().stream().map(vd->{
-                    return vd.getVendorId();
-                }).collect(Collectors.toList()));
+                csdMap.put("vendors",csd.getVendorDetails().stream().map(CsVendorDetail::getVendorId
+                ).toList());
                 result.add(csdMap);
             });
 
@@ -312,8 +284,8 @@ public class CsServiceImpl implements CsService{
             List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
             List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
                     .getVerificationsByDomainTypeAndDomainId(DomainType.CS, cs.getId());
-            vrs.stream().forEach(verifier->{
-                if(verifier.getIsApproval()==false){
+            vrs.forEach(verifier->{
+                if(Boolean.FALSE.equals(verifier.getIsApproval())){
                     verifiers.add(verifier);
                 }else{
                     approvers.add(verifier);
@@ -327,12 +299,11 @@ public class CsServiceImpl implements CsService{
             resultMap.put("validityDate",cs.getValidityDate());
             resultMap.put("declineNote",cs.getDeclineNote());
             resultMap.put("requestedBy",cs.getRequestedBy());
-            resultMap.put("requestedBy",cs.getRequestedBy());
             resultMap.put("verifiers",verifiers);
             resultMap.put("approvers",approvers);
             resultMap.put("comments",comments);
 
-            return Optional.ofNullable(resultMap);
+            return Optional.of(resultMap);
         }
 
         return Optional.empty();
@@ -343,7 +314,7 @@ public class CsServiceImpl implements CsService{
     public void updateCsByInitiator(Jwt token, String uri, Long id, CsRequestDto csRequestDto) {
         Optional<Cs> csOp = csRepository.findById(id);
         if(csOp.isEmpty()){
-            throw new RuntimeException("Sorry! No Cs found");
+            throw new AesException("Sorry! No Cs found");
         }
         Cs cs = csOp.get();
         cs.setTotalPrice(csRequestDto.getTotalPrice());
@@ -351,32 +322,25 @@ public class CsServiceImpl implements CsService{
         cs.setSubTotalPrice(csRequestDto.getSubTotalPrice());
         cs.setVatAmount(csRequestDto.getVatAmount());
         cs.setValidityDate((csRequestDto.getValidityDate()));
-        Indent indent = cs.getIndent();
-        StringBuilder categories = new StringBuilder(indent.getCategory().getId().toString());
-        categories.append(",").append(indent.getSubCategory().getId().toString());
-        List<String> ids =new ArrayList<>();
+
         cs.setCsDetails(csRequestDto.getDetails().stream().map(v->{
             Optional<CsDetail> csDetailOp = csDetailRepository.findById(v.getId());
             if(csDetailOp.isEmpty()){
-                throw new RuntimeException("Sorry! Cs Detail not found");
+                throw new AesException("Sorry! Cs Detail not found");
             }
             Optional<IndentDetail> indentDetailOp = indentDetailRepository.findById(v.getIndentDetailId());
             if(indentDetailOp.isEmpty()){
-                throw new RuntimeException("Sorry! Indent Detail not found");
+                throw new AesException("Sorry! Indent Detail not found");
             }
             IndentDetail indentDetail = indentDetailOp.get();
-            ids.add(indentDetail.getSubCategory().getId().toString());
-            ids.add(indentDetail.getSubCategory().getParentCategory().getId().toString());
 
             CsDetail csDetail = csDetailOp.get();
 
-
-
             csDetail.setCs(cs);
             csDetail.setIndentDetail(indentDetail);
-            v.getVendors().stream().filter(vd -> vd.getIsDeleted()).forEach(vd->{
-                csVendorDetailRepository.deleteById(vd.getId());
-            });
+            v.getVendors().stream().filter(CsVendorDetailDto::getIsDeleted).forEach(vd->
+                csVendorDetailRepository.deleteById(vd.getId())
+            );
 
             csDetail.setVendorDetails(v.getVendors().stream().filter(vd->!vd.getIsDeleted()).map(vendorDetail->{
                 CsVendorDetail csVendorDetail = new CsVendorDetail();
@@ -397,51 +361,15 @@ public class CsServiceImpl implements CsService{
                     csDeliveryDetail.setDeliveryQty(w.getDeliveryQty());
                     csDeliveryDetail.setVendorDeliveryDetail(csVendorDetail);
                     return csDeliveryDetail;
-                }).collect(Collectors.toList()));
+                }).toList());
                 return csVendorDetail;
-            }).collect(Collectors.toList()));
+            }).toList());
             return csDetail;
-        }).collect(Collectors.toList()));
+        }).toList());
 
 
         csRepository.save(cs);
 
-//        verificationService.removeVerification(cs.getId(), DomainType.CS);
-//        csVaHistoryRepository.deleteAllByCsId(cs.getId());
-
-//        verificationService.applyVerifyApprovalProcess(cs, DomainType.CS, CsStatus.COMPLETED.toString(),
-//                uri,"CATEGORY",ids, null);
-
-//        @SuppressWarnings("unchecked")
-//        Optional<Map<String, Object>> verifierOp = (Optional<Map<String, Object>>) verificationService.getVerifiers(loggedInUser, uri, categories.toString());
-//
-//        List<Verifier> verifiers = new ArrayList<>();
-//        if (verifierOp.isPresent()) {
-//            Map<String, Object> verification = verifierOp.get();
-//
-//            verifiers = (List<Verifier>) verification.get("verifiers");
-//
-//            Boolean verificationRequired = (Boolean) verification.get("verificationRequired");
-//            if (verificationRequired != null && verificationRequired == true && verifiers != null && verifiers.size() > 0) {
-//                cs.setStatus(CsStatus.PENDING_VERIFICATION);
-//            } else {
-//                cs.setStatus(CsStatus.PENDING);
-//
-//            }
-//
-//        }else{
-//            cs.setStatus(CsStatus.APPROVED);
-//            // generatePO(cs.getRequestedBy(),cs);
-//        }
-//
-//        List<ApprovalSettingQuery.ApprovalPanel> approvalPanels = approvalSettingService.getModuleWiseApprovalSetting(uri,
-//                Optional.ofNullable(categories.toString()),Optional.empty());
-//
-//        verificationService.removeVerification(cs.getId(), DomainType.CS);
-//        csVaHistoryRepository.deleteAllByCsId(cs.getId());
-//
-//        verificationService.setVerifiers(cs, verifiers, DomainType.CS);
-//        verificationService.setApprovers(cs, approvalPanels, DomainType.CS);
     }
 
     @Override
@@ -449,12 +377,12 @@ public class CsServiceImpl implements CsService{
         List<CsDetailRepository.CsVendorItemInfo> allItemsByVendor = csDetailRepository.findAllItemsByVendor(csNo, vendorId);
         record CsVendorItemsResult(Object result,List<?> termsConditions,List<?> warehouses){}
         List<Long> ids = new ArrayList<>();
-        allItemsByVendor.stream().forEach(i->{
-            ids.add(i.getPqId());
-        });
-        List<?> warehoues = csDetailRepository.findAllVendorWarehouses(csNo,vendorId);
+        allItemsByVendor.forEach(i->
+            ids.add(i.getPqId())
+        );
+        List<?> warehouse = csDetailRepository.findAllVendorWarehouses(csNo,vendorId);
         List<PqTermsAndCondition> allByVendorIdAndPriceQuotationId = pqTermAndConditionRepository.findAllByVendorIdAndPriceQuotationId(vendorId, ids);
-        var result = new CsVendorItemsResult(allItemsByVendor,allByVendorIdAndPriceQuotationId,warehoues);
+        var result = new CsVendorItemsResult(allItemsByVendor,allByVendorIdAndPriceQuotationId,warehouse);
         return Optional.of(result);
     }
 
@@ -462,7 +390,7 @@ public class CsServiceImpl implements CsService{
     public List<?> getItemWiseVendors(Long tenderId, String brandName,String itemName) {
         Optional<Indent> indentOp = indentRepository.findById(tenderId);
         if(indentOp.isEmpty()){
-            throw new RuntimeException("Sorry! Rfq not found");
+            throw new AesException(ERR_RFQ_NOT_FOUND);
         }
         return csRepository.findLockedVendorsByItemName(tenderId, brandName,itemName);
     }
@@ -471,11 +399,11 @@ public class CsServiceImpl implements CsService{
     public Map<String, Object> getItemWiseVendors(Long tenderId, Long vendorId, String itemName) {
         Optional<Indent> indentOp = indentRepository.findById(tenderId);
         if(indentOp.isEmpty()){
-            throw new RuntimeException("Sorry! Rfq not found");
+            throw new AesException(ERR_RFQ_NOT_FOUND);
         }
         List<PqTermsAndCondition> termsAndConditions = pqTermAndConditionRepository.findAllByRfqIdAndVendorId(tenderId, vendorId);
         Map<String,Object> result = new HashMap<>();
-        List<CsRepository.ItemWiseVendorDetail> itemWiseVendorDetails = new ArrayList<>();
+        List<CsRepository.ItemWiseVendorDetail> itemWiseVendorDetails;
         if(itemName!=null){
             itemWiseVendorDetails = csRepository.findLockedVendorsByItemName(tenderId,vendorId, itemName);
         }else{
@@ -492,7 +420,7 @@ public class CsServiceImpl implements CsService{
     public void updateCs(Jwt token, Long id, CsUpdateRequestDto csDto, CsOperation csOperation) {
         Optional<Cs> csOp = csRepository.findById(id);
         if(csOp.isEmpty()){
-            throw new RuntimeException("Sorry! Cs Not Found");
+            throw new AesException("Sorry! Cs Not Found");
         }
 
         Cs cs = csOp.get();
@@ -544,7 +472,7 @@ public class CsServiceImpl implements CsService{
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
         LocalDateTime fromDate = parseDate(formDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> statuses = Arrays.asList(
                 CsStatus.PENDING_VERIFICATION.name(),
                 CsStatus.REVIEW.name(),
@@ -569,7 +497,7 @@ public class CsServiceImpl implements CsService{
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> statuses = Arrays.asList(
                 CsStatus.PENDING_APPROVAL.name(),
                 CsStatus.REVIEW.name(),
@@ -594,7 +522,7 @@ public class CsServiceImpl implements CsService{
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> statuses = Arrays.asList(
                 CsStatus.VERIFIED.name(),
                 CsStatus.APPROVED.name(),
@@ -615,7 +543,7 @@ public class CsServiceImpl implements CsService{
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> statuses = Arrays.asList(
                 CsStatus.APPROVED.name(),
                 CsStatus.REJECTED.name(),
@@ -635,10 +563,13 @@ public class CsServiceImpl implements CsService{
     @Transactional
     public void rejectCs(Jwt token, Long id, NoteDto noteDto) {
         claimResolver.setToken(token);
+        if(claimResolver.getEmployee().isEmpty()){
+            throw new AesException("Sorry! Employee profile required");
+        }
         Optional<Cs> csOp = csRepository.findById(id);
         if(csOp.isPresent()){
             Cs cs = csOp.get();
-            if(noteDto.getNote()!=null && !noteDto.getNote().isEmpty()){
+            if(!noteDto.getNote().isEmpty()){
                 cs.setDeclineNote(noteDto.getNote());
                 commentService.addComment(commentService.prepareComment(claimResolver.getEmployee().get(),
                         DomainType.CS, cs.getId(), noteDto.getNote(),noteDto.getAttachments()));
@@ -653,7 +584,7 @@ public class CsServiceImpl implements CsService{
         claimResolver.setToken(token);
         Optional<Cs> csOp = csRepository.findById(id);
         if(csOp.isEmpty()){
-            throw new RuntimeException("Sorry! Cs not found");
+            throw new AesException("Sorry! Cs not found");
         }
 
         Cs cs = csOp.get();
@@ -661,12 +592,6 @@ public class CsServiceImpl implements CsService{
         cs.setReviewDate(LocalDateTime.now());
         cs.setCsStatus(cs.getReviewPrevStatus());
         cs.setReviewPrevStatus(null);
-        // if(cs.getNextVerifierId() != null && cs.getNextApproverId() == null){
-        //     cs.setStatus(CsStatus.PENDING_VERIFICATION);
-        // }
-        // if(cs.getNextVerifierId()!= null && cs.getNextApproverId() != null){
-        //     cs.setStatus(CsStatus.PENDING_APPROVAL);
-        // }
 
         commentService.addComment(
                 commentService.prepareComment(claimResolver.getEmployee().get(),
@@ -680,13 +605,11 @@ public class CsServiceImpl implements CsService{
         claimResolver.setToken(token);
         Optional<Cs> csOp = csRepository.findById(id);
         if(csOp.isEmpty()){
-            throw new RuntimeException("Sorry! Cs not found");
+            throw new AesException("Sorry! Cs not found");
         }
         Cs cs = csOp.get();
         cs.setCsStatus(CsStatus.REJECTED);
-        cs.getIndent().getIndentDetails().stream().forEach(ide->{
-            productRequirementService.reOpen(ide.getProductRequirementsIds());
-        });
+        cs.getIndent().getIndentDetails().forEach(ide-> productRequirementService.reOpen(ide.getProductRequirementsIds()));
         commentService.addComment(
                 commentService.prepareComment(claimResolver.getEmployee().get(),
                         DomainType.CS,cs.getId(),"Rejected & Resent To PR",new ArrayList<>())
@@ -699,7 +622,7 @@ public class CsServiceImpl implements CsService{
         claimResolver.setToken(token);
         Optional<Cs> csOp = csRepository.findById(id);
         if(csOp.isEmpty()){
-            throw new RuntimeException("Sorry! Cs not found");
+            throw new AesException("Sorry! Cs not found");
         }
         Cs cs = csOp.get();
         cs.setCsStatus(CsStatus.PENDING_VERIFICATION);
@@ -707,7 +630,7 @@ public class CsServiceImpl implements CsService{
         cs.setReviewerId(null);
         csVaHistoryRepository.removeByCsId(cs.getId());
         List<UserApplicationValidation> verifiers = verificationService.getVerifyersByDomainId(DomainType.CS,cs.getId());
-        verifiers.stream().forEach(verifer->{
+        verifiers.forEach(verifer->{
             verifer.setVerificationDate(null);
             verifer.setVerified(false);
         });
@@ -720,7 +643,6 @@ public class CsServiceImpl implements CsService{
         if(csOp.isPresent()){
             Cs cs = csOp.get();
             cs.setNextVerifierId(nextVerifier.getVerifier().getId());
-//            cs.setCsStatus(CsStatus.VERIFIED);
             setVAHistory(cs, verification.getVerifier(),CsStatus.VERIFIED);
         }
     }
@@ -732,7 +654,6 @@ public class CsServiceImpl implements CsService{
         if(csOp.isPresent()){
             Cs cs = csOp.get();
             cs.setNextApproverId(nextApprover.getVerifier().getId());
-//            cs.setCsStatus(CsStatus.APPROVED);
             setVAHistory(cs, verification.getVerifier(),CsStatus.APPROVED);
         }
     }
@@ -753,7 +674,6 @@ public class CsServiceImpl implements CsService{
                 cs.setCsStatus(CsStatus.VERIFIED);
                 setVAHistory(cs,new Employee(cs.getNextVerifierId()),CsStatus.VERIFIED);
                 csAccountService.createCsAccount(cs);
-//                generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
             }
 
         }
@@ -769,7 +689,7 @@ public class CsServiceImpl implements CsService{
             setVAHistory(cs,new Employee(cs.getNextApproverId()),CsStatus.APPROVED);
 
             csAccountService.createCsAccount(cs);
-//            generatePO(cs.getRequestedBy(),cs,PurchaseOrderStatus.PENDING);
+
         }
     }
 
@@ -789,13 +709,12 @@ public class CsServiceImpl implements CsService{
     @Override
     @Transactional
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
-
+        log.info(verifier.getEmployeeName());
     }
 
     @Transactional
     private void setVAHistory(Cs cs, Employee employee, CsStatus status){
         CsVerificationApprovalHistory csVaHistory = new CsVerificationApprovalHistory();
-        String empId = null;
 
         csVaHistory.setCs(cs);
         csVaHistory.setEmployee(employee);
@@ -809,7 +728,7 @@ public class CsServiceImpl implements CsService{
 
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
         if(orgOp.isEmpty()){
-            throw new RuntimeException("Sorry! Organization not found");
+            throw new AesException("Sorry! Organization not found");
         }
 
         List<CsVendorDetailRepository.PendingItemBrandInfo> itemBrandInfos = csVendorDetailRepository.getPendingItemAndBrandInfoByCsId(cs.getId());
@@ -820,7 +739,7 @@ public class CsServiceImpl implements CsService{
 
                 Optional<ItemCategory> subCatOp = categoryService.getItemCategory(csDetail.getSubCatId());
                 if(subCatOp.isEmpty()){
-                    throw new RuntimeException("Sorry! Sub Cat missing");
+                    throw new AesException("Sorry! Sub Cat missing");
                 }
                 ItemCategory subCat = subCatOp.get();
 
@@ -852,9 +771,9 @@ public class CsServiceImpl implements CsService{
 
 
 
-        // Map<String,PurchaseOrder> poMap = new HashMap<>();
+
         List<PurchaseOrder> purchaseOrders =new ArrayList<>();
-        // StringBuilder sb = new StringBuilder();
+
         PoGroup poGroup = new PoGroup();
         poGroup.setCs(cs);
         poGroup.setPurchaseOrderStatus(status);
@@ -927,36 +846,12 @@ public class CsServiceImpl implements CsService{
             }
             i++;
         }
-        // cs.getCsDetails().stream().forEach(csd->{
-        //     sb.append(csd.getIndentDetail().getSubCategory().getId()).append(",");
-        //     csd.getVendorDetails().stream().forEach(vd->{
 
-        //         if(!poMap.containsKey(vd.getVendorId().toString())){
-        //             System.out.println(vd.getVendorId()+"_"+vd.getId());
-        //             PurchaseOrder vPo = new PurchaseOrder();
-        //             List<PurchaseOrderDetail> pods = new ArrayList<>();
-        //             vPo.setPurchaseOrderDetails(pods);
-        //             setPoDetail(cs,vPo,vd);
-        //             poMap.put(vd.getVendorId().toString(), vPo);
-        //             vPo.setRequestedBy(new Employee(cs.getNextApproverId()));
-
-        //         }else{
-        //             System.out.println(vd.getVendorId()+"_"+vd.getId());
-        //             PurchaseOrder vPo = (PurchaseOrder) poMap.get(vd.getVendorId().toString());
-        //             setPoDetail(cs,vPo, vd);
-        //         }
-        //     });
-        // });
-
-        // String categories = sb.substring(0,sb.toString().length()-1);
-        // purchaseOrders = poMap.entrySet().stream().map(et->{
-        //     return et.getValue();
-        // }).collect(Collectors.toList());
 
 
         purchaseOrderService.createPurchaseOrder(purchaseOrders);
 
-        // setVerificationAndApproval(categories,employee,poGroup);
+
 
     }
 
@@ -965,23 +860,21 @@ public class CsServiceImpl implements CsService{
     }
 
     @Async
-    private void sendPendingItemRequest(PendingItemRequestDto payloadDto) {
+    public void sendPendingItemRequest(PendingItemRequestDto payloadDto) {
         try{
             HttpHeaders headers = new HttpHeaders();
             Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
-            if(orgOp.isPresent()){
-                headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
-            }
+            orgOp.ifPresent(organization -> headers.set("orgId", organization.getCpsVendorRegistrationId().toString()));
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(payloadDto,headers);
             String url = cpsServerConfig.getPendingItemReqEndpoint();
-            ResponseEntity<Void> response = (ResponseEntity<Void>)networkService.post(url, payload,Void.class);
+            ResponseEntity<Void> response = networkService.post(url, payload,Void.class);
             if(!response.getStatusCode().equals(HttpStatus.CREATED)){
-                throw new RuntimeException("Sorry! Something wrong");
+                throw new AesException("Sorry! Something wrong");
             }
         }catch(Exception ex){
-            throw new RuntimeException(ex.getMessage());
+            throw new AesException(ex.getMessage());
         }
     }
 
@@ -994,16 +887,15 @@ public class CsServiceImpl implements CsService{
 
 
             for(String attr : attrs){
-                String _attr="";
-                Optional<CategoryAttribute> catAttrOp = cat.getAttributes().stream().filter(c->{
-                    return attr.contains(c.getAttributeType());
-
-                }).findFirst();
+                String attribute="";
+                Optional<CategoryAttribute> catAttrOp = cat.getAttributes().stream().filter(c->
+                   attr.contains(c.getAttributeType())
+                ).findFirst();
 
                 if(catAttrOp.isPresent()){
-                    _attr = attr.replace(catAttrOp.get().getAttributeType(),"");
+                    attribute = attr.replace(catAttrOp.get().getAttributeType(),"");
 
-                    String[] args = _attr.trim().split(" ");
+                    String[] args = attribute.trim().split(" ");
                     PendingItemAttributeDto pia = new PendingItemAttributeDto();
                     pia.setAttributeType(catAttrOp.get().getAttributeType());
                     pia.setAttributeValue(args[0].trim());

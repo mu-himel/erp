@@ -4,6 +4,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseStoreService;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.repository.CategoryRepository;
 import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
@@ -157,16 +158,15 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
 
     @Override
     public Page<?> getProducts(Optional<Long> warehouseId, Optional<Long> categoryId,
-                               Optional<Long> subCategoryId,
+                               Optional<Long> subCategoryId,Optional<String> name,
                                Optional<Integer> page, Optional<Integer> size) {
         List<Long> categoryIds = new ArrayList<>();
         List<Long> subCategoryIds = new ArrayList<>();
         List<Long> warehouseIds = new ArrayList<>();
-        List<ProductInfo> products = new ArrayList<>();
         if(categoryId.isPresent()){
             Optional<ItemCategory> catOp = categoryRepository.findById(categoryId.get());
             if(catOp.isEmpty()){
-                throw new RuntimeException("Sorry! category not found");
+                throw new AesException("Sorry! category not found");
             }
             ItemCategory category = catOp.get();
             categoryIds.add(category.getId());
@@ -174,7 +174,7 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
         if(subCategoryId.isPresent()) {
             Optional<ItemCategory> subCatOp = categoryRepository.findById(subCategoryId.get());
             if(subCatOp.isEmpty()){
-                throw new RuntimeException("Sorry! sub category not found");
+                throw new AesException("Sorry! sub category not found");
             }
             ItemCategory subCategory = subCatOp.get();
             subCategoryIds.add(subCategory.getId());
@@ -190,21 +190,16 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
 
         List<WarehouseStore> stores = warehouseStoreService.getStoresByWarehouseIdIn(warehouseIds);
         List<Long> finisGoodStoreIds = new ArrayList<>();
-        stores.stream().forEach(s -> {
+        stores.forEach(s -> {
             if(s.getStoreName().toLowerCase().contains("finish")){
                 finisGoodStoreIds.add(s.getId());
             }
         });
         if(!finisGoodStoreIds.isEmpty()){
             Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(Integer.MAX_VALUE));
-            Page<ItemRepository.SalesItems> allItemList = itemRepository.findAllItemListForSales(null, null, null, null,
+            return itemRepository.findAllItemListForSales(name.orElse(null), null, null, null,
                     categoryIds, subCategoryIds, warehouseIds, finisGoodStoreIds,pageable);
-//            allItemList.stream().forEach(i->{
-//                String itemName = i.getSubCategoryName()+" - "+i.getSubCategoryCode()+" - "+i.getItemAttributeName();
-//                products.add(new ProductInfo(i.getId(),i.getName(),i.getCategoryCode(),i.getCategoryName(),
-//                        i.getSubCategoryCode(),i.getSubCategoryName(),i.getItemUnit(),i.getCode(),itemName,i.getQty().toBigInteger()));
-//            });
-            return allItemList;
+
         }
 
         return Page.empty();

@@ -1,13 +1,11 @@
 package com.agi.aesl.erpscm.demand.dto.request;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import com.agi.aesl.erpscm.common.EntityConvertable;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.demand.entity.Demand;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -40,11 +38,8 @@ public class DemandRequestDto implements EntityConvertable<Demand>{
 
     @Override
     public Demand getEntity() {
-        Demand demand = Demand.builder()
+        return Demand.builder()
                 .id(id)
-//                .demandNo(demandNo)
                 .build();
-
-        return demand;
     }
 }

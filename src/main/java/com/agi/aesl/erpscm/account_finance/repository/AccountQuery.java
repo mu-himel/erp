@@ -1,13 +1,17 @@
 package com.agi.aesl.erpscm.account_finance.repository;
 
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 
 public interface AccountQuery {
 
-    String getPendingAccounts = """
-            SELECT 
+    String COUNT_INIT="SELECT COUNT (*) FROM (";
+    String COUNT_END=") as total ";
+
+    String GET_PENDING_ACCOUNTS = """
+            SELECT
                 la.id,
                 la.account_no accountNo,
                 ws.store_name as store,
@@ -22,17 +26,17 @@ public interface AccountQuery {
             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
-            WHERE 
+            WHERE
             (COALESCE(:warehouseId) IS NULL OR ws.warehouse_id IN (:warehouseId)) AND 
             (COALESCE(:warehouseId) IS NULL OR la.warehouse_id IN (:warehouseId)) AND
             la.account_status IN ('PENDING','PENDING_VERIFICATION','PENDING_APPROVAL','REVIEW')
             GROUP BY la.id
             """;
 
-    String countPendingAccounts = "SELECT COUNT(*) FROM ("+getPendingAccounts+") total";
+    String COUNT_PENDING_ACCOUNTS = COUNT_INIT+GET_PENDING_ACCOUNTS+COUNT_END;
 
-    String getClosedAccounts = """
-            SELECT 
+    String GET_CLOSED_ACCOUNTS = """
+            SELECT
                 la.id,
                 la.account_no accountNo,
                 ws.store_name as store,
@@ -48,18 +52,18 @@ public interface AccountQuery {
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
             AND cws.warehouse_id = la.warehouse_id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
-            WHERE 
+            WHERE
             (COALESCE(:warehouseId) IS NULL OR ws.warehouse_id IN (:warehouseId)) AND 
             (COALESCE(:warehouseId) IS NULL OR la.warehouse_id IN (:warehouseId)) AND
             la.account_status IN ('APPROVED','REJECTED','VERIFIED','COMPLETED')
             GROUP BY la.id
             """;
 
-    String countClosedAccounts = "SELECT COUNT(*) FROM ("+getClosedAccounts+") as total";
+    String COUNT_CLOSE_ACCOUNTS = COUNT_INIT+GET_CLOSED_ACCOUNTS+COUNT_END;
 
     //accounts query
-    String ledgerAccDetail = """
-        SELECT 
+    String LEDGER_ACC_DETAIL = """
+        SELECT
         la.id,
         la.account_no as accountNo,
         la.master_account as masterAccount,
@@ -101,10 +105,10 @@ public interface AccountQuery {
         LEFT JOIN acl_users au ON au.id = la.requested_by_id
         WHERE la.id=:id
         GROUP BY la.id
-            """;
+        """;
 
-    String getApprovedAccountsList = """
-        SELECT 
+    String GET_APPROVED_ACCOUNTS = """
+        SELECT
                 la.id,
                 la.account_no accountNo,
                 ws.store_name as store,
@@ -120,15 +124,15 @@ public interface AccountQuery {
             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
-            WHERE 
+            WHERE
             (COALESCE(:warehouseId) IS NULL OR ws.warehouse_id IN (:warehouseId)) AND 
             (COALESCE(:warehouseId) IS NULL OR la.warehouse_id IN (:warehouseId)) AND 
             la.account_status IN ('APPROVED','COMPLETED')
             GROUP BY la.id
             """;
-    String countApprovedAccounts = "SELECT COUNT(*) FROM ("+getApprovedAccountsList+") total";
-    String getRejectedAccountsList = """
-        SELECT 
+    String COUNT_APPROVED_ACCOUNTS = COUNT_INIT+GET_APPROVED_ACCOUNTS+") total";
+    String GET_REJECTED_ACCOUNTS = """
+        SELECT
                 la.id,
                 la.account_no accountNo,
                 ws.store_name as store,
@@ -147,15 +151,15 @@ public interface AccountQuery {
             LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
             LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
             LEFT JOIN scm_warehouse_stores ws ON ws.id = cws.warehouse_store_id
-            WHERE 
+            WHERE
             (COALESCE(:warehouseId) IS NULL OR ws.warehouse_id IN (:warehouseId)) AND 
             (COALESCE(:warehouseId) IS NULL OR la.warehouse_id IN (:warehouseId)) AND
             la.account_status IN ('REJECTED')
             """;
-    String countRejectedAccounts = "SELECT COUNT(*) FROM ("+getRejectedAccountsList+") total";
+    String COUNT_REJECTED_ACCOUNTS = COUNT_INIT+GET_REJECTED_ACCOUNTS+") total";
 
-    String getAllFilteredPendingVerifications = """
-            SELECT 
+    String GET_ALL_FILTERED_PV = """
+            SELECT
                 la.id,
                 la.account_no accountNo,
                 ws.store_name as store,
@@ -179,8 +183,8 @@ public interface AccountQuery {
             GROUP BY la.id
             ORDER BY CASE WHEN la.account_status IN ('REVIEW','PENDING_VERIFICATION') THEN 1 ELSE 2 END ASC
             """;
-    String getAllFilteredPendingVerificationsWithNextVerifier = """
-            SELECT 
+    String GET_ALL_FILTERED_PV_WITH_NEXT_VERIFIER = """
+            SELECT
                 la.id,
                 la.account_no accountNo,
                 ws.store_name as store,
@@ -206,12 +210,12 @@ public interface AccountQuery {
             ORDER BY CASE WHEN la.account_status IN ('REVIEW','PENDING_VERIFICATION') THEN 1 ELSE 2 END ASC
             """;
 
-    String countAllFilteredPendingVerifications = "SELECT COUNT(*) FROM ("+getAllFilteredPendingVerifications+") as total";
-    String countAllFilteredPendingVerificationsWithNextVerifier = "SELECT COUNT(*) FROM ("+getAllFilteredPendingVerificationsWithNextVerifier+") as total";
+    String COUNT_ALL_FILTERED_PV = COUNT_INIT+GET_ALL_FILTERED_PV+COUNT_END;
+    String COUNT_ALL_FILTERED_PV_WITH_NEXT_VERIFIER = COUNT_INIT+GET_ALL_FILTERED_PV_WITH_NEXT_VERIFIER+COUNT_END;
 
 
-    String getAllFilteredPendingApprovals = """
-            SELECT 
+    String GET_ALL_FILTERED_PA = """
+            SELECT
                 la.id,
                 la.account_no accountNo,
                 ws.store_name as store,
@@ -235,8 +239,8 @@ public interface AccountQuery {
             GROUP BY la.id
             ORDER BY CASE WHEN la.account_status IN ('REVIEW','PENDING_APPROVAL') THEN 1 ELSE 2 END ASC
             """;
-    String getAllFilteredPendingApprovalsWithNextApprover = """
-            SELECT 
+    String GET_ALL_FILTERED_PA_WITH_NEXT_APPROVER = """
+            SELECT
                 la.id,
                 la.account_no accountNo,
                 ws.store_name as store,
@@ -262,11 +266,11 @@ public interface AccountQuery {
             ORDER BY CASE WHEN la.account_status IN ('REVIEW','PENDING_APPROVAL') THEN 1 ELSE 2 END ASC
             """;
 
-    String countAllFilteredPendingApprovals = "SELECT COUNT(*) FROM ("+getAllFilteredPendingApprovals+") as total";
-    String countAllFilteredPendingApprovalsWithNextApprover = "SELECT COUNT(*) FROM ("+getAllFilteredPendingApprovalsWithNextApprover+") as total";
+    String COUNT_ALL_FILTERED_PA = COUNT_INIT+GET_ALL_FILTERED_PA+COUNT_END;
+    String COUNT_ALL_FILTERED_PA_WITH_NEXT_APPROVER = COUNT_INIT+GET_ALL_FILTERED_PA_WITH_NEXT_APPROVER+COUNT_END;
 
 
-    interface PendingAccount{
+    interface PendingAccount {
         Long getId();
         String getAccountNo();
         String getStore();

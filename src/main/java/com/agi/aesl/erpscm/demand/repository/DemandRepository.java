@@ -16,8 +16,6 @@ import com.agi.aesl.erpscm.demand.entity.Demand;
 import com.agi.aesl.erpscm.demand.enums.DemandPriority;
 import com.agi.aesl.erpscm.demand.enums.DemandStatus;
 import com.agi.aesl.erpscm.employee.entity.Employee;
-import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
-import com.agi.aesl.erpscm.inventory.repository.CategoryRepository.ItemCategoryInfo;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 

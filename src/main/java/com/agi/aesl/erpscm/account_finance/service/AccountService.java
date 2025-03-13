@@ -1,7 +1,7 @@
 package com.agi.aesl.erpscm.account_finance.service;
 
 import com.agi.aesl.erpscm.account_finance.dto.request.LedgerAccountRequestDto;
-import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
+import com.agi.aesl.erpscm.account_finance.repository.AccountQuery;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
@@ -12,31 +12,32 @@ import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+import java.util.Map;
 import java.util.Optional;
 
 public interface AccountService extends VerificationDomainService {
     String getNextAccountNo();
 
-    Page<?> getAllPendingAccounts(Jwt token,Optional<Integer> page, Optional<Integer> size,
-                                  Optional<Long> warehouseId);
-    Page<?> getClosedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> warehouseId);
+    Page<AccountQuery.PendingAccount> getAllPendingAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                            Optional<Long> warehouseId);
+    Page<AccountQuery.PendingAccount> getClosedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> warehouseId);
 
-    Page<?> getAllPendingVerifications(Jwt token,
+    Page<AccountQuery.PendingAccount> getAllPendingVerifications(Jwt token,
                                              Optional<Integer> page, Optional<Integer> size,
                                              Optional<String> fromDate, Optional<String> toDate
     );
-    Page<?> getAllPendingApprovals(Jwt token,
+    Page<AccountQuery.PendingAccount> getAllPendingApprovals(Jwt token,
                                          Optional<Integer> page, Optional<Integer> size,
                                          Optional<String> fromDate, Optional<String> toDate
 
     );
 
-    Optional<?> getLedgerDetailById(Long id);
+    Optional<Map<String,Object>> getLedgerDetailById(Long id);
 
-    Page<?> getAllApprovedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+    Page<AccountQuery.PendingAccount> getAllApprovedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                    Optional<Long> warehouseId);
 
-    Page<?> getAllRejectedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
+    Page<AccountQuery.PendingAccount> getAllRejectedAccounts(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                    Optional<Long> warehouseId);
 
     void updateAccount(Jwt token, String uri, Long id, LedgerAccountRequestDto ledgerAccountRequestDto);

@@ -67,7 +67,9 @@ import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationVa
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class DemandServiceImpl implements DemandService{
 
@@ -162,12 +164,12 @@ public class DemandServiceImpl implements DemandService{
     }
 
     private void setVerifiers(Demand demand, List<VerifierInfo> verifiers) {
-        if(verifiers.size()>0){
+        if(!verifiers.isEmpty()){
             Optional<VerifierInfo> firstOp = verifiers.stream().findFirst();
-            VerifierInfo _verifier = firstOp.get();
+            VerifierInfo nextVerifier = firstOp.get();
 
-            demandMailService.prepareMailContent(_verifier.getName(), "Verification", demand);
-            demandMailService.sentMail(_verifier.getEmail(),"Pending Demand Verification Request");
+            demandMailService.prepareMailContent(nextVerifier.getName(), "Verification", demand);
+            demandMailService.sentMail(nextVerifier.getEmail(),"Pending Demand Verification Request");
 
             List<UserApplicationValidation> verifications = verifiers.stream().map(verifier -> {
                 UserApplicationValidation verification = new UserApplicationValidation();
@@ -178,13 +180,13 @@ public class DemandServiceImpl implements DemandService{
                 verification.setVerifier(new Employee(verifier.getId()));
                 return verification;
             }).collect(Collectors.toList());
-            demand.setNextVerifierId(_verifier.getId());
+            demand.setNextVerifierId(nextVerifier.getId());
             verificationService.addVerification(verifications);
         }
     }
 
     private void setApprovers(Demand demand, List<ApprovalPanel> approvalPanels) {
-        if(approvalPanels.size()>0){
+        if(!approvalPanels.isEmpty()){
             List<UserApplicationValidation> verifications = approvalPanels.stream().map(approvalPanel -> {
                 UserApplicationValidation verification = new UserApplicationValidation();
                 verification.setDomainId(demand.getId());
@@ -193,7 +195,7 @@ public class DemandServiceImpl implements DemandService{
                 verification.setIsApproval(true);
                 verification.setVerifier(new Employee(approvalPanel.getUserId()));
                 return verification;
-            }).collect(Collectors.toList());
+            }).toList();
             
             verificationService.addVerification(verifications);
         }
@@ -207,7 +209,7 @@ public class DemandServiceImpl implements DemandService{
         claimResolver.setToken(token);
         Optional<Employee> employeeOp = claimResolver.getEmployee();
         if(employeeOp.isEmpty()){
-            throw new RuntimeException("Sorry! Employee not found");
+            throw new AesException("Sorry! Employee not found");
         }
         
         Optional<VerifierConfig> verifierOp = verificationService.prepareLogicForVerifiers(claimResolver,uri,"CATEGORY",demandRequestDto.getCategories());
@@ -241,7 +243,7 @@ public class DemandServiceImpl implements DemandService{
         demandRepository.save(demand);
         setVerifiers(demand, verifiers);
         List<ApprovalPanel> panels = getApprovalPanels(claimResolver, uri, demandRequestDto.getCategories());
-        if(verifiers.size()==0 && panels.size()>0){
+        if(verifiers.isEmpty() && !panels.isEmpty()){
             demand.setStatus(DemandStatus.PENDING_APPROVAL);
             Optional<ApprovalPanel> firstPanel = panels.stream().findFirst();
             if(firstPanel.isPresent()){
@@ -321,9 +323,8 @@ public class DemandServiceImpl implements DemandService{
     }
 
     private List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories) {
-        List<ApprovalPanel> approvalPanels = moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
+        return moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
                 Optional.ofNullable(categories),Optional.empty());
-        return approvalPanels;
     }
 
     private List<VerifierInfo> getVerifiers(Demand demand, Optional<VerifierConfig> verifierOp) {
@@ -332,7 +333,7 @@ public class DemandServiceImpl implements DemandService{
             VerifierConfig verification = verifierOp.get();
             verifiers = verification.getVerifiers();
             Boolean verificationRequired = verification.getVerificationRequired();
-            if(verificationRequired!=null && verificationRequired==true && verifiers!=null && verifiers.size()>0){
+            if(Boolean.TRUE.equals(verificationRequired) && !verifiers.isEmpty()){
                 demand.setStatus(DemandStatus.PENDING_VERIFICATION);
             }else{
                 demand.setStatus(DemandStatus.PENDING);
@@ -448,7 +449,7 @@ public class DemandServiceImpl implements DemandService{
                     categoryIds = modulePermission.get().get("category_id");
                     warehouseIds = modulePermission.get().get("warehouse_id");
                     return demandRepository.findAllDemandsByCategory(categoryIds,
-                            (warehouseIds !=null && warehouseIds.size()>0)? warehouseIds : List.of(warehouseId),
+                            (!warehouseIds.isEmpty())? warehouseIds : List.of(warehouseId),
                             demandNo.orElse(null),
                             fromDate,toDate,daysRemain.orElse(null),
                             pageable);
@@ -464,14 +465,10 @@ public class DemandServiceImpl implements DemandService{
     public Page<?> getAllPendingApprovalDemands(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                                 Optional<String> demandNo, Optional<Long> categoryId,
             Optional<String> fromDateStr, Optional<String> toDateStr) {
-//                ClaimResolver claimResolver = new ClaimResolver();
                 claimResolver.setToken(token);
         
                 String moduleUri = "demand/pending-approval";
-                // Sort sort = Sort.by(Sort.Direction.ASC,"id");
                 Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10));
-                // Optional<Map<String,List<Long>>> modulePermission = moduleAccessPermissionService
-                //         .getModulePermissionFilterByUri(loggedInUser,moduleUri);
                 Optional<Map<String,List<Long>>> modulePermission = integrationReaderService
                         .getModuleFilterByUri(token, moduleUri);
         
@@ -522,9 +519,6 @@ public class DemandServiceImpl implements DemandService{
         String moduleUri = "demand/pending-verification";
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10));
 
-        //TODO following commented code should be removed if new code works
-        // Optional<Map<String,List<Long>>> modulePermission = moduleAccessPermissionService
-        //         .getModulePermissionFilterByUri(loggedInUser,moduleUri);
         Optional<Map<String,List<Long>>> modulePermission = integrationReaderService
                 .getModuleFilterByUri(token, moduleUri);
 
@@ -572,7 +566,6 @@ public class DemandServiceImpl implements DemandService{
 
     @Override
     public Optional<DemandDetailResDto> getDemandDetail(Long id) {
-        LocalDateTime localDateTime = LocalDateTime.now();
 
         List<DemandRepository.DemandDetailItem> demandList = demandRepository.findByDemandId(id);
         DemandDetailResDto resDto = DemandDetailResDto.builder().build();
@@ -638,13 +631,12 @@ public class DemandServiceImpl implements DemandService{
         }
 
         if(resDto.getDemandId()!=null) {
-            // TODO modification required on following code
             List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
             List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
             verificationService
                     .getVerificationsByDomainTypeAndDomainId(DomainType.DEMAND, resDto.getDemandId())
-                    .stream().forEach(verifier->{
-                        if(verifier.getIsApproval()==false){
+                    .forEach(verifier->{
+                        if(Boolean.FALSE.equals(verifier.getIsApproval())){
                             verifiers.add(verifier);
                         }else{
                             approvers.add(verifier);
@@ -722,7 +714,7 @@ public class DemandServiceImpl implements DemandService{
                 if(itemDetailOp.isPresent()){
                     ItemDetail itemDetail = itemDetailOp.get();
                     stocks = itemDetail.getWarehouses().get(demandReceiveDto.getWarehouseId().toString());
-                    if(stocks.size()>0){
+                    if(!stocks.isEmpty()){
                         Map<String,Object> lastStock = stocks.get(0);
                         warehouseStoreId = (Long)lastStock.get("warehouseStoreId");
                     }
@@ -833,16 +825,12 @@ public class DemandServiceImpl implements DemandService{
     @Transactional
     public void resendDemandItem(Jwt token, DemandReceiveDto demandReceiveDto) {
 
-//        ClaimResolver claimResolver = new ClaimResolver();
         claimResolver.setToken(token);
         Optional<DemandDetail> demandDetailOp = demandDetailRepository
                 .findById(demandReceiveDto.getDemandDetailId());
 
         if(demandDetailOp.isPresent()){
             DemandDetail demandDetail = demandDetailOp.get();
-
-//            itemService.stockUpdateByDemand(demandReceiveDto.getWarehouseId(), demandDetail, StockType.STOCK_OUT);
-
             if(demandReceiveDto.getNote()!=null && !demandReceiveDto.getNote().isEmpty()){
 
                 commentService.addComment(commentService.prepareComment(claimResolver.getEmployee().get(),
@@ -858,7 +846,7 @@ public class DemandServiceImpl implements DemandService{
 
     @Override
     public void onRejected(Employee verifier, Long id, RejectDto rejectDto) {
-        // TODO need to optimize demand reject here
+        log.info("Rejected");
     }
 
     @Override
@@ -924,13 +912,6 @@ public class DemandServiceImpl implements DemandService{
                 if(item!=null) {
                     
                     demandDetail.setItem(item);
-//                    if (demandReceiveDto.getQty() != null && (demandDetail.getApprovedQuantity().compareTo(demandReceiveDto.getQty()) >= 0)) {
-//                        itemService.stockOut(item, demandReceiveDto.getQty(),demandReceiveDto.getWarehouseId(),
-//                                demandReceiveDto.getWarehouseStoreId());
-//                    } else {
-//                        itemService.stockOut(item, demandDetail.getApprovedQuantity(),
-//                                demandReceiveDto.getWarehouseId(),demandReceiveDto.getWarehouseStoreId());
-//                    }
                     if(demandReceiveDto.getNote()!=null && !demandReceiveDto.getNote().isEmpty()){
                         demandDetail.setStoreNote(demandReceiveDto.getNote());
                     }
@@ -970,7 +951,6 @@ public class DemandServiceImpl implements DemandService{
             setDemandDetail(demandRequestDto, demand, new ArrayList<>());
             demand.setReviewerId(null);
             demandRepository.save(demand);
-            // TODO following code needs to modify to maintain same behavior
             // remove all previous verification and approval request
             verificationService.removeVerification(demand.getId(), DomainType.DEMAND);
             dvahistoryRepository.deleteAllByDemandId(demand.getId());

@@ -107,13 +107,13 @@ public class CpsServerConfig {
 
     public String getPoReceiveEndpoint(String  id){
         StringBuilder sb = new StringBuilder();
-        sb.append(this.host).append(this.poReceiveEndpoint.replace("{id}", id.toString()));
+        sb.append(this.host).append(this.poReceiveEndpoint.replace("{id}", id));
         return sb.toString();
     }
 
     public String getPoRejectEndpoint(String id){
         StringBuilder sb = new StringBuilder();
-        sb.append(this.host).append(this.poRejectEndpoint.replace("{id}", id.toString()));
+        sb.append(this.host).append(this.poRejectEndpoint.replace("{id}", id));
         return sb.toString();
     }
 

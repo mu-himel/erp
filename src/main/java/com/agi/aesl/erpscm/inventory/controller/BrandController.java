@@ -2,7 +2,6 @@ package com.agi.aesl.erpscm.inventory.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryBrandDto;
-import com.agi.aesl.erpscm.inventory.entity.CategoryBrand;
 import com.agi.aesl.erpscm.inventory.service.CategoryBrandService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

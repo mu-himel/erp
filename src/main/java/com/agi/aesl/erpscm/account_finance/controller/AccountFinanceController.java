@@ -4,35 +4,29 @@ import com.agi.aesl.erpscm.account_finance.dto.request.LedgerAccountRequestDto;
 import com.agi.aesl.erpscm.account_finance.service.AccountService;
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/accounts")
+@RequiredArgsConstructor
 public class AccountFinanceController extends BaseController {
 
-    @Autowired
-    private AccountService accountService;
+
+    private final AccountService accountService;
 
     record LedgerRequest(Long id, String assetNo, String store, String category, String subCategory, String product,
                          String group, String status){}
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateLedgerAccount(
+    public ResponseEntity<Void> updateLedgerAccount(
             @RequestHeader("uri") String uri,
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id, @RequestBody LedgerAccountRequestDto ledgerAccountRequestDto){
@@ -41,7 +35,7 @@ public class AccountFinanceController extends BaseController {
     }
 
     @PutMapping("/review/{id}")
-    public ResponseEntity<?> review(
+    public ResponseEntity<Void> review(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody ReviewDto reviewDto
@@ -55,7 +49,7 @@ public class AccountFinanceController extends BaseController {
 
 
     @GetMapping("/ledgers")
-    public ResponseEntity<?> getLedgerRequests(
+    public ResponseEntity<Object> getLedgerRequests(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -65,7 +59,7 @@ public class AccountFinanceController extends BaseController {
     }
 
     @GetMapping("/ledgers/closed")
-    public ResponseEntity<?> getClosedLedgerRequests(
+    public ResponseEntity<Object> getClosedLedgerRequests(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -80,7 +74,7 @@ public class AccountFinanceController extends BaseController {
     }
 
     @GetMapping("/ledgers/pending-verifications")
-    public ResponseEntity<?> getPendingVerifications(
+    public ResponseEntity<Object> getPendingVerifications(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -93,7 +87,7 @@ public class AccountFinanceController extends BaseController {
     }
 
     @GetMapping("/ledgers/pending-approvals")
-    public ResponseEntity<?> getPendingApprovals(
+    public ResponseEntity<Object> getPendingApprovals(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -107,7 +101,7 @@ public class AccountFinanceController extends BaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getLedgerDetail(@PathVariable("id") Long id){
+    public ResponseEntity<Object> getLedgerDetail(@PathVariable("id") Long id){
         return new ResponseEntity<>(
                 accountService.getLedgerDetailById(id),
                 HttpStatus.OK
@@ -115,7 +109,7 @@ public class AccountFinanceController extends BaseController {
     }
 
     @GetMapping("/ledgers/approved")
-    public ResponseEntity<?> getApprovedLedgerRequests(
+    public ResponseEntity<Object> getApprovedLedgerRequests(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -127,7 +121,7 @@ public class AccountFinanceController extends BaseController {
     }
 
     @GetMapping("/ledgers/rejected")
-    public ResponseEntity<?> getRejectedLedgerRequests(
+    public ResponseEntity<Object> getRejectedLedgerRequests(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,

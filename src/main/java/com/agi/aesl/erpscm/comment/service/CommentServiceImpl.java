@@ -8,8 +8,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.agi.aesl.erpscm.comment.dto.CommentInfo;
 import com.agi.aesl.erpscm.comment.enums.ActionType;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.agi.aesl.erpscm.exception.AesException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,16 +28,22 @@ import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
 import com.agi.aesl.erpscm.fileupload.service.FileUploadService;
 
 @Service
+@RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService{
 
-    @Autowired  
-    private CommentRepository commentRepository;
 
-    @Autowired
-    private CommentAttachmentRepository commentAttachmentRepository;
+    private final CommentRepository commentRepository;
 
-    @Autowired
-    private FileUploadService fileUploadService;
+
+    private final CommentAttachmentRepository commentAttachmentRepository;
+
+
+    private final FileUploadService fileUploadService;
+
+    @Value("${upload.dir}")
+    private String uploadDir;
+
+    private static final String PATH_SEPARATOR="/";
 
     @Override
     public void addComment(CommentDto commentDto) {
@@ -57,7 +66,7 @@ public class CommentServiceImpl implements CommentService{
         comment.setAttachments(comment.getAttachments().stream().map(attachment->{
             attachment.setComment(comment);
             return attachment;
-        }).collect(Collectors.toList()));
+        }).toList());
         commentRepository.save(comment);
         
     }
@@ -93,18 +102,18 @@ public class CommentServiceImpl implements CommentService{
     }
 
     @Override
-    public List<?> getCommentsByDomain(DomainType domainType, Long domainId) {
+    public List<CommentInfo> getCommentsByDomain(DomainType domainType, Long domainId) {
         return commentRepository.findAllByDomainTypeAndDomainId(domainType,domainId);
     }
 
     @Override
     public ByteArrayResource load(String domainType, Long domainId, Long id, String filename) {
-        Optional<CommentAttachment> CommentAttachmentOp = commentAttachmentRepository.findById(id);
-        if(CommentAttachmentOp.isEmpty()){
+        Optional<CommentAttachment> commentAttachmentOp = commentAttachmentRepository.findById(id);
+        if(commentAttachmentOp.isEmpty()){
             return null;
         }
         try {
-            CommentAttachment commentAttachment = CommentAttachmentOp.get();
+            CommentAttachment commentAttachment = commentAttachmentOp.get();
             if(!commentAttachment.getAttachmentPath().contains(filename)){
                 return null;
             }
@@ -114,16 +123,16 @@ public class CommentServiceImpl implements CommentService{
             if (resource.exists() || resource.isReadable()) {
                 return resource;
             } else {
-                throw new RuntimeException("Could not read the file!");
+                throw new AesException("Could not read the file!");
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error: " + e.getMessage());
+            throw new AesException("Error: " + e.getMessage());
         }
     }
 
     @Override
     public List<FileUploadResponse> uploadAttachment(String domainType, Long domainId, List<MultipartFile> attachments) {
-        Path path = Path.of("./uploads/"+domainType+"/"+domainId+"/comments/");
+        Path path = Path.of(uploadDir+domainType+PATH_SEPARATOR+domainId+"/comments/");
         List<FileUploadResponse> fileUploadResponses = new ArrayList<>(); 
         for(MultipartFile attachment : attachments){
          fileUploadResponses.add(fileUploadService.uploadFile(path, attachment));
