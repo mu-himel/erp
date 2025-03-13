@@ -26,6 +26,8 @@ import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicatio
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,10 +35,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
+@Slf4j
 @Service
 public class IrStoreServiceImpl implements IrStoreService{
 
@@ -87,35 +89,6 @@ public class IrStoreServiceImpl implements IrStoreService{
         if(appliedVADto.getPanels().isEmpty() && appliedVADto.getVerifiers().isEmpty()){
             sIR.setIrStatus(IrStatus.COMPLETED);
         }
-//        var verifierOp =  verificationService.getVerifiers(loggedInUser, uri, categories);
-//        if(verifierOp instanceof Optional){
-//            List<Verifier> verifiers = new ArrayList<>();
-//            if (verifierOp.isPresent()) {
-//
-//                var verification =  (Map<String,Object>)verifierOp.get();
-//
-//                verifiers = (List<Verifier>) verification.get("verifiers");
-//
-//
-//                Boolean verificationRequired = (Boolean) verification.get("verificationRequired");
-//                if (verificationRequired != null && verificationRequired == true && verifiers != null && verifiers.size() > 0) {
-//                    sIR.setStatus(IrStatus.PENDING_VERIFICATION);
-//                } else {
-//                    sIR.setStatus(IrStatus.PENDING);
-//                }
-//
-//            } else {
-//                sIR.setStatus(IrStatus.PENDING);
-//            }
-//
-//            verificationService.setVerifiers(sIR, verifiers, DomainType.PSIR);
-//
-//            List<ApprovalSettingQuery.ApprovalPanel> approvalPanels = approvalSettingService
-//                    .getModuleWiseApprovalSetting(uri,
-//                            Optional.ofNullable(categories),Optional.empty());
-//
-//            verificationService.setApprovers(sIR, approvalPanels, DomainType.PSIR);
-//        }
     }
 
     @Override
@@ -145,8 +118,8 @@ public class IrStoreServiceImpl implements IrStoreService{
             List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
             List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
                     .getVerificationsByDomainTypeAndDomainId(DomainType.PSIR, storeIR.getId());
-            vrs.stream().forEach(verifier->{
-                if(verifier.getIsApproval()==false){
+            vrs.forEach(verifier->{
+                if(Boolean.FALSE.equals(verifier.getIsApproval())){
                     verifiers.add(verifier);
                 }else{
                     approvers.add(verifier);
@@ -198,10 +171,10 @@ public class IrStoreServiceImpl implements IrStoreService{
                 var itemDetailOp = itemService.getItemDetailWithWarehouse(item.getId());
                 if(itemDetailOp instanceof Optional && itemDetailOp.isPresent()){
                     ItemDetail itemDetail = (ItemDetail) itemDetailOp.get();
-                    List<Map<String,Object>> warehouses = (List<Map<String,Object>>)itemDetail
+                    List<Map<String,Object>> warehouses = itemDetail
                             .getWarehouses()
                             .get(transferStockDto.getWarehouseId().toString());
-                    if(warehouses.size()>0){
+                    if(!warehouses.isEmpty()){
                         Map<String,Object> warehouseStoreInfo = warehouses.get(0);
 
                         itemService.stockOut(new Item(itemDetail.getId()), transferStockDto.getTransferQty(),
@@ -231,10 +204,10 @@ public class IrStoreServiceImpl implements IrStoreService{
                 var itemDetailOp = itemService.getItemDetailWithWarehouse(item.getId());
                 if(itemDetailOp instanceof Optional && itemDetailOp.isPresent()){
                     ItemDetail itemDetail = (ItemDetail) itemDetailOp.get();
-                    List<Map<String,Object>> warehouses = (List<Map<String,Object>>)itemDetail
+                    List<Map<String,Object>> warehouses = itemDetail
                             .getWarehouses()
                             .get(receiveStockDto.getWarehouseId().toString());
-                    if(warehouses.size()>0){
+                    if(!warehouses.isEmpty()){
                         Map<String,Object> warehouseStoreInfo = warehouses.get(0);
                         itemService.stockIn(new Item(itemDetail.getId()), irdw.getReceivedQty(),
                                 (Long)warehouseStoreInfo.get("warehouseId"),
@@ -396,6 +369,6 @@ public class IrStoreServiceImpl implements IrStoreService{
 
     @Override
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
-
+        log.info("Rejected IrStore");
     }
 }

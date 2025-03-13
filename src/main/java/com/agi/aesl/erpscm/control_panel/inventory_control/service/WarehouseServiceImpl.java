@@ -82,7 +82,6 @@ public class WarehouseServiceImpl implements WarehouseService{
 //            throw new AesException("Name already exist");
         }
 
-        String oldName = warehouseOptional.get().getName();
         Warehouse newWarehouse = new Warehouse(warehouse.getId());
         newWarehouse.setName(warehouse.getName());
         newWarehouse.setLocation(warehouse.getLocation());
@@ -114,7 +113,7 @@ public class WarehouseServiceImpl implements WarehouseService{
             return filteredData;
         }
 
-        if(claimResolver.isAdmin()) {
+        if(Boolean.TRUE.equals(claimResolver.isAdmin())) {
             return warehouseRepository.findAllByName(name, pageable);
         }
 
@@ -137,22 +136,18 @@ public class WarehouseServiceImpl implements WarehouseService{
         Optional<Warehouse> warehouseOptional = warehouseRepository.findById(id);
         Boolean exist = categoryWarehouseStoreRepository.existsByWarehouseId(id);
         Boolean exist1 = warehouseStoreRepository.existsByWarehouseIdAndActive(id,true);
-        if(exist){
-            throw new RuntimeException("Sorry! This warehouse cannot be deleted exist in warehouse referred to category or subcategory ");
+        if(Boolean.TRUE.equals(exist)){
+            throw new AesException("Sorry! This warehouse cannot be deleted exist in warehouse referred to category or subcategory ");
         }
-        if(exist1){
+        if(Boolean.TRUE.equals(exist1)){
             throw new AesException("Sorry! This warehouse cannot be deleted store exist");
         }
-        warehouseOptional.ifPresent(warehouse -> {
-            warehouse.setActive(false);
-//            integrationWriterService.deleteWarehouse(token, warehouse.getName());
-        });
+        warehouseOptional.ifPresent(warehouse -> warehouse.setActive(false));
     }
 
     @Override
     public Optional<Warehouse> getWarehouse(Long id) {
-        Optional<Warehouse> ws = warehouseRepository.findWarehouseById(id);
-        return ws;
+        return warehouseRepository.findWarehouseById(id);
     }
 
     @Override

@@ -10,7 +10,6 @@ import org.springframework.beans.BeanUtils;
 import com.agi.aesl.erpscm.common.EntityConvertable;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
-import com.agi.aesl.erpscm.inventory.entity.CategoryBrand;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 
 import jakarta.validation.constraints.NotBlank;
@@ -26,10 +25,8 @@ public class CategoryRequestDto implements EntityConvertable<ItemCategory>{
     private Long id;
 
     @NotBlank(message = "Name is required")
-    // @ApiModelProperty(required = true)
     private String name;
 
-    // @ApiModelProperty(required = true)
     private String code;
     private String prefix;
 

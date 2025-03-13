@@ -6,8 +6,6 @@ import java.util.List;
 import com.agi.aesl.erpscm.demand.entity.DemandDetailAttribute;
 import com.agi.aesl.erpscm.demand.enums.DemandPriority;
 import com.agi.aesl.erpscm.demand.enums.DemandStatus;
-import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
