@@ -1,14 +1,11 @@
 package com.agi.aesl.erpscm.inventory.service;
 
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
-
-import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 
 public interface SalesInventoryService {
 
@@ -37,5 +34,5 @@ public interface SalesInventoryService {
 
     List<ProductInfo> getProducts(Long warehouseId, Long categoryId, Long subCategoryId);
     Page<?> getProducts(Optional<Long> warehouseId, Optional<Long> categoryId, Optional<Long> subCategoryId,
-                        Optional<Integer> page, Optional<Integer> size);
+                        Optional<String>name,Optional<Integer> page, Optional<Integer> size);
 }
