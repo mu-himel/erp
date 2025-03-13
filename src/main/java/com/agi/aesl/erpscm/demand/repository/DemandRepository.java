@@ -18,17 +18,19 @@ import com.agi.aesl.erpscm.demand.enums.DemandStatus;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import static com.agi.aesl.erpscm.demand.repository.DemandQuery.*;
+
 
 @Repository
-public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuery{
+public interface DemandRepository extends JpaRepository<Demand,Long>{
     
     @Query("SELECT max(d.id) FROM Demand d")
     Optional<Long> findMaxOrderById();
 
-    @Query(value = demandDetailQuery,nativeQuery = true)
+    @Query(value = DEMAND_DETAIL_QUERY,nativeQuery = true)
     List<DemandDetailItem> findByDemandId(Long id);
 
-    @Query(value = getStockBySubCatAndWarehouseId,nativeQuery = true)
+    @Query(value = GET_STOCK_BY_SUB_CAT_AND_WAREHOUSE_ID,nativeQuery = true)
     List<SubCatStockInfo> findStockBySubCatAndWarehouse(Long subCategoryId, Long warehouseId);
 
     interface SubCatStockInfo{
@@ -93,18 +95,18 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
     }
 
 
-    @Query(value = myDemandSql, countQuery = countMyDemandSql)
+    @Query(value = MY_DEMANDS, countQuery = COUNT_MY_DEMANDS)
     Page<DemandListInfo> findAllByRequestedById(String id,
                                                 String demandNo,Long categoryId,
                                                 LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
-    @Query(value = getAllPending, countQuery = countAllPending)
+    @Query(value = GET_ALL_PENDING, countQuery = COUNT_ALL_PENDING)
     Page<DemandListInfo> findAllDemands(Long warehouseId, String demandNo,
                                         Long categoryId,
                                         LocalDateTime fromDate, LocalDateTime toDate,
                                         Integer daysRemain, Pageable pageable);
 
-    @Query(value = getAllPendingVerification, countQuery = countAllPendingVerification, nativeQuery = true)
+    @Query(value = GET_ALL_PENDING_VERIFICATION, countQuery = COUNT_ALL_PENDING_VERIFICATION, nativeQuery = true)
     Page<DemandPendingVerificationApprovalList> findAllDemandsByDemandStatusAndNextVerifierId(
             List<String> pendingVerification, String nextVerifierId,
             String demandNo, Long categoryId,
@@ -149,26 +151,26 @@ public interface DemandRepository extends JpaRepository<Demand,Long>, DemandQuer
     }
 
 
-    @Query(value = getAllCloseDemands, countQuery = countAllCloseDemands)
+    @Query(value = GET_ALL_CLOSE_DEMANDS, countQuery = COUNT_ALL_CLOSE_DEMANDS)
     Page<DemandListInfo> findAllCloseDemands(Long warehouseId,
                                              String demandNo, Long categoryId,
                                              LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
-    @Query(value = getAllPendingApprovalDemands, countQuery=countAllPendingApprovalDemands, nativeQuery = true)
+    @Query(value = GET_ALL_PENDING_APPROVAL_DEMANDS, countQuery=COUNT_ALL_PENDING_APPROVAL_DEMANDS, nativeQuery = true)
     Page<DemandPendingVerificationApprovalList> findAllDemandsByDemandStatusAndNextApproverId(List<String> demandStatus, String nextApproverId,
             String demandNo, Long categoryId, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
-    @Query(value = getAllDemandsByCategory, countQuery = countAllDemandsByCategory)
+    @Query(value = GET_ALL_DEMANDS_BY_CATEGORY, countQuery = COUNT_ALL_DEMANDS_BY_CATEGORY)
     Page<DemandListInfo> findAllDemandsByCategory(List<Long> categories, List<Long> warehouseId,
                                                   String demandNo, LocalDateTime fromDate,
             LocalDateTime toDate,Integer daysRemain, Pageable pageable);
 
-    @Query(value=getAllFilteredPendingVerificationDemands, countQuery = countAllFilteredPendingVerificationDemands,nativeQuery = true)
+    @Query(value=GET_ALL_FILTERED_PV_DEMANDS, countQuery = COUNT_ALL_FILTERED_PV_DEMANDS,nativeQuery = true)
     Page<DemandPendingVerificationApprovalList> findAllDemandsByCategoryAndDemandStatusAndNextVerifierId(
             List<Long> categories, String nextVerifierId,String demandNo,
             List<String> pendingVerification, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
     
-    @Query(value = getAllFilteredPendingApprovalDemands, countQuery = countAllFilteredPendingApprovalDemands,nativeQuery = true)
+    @Query(value = GET_ALL_FILTERED_PA_DEMANDS, countQuery = COUNT_ALL_FILTERED_PA_DEMANDS,nativeQuery = true)
     Page<DemandPendingVerificationApprovalList> findAllDemandsByCategoryAndDemandStatusAndNextApproverId(
             List<Long> categoryIds, String nextApproverId,String demandNo,
             List<String> demandStatuses, LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);

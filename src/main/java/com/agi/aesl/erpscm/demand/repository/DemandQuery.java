@@ -1,212 +1,213 @@
 package com.agi.aesl.erpscm.demand.repository;
 
-interface DemandQuery {
-
-    String prSql = """
-            SELECT COALESCE(SUM(pr_qty),0) FROM (SELECT sdd.pr_qty  as pr_qty, sd.id as demandId, sdd.id as ddId,
-            			CASE WHEN scb.id IS NOT NULL THEN
-            			concat (scb.name, ' - ',GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - '))\s
-            			ELSE
-            			GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - ')
-            			END as pr_attrs
-            			FROM product_requirements pr
-                        LEFT JOIN scm_demand_details sdd ON sdd.id = pr.demand_detail_id
-                        LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
-                        LEFT JOIN scm_category_brands scb ON sdd.brand_id = scb.id
-                        LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
-                        WHERE pr.status = 'OPEN' AND sd.warehouse_id = 205
-                        GROUP BY pr.id
-                        ) r WHERE r.pr_attrs LIKE CONCAT('%','Dize 64 GB','%')
-            """;
-    String openPr="(SELECT count(*) as pr_qty  FROM product_requirements pr WHERE pr.demand_detail_id = dd.id)";
-    String demandDetailQuery= """
-            SELECT
-            	i.id as id,
-            	dd.id as demandDetailId,
-            	CASE WHEN dd.item_id IS NULL THEN
-            	    dd.item_unit
-            	ELSE
-                    i.item_unit
-                END as itemUnit,
-            	CASE WHEN dd.brand_id  IS NULL THEN
-                (SELECT COALESCE(SUM(pr_qty),0) FROM (SELECT sdd.pr_qty  as pr_qty, sd.id as demandId, sdd.id as ddId,
-            			CASE WHEN scb.id IS NOT NULL THEN
-            			concat (scb.name, ' - ',GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - '))\s
-            			ELSE
-            			GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - ')
-            			END as pr_attrs
-            			FROM product_requirements pr
-                        LEFT JOIN scm_demand_details sdd ON sdd.id = pr.demand_detail_id
-                        LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
-                        LEFT JOIN scm_category_brands scb ON sdd.brand_id = scb.id
-                        LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
-                        WHERE pr.status = 'OPEN' AND sd.warehouse_id = d.warehouse_id
-                        GROUP BY pr.id
-                        ) r WHERE r.pr_attrs LIKE CONCAT('%',GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - '),'%'))
-                ELSE 
-                (SELECT COALESCE(SUM(pr_qty),0) FROM (SELECT sdd.pr_qty  as pr_qty, sd.id as demandId, sdd.id as ddId,
-            			CASE WHEN scb.id IS NOT NULL THEN
-            			concat (scb.name, ' - ',GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - '))
-            			ELSE
-            			GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - ')
-            			END as pr_attrs
-            			FROM product_requirements pr
-                        LEFT JOIN scm_demand_details sdd ON sdd.id = pr.demand_detail_id
-                        LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
-                        LEFT JOIN scm_category_brands scb ON sdd.brand_id = scb.id
-                        LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
-                        WHERE pr.status = 'OPEN' AND sd.warehouse_id = d.warehouse_id
-                        GROUP BY pr.id
-                        ) r WHERE r.pr_attrs LIKE CONCAT('%',CONCAT(cb.name,' - ',GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ')),'%'))
-                END  as prQty,
-                """+openPr+"""
-                     as openPrQty,
-                d.id as demandId,
-                d.next_verifier_id as nextVerifierId,
-                d.next_approver_id as nextApproverId,
-                d.reviewer_id as reviewerId,
-                d.demand_date as demandDate,
-                d.demand_no as demandNo,
-                d.status as demandStatus,
-                d.is_canceled as isCanceled,
-                dd.approved_quantity as approvedQuantity,
-                dd.request_quantity as requestQuantity,
-                dd.status as demandDetailStatus,
-                dd.specification  as specification,
-                dd.priority as demandPriority,
-                dd.item_category_id as itemCategoryId,
-                dd.item_parent_category_id as itemParentCategoryId,
-                dd.receive_note as receiveNote,
-                dd.store_note as storeNote,
-                dd.decline_note as declineNote,
-                cb.id as brandId,
-                cb.name as brandName,
-                GROUP_CONCAT(dda.attribute_type) as attributeTypes,
-                GROUP_CONCAT(dda.attribute_value) as attributeValues,
-                CASE WHEN dd.brand_id  IS NULL THEN
-                  GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - ')
-                WHEN dd.brand_id IS NOT NULL AND dda.id IS NOT NULL THEN
-                  CONCAT(cb.name,' - ',GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - '))
-                WHEN dd.brand_id IS NOT NULL AND dda.id IS NULL THEN
-                    cb.name
+public class DemandQuery {
+    private DemandQuery(){}
+    public static final String COUNT_START="SELECT COUNT(*) FROM (";
+    public static final String COUNT_END=") AS TOTAL";
+    public static final String PR_SQL = """
+                SELECT COALESCE(SUM(pr_qty),0) FROM (SELECT sdd.pr_qty  as pr_qty, sd.id as demandId, sdd.id as ddId,
+                CASE WHEN scb.id IS NOT NULL THEN
+                concat (scb.name, ' - ',GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - '))\s
                 ELSE
-                  GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - ')
-                END as name,
-                w.id as warehouseId,
-                w.name as warehouseName,
-                w.location as warehouseLocation,
-                i.code as code,
-                CASE WHEN dda.id IS NULL THEN
-                    COALESCE((SELECT COALESCE(sum(distinct i3.stock_threshold_qty),0) as stockThresholdQty
-                    FROM scm_items i3 WHERE i3.item_category_id = dd.item_category_id),0)
-                WHEN dd.brand_id IS NULL THEN
-                    COALESCE((SELECT sum(stockThresholdQty) as stockThresholdQty FROM (
-                        SELECT
-                            sum(distinct i2.stock_threshold_qty) as stockThresholdQty,
-                            ia.item_id,
-                            GROUP_CONCAT(DISTINCT attribute_type,' ',attribute_value , ' ',attribute_unit order by ia.id asc separator ' - ') item_attributes
-                        FROM scm_item_attributes ia
-                        LEFT JOIN scm_items i2 ON i2.id = ia.item_id
-                        WHERE i2.active = 1 
-                        GROUP BY ia.item_id ) stockResulSet
-                         WHERE stockResulSet.item_attributes
-                            LIKE CONCAT('%',GROUP_CONCAT(attribute_type,' ',attribute_value ,
-                                ' ',attribute_unit separator ' - '),'%')),0)
-                WHEN dd.brand_id IS NOT NULL THEN
-                    COALESCE((SELECT sum(stockThresholdQty) as stockThresholdQty FROM (
-                        SELECT
-                            sum(distinct i2.stock_threshold_qty) as stockThresholdQty,
-                            ia.item_id,
-                            GROUP_CONCAT(DISTINCT attribute_type,' ',attribute_value , ' ',attribute_unit order by ia.id asc separator ' - ') item_attributes
-                        FROM scm_item_attributes ia
-                        LEFT JOIN scm_items i2 ON i2.id = ia.item_id
-                        WHERE i2.brand_id = dd.brand_id AND i2.active = 1
-                        GROUP BY ia.item_id ) stockResulSet
-                         WHERE stockResulSet.item_attributes
-                            LIKE CONCAT('%',GROUP_CONCAT(attribute_type,' ',attribute_value ,
-                                ' ',attribute_unit separator ' - '),'%')),0)
-                END as stockThresholdQty,
-                e.id as empId,
-                e.employee_id as employeeId,
-                e.employee_name as employeeName,
-                re.employee_name as reportingManager,
-                e.department_name as department,
-                e.designation_name as designation,
-                ic.name as category,
-                ic.code as categoryCode,
-                ic2.name as parentCategory,
-                ic2.code as parentCategoryCode,
-                CASE WHEN dda.id IS NULL THEN
-                    (SELECT COALESCE(sum(is2.stock_qty),0) as stockQty FROM scm_item_stocks is2 WHERE is2.item_id IN (
-                        SELECT i.id from scm_items i WHERE i.item_category_id = dd.item_category_id
-                    ) AND is2.warehouse_id = d.warehouse_id)
-                WHEN dd.brand_id  IS NULL THEN
-                    COALESCE((
-                        SELECT sum(stockQty) as stockQty FROM (
-                        SELECT
-                            (
-                                SELECT sum(stock_qty) FROM scm_item_stocks is1 where is1.item_id = ia.item_id 
-                                AND is1.warehouse_id = d.warehouse_id 
-                            ) stockQty,
-                            ia.item_id,
-                            GROUP_CONCAT(DISTINCT attribute_type,' ',attribute_value , ' ',attribute_unit order by ia.id asc separator ' - ') item_attributes
-                        FROM scm_item_attributes ia
-                        LEFT JOIN scm_items i2 ON i2.id = ia.item_id
-                        WHERE i2.active = 1
-                        GROUP BY ia.item_id ) stockResulSet
-                         WHERE stockResulSet.item_attributes
-                            LIKE CONCAT('%',GROUP_CONCAT(attribute_type,' ',attribute_value ,
-                                ' ',attribute_unit separator ' - '),'%')
-                        ),0)
-                WHEN dd.brand_id IS NOT NULL THEN
-                    COALESCE((SELECT sum(stockQty) as stockQty FROM (
-                        SELECT
-                            (
-                                SELECT sum(stock_qty) FROM scm_item_stocks is1 where is1.item_id = ia.item_id 
-                                AND is1.warehouse_id = d.warehouse_id 
-                            ) stockQty,
-                            ia.item_id,
-                            GROUP_CONCAT(DISTINCT attribute_type,' ',attribute_value , ' ',attribute_unit order by ia.id asc separator ' - ') item_attributes
-                        FROM scm_item_attributes ia
-                        LEFT JOIN scm_items i2 ON i2.id = ia.item_id
-                        WHERE i2.brand_id = dd.brand_id AND i2.active = 1
-                        GROUP BY ia.item_id ) stockResulSet
-                         WHERE stockResulSet.item_attributes
-                            LIKE CONCAT('%',GROUP_CONCAT(attribute_type,' ',attribute_value ,
-                                ' ',attribute_unit order by dda.id asc separator ' - '),'%')),0)
-                
-                END as currentStockQty,
-                d.delivery_date as deliveryDate,
-                (DATEDIFF(d.delivery_date,CURRENT_DATE)) as daysRemain,
-            	(SELECT sum(p.approved_quantity) FROM (SELECT
-                                            	sdd.approved_quantity,
-                                            	scb.name as brand_name,
-                                            	GROUP_CONCAT(DISTINCT sdda.attribute_type,' ',sdda.attribute_value , ' ',sdda.attribute_unit order by sdda.id asc separator ' - ') attribute_name,	
-                                                sdd.item_category_id as categoryId
-                                            FROM scm_demand_details sdd
-                                            LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
-                                            LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
-                                            LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
-                                            WHERE sdd.status IN ('PENDING_QC') AND sd.warehouse_id = d.warehouse_id AND sdd.approved_quantity > 0
-                                            	GROUP BY sdd.item_id) p WHERE (p.categoryId = dd.item_category_id) AND (cb.name IS NULL OR p.brand_name = cb.name) AND p.attribute_name LIKE GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value,' ',dda.attribute_unit order by dda.id asc separator ' - ') 
-                                            GROUP BY p.brand_name, p.attribute_name) as inTransit,
-            	GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - ') deamndAttributes
-            FROM scm_demand_details dd
-            LEFT JOIN scm_demand_detail_attributes dda on dda.demand_detail_id = dd.id
-            LEFT JOIN scm_demands d on d.id=dd.demand_id
-            LEFT JOIN scm_category_brands cb on cb.id = dd.brand_id
-            LEFT JOIN scm_items i on i.id = dd.item_id
-            LEFT JOIN scm_item_categories ic on ic.id = dd.item_category_id
-            LEFT JOIN scm_item_categories ic2 on ic2.id = dd.item_parent_category_id
-            LEFT JOIN acl_users e on e.id = d.requested_by_id
-            LEFT JOIN acl_users re on e.reporting_manager_id = re.id
-            LEFT JOIN scm_warehouses w ON w.id = d.warehouse_id
-            WHERE demand_id = :id
-            GROUP BY dda.demand_detail_id
+                GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - ')
+                END as pr_attrs
+                FROM product_requirements pr
+                LEFT JOIN scm_demand_details sdd ON sdd.id = pr.demand_detail_id
+                LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
+                LEFT JOIN scm_category_brands scb ON sdd.brand_id = scb.id
+                LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+                WHERE pr.status = 'OPEN' AND sd.warehouse_id = 205
+                GROUP BY pr.id
+                ) r WHERE r.pr_attrs LIKE CONCAT('%','Dize 64 GB','%')
+            """;
+    public static final String OPEN_PR="(SELECT count(*) as pr_qty  FROM product_requirements pr WHERE pr.demand_detail_id = dd.id)";
+    public static final String DEMAND_DETAIL_QUERY= """
+                SELECT
+                    i.id as id,
+                    dd.id as demandDetailId,
+                    CASE WHEN dd.item_id IS NULL THEN
+                        dd.item_unit
+                    ELSE
+                        i.item_unit
+                    END as itemUnit,
+                    CASE WHEN dd.brand_id  IS NULL THEN
+                    (SELECT COALESCE(SUM(pr_qty),0) FROM (SELECT sdd.pr_qty  as pr_qty, sd.id as demandId, sdd.id as ddId,
+                            CASE WHEN scb.id IS NOT NULL THEN
+                            concat (scb.name, ' - ',GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - '))\s
+                            ELSE
+                            GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - ')
+                            END as pr_attrs
+                            FROM product_requirements pr
+                            LEFT JOIN scm_demand_details sdd ON sdd.id = pr.demand_detail_id
+                            LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
+                            LEFT JOIN scm_category_brands scb ON sdd.brand_id = scb.id
+                            LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+                            WHERE pr.status = 'OPEN' AND sd.warehouse_id = d.warehouse_id
+                            GROUP BY pr.id
+                            ) r WHERE r.pr_attrs LIKE CONCAT('%',GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - '),'%'))
+                    ELSE
+                    (SELECT COALESCE(SUM(pr_qty),0) FROM (SELECT sdd.pr_qty  as pr_qty, sd.id as demandId, sdd.id as ddId,
+                            CASE WHEN scb.id IS NOT NULL THEN
+                            concat (scb.name, ' - ',GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - '))
+                            ELSE
+                            GROUP_CONCAT(sdda.attribute_type,' ',sdda.attribute_value,' ',sdda.attribute_unit separator ' - ')
+                            END as pr_attrs
+                            FROM product_requirements pr
+                            LEFT JOIN scm_demand_details sdd ON sdd.id = pr.demand_detail_id
+                            LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
+                            LEFT JOIN scm_category_brands scb ON sdd.brand_id = scb.id
+                            LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+                            WHERE pr.status = 'OPEN' AND sd.warehouse_id = d.warehouse_id
+                            GROUP BY pr.id
+                            ) r WHERE r.pr_attrs LIKE CONCAT('%',CONCAT(cb.name,' - ',GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit separator ' - ')),'%'))
+                    END  as prQty,
+                    """+OPEN_PR+"""
+                         as openPrQty,
+                    d.id as demandId,
+                    d.next_verifier_id as nextVerifierId,
+                    d.next_approver_id as nextApproverId,
+                    d.reviewer_id as reviewerId,
+                    d.demand_date as demandDate,
+                    d.demand_no as demandNo,
+                    d.status as demandStatus,
+                    d.is_canceled as isCanceled,
+                    dd.approved_quantity as approvedQuantity,
+                    dd.request_quantity as requestQuantity,
+                    dd.status as demandDetailStatus,
+                    dd.specification  as specification,
+                    dd.priority as demandPriority,
+                    dd.item_category_id as itemCategoryId,
+                    dd.item_parent_category_id as itemParentCategoryId,
+                    dd.receive_note as receiveNote,
+                    dd.store_note as storeNote,
+                    dd.decline_note as declineNote,
+                    cb.id as brandId,
+                    cb.name as brandName,
+                    GROUP_CONCAT(dda.attribute_type) as attributeTypes,
+                    GROUP_CONCAT(dda.attribute_value) as attributeValues,
+                    CASE WHEN dd.brand_id  IS NULL THEN
+                      GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - ')
+                    WHEN dd.brand_id IS NOT NULL AND dda.id IS NOT NULL THEN
+                      CONCAT(cb.name,' - ',GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - '))
+                    WHEN dd.brand_id IS NOT NULL AND dda.id IS NULL THEN
+                        cb.name
+                    ELSE
+                      GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - ')
+                    END as name,
+                    w.id as warehouseId,
+                    w.name as warehouseName,
+                    w.location as warehouseLocation,
+                    i.code as code,
+                    CASE WHEN dda.id IS NULL THEN
+                        COALESCE((SELECT COALESCE(sum(distinct i3.stock_threshold_qty),0) as stockThresholdQty
+                        FROM scm_items i3 WHERE i3.item_category_id = dd.item_category_id),0)
+                    WHEN dd.brand_id IS NULL THEN
+                        COALESCE((SELECT sum(stockThresholdQty) as stockThresholdQty FROM (
+                            SELECT
+                                sum(distinct i2.stock_threshold_qty) as stockThresholdQty,
+                                ia.item_id,
+                                GROUP_CONCAT(DISTINCT attribute_type,' ',attribute_value , ' ',attribute_unit order by ia.id asc separator ' - ') item_attributes
+                            FROM scm_item_attributes ia
+                            LEFT JOIN scm_items i2 ON i2.id = ia.item_id
+                            WHERE i2.active = 1
+                            GROUP BY ia.item_id ) stockResulSet
+                             WHERE stockResulSet.item_attributes
+                                LIKE CONCAT('%',GROUP_CONCAT(attribute_type,' ',attribute_value ,
+                                    ' ',attribute_unit separator ' - '),'%')),0)
+                    WHEN dd.brand_id IS NOT NULL THEN
+                        COALESCE((SELECT sum(stockThresholdQty) as stockThresholdQty FROM (
+                            SELECT
+                                sum(distinct i2.stock_threshold_qty) as stockThresholdQty,
+                                ia.item_id,
+                                GROUP_CONCAT(DISTINCT attribute_type,' ',attribute_value , ' ',attribute_unit order by ia.id asc separator ' - ') item_attributes
+                            FROM scm_item_attributes ia
+                            LEFT JOIN scm_items i2 ON i2.id = ia.item_id
+                            WHERE i2.brand_id = dd.brand_id AND i2.active = 1
+                            GROUP BY ia.item_id ) stockResulSet
+                             WHERE stockResulSet.item_attributes
+                                LIKE CONCAT('%',GROUP_CONCAT(attribute_type,' ',attribute_value ,
+                                    ' ',attribute_unit separator ' - '),'%')),0)
+                    END as stockThresholdQty,
+                    e.id as empId,
+                    e.employee_id as employeeId,
+                    e.employee_name as employeeName,
+                    re.employee_name as reportingManager,
+                    e.department_name as department,
+                    e.designation_name as designation,
+                    ic.name as category,
+                    ic.code as categoryCode,
+                    ic2.name as parentCategory,
+                    ic2.code as parentCategoryCode,
+                    CASE WHEN dda.id IS NULL THEN
+                        (SELECT COALESCE(sum(is2.stock_qty),0) as stockQty FROM scm_item_stocks is2 WHERE is2.item_id IN (
+                            SELECT i.id from scm_items i WHERE i.item_category_id = dd.item_category_id
+                        ) AND is2.warehouse_id = d.warehouse_id)
+                    WHEN dd.brand_id  IS NULL THEN
+                        COALESCE((
+                            SELECT sum(stockQty) as stockQty FROM (
+                            SELECT
+                                (
+                                    SELECT sum(stock_qty) FROM scm_item_stocks is1 where is1.item_id = ia.item_id
+                                    AND is1.warehouse_id = d.warehouse_id
+                                ) stockQty,
+                                ia.item_id,
+                                GROUP_CONCAT(DISTINCT attribute_type,' ',attribute_value , ' ',attribute_unit order by ia.id asc separator ' - ') item_attributes
+                            FROM scm_item_attributes ia
+                            LEFT JOIN scm_items i2 ON i2.id = ia.item_id
+                            WHERE i2.active = 1
+                            GROUP BY ia.item_id ) stockResulSet
+                             WHERE stockResulSet.item_attributes
+                                LIKE CONCAT('%',GROUP_CONCAT(attribute_type,' ',attribute_value ,
+                                    ' ',attribute_unit separator ' - '),'%')
+                            ),0)
+                    WHEN dd.brand_id IS NOT NULL THEN
+                        COALESCE((SELECT sum(stockQty) as stockQty FROM (
+                            SELECT
+                                (
+                                    SELECT sum(stock_qty) FROM scm_item_stocks is1 where is1.item_id = ia.item_id
+                                    AND is1.warehouse_id = d.warehouse_id
+                                ) stockQty,
+                                ia.item_id,
+                                GROUP_CONCAT(DISTINCT attribute_type,' ',attribute_value , ' ',attribute_unit order by ia.id asc separator ' - ') item_attributes
+                            FROM scm_item_attributes ia
+                            LEFT JOIN scm_items i2 ON i2.id = ia.item_id
+                            WHERE i2.brand_id = dd.brand_id AND i2.active = 1
+                            GROUP BY ia.item_id ) stockResulSet
+                             WHERE stockResulSet.item_attributes
+                                LIKE CONCAT('%',GROUP_CONCAT(attribute_type,' ',attribute_value ,
+                                    ' ',attribute_unit order by dda.id asc separator ' - '),'%')),0)
+                    END as currentStockQty,
+                    d.delivery_date as deliveryDate,
+                    (DATEDIFF(d.delivery_date,CURRENT_DATE)) as daysRemain,
+                    (SELECT sum(p.approved_quantity) FROM (SELECT
+                                                    sdd.approved_quantity,
+                                                    scb.name as brand_name,
+                                                    GROUP_CONCAT(DISTINCT sdda.attribute_type,' ',sdda.attribute_value , ' ',sdda.attribute_unit order by sdda.id asc separator ' - ') attribute_name,
+                                                    sdd.item_category_id as categoryId
+                                                FROM scm_demand_details sdd
+                                                LEFT JOIN scm_demands sd ON sd.id = sdd.demand_id
+                                                LEFT JOIN scm_demand_detail_attributes sdda ON sdda.demand_detail_id = sdd.id
+                                                LEFT JOIN scm_category_brands scb ON scb.id = sdd.brand_id
+                                                WHERE sdd.status IN ('PENDING_QC') AND sd.warehouse_id = d.warehouse_id AND sdd.approved_quantity > 0
+                                                    GROUP BY sdd.item_id) p WHERE (p.categoryId = dd.item_category_id) AND (cb.name IS NULL OR p.brand_name = cb.name) AND p.attribute_name LIKE GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value,' ',dda.attribute_unit order by dda.id asc separator ' - ')
+                                                GROUP BY p.brand_name, p.attribute_name) as inTransit,
+                    GROUP_CONCAT(dda.attribute_type,' ',dda.attribute_value , ' ',dda.attribute_unit order by dda.id asc separator ' - ') deamndAttributes
+                FROM scm_demand_details dd
+                LEFT JOIN scm_demand_detail_attributes dda on dda.demand_detail_id = dd.id
+                LEFT JOIN scm_demands d on d.id=dd.demand_id
+                LEFT JOIN scm_category_brands cb on cb.id = dd.brand_id
+                LEFT JOIN scm_items i on i.id = dd.item_id
+                LEFT JOIN scm_item_categories ic on ic.id = dd.item_category_id
+                LEFT JOIN scm_item_categories ic2 on ic2.id = dd.item_parent_category_id
+                LEFT JOIN acl_users e on e.id = d.requested_by_id
+                LEFT JOIN acl_users re on e.reporting_manager_id = re.id
+                LEFT JOIN scm_warehouses w ON w.id = d.warehouse_id
+                WHERE demand_id = :id
+                GROUP BY dda.demand_detail_id
             """;
 
-    String myDemandSql = """
-            SELECT 
+    public static final String MY_DEMANDS = """
+            SELECT
                 d.id as id,
                 d.demandNo as demandNo,
                 d.status as status,
@@ -214,12 +215,12 @@ interface DemandQuery {
                 cat as category,
                 COUNT(dd) as itemsQty,
                 d.requestedBy as requestedBy
-            FROM Demand d 
+            FROM Demand d
             LEFT JOIN d.category cat
             LEFT JOIN d.requestedBy r
             LEFT JOIN d.demandDetails dd
             LEFT JOIN dd.item i
-            LEFT JOIN dd.itemCategory c 
+            LEFT JOIN dd.itemCategory c
             WHERE r.id=:id
             AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
             AND (COALESCE(:categoryId) IS NULL OR cat.id = :categoryId)
@@ -228,10 +229,10 @@ interface DemandQuery {
             GROUP BY d.id
             """;
 
-    String countMyDemandSql = """
+    public static final String COUNT_MY_DEMANDS = """
             SELECT count(*) FROM Demand d
             LEFT JOIN d.requestedBy r
-            LEFT JOIN d.category cat 
+            LEFT JOIN d.category cat
             WHERE r.id=:id
             AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
             AND (COALESCE(:categoryId) IS NULL OR cat.id = :categoryId)
@@ -240,8 +241,8 @@ interface DemandQuery {
             GROUP BY d.id""";
 
 
-    String getAllPending ="""
-        SELECT 
+    public static final String GET_ALL_PENDING ="""
+        SELECT
         d.id as id,
            d.demandNo as demandNo,
            d.status as status,
@@ -250,38 +251,38 @@ interface DemandQuery {
            COUNT(dd) as itemsQty,
            d.requestedBy as requestedBy,
            DATEDIFF(d.deliveryDate,CURRENT_DATE) as daysRemain
-       FROM Demand d 
-        LEFT JOIN d.requestedBy r 
+       FROM Demand d
+        LEFT JOIN d.requestedBy r
         LEFT JOIN d.category cat
-        LEFT JOIN d.warehouse w 
-        LEFT JOIN d.demandDetails dd 
-        LEFT JOIN dd.item i 
-        LEFT JOIN dd.itemCategory c 
+        LEFT JOIN d.warehouse w
+        LEFT JOIN d.demandDetails dd
+        LEFT JOIN dd.item i
+        LEFT JOIN dd.itemCategory c
         WHERE d.status NOT IN ('PENDING_APPROVAL','PENDING_VERIFICATION','REJECTED','RECEIVED','COMPLETED','CANCELED','DECLINED')
-        AND (:warehouseId IS NULL OR w.id = :warehouseId) 
+        AND (:warehouseId IS NULL OR w.id = :warehouseId)
         AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
         AND (COALESCE(:categoryId) IS NULL OR cat.id = :categoryId)
         AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
         AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
-        GROUP BY d.id 
-        """;
+        GROUP BY d.id
+       """;
 
-    String countAllPending = """
+    public static final String COUNT_ALL_PENDING = """
         SELECT count(d) FROM Demand d
         LEFT JOIN d.requestedBy r
         LEFT JOIN d.warehouse w
         LEFT JOIN d.category cat
         WHERE d.status NOT IN ('PENDING_APPROVAL','REJECTED','PENDING_VERIFICATION','RECEIVED','COMPLETED','CANCELED','DECLINED')
-        AND (:warehouseId IS NULL OR w.id = :warehouseId) 
+        AND (:warehouseId IS NULL OR w.id = :warehouseId)
         AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
         AND (COALESCE(:categoryId) IS NULL OR cat.id = :categoryId)
-        AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
+        AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
         AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
-        GROUP BY d.id """;
+        GROUP BY d.id""";
 
 
-    String getAllPendingVerification = """
-            SELECT 
+    public static final String GET_ALL_PENDING_VERIFICATION = """
+            SELECT
                 d.id as id,
                 d.demand_no as demandNo,
                 d.status as status,
@@ -292,140 +293,7 @@ interface DemandQuery {
                 d.demand_date as demandDate,
                 pc.name as category,
                 (select count(dd1.id) from scm_demand_details dd1 WHERE dd1.demand_id = d.id) as itemsQty,
-                CONCAT(e.employee_id,'-',e.employee_name) as requestedBy 
-            FROM scm_demands d 
-            LEFT JOIN acl_users e ON e.id = d.requested_by_id
-            LEFT JOIN scm_warehouses w ON w.id = d.warehouse_id
-            LEFT JOIN scm_demand_details dd ON dd.demand_id = d.id
-            LEFT JOIN scm_item_categories ic ON ic.id = d.sub_category_id
-            LEFT JOIN scm_item_categories pc ON pc.id = d.category_id
-            LEFT JOIN scm_demand_verification_approval_histories dvah ON dvah.demand_id = d.id
-            WHERE ((d.next_verifier_id = :nextVerifierId AND d.status IN (:pendingVerification)) 
-                OR (dvah.employee_id = :nextVerifierId AND dvah.demand_status='VERIFIED'))
-            AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate))
-            AND (:demandNo IS NULL OR d.demand_no LIKE CONCAT('%',:demandNo,'%'))
-            AND (:categoryId IS NULL OR d.category_id = :categoryId)
-            GROUP BY d.id 
-            ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_VERIFICATION') THEN 1 ELSE 2 END ASC
-            """;
-
-    String countAllPendingVerification="SELECT COUNT(*) FROM ("+getAllPendingVerification+") as  total";
-
-
-    String getAllCloseDemands = """
-        SELECT 
-            d.id as id,
-            d.demandNo as demandNo,
-            d.status as status,
-            d.demandDate as demandDate,
-            d.category as category,
-            COUNT(dd) as itemsQty,
-            d.requestedBy as requestedBy 
-        FROM Demand d 
-        LEFT JOIN d.requestedBy r 
-        LEFT JOIN d.warehouse w 
-        LEFT JOIN d.category dc
-        LEFT JOIN d.demandDetails dd 
-        LEFT JOIN dd.item i 
-        LEFT JOIN dd.itemCategory c
-        WHERE d.status IN ('REJECTED','COMPLETED','CANCELED','DECLINED','RECEIVED','CLOSED_BY_STORE')
-        AND (:warehouseId IS NULL OR w.id = :warehouseId)
-        AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
-        AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
-        AND (:categoryId IS NULL OR dc.id = :categoryId)
-        GROUP BY d.id
-        """;
-
-    String countAllCloseDemands = """
-        SELECT count(d) FROM Demand d
-            LEFT JOIN d.requestedBy r 
-            LEFT JOIN d.warehouse w 
-            WHERE d.status IN ('REJECTED','COMPLETED','CANCELED','DECLINED','RECEIVED','CLOSED_BY_STORE')
-            AND (:warehouseId IS NULL OR w.id = :warehouseId)
-            AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
-            GROUP BY d.id
-        """;
-
-    String getAllPendingApprovalDemands = """
-        SELECT d.id as id,
-            d.demand_no as demandNo,
-            d.status as status,
-            (SELECT demand_status FROM `scm_demand_verification_approval_histories` 
-                    where `employee_id` = :nextApproverId AND `demand_id`=d.id AND demand_status='APPROVED') as demandStatus,
-            d.demand_date as demandDate,
-            pc.name as category,
-            (select count(dd1.id) from scm_demand_details dd1 WHERE dd1.demand_id = d.id) as itemsQty,
-            CONCAT(e.employee_id,'-',e.employee_name) as requestedBy  
-        FROM scm_demands d 
-        LEFT JOIN acl_users e ON e.id = d.requested_by_id 
-        LEFT JOIN scm_warehouses w ON w.id = d.warehouse_id 
-        LEFT JOIN scm_demand_details dd ON dd.demand_id = d.id 
-        LEFT JOIN scm_item_categories ic ON ic.id = dd.item_category_id
-        LEFT JOIN scm_item_categories pc ON pc.id = dd.item_parent_category_id
-        LEFT JOIN scm_demand_verification_approval_histories dvah ON dvah.demand_id = d.id
-        WHERE ((d.next_approver_id = :nextApproverId AND d.status IN (:demandStatus))
-            OR (dvah.employee_id = :nextApproverId AND dvah.demand_status = 'APPROVED')) 
-        AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate)) 
-        AND (:demandNo IS NULL OR d.demand_no LIKE CONCAT('%',:demandNo,'%'))
-        AND (:categoryId IS NULL OR d.category_id = :categoryId)
-        GROUP BY d.id ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_APPROVAL') THEN 1 ELSE 2 END ASC
-        """;
-
-    String countAllPendingApprovalDemands = "SELECT COUNT(*) FROM ("+getAllPendingApprovalDemands+") total";
-
-    String getAllDemandsByCategory = """
-        SELECT 
-            d.id as id,
-            d.demandNo as demandNo,
-            d.status as status,
-            d.demandDate as demandDate,
-            d.category as category,
-            COUNT(dd) as itemsQty,
-            r.employeeName as requestedBy
-        FROM Demand d 
-            LEFT JOIN d.requestedBy r 
-            LEFT JOIN d.warehouse w 
-            LEFT JOIN d.demandDetails dd 
-            LEFT JOIN dd.item i 
-            LEFT JOIN dd.itemCategory c 
-            WHERE (dd.itemCategory.id IN :categories OR dd.itemParentCategory.id IN :categories)
-            AND d.status NOT IN ('PENDING_APPROVAL','REJECTED','PENDING_VERIFICATION','RECEIVED','COMPLETED','CANCELED','DECLINED')
-            AND (w.id IN :warehouseId) 
-            AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
-            AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
-            AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
-            GROUP BY d.id
-            """;
-
-    String countAllDemandsByCategory="""
-        SELECT count(d) FROM Demand d
-            LEFT JOIN d.requestedBy r
-            LEFT JOIN d.warehouse w
-            LEFT JOIN d.demandDetails dd
-            LEFT JOIN dd.item i 
-            LEFT JOIN dd.itemCategory c 
-        WHERE (dd.itemCategory.id IN :categories OR dd.itemParentCategory.id IN :categories)
-         AND d.status NOT IN ('PENDING_APPROVAL','REJECTED','PENDING_VERIFICATION','RECEIVED','COMPLETED','CANCELED','DECLINED')
-         AND (w.id IN :warehouseId) 
-         AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
-         AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate)) 
-         AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
-         GROUP BY d.id 
-            """;
-
-    String getAllFilteredPendingVerificationDemands = """
-                SELECT 
-                d.id as id,
-                d.demand_no as demandNo,
-                d.status as status,
-                CASE WHEN d.status  !='REVIEW' AND (dvah.id IS NOT NULL AND dvah.demand_id = d.id
-                                AND dvah.employee_id = :nextVerifierId AND dvah.demand_status IN ('VERIFIED')) THEN
-                                   dvah.demand_status
-                    			ELSE d.status END as demandStatus,
-                d.demand_date as demandDate,
-                pc.name as category,
-                COUNT(dd.id) as itemsQty,
-                CONCAT(e.employee_id,'-',e.name) as requestedBy 
+                CONCAT(e.employee_id,'-',e.employee_name) as requestedBy
             FROM scm_demands d
             LEFT JOIN acl_users e ON e.id = d.requested_by_id
             LEFT JOIN scm_warehouses w ON w.id = d.warehouse_id
@@ -433,44 +301,177 @@ interface DemandQuery {
             LEFT JOIN scm_item_categories ic ON ic.id = d.sub_category_id
             LEFT JOIN scm_item_categories pc ON pc.id = d.category_id
             LEFT JOIN scm_demand_verification_approval_histories dvah ON dvah.demand_id = d.id
-            WHERE ((COALESCE(:categories) IS NULL OR ic.id IN (:categories)) OR (COALESCE(:categories) IS NULL OR pc.id IN (:categories)))
-            AND ((d.next_verifier_id = :nextVerifierId AND d.status IN (:pendingVerification)) 
+            WHERE ((d.next_verifier_id = :nextVerifierId AND d.status IN (:pendingVerification))
                 OR (dvah.employee_id = :nextVerifierId AND dvah.demand_status='VERIFIED'))
             AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate))
             AND (:demandNo IS NULL OR d.demand_no LIKE CONCAT('%',:demandNo,'%'))
-            GROUP BY d.id 
+            AND (:categoryId IS NULL OR d.category_id = :categoryId)
+            GROUP BY d.id
             ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_VERIFICATION') THEN 1 ELSE 2 END ASC
-                        """;
-    String countAllFilteredPendingVerificationDemands = " SELECT COUNT(*) FROM ("+getAllFilteredPendingVerificationDemands+") as total";
-     
-    String getAllFilteredPendingApprovalDemands = """
-        SELECT d.id as id,
-        d.demand_no as demandNo,
-        d.status as status,
-        (SELECT demand_status FROM `demand_verification_approval_histories` 
-                where `employee_id` = :nextApproverId AND `demand_id`=d.id) as demandStatus,
-        d.demand_date as demandDate,
-        pc.name as category,
-        COUNT(dd.id) as itemsQty,
-        CONCAT(e.employee_id,'-',e.name) as requestedBy 
-    FROM demands d 
-    LEFT JOIN employees e ON e.id = d.requested_by_id
-    LEFT JOIN warehouses w ON w.id = d.warehouse_id 
-    LEFT JOIN demand_details dd ON dd.demand_id = d.id  
-    LEFT JOIN item_categories ic ON ic.id = dd.item_category_id
-    LEFT JOIN item_categories pc ON pc.id = dd.item_parent_category_id
-    LEFT JOIN demand_verification_approval_histories dvah ON dvah.demand_id = d.id
-    WHERE (c.id IN (:categoryIds) OR pc.id IN (:categoryIds)) 
-    AND ((d.next_approver_id = :nextApproverId AND d.status IN (:demandStatuses))
-        OR (dvah.employee_id = :nextApproverId AND dvah.demand_status = 'APPROVED')) 
-    AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate)) 
-    AND (:demandNo IS NULL OR d.demand_no LIKE CONCAT('%',:demandNo,'%'))
-    GROUP BY d.id ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_APPROVAL') THEN 1 ELSE 2 END ASC
             """;
 
-    String countAllFilteredPendingApprovalDemands = "SELECT COUNT(*) FROM ("+getAllFilteredPendingApprovalDemands+") total";
+    public static final String COUNT_ALL_PENDING_VERIFICATION=COUNT_START+GET_ALL_PENDING_VERIFICATION+COUNT_END;
 
-    String getStockBySubCatAndWarehouseId= """
+
+    public static final String GET_ALL_CLOSE_DEMANDS = """
+        SELECT
+            d.id as id,
+            d.demandNo as demandNo,
+            d.status as status,
+            d.demandDate as demandDate,
+            d.category as category,
+            COUNT(dd) as itemsQty,
+            d.requestedBy as requestedBy
+        FROM Demand d
+        LEFT JOIN d.requestedBy r
+        LEFT JOIN d.warehouse w
+        LEFT JOIN d.category dc
+        LEFT JOIN d.demandDetails dd
+        LEFT JOIN dd.item i
+        LEFT JOIN dd.itemCategory c
+        WHERE d.status IN ('REJECTED','COMPLETED','CANCELED','DECLINED','RECEIVED','CLOSED_BY_STORE')
+        AND (:warehouseId IS NULL OR w.id = :warehouseId)
+        AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
+        AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
+        AND (:categoryId IS NULL OR dc.id = :categoryId)
+        GROUP BY d.id
+        """;
+
+    public static final String COUNT_ALL_CLOSE_DEMANDS = """
+        SELECT count(d) FROM Demand d
+            LEFT JOIN d.requestedBy r
+            LEFT JOIN d.warehouse w
+            WHERE d.status IN ('REJECTED','COMPLETED','CANCELED','DECLINED','RECEIVED','CLOSED_BY_STORE')
+            AND (:warehouseId IS NULL OR w.id = :warehouseId)
+            AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
+            GROUP BY d.id
+        """;
+
+    public static final String GET_ALL_PENDING_APPROVAL_DEMANDS = """
+        SELECT d.id as id,
+            d.demand_no as demandNo,
+            d.status as status,
+            (SELECT demand_status FROM `scm_demand_verification_approval_histories`
+                    where `employee_id` = :nextApproverId AND `demand_id`=d.id AND demand_status='APPROVED') as demandStatus,
+            d.demand_date as demandDate,
+            pc.name as category,
+            (select count(dd1.id) from scm_demand_details dd1 WHERE dd1.demand_id = d.id) as itemsQty,
+            CONCAT(e.employee_id,'-',e.employee_name) as requestedBy
+        FROM scm_demands d
+        LEFT JOIN acl_users e ON e.id = d.requested_by_id
+        LEFT JOIN scm_warehouses w ON w.id = d.warehouse_id
+        LEFT JOIN scm_demand_details dd ON dd.demand_id = d.id
+        LEFT JOIN scm_item_categories ic ON ic.id = dd.item_category_id
+        LEFT JOIN scm_item_categories pc ON pc.id = dd.item_parent_category_id
+        LEFT JOIN scm_demand_verification_approval_histories dvah ON dvah.demand_id = d.id
+        WHERE ((d.next_approver_id = :nextApproverId AND d.status IN (:demandStatus))
+            OR (dvah.employee_id = :nextApproverId AND dvah.demand_status = 'APPROVED'))
+        AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate))
+        AND (:demandNo IS NULL OR d.demand_no LIKE CONCAT('%',:demandNo,'%'))
+        AND (:categoryId IS NULL OR d.category_id = :categoryId)
+        GROUP BY d.id ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_APPROVAL') THEN 1 ELSE 2 END ASC
+        """;
+
+    public static final String COUNT_ALL_PENDING_APPROVAL_DEMANDS = COUNT_START+GET_ALL_PENDING_APPROVAL_DEMANDS+COUNT_END;
+
+    public static final String GET_ALL_DEMANDS_BY_CATEGORY = """
+        SELECT
+            d.id as id,
+            d.demandNo as demandNo,
+            d.status as status,
+            d.demandDate as demandDate,
+            d.category as category,
+            COUNT(dd) as itemsQty,
+            r.employeeName as requestedBy
+        FROM Demand d
+            LEFT JOIN d.requestedBy r
+            LEFT JOIN d.warehouse w
+            LEFT JOIN d.demandDetails dd
+            LEFT JOIN dd.item i
+            LEFT JOIN dd.itemCategory c
+            WHERE (dd.itemCategory.id IN :categories OR dd.itemParentCategory.id IN :categories)
+            AND d.status NOT IN ('PENDING_APPROVAL','REJECTED','PENDING_VERIFICATION','RECEIVED','COMPLETED','CANCELED','DECLINED')
+            AND (w.id IN :warehouseId)
+            AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
+            AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
+            AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
+            GROUP BY d.id
+        """;
+
+    public static final String COUNT_ALL_DEMANDS_BY_CATEGORY="""
+        SELECT count(d) FROM Demand d
+            LEFT JOIN d.requestedBy r
+            LEFT JOIN d.warehouse w
+            LEFT JOIN d.demandDetails dd
+            LEFT JOIN dd.item i
+            LEFT JOIN dd.itemCategory c
+        WHERE (dd.itemCategory.id IN :categories OR dd.itemParentCategory.id IN :categories)
+         AND d.status NOT IN ('PENDING_APPROVAL','REJECTED','PENDING_VERIFICATION','RECEIVED','COMPLETED','CANCELED','DECLINED')
+         AND (w.id IN :warehouseId)
+         AND (:demandNo IS NULL OR d.demandNo LIKE CONCAT('%',:demandNo,'%'))
+         AND (:fromDate IS NULL OR (d.demandDate BETWEEN :fromDate AND :toDate))
+         AND (:daysRemain IS NULL OR DATEDIFF(d.deliveryDate,CURRENT_DATE) <= :daysRemain)
+         GROUP BY d.id
+        """;
+
+    public static final String GET_ALL_FILTERED_PV_DEMANDS = """
+                    SELECT
+                    d.id as id,
+                    d.demand_no as demandNo,
+                    d.status as status,
+                    CASE WHEN d.status  !='REVIEW' AND (dvah.id IS NOT NULL AND dvah.demand_id = d.id
+                                    AND dvah.employee_id = :nextVerifierId AND dvah.demand_status IN ('VERIFIED')) THEN
+                                       dvah.demand_status
+                                    ELSE d.status END as demandStatus,
+                    d.demand_date as demandDate,
+                    pc.name as category,
+                    COUNT(dd.id) as itemsQty,
+                    CONCAT(e.employee_id,'-',e.name) as requestedBy
+                    FROM scm_demands d
+                    LEFT JOIN acl_users e ON e.id = d.requested_by_id
+                    LEFT JOIN scm_warehouses w ON w.id = d.warehouse_id
+                    LEFT JOIN scm_demand_details dd ON dd.demand_id = d.id
+                    LEFT JOIN scm_item_categories ic ON ic.id = d.sub_category_id
+                    LEFT JOIN scm_item_categories pc ON pc.id = d.category_id
+                    LEFT JOIN scm_demand_verification_approval_histories dvah ON dvah.demand_id = d.id
+                    WHERE ((COALESCE(:categories) IS NULL OR ic.id IN (:categories)) OR (COALESCE(:categories) IS NULL OR pc.id IN (:categories)))
+                    AND ((d.next_verifier_id = :nextVerifierId AND d.status IN (:pendingVerification))
+                        OR (dvah.employee_id = :nextVerifierId AND dvah.demand_status='VERIFIED'))
+                    AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate))
+                    AND (:demandNo IS NULL OR d.demand_no LIKE CONCAT('%',:demandNo,'%'))
+                    GROUP BY d.id
+                    ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_VERIFICATION') THEN 1 ELSE 2 END ASC
+            """;
+    public static final String COUNT_ALL_FILTERED_PV_DEMANDS =COUNT_START+GET_ALL_FILTERED_PV_DEMANDS+COUNT_END;
+
+    public static final String GET_ALL_FILTERED_PA_DEMANDS = """
+                    SELECT d.id as id,
+                    d.demand_no as demandNo,
+                    d.status as status,
+                    (SELECT demand_status FROM `demand_verification_approval_histories`
+                            where `employee_id` = :nextApproverId AND `demand_id`=d.id) as demandStatus,
+                    d.demand_date as demandDate,
+                    pc.name as category,
+                    COUNT(dd.id) as itemsQty,
+                    CONCAT(e.employee_id,'-',e.name) as requestedBy
+                FROM demands d
+                LEFT JOIN employees e ON e.id = d.requested_by_id
+                LEFT JOIN warehouses w ON w.id = d.warehouse_id
+                LEFT JOIN demand_details dd ON dd.demand_id = d.id
+                LEFT JOIN item_categories ic ON ic.id = dd.item_category_id
+                LEFT JOIN item_categories pc ON pc.id = dd.item_parent_category_id
+                LEFT JOIN demand_verification_approval_histories dvah ON dvah.demand_id = d.id
+                WHERE (c.id IN (:categoryIds) OR pc.id IN (:categoryIds))
+                AND ((d.next_approver_id = :nextApproverId AND d.status IN (:demandStatuses))
+                    OR (dvah.employee_id = :nextApproverId AND dvah.demand_status = 'APPROVED'))
+                AND (:fromDate IS NULL OR (d.demand_date BETWEEN :fromDate AND :toDate))
+                AND (:demandNo IS NULL OR d.demand_no LIKE CONCAT('%',:demandNo,'%'))
+                GROUP BY d.id ORDER BY CASE WHEN d.status IN ('REVIEW','PENDING_APPROVAL') THEN 1 ELSE 2 END ASC
+            """;
+
+    public static final String COUNT_ALL_FILTERED_PA_DEMANDS = COUNT_START+GET_ALL_FILTERED_PA_DEMANDS+COUNT_END;
+
+    public static final String GET_STOCK_BY_SUB_CAT_AND_WAREHOUSE_ID= """
             SELECT sic.id,sic.name,sum(stock_qty) stockQty,(
                SELECT sum(p.approved_quantity) FROM(
                     SELECT

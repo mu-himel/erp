@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.demand.service;
 import java.util.List;
 import java.util.Optional;
 
+import com.agi.aesl.erpscm.demand.repository.DemandRepository;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -19,12 +20,12 @@ public interface DemandService extends VerificationDomainService{
     Optional<DemandDetailResDto> updateDemand(Jwt loggedInUser, String uri, Long id, DemandRequestDto demandRequestDto);
 
 
-    Page<?> getMyDemands(Jwt loggedInUser, Optional<Integer> page, Optional<Integer> size,
-                         Optional<String> demandNo,Optional<Long> categoryId,
-                         Optional<String> fromDate, Optional<String> toDate);
-    Page<?> getAllDemands(Jwt loggedInUser, Optional<Integer> page, Optional<Integer> size,
-                            Optional<String> demandNo,Optional<Long> categoryId,
-                            Optional<String> fromDate, Optional<String> toDate, Optional<Integer> daysRemain
+    Page<DemandRepository.DemandListInfo> getMyDemands(Jwt loggedInUser, Optional<Integer> page, Optional<Integer> size,
+                                                       Optional<String> demandNo, Optional<Long> categoryId,
+                                                       Optional<String> fromDate, Optional<String> toDate);
+    Page<DemandRepository.DemandListInfo> getAllDemands(Jwt loggedInUser, Optional<Integer> page, Optional<Integer> size,
+                                                        Optional<String> demandNo, Optional<Long> categoryId,
+                                                        Optional<String> fromDate, Optional<String> toDate, Optional<Integer> daysRemain
                           );
 
     Optional<DemandDetailResDto> getDemandDetail(Long id);
@@ -34,20 +35,20 @@ public interface DemandService extends VerificationDomainService{
 
     void sentDemandItem(Jwt token, DemandReceiveDto demandReceiveDto);
 
-    Page<?> getAllCloseDemands(Jwt loggedInUser,
-                               Optional<Integer> page, Optional<Integer> size,
-                               Optional<String> demandNo, Optional<Long> categoryId,
-                               Optional<String> fromDate, Optional<String> toDate
+    Page<DemandRepository.DemandListInfo> getAllCloseDemands(Jwt loggedInUser,
+                                                             Optional<Integer> page, Optional<Integer> size,
+                                                             Optional<String> demandNo, Optional<Long> categoryId,
+                                                             Optional<String> fromDate, Optional<String> toDate
     );
 
     String getNextDemandNo();
 
-    Page<?> getAllPendingVerificationDemands(Jwt loggedInUser,
+    Page<DemandRepository.DemandPendingVerificationApprovalList> getAllPendingVerificationDemands(Jwt loggedInUser,
                                              Optional<Integer> page, Optional<Integer> size,
                                              Optional<String> demandNo,Optional<Long> categoryId,
                                              Optional<String> fromDate, Optional<String> toDate
                                              );
-    Page<?> getAllPendingApprovalDemands(Jwt loggedInUser,
+    Page<DemandRepository.DemandPendingVerificationApprovalList> getAllPendingApprovalDemands(Jwt loggedInUser,
                                          Optional<Integer> page, Optional<Integer> size,
                                          Optional<String> demandNo, Optional<Long> categoryId,
                                          Optional<String> fromDate, Optional<String> toDate
@@ -62,5 +63,5 @@ public interface DemandService extends VerificationDomainService{
 
     void cancelDemand(Jwt token, Long id, String uri, String categories, NoteDto noteDto);
 
-    List<?> getStockBySubCategory(Long subCategoryId, Long warehouseId);
+    List<DemandRepository.SubCatStockInfo> getStockBySubCategory(Long subCategoryId, Long warehouseId);
 }

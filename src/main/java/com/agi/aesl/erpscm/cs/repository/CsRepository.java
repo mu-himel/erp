@@ -13,60 +13,43 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Repository
-public interface CsRepository extends JpaRepository<Cs,Long>, CsQuery {
+import static com.agi.aesl.erpscm.cs.repository.CsQuery.*;
 
-    @Query(value = fetchLockedVendorsByItem,nativeQuery = true)
+@Repository
+public interface CsRepository extends JpaRepository<Cs,Long> {
+
+    @Query(value = FETCH_LOCKED_VENDORS_BY_ITEM,nativeQuery = true)
     List<ItemWiseVendorDetail> findLockedVendorsByItemName(@Param("tenderId") Long tenderId,
                                                            @Param("brandName") String brandName,
                                                            @Param("itemName")String itemName);
 
-    @Query(value = fetchLockedVendorsByVendorAndItem,nativeQuery = true)
+    @Query(value = FETCH_LOCKED_VENDORS_BY_VENDOR_AND_ITEM,nativeQuery = true)
     List<ItemWiseVendorDetail> findLockedVendorsByItemName(Long tenderId, Long vendorId, String itemName);
 
-    @Query(value = pendingVerifications,countQuery = countPendingVerifications, nativeQuery = true)
+    @Query(value = PENDING_VERIFICATIONS,countQuery = COUNT_PENDING_VERIFICATIONS, nativeQuery = true)
     Page<CsPendingListInfo> findPendingVerificationCs(String nextVerifierId,
                                                       String indentNo, List<String> statuses,
                                                       LocalDateTime fromDate, LocalDateTime toDate,
                                                       Pageable pageable);
 
-    @Query(value = pendingApprovals,countQuery = countPendingApprovals, nativeQuery = true)
+    @Query(value = PENDING_APPROVALS,countQuery = COUNT_PENDING_APPROVALS, nativeQuery = true)
     Page<CsPendingListInfo> findPendingApprovalCs(String nextApproverId,
                                                   String indentNo, List<String> statuses,
                                                   LocalDateTime fromDate, LocalDateTime toDate,
                                                   Pageable pageable);
 
-    @Query(value = closedCs,countQuery = countClosedCs, nativeQuery = true)
+    @Query(value = CLOSED_CS,countQuery = COUNT_CLOSED_CS, nativeQuery = true)
     Page<CsPendingListInfo> findClosedCs(String indentNo, List<String> statuses,
                                          LocalDateTime fromDate, LocalDateTime toDate,
                                          Pageable pageable);
 
-    @Query(value = approvedCs,countQuery = countApprovedCs, nativeQuery = true)
+    @Query(value = APPROVED_CS,countQuery = COUNT_APPROVED_CS, nativeQuery = true)
     Page<CsPendingListInfo> findApprovedCs(
             String indentNo, List<String> statuses,
             LocalDateTime fromDate, LocalDateTime toDate,
             Pageable pageable);
 
-    @Query(value="""
-                SELECT cvdd.id as cvddId, 
-                cvd.id as csVendorDetailId,
-                    (
-                        select item_attribute from indent_details ide where ide.id=cd.indent_detail_id 
-                    ) as itemAttribute ,
-                    cvd.price_quotation_id as priceQuotationId,
-                    cd.indent_detail_id as indentDetailId, 
-                    cvd.vendor_id as vendorId, 
-                    cd.id as csDetailId, 
-                    cvdd.delivery_date as deliveryDate, 
-                    sum(cvdd.delivery_qty) as deliveryQty,
-                    cvdd.warehouse_id as warehouseId 
-                    From cs 
-                    LEFT JOIN cs_details cd ON cd.cs_id = cs.id 
-                    LEFT JOIN cs_vendor_details cvd ON cvd.cs_detail_id = cd.id
-                    LEFT JOIN cs_vendor_delivery_details cvdd ON cvdd.vendor_delivery_detail_id = cvd.id
-                    WHERE cs.id=:csId
-                    GROUP BY cvd.vendor_id, cd.id, cvdd.delivery_date,cvdd.warehouse_id 
-                """,nativeQuery = true)
+    @Query(value=GET_POTENTIAL_PO_LIST_FROM_CS,nativeQuery = true)
     List<PotentialPoListItem> getPotentialPoListFromCs(Long csId);
 
     interface PotentialPoListItem {

@@ -2,7 +2,7 @@ package com.agi.aesl.erpscm.inventory.controller;
 
 
 import com.agi.aesl.erpscm.common.BaseController;
-// import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
+
 import com.agi.aesl.erpscm.inventory.dto.request.BulkCategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
@@ -10,9 +10,7 @@ import com.agi.aesl.erpscm.inventory.service.CategoryService;
 
 import jakarta.validation.Valid;
 
-// import io.swagger.annotations.ApiOperation;
-// import io.swagger.annotations.ApiParam;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,7 +18,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-// import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,14 +26,14 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/item-categories")
+@RequiredArgsConstructor
 public class ItemCategoryController extends BaseController{
 
-    @Autowired
-    private CategoryService categoryService;
+
+    private final CategoryService categoryService;
 
     @GetMapping
-    // @ApiOperation(value = "Get Parent Categories With Pagination")
-    public ResponseEntity<?> getParentItemCategories(
+    public ResponseEntity<Object> getParentItemCategories(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
                                                @RequestParam("size") Optional<Integer> size,
@@ -58,8 +55,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/sub-categories")
-    // @ApiOperation(value = "Get Sub Categories With Pagination")
-    public ResponseEntity<?> getSubItemCategories(
+    public ResponseEntity<Object> getSubItemCategories(
             @AuthenticationPrincipal Jwt token,
                      @RequestParam("page") Optional<Integer> page,
                      @RequestParam("size") Optional<Integer> size,
@@ -81,7 +77,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/inventory-control/main-categories")
-    public ResponseEntity<?> getMainCategoryListForInventoryControl(
+    public ResponseEntity<Object> getMainCategoryListForInventoryControl(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("warehouseId") Optional<Long> warehouseId,
             @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId,
@@ -94,7 +90,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/main-categories")
-    public ResponseEntity<?> getMainCategoryList(
+    public ResponseEntity<Object> getMainCategoryList(
                                              @RequestParam("warehouseId") Optional<Long> warehouseId,
                                              @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId,
                                              @RequestParam("name")  Optional<String> name,
@@ -106,7 +102,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/inventory-control/main-categories/pages")
-    public ResponseEntity<?> getMainCategoryPage(
+    public ResponseEntity<Object> getMainCategoryPage(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("warehouseId") Optional<Long> warehouseId,
             @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId,
@@ -122,7 +118,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/list")
-    public ResponseEntity<?> getCategoryList(@RequestParam("storeId") Optional<Long> storeId,
+    public ResponseEntity<Object> getCategoryList(@RequestParam("storeId") Optional<Long> storeId,
                                             @RequestParam("categoryId")  Optional<Long> categoryId,
                                              @RequestParam("name")  Optional<String> name,
                                                 @RequestParam("code") Optional<String> code){
@@ -133,7 +129,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/all")
-    public ResponseEntity<?> getAllCategoryList(@RequestParam("categoryId")  Optional<Long> categoryId,
+    public ResponseEntity<Object> getAllCategoryList(@RequestParam("categoryId")  Optional<Long> categoryId,
                                              @RequestParam("name")  Optional<String> name,
                                              @RequestParam("code") Optional<String> code){
         return new ResponseEntity<>(
@@ -143,7 +139,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/inventory-control/list")
-    public ResponseEntity<?> getSubCategoryListForInventoryControl(
+    public ResponseEntity<Object> getSubCategoryListForInventoryControl(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId")  Optional<Long> categoryId,
             @RequestParam("warehouseId")  Optional<Long> warehouseId,
@@ -159,7 +155,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/inventory-control/pages")
-    public ResponseEntity<?> getSubCategoriesForInventoryControl(
+    public ResponseEntity<Object> getSubCategoriesForInventoryControl(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId")  Optional<Long> categoryId,
             @RequestParam("warehouseId")  Optional<Long> warehouseId,
@@ -178,7 +174,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/inventory-control/list/pending")
-    public ResponseEntity<?> getPendingSubCategoryListForInventoryControl(
+    public ResponseEntity<Object> getPendingSubCategoryListForInventoryControl(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId")  Optional<Long> categoryId,
             @RequestParam("warehouseId")  Optional<Long> warehouseId,
@@ -194,7 +190,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/inventory-control/pending")
-    public ResponseEntity<?> getPendingSubCategoryPendingForInventoryControl(
+    public ResponseEntity<Object> getPendingSubCategoryPendingForInventoryControl(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId")  Optional<Long> categoryId,
             @RequestParam("warehouseId")  Optional<Long> warehouseId,
@@ -213,8 +209,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/{id}")
-    // @ApiOperation(value = "Get Category Detail By ID")
-    public ResponseEntity<?> getItemCategory(
+    public ResponseEntity<Object> getItemCategory(
         // @ApiParam(value = "Category Id",example = "1", required = true) 
         @PathVariable("id") Long id){
         return new ResponseEntity<>(
@@ -224,8 +219,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/pending/{id}")
-    // @ApiOperation(value = "Get Category Detail By ID")
-    public ResponseEntity<?> getPendingItemCategory(
+    public ResponseEntity<Object> getPendingItemCategory(
             // @ApiParam(value = "Category Id",example = "1", required = true)
             @PathVariable("id") Long id){
         return new ResponseEntity<>(
@@ -235,8 +229,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/inventory-control/{id}")
-    // @ApiOperation(value = "Get Category Detail By ID")
-    public ResponseEntity<?> getItemCategoryForInventoryControl(
+    public ResponseEntity<Object> getItemCategoryForInventoryControl(
         // @ApiParam(value = "Category Id",example = "1", required = true) 
         @PathVariable("id") Long id){
         return new ResponseEntity<>(
@@ -247,8 +240,7 @@ public class ItemCategoryController extends BaseController{
 
 
     @PostMapping("/bulk-create")
-    // @ApiOperation(value = "Create multiple categories")
-    public ResponseEntity<?> createCategories(
+    public ResponseEntity<Void> createCategories(
             @AuthenticationPrincipal Jwt token,
             @RequestBody BulkCategoryRequestDto categoryRequestDto){
         categoryService.addCategories(token,categoryRequestDto.getCategories());
@@ -256,7 +248,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @PostMapping
-    public ResponseEntity<?> createItemCategory(
+    public ResponseEntity<Void> createItemCategory(
         @AuthenticationPrincipal Jwt loggedInUser,
         @RequestBody @Valid CategoryRequestDto categoryRequestDto){
         categoryService.addCategory(loggedInUser, categoryRequestDto);
@@ -264,7 +256,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateItemCategory(
+    public ResponseEntity<Void> updateItemCategory(
         @PathVariable("id") Long id,
         @RequestBody CategoryRequestDto categoryRequestDto){
         categoryService.updateCategory(id,categoryRequestDto);
@@ -272,8 +264,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteItemCategory(
-            // @ApiParam(value = "Category Id",example = "1", required = true) 
+    public ResponseEntity<Void> deleteItemCategory(
             @PathVariable("id") Long id,
             @RequestParam("warehouseId") Long warehouseId,
             @RequestParam("warehouseStoreId") Long warehouseStoreId
@@ -283,7 +274,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @PutMapping("/{id}/active")
-    public ResponseEntity<?> activeItemCategory(
+    public ResponseEntity<Void> activeItemCategory(
         @PathVariable("id") Long id,
         @RequestParam("warehouseId") Long warehouseId,
         @RequestParam("storeId") Long warehouseStoreId
@@ -293,7 +284,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/inventory-control/main-categories/pending")
-    public ResponseEntity<?> getPendingCategories(
+    public ResponseEntity<Object> getPendingCategories(
             @AuthenticationPrincipal Jwt token,
             Optional<Long> warehouseId,
             Optional<Long> warehouseStoreId,
@@ -307,7 +298,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/inventory-control/main-categories/pending/pages")
-    public ResponseEntity<?> getPendingCategories(
+    public ResponseEntity<Object> getPendingCategories(
             @AuthenticationPrincipal Jwt token,
             Optional<Long> warehouseId,
             Optional<Long> warehouseStoreId,
@@ -323,10 +314,8 @@ public class ItemCategoryController extends BaseController{
     }
 
     @DeleteMapping("/{categoryId}/{attributeId}")
-    public ResponseEntity<?> deleteCategoryAttribute(
-            // @ApiParam(value = "Category Id", example = "1", required = true) 
+    public ResponseEntity<Void> deleteCategoryAttribute(
             @PathVariable("categoryId") Long categoryId,
-            // @ApiParam(value = "Attribute Id", example = "1", required = true) 
             @PathVariable("attributeId") Long attributeId
 
     ){
@@ -337,8 +326,7 @@ public class ItemCategoryController extends BaseController{
 
 
     @GetMapping("/next-id")
-    // @ApiOperation(value = "Get New Category Id")
-    public ResponseEntity<?> getNextId(){
+    public ResponseEntity<Object> getNextId(){
         Map<String,Object> response = new HashMap<>();
         response.put("code",categoryService.getNewCategoryCode());
         return new ResponseEntity<>(
@@ -348,7 +336,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @PutMapping("/approve/category/{id}")
-    public ResponseEntity<?> approveCategory(
+    public ResponseEntity<Void> approveCategory(
         @AuthenticationPrincipal Jwt token,
         @PathVariable("id") Long id,
         @RequestBody CategoryApproveRequestDto categoryApproveRequestDto){
@@ -357,7 +345,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @PutMapping("/approve/subcategory/{id}")
-    public ResponseEntity<?> approveSubCategory(
+    public ResponseEntity<Void> approveSubCategory(
         @AuthenticationPrincipal Jwt token,
         @PathVariable("id") Long id,
         @RequestBody CategoryApproveRequestDto categoryApproveRequestDto){
@@ -366,7 +354,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @PostMapping("/import")
-    public ResponseEntity<?> importItems(
+    public ResponseEntity<Void> importItems(
             @RequestPart("file") Optional<MultipartFile> file
     ){
         categoryService.importCategories(file);
@@ -374,7 +362,7 @@ public class ItemCategoryController extends BaseController{
     }
 
     @GetMapping("/download-template")
-    public ResponseEntity<?> downloadTemplate(
+    public ResponseEntity<Object> downloadTemplate(
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("warehouseId") Optional<Long> warehouseId,
             @RequestParam("warehouseStoreId") Optional<Long> warehouseStoreId

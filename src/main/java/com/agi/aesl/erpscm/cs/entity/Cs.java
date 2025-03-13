@@ -26,8 +26,6 @@ import java.util.List;
 @Data
 public class Cs extends VerifyableEntity {
 
-    private Long id;
-
     @ManyToOne
     private Indent indent;
 

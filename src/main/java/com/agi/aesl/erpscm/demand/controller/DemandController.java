@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,13 +22,14 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/demands")
+@RequiredArgsConstructor
 public class DemandController extends BaseController{
     
-    @Autowired
-    private DemandService demandService;
+
+    private final DemandService demandService;
 
     @PostMapping
-    public ResponseEntity<?> createDemand(
+    public ResponseEntity<Void> createDemand(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @RequestBody @Valid DemandRequestDto demandRequestDto){
@@ -37,7 +38,7 @@ public class DemandController extends BaseController{
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateDemand(
+    public ResponseEntity<Void> updateDemand(
         @AuthenticationPrincipal Jwt token,
         @PathVariable("id") Long id,
         @RequestHeader("uri") String uri,
@@ -47,7 +48,7 @@ public class DemandController extends BaseController{
     }
 
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<?> cancelDemand(
+    public ResponseEntity<Void> cancelDemand(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestHeader("uri") String uri,
@@ -59,7 +60,7 @@ public class DemandController extends BaseController{
     }
 
     @GetMapping("/my")
-    public ResponseEntity<?> getMyDemands(@AuthenticationPrincipal Jwt loggedInUser,
+    public ResponseEntity<Object> getMyDemands(@AuthenticationPrincipal Jwt loggedInUser,
                                           @RequestParam("page") Optional<Integer> page,
                                           @RequestParam("size") Optional<Integer> size,
                                           @RequestParam("demandNo") Optional<String> demandNo,
@@ -74,7 +75,7 @@ public class DemandController extends BaseController{
     }
 
     @GetMapping("/stock-by/sub-category")
-    public ResponseEntity<?> getStockBySubCategory(
+    public ResponseEntity<Object> getStockBySubCategory(
             @RequestParam("subCategoryId") Long subCategoryId,
             @RequestParam("warehouseId") Long warehouseId
     ){
@@ -85,7 +86,7 @@ public class DemandController extends BaseController{
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getDemandDetail(@PathVariable("id") Long id){
+    public ResponseEntity<Object> getDemandDetail(@PathVariable("id") Long id){
         return new ResponseEntity<>(
                 demandService.getDemandDetail(id),
                 HttpStatus.OK
@@ -93,7 +94,7 @@ public class DemandController extends BaseController{
     }
 
     @GetMapping
-    public ResponseEntity<?> getPendingDemands(
+    public ResponseEntity<Object> getPendingDemands(
                     @AuthenticationPrincipal Jwt loggedInUser,
                     @RequestParam("page") Optional<Integer> page,
                     @RequestParam("size") Optional<Integer> size,
@@ -115,7 +116,7 @@ public class DemandController extends BaseController{
     }
 
     @GetMapping("/pending-verification")
-    public ResponseEntity<?> getPendingVerificationDemands(
+    public ResponseEntity<Object> getPendingVerificationDemands(
             @AuthenticationPrincipal Jwt loggedInUser,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -135,7 +136,7 @@ public class DemandController extends BaseController{
     }
 
     @GetMapping("/pending-approval")
-    public ResponseEntity<?> getPendingApprovalDemands(
+    public ResponseEntity<Object> getPendingApprovalDemands(
             @AuthenticationPrincipal Jwt loggedInUser,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -155,7 +156,7 @@ public class DemandController extends BaseController{
     }
 
     @GetMapping("/close")
-    public ResponseEntity<?> getCloseDemands(
+    public ResponseEntity<Object> getCloseDemands(
             @AuthenticationPrincipal Jwt loggedInUser,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -173,7 +174,7 @@ public class DemandController extends BaseController{
     }
 
     @PostMapping("/receive")
-    public ResponseEntity<?> demandReceive(
+    public ResponseEntity<Void> demandReceive(
             @AuthenticationPrincipal Jwt loggedInUser,
             @RequestBody DemandReceiveDto demandReceiveDto
     ){
@@ -184,7 +185,7 @@ public class DemandController extends BaseController{
     }
 
     @PostMapping("/sent")
-    public ResponseEntity<?> demandSent(
+    public ResponseEntity<Void> demandSent(
            @AuthenticationPrincipal Jwt token,
             @RequestBody DemandReceiveDto demandReceiveDto
     ){
@@ -195,7 +196,7 @@ public class DemandController extends BaseController{
     }
 
     @PostMapping("/decline")
-    public ResponseEntity<?> declineDemand(
+    public ResponseEntity<Void> declineDemand(
             @AuthenticationPrincipal Jwt loggedInUser,
             @RequestBody DemandReceiveDto demandReceiveDto
     ){
@@ -206,7 +207,7 @@ public class DemandController extends BaseController{
     }
 
     @PutMapping("/reject")
-    public ResponseEntity<?> rejectDemand(
+    public ResponseEntity<Void> rejectDemand(
             @AuthenticationPrincipal Jwt loggedInUser,
             @RequestBody DemandReceiveDto demandReceiveDto
     ){
@@ -217,7 +218,7 @@ public class DemandController extends BaseController{
     }
 
     @PutMapping("/close-by-store")
-    public ResponseEntity<?> closeDemand(
+    public ResponseEntity<Void> closeDemand(
             @AuthenticationPrincipal Jwt loggedInUser,
             @RequestBody DemandReceiveDto demandReceiveDto
     ){
@@ -228,7 +229,7 @@ public class DemandController extends BaseController{
     }
 
     @PutMapping("/reject-by-panel")
-    public ResponseEntity<?> rejectDemandPanel(
+    public ResponseEntity<Void> rejectDemandPanel(
             @AuthenticationPrincipal Jwt loggedInUser,
             @RequestBody DemandReceiveDto demandReceiveDto
     ){
@@ -239,7 +240,7 @@ public class DemandController extends BaseController{
     }
 
     @PutMapping("/resent")
-    public ResponseEntity<?> resentDemand(
+    public ResponseEntity<Void> resentDemand(
             @AuthenticationPrincipal Jwt loggedInUser,
             @RequestBody DemandReceiveDto demandReceiveDto
     ){
@@ -250,7 +251,7 @@ public class DemandController extends BaseController{
     }
 
     @PostMapping("/review/{id}")
-    public ResponseEntity<?> review(
+    public ResponseEntity<Void> review(
             @AuthenticationPrincipal Jwt loggedInUser,
             @PathVariable("id") Long id,
             @RequestBody ReviewDto reviewDto
@@ -262,7 +263,7 @@ public class DemandController extends BaseController{
     }
 
     @GetMapping("/next-id")
-    public ResponseEntity<?> getNextId(){
+    public ResponseEntity<Object> getNextId(){
         Map<String,Object> response = new HashMap<>();
         response.put("code",demandService.getNextDemandNo());
         return new ResponseEntity<>(

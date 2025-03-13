@@ -1,25 +1,20 @@
 package com.agi.aesl.erpscm.quality_control.service;
 
-import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
-import com.agi.aesl.erpscm.account_finance.entity.LedgerAccountVerifyApprovalHistory;
-import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
-import com.agi.aesl.erpscm.demand.service.DemandMailService;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
 import com.agi.aesl.erpscm.goods_receive.enums.QcType;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
-import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
-import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
@@ -30,20 +25,20 @@ import com.agi.aesl.erpscm.quality_control.entity.QcVerifyApprovalHistory;
 import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
 import com.agi.aesl.erpscm.quality_control.entity.QualityControlKpi;
 import com.agi.aesl.erpscm.quality_control.enums.QcStatus;
+import com.agi.aesl.erpscm.quality_control.repository.QcQuery;
 import com.agi.aesl.erpscm.quality_control.repository.QcRepository;
 import com.agi.aesl.erpscm.quality_control.repository.QcVerifyApprovalHistoryRepository;
 import com.agi.aesl.erpscm.store_receive.enums.SrnStatus;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
-import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -61,49 +56,51 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class QcServiceImpl implements QcService{
 
-    private final Integer MAX_NO_OF_KPI=3;
+    private static final Integer MAX_NO_OF_KPI=3;
 
-    @Autowired
-    private QcRepository qcRepository;
 
-    @Autowired
+    private final QcRepository qcRepository;
+
+
     @Lazy
-    private GrnService grnService;
+    private final GrnService grnService;
 
-    @Autowired
-    private UserApplicationValidatorService<QualityControl> verificationService;
 
-    @Autowired
-    private CommentService commentService;
+    private final UserApplicationValidatorService<QualityControl> verificationService;
 
-    @Autowired
-    private ModuleService moduleService;
+    private final CommentService commentService;
 
-    @Autowired
-    private ClaimResolver claimResolver;
 
-    @Autowired
-    private QcMailService qcMailService;
+    private final ModuleService moduleService;
 
-    @Autowired
-    private OrgService orgService;
 
-    @Autowired
-    private NetworkService networkService;
+    private final ClaimResolver claimResolver;
 
-    @Autowired
-    private CpsServerConfig cpsServerConfig;
 
-    @Autowired
-    private QcVerifyApprovalHistoryRepository qcVerifyApprovalHistoryRepository;
+    private final QcMailService qcMailService;
 
-    @Autowired
-    private IntegrationReaderService readerService;
+
+    private final OrgService orgService;
+
+
+    private final NetworkService networkService;
+
+
+    private final CpsServerConfig cpsServerConfig;
+
+
+    private final QcVerifyApprovalHistoryRepository qcVerifyApprovalHistoryRepository;
+
+
+    private final IntegrationReaderService readerService;
+
+    private static final String DATE_TIME_START="T00:00:00";
+    private static final String DATE_TIME_END="T23:59:59";
 
     @Override
     @Transactional
@@ -111,30 +108,30 @@ public class QcServiceImpl implements QcService{
 
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
-            throw new RuntimeException("Store Manager/Executive profile required to perform this");
+            throw new AesException("Store Manager/Executive profile required to perform this");
         }
         AtomicReference<Boolean> error = new AtomicReference<>(false);
 
         if(controlDto.getKpis()==null || controlDto.getKpis().isEmpty()){
-            throw new RuntimeException("Sorry! KPI required");
+            throw new AesException("Sorry! KPI required");
         }
 
-        controlDto.getKpis().stream().forEach(qualityControlKpi -> {
-            if(qualityControlKpi.getQcType().equals(null)){
+        controlDto.getKpis().forEach(qualityControlKpi -> {
+            if(qualityControlKpi.getQcType()!=null){
                 error.set(true);
             }
         });
-        if(error.get()){
-            throw new RuntimeException("Inspection summary should be submit for all kpi");
+        if(Boolean.TRUE.equals(error.get())){
+            throw new AesException("Inspection summary should be submit for all kpi");
         }
 
         if(controlDto.getGrn()==null || controlDto.getGrn().getId() == null){
-            throw new RuntimeException("Good Receive Note Reference missing");
+            throw new AesException("Good Receive Note Reference missing");
         }
 
-        Optional<GoodReceiveNote> goodReceiveNoteOptional = (Optional<GoodReceiveNote>)grnService.getGRNById(controlDto.getGrn().getId(),true);
+        Optional<GoodReceiveNote> goodReceiveNoteOptional = grnService.getGrn(controlDto.getGrn().getId(),true);
         if(goodReceiveNoteOptional.isEmpty()){
-            throw new RuntimeException("Good Receive note not found");
+            throw new AesException("Good Receive note not found");
         }
 
         GoodReceiveNote grn = goodReceiveNoteOptional.get();
@@ -146,11 +143,11 @@ public class QcServiceImpl implements QcService{
             ).findFirst();
 
             if(qcItemDetail.getDeclaredQty()==null){
-                throw new RuntimeException("Sorry! Declared Qty Required");
+                throw new AesException("Sorry! Declared Qty Required");
             }
 
             if(qcItemDetail.getInspectedQty()==null){
-                throw new RuntimeException("Sorry! Inspected Qty Required");
+                throw new AesException("Sorry! Inspected Qty Required");
             }
             if(grnItemDetail.isPresent()){
                 GoodReceiveItemDetail goodReceiveItemDetail = grnItemDetail.get();
@@ -170,15 +167,12 @@ public class QcServiceImpl implements QcService{
         QualityControl qualityControl = new QualityControl();
 
         qualityControl.setComment(controlDto.getComment());
-        qualityControl.setCreatedBy(new Employee(claimResolver.getEmployee().get().getId()));
-        qualityControl.setWarehouse(new Warehouse(claimResolver.getEmployee().get().getWarehouseId()));
+        claimResolver.getEmployee().ifPresent(qualityControl::setCreatedBy);
+        claimResolver.getEmployee().ifPresent(emp->qualityControl.setWarehouse(new Warehouse(emp.getWarehouseId())));
         qualityControl.setGoodReceiveNote(grn);
 
         AtomicReference<Integer> qcPassCount = new AtomicReference<>(0);
-        AtomicReference<Integer> qcFailCount = new AtomicReference<>(0);
-//        if(controlDto.getQcStatus() == QcStatus.PARTIALLY_APPROVED ||
-//                controlDto.getQcStatus() == QcStatus.APPROVED) {
-//
+
             qualityControl.setQcStatus(controlDto.getQcStatus());
             qualityControl.setStatus(controlDto.getQcStatus().toString());
 
@@ -189,13 +183,9 @@ public class QcServiceImpl implements QcService{
                             qcPassCount.getAndSet(qcPassCount.get() + 1);
                         }
                         return qualityControlKpi;
-                    }).collect(Collectors.toList())
+                    }).toList()
             );
 
-//        }else{
-//
-//            qualityControl.setQcStatus(QcStatus.REJECTED);
-//        }
 
         qcRepository.save(qualityControl);
         if(qualityControl.getQcStatus().equals(QcStatus.PARTIALLY_APPROVED)){
@@ -208,37 +198,20 @@ public class QcServiceImpl implements QcService{
             grn.setGrnStatus(GrnStatus.QC_FAILED);
         }
 
-//        if(qcPassCount.get().equals(MAX_NO_OF_KPI)){
-//            grn.setGrnStatus(GrnStatus.READY_FOR_STORE);
-//        }
-//        if(qualityControl.getQcStatus().equals(QcStatus.PARTIALLY_APPROVED)){
-//            grn.setGrnStatus(GrnStatus.QC_PARTIAL);
-//        }
-//        if(qualityControl.getQcStatus().equals(QcStatus.REJECTED) ||  qcFailCount.get()>0){
-//            grn.setGrnStatus(GrnStatus.QC_FAILED);
-//        }
-//        if(qcPassCount.get()==0 && qcFailCount.get()==0 ){
-//            grn.setGrnStatus(GrnStatus.QC_HOLD);
-//        }
+        if(!ids.isEmpty() && !uri.isBlank() && !qualityControl.getQcStatus().equals(QcStatus.REJECTED)) {
 
-        if(ids.size()>0 && !uri.isBlank() && !qualityControl.getQcStatus().equals(QcStatus.REJECTED)) {
-            System.out.println(uri);
             AppliedVADto result = verificationService.applyVerifyApprovalProcess(qualityControl, DomainType.QC, QcStatus.APPROVED.toString(), uri, "CATEGORY", ids,
                     null);
 
             if(result.getVerifiers().isEmpty() && result.getPanels().isEmpty()){
 
-                controlDto.getQcItemDetails().stream().forEach(qcItemDetail -> {
+                controlDto.getQcItemDetails().forEach(qcItemDetail -> {
                     Optional<GoodReceiveItemDetail> grnItemDetail = grn.getGoodReceiveItemDetails().stream().filter(
                             goodReceiveItemDetail -> goodReceiveItemDetail.getId().equals(qcItemDetail.getId())
                     ).findFirst();
 
                     if(grnItemDetail.isPresent()){
                         GoodReceiveItemDetail goodReceiveItemDetail = grnItemDetail.get();
-//                        ids.add(goodReceiveItemDetail.getItem().getItemCategory().getId().toString());
-//                        ids.add(goodReceiveItemDetail.getItem().getItemParentCategory().getId().toString());
-//                        goodReceiveItemDetail.setDeclaredQty(qcItemDetail.getDeclaredQty());
-//                        goodReceiveItemDetail.setInspectedQty(qcItemDetail.getInspectedQty());
                         goodReceiveItemDetail.setTotalApprovedQty(qcItemDetail.getDeclaredQty());
                         grnService.updateGrnItemDetail(goodReceiveItemDetail);
                     }
@@ -259,8 +232,8 @@ public class QcServiceImpl implements QcService{
             List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
             List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
                     .getVerificationsByDomainTypeAndDomainId(DomainType.QC, (Long)detail.get("qcId"));
-            vrs.stream().forEach(verifier->{
-                if(verifier.getIsApproval()==false){
+            vrs.forEach(verifier->{
+                if(Boolean.FALSE.equals(verifier.getIsApproval())){
                     verifiers.add(verifier);
                 }else{
                     approvers.add(verifier);
@@ -273,18 +246,18 @@ public class QcServiceImpl implements QcService{
             detail.put("approvers",approvers);
             detail.put("comments",comments);
             detail.put("verifiers",verifiers);
-            return Optional.ofNullable(detail);
+            return Optional.of(detail);
         }
         return detailOp;
     }
 
     @Override
     public Optional<?> getByGrnId(Long id) {
-        return grnService.getGRNById(id, true);
+        return grnService.getGrn(id, true);
     }
 
     @Override
-    public List<?> getQcResultByGrn(Long id) {
+    public List<QcQuery.QcResultItem> getQcResultByGrn(Long id) {
         return qcRepository.getQcResultByGrn(id);
     }
 
@@ -292,7 +265,7 @@ public class QcServiceImpl implements QcService{
     @Transactional
     public void rejectQc(Jwt token, Long id, NoteDto noteDto) {
         claimResolver.setToken(token);
-        Optional<GoodReceiveNote> goodReceiveNoteOptional = (Optional<GoodReceiveNote>)grnService.getGRNById(id, true);
+        Optional<GoodReceiveNote> goodReceiveNoteOptional = grnService.getGrn(id, true);
         if(goodReceiveNoteOptional.isPresent()){
             GoodReceiveNote grn = goodReceiveNoteOptional.get();
             grn.setGrnStatus(GrnStatus.REJECTED);
@@ -322,7 +295,7 @@ public class QcServiceImpl implements QcService{
             try {
                 kpi = mapper.writeValueAsString(kpis);
             } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+                throw new AesException(e.getMessage());
             }
             if(grn.getGrnMode().equals(GrnMode.AUTO)) {
                 sentQcStatus(token.getTokenValue(), grn.getRemotePoId(), GrnStatus.QC_FAILED, new ArrayList<>(), noteDto, kpi);
@@ -331,12 +304,10 @@ public class QcServiceImpl implements QcService{
     }
 
     @Transactional
-    private void sentQcStatus(String token, Long id,GrnStatus status, List<?> qcDetails, NoteDto noteDto, String qcResult){
+    public void sentQcStatus(String token, Long id,GrnStatus status, List<?> qcDetails, NoteDto noteDto, String qcResult){
         HttpHeaders headers = new HttpHeaders();
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token);
-        if(orgOp.isPresent()){
-            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
-        }
+        orgOp.ifPresent(organization -> headers.set("orgId", organization.getCpsVendorRegistrationId().toString()));
 
         Map<String,Object> map = new HashMap<>();
         map.put("note",noteDto.getNote());
@@ -348,7 +319,7 @@ public class QcServiceImpl implements QcService{
                 cpsServerConfig.getPoQcFailEndpoint(id);
         ResponseEntity<?> response = networkService.put(url, payload, Void.class);
         if(response.getStatusCode()!= HttpStatus.NO_CONTENT){
-            throw new RuntimeException("Sorry! Something wrong");
+            throw new AesException("Sorry! Something wrong");
         }
 
     }
@@ -368,8 +339,6 @@ public class QcServiceImpl implements QcService{
         Optional<QualityControl> qcOp = qcRepository.findById(id);
         if(qcOp.isPresent()){
             QualityControl qc = qcOp.get();
-//            demandMailService.prepareMailContent(verificationResponse.getVerifier().getEmployeeName(),"Approval",demand);
-//            demandMailService.sentMail(verificationResponse.getVerifier().getEmailAddress(),"Pending Demand Approval Request");
             QcVerifyApprovalHistory qvah = new QcVerifyApprovalHistory();
             qvah.setEmployee(verification.getVerifier());
             qvah.setQcStatus(QcStatus.VERIFIED);
@@ -387,8 +356,6 @@ public class QcServiceImpl implements QcService{
         Optional<QualityControl> qcOp  = qcRepository.findById(id);
         if(qcOp.isPresent()){
             QualityControl qc = qcOp.get();
-//            demandMailService.prepareMailContent(verificationResponse.getVerifier().getEmployeeName(),"Approval",demand);
-//            demandMailService.sentMail(verificationResponse.getVerifier().getEmailAddress(),"Pending Demand Approval Request");
             QcVerifyApprovalHistory qvah = new QcVerifyApprovalHistory();
             qvah.setEmployee(verification.getVerifier());
             qvah.setQcStatus(QcStatus.APPROVED);
@@ -496,7 +463,7 @@ public class QcServiceImpl implements QcService{
                 try {
                     kpi = mapper.writeValueAsString(kpis);
                 } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
+                    throw new AesException(e.getMessage());
                 }
                 if(grn.getGrnMode().equals(GrnMode.AUTO)) {
                     NoteDto note = new NoteDto(rejectDto.getComment());
@@ -505,7 +472,7 @@ public class QcServiceImpl implements QcService{
                 }
             }
         }else{
-            throw new RuntimeException("QC not found");
+            throw new AesException("QC not found");
         }
 
     }
@@ -516,7 +483,7 @@ public class QcServiceImpl implements QcService{
         claimResolver.setToken(token);
         Optional<QualityControl> qcOp = qcRepository.findById(id);
         if(qcOp.isEmpty()){
-            throw new RuntimeException("QC not found");
+            throw new AesException("QC not found");
         }
         QualityControl qc = qcOp.get();
         qc.setReviewerId(null);
@@ -551,8 +518,8 @@ public class QcServiceImpl implements QcService{
         LocalDateTime toDateObj = null;
 
         if(fromDate.isPresent() && toDate.isPresent()) {
-            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
-            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+            fromDateObj = LocalDateTime.parse(fromDate.get() + DATE_TIME_START);
+            toDateObj = LocalDateTime.parse(toDate.get() + DATE_TIME_END);
         }
 
         DataFilter dataFilter = new DataFilter(uri,claimResolver);
@@ -587,8 +554,8 @@ public class QcServiceImpl implements QcService{
         LocalDateTime toDateObj = null;
 
         if(fromDate.isPresent() && toDate.isPresent()) {
-            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
-            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+            fromDateObj = LocalDateTime.parse(fromDate.get() + DATE_TIME_START);
+            toDateObj = LocalDateTime.parse(toDate.get() + DATE_TIME_END);
         }
 
         DataFilter dataFilter = new DataFilter(uri,claimResolver);
@@ -617,7 +584,7 @@ public class QcServiceImpl implements QcService{
                                 Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
-            throw new RuntimeException("Sorry! Qc Relevant Employee Profile Required");
+            throw new AesException("Sorry! Qc Relevant Employee Profile Required");
         }
         String uri="inventory-management/good-receive/quality-check-closed";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
@@ -627,8 +594,8 @@ public class QcServiceImpl implements QcService{
         LocalDateTime toDateObj = null;
 
         if(fromDate.isPresent() && toDate.isPresent()) {
-            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
-            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+            fromDateObj = LocalDateTime.parse(fromDate.get() + DATE_TIME_START);
+            toDateObj = LocalDateTime.parse(toDate.get() + DATE_TIME_END);
         }
 
         DataFilter dataFilter = new DataFilter(uri,claimResolver);
@@ -661,8 +628,8 @@ public class QcServiceImpl implements QcService{
         LocalDateTime toDateObj = null;
 
         if(fromDate.isPresent() && toDate.isPresent()) {
-            fromDateObj = LocalDateTime.parse(fromDate.get() + "T00:00:00");
-            toDateObj = LocalDateTime.parse(toDate.get() + "T23:59:59");
+            fromDateObj = LocalDateTime.parse(fromDate.get() + DATE_TIME_START);
+            toDateObj = LocalDateTime.parse(toDate.get() + DATE_TIME_END);
         }
 
         DataFilter dataFilter = new DataFilter(uri,claimResolver);

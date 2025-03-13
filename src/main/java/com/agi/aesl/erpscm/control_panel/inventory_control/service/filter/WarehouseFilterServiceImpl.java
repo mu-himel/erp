@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.control_panel.inventory_control.service.filter;
 
 import com.agi.aesl.erpscm.common.DataFilterService;
+import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseQuery;
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,7 +19,7 @@ public class WarehouseFilterServiceImpl implements WarehouseFilterService, DataF
     private final WarehouseRepository warehouseRepository;
 
     @Override
-    public Page<?> getFilteredData(List<Long> ids, Pageable pageable) {
+    public Page<WarehouseQuery.WarehouseInfo> getFilteredData(List<Long> ids, Pageable pageable) {
         return warehouseRepository.findAllByNameAndId(ids,name,pageable);
     }
 

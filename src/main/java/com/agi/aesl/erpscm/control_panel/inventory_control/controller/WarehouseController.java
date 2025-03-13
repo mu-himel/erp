@@ -6,8 +6,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseServ
 
 import jakarta.validation.Valid;
 
-// import io.swagger.annotations.ApiOperation;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,14 +18,15 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/warehouses")
+@RequiredArgsConstructor
 public class WarehouseController extends BaseController{
 
-    @Autowired
-    private WarehouseService warehouseService;
+
+    private final WarehouseService warehouseService;
 
 
     @PostMapping
-    public ResponseEntity<?> createWarehouse(
+    public ResponseEntity<Void> createWarehouse(
         @AuthenticationPrincipal Jwt token,
         @RequestBody @Valid Warehouse warehouse){
         warehouseService.createWarehouse(token, warehouse);
@@ -34,7 +34,7 @@ public class WarehouseController extends BaseController{
     }
 
     @GetMapping
-    public ResponseEntity<?> getWarehouses(
+    public ResponseEntity<Object> getWarehouses(
             @AuthenticationPrincipal Jwt token,
                 @RequestParam("name") Optional<String> name,
                 @RequestParam("page") Optional<Integer> page,
@@ -48,7 +48,7 @@ public class WarehouseController extends BaseController{
     }
 
     @GetMapping("/list")
-    public ResponseEntity<?> getWarehouses(
+    public ResponseEntity<Object> getWarehouses(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("name") Optional<String> name){
         return new ResponseEntity<>(
@@ -58,7 +58,7 @@ public class WarehouseController extends BaseController{
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getWarehouse(@PathVariable("id") Long id){
+    public ResponseEntity<Object> getWarehouse(@PathVariable("id") Long id){
         return new ResponseEntity<>(
                 warehouseService.getWarehouse(id),
                 HttpStatus.OK
@@ -66,7 +66,7 @@ public class WarehouseController extends BaseController{
     }
 
     @PutMapping
-    public ResponseEntity<?> updateWarehouse(
+    public ResponseEntity<Void> updateWarehouse(
         @AuthenticationPrincipal Jwt token,
         @RequestBody @Valid Warehouse warehouse){
         warehouseService.updateWarehouse(token, warehouse);
@@ -74,7 +74,7 @@ public class WarehouseController extends BaseController{
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteWarehouse(
+    public ResponseEntity<Void> deleteWarehouse(
         @AuthenticationPrincipal Jwt token,
         @PathVariable("id") Long id){
         warehouseService.deleteWarehouse(token, id);

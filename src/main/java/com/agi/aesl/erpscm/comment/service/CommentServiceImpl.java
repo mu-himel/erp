@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.agi.aesl.erpscm.comment.dto.CommentInfo;
 import com.agi.aesl.erpscm.comment.enums.ActionType;
@@ -56,7 +55,7 @@ public class CommentServiceImpl implements CommentService{
         comment.setAttachments(commentDto.getAttachments().stream().map(attachment->{
             attachment.setComment(comment);
             return attachment;
-        }).collect(Collectors.toList()));
+        }).toList());
         commentRepository.save(comment);
         
     }

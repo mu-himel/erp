@@ -16,33 +16,35 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.agi.aesl.erpscm.cs.repository.AcsQuery.*;
+
 @Repository
-public interface CsAccountRepository extends JpaRepository<CsAccount,Long>, AcsQuery {
-    @Query(value = getAllAcsByIndentNoAndStatus, countQuery = countByIndentNoAndStatusAcs, nativeQuery = true)
+public interface CsAccountRepository extends JpaRepository<CsAccount,Long> {
+    @Query(value = GET_ALL_ACS_BY_INDENT_NO_AND_STATUS, countQuery = COUNT_BY_INDENT_NO_AND_STATUS_ACS, nativeQuery = true)
     Page<AcsPendingItem> findAllAcs(Optional<String> indentNo, List<String> status,
                                     LocalDateTime fromDate, LocalDateTime toDate,
                                     Pageable pageable);
 
-    @Query(value = getAllPVAcsByIndentNoAndStatus, countQuery = countByPVAcsIndentNoAndStatusAcs, nativeQuery = true)
+    @Query(value = GET_ALL_PV_ACS_BY_INDENT_NO_AND_STATUS, countQuery = COUNT_ALL_PV_ACS_BY_INDENT_NO_AND_STATUS, nativeQuery = true)
     Page<AcsPendingItem> findAllPendingVerificationAcs(Optional<String> indentNo,
                                                        String nextVerifierId, List<String> status,
                                                        LocalDateTime fromDate,
                                                        LocalDateTime toDate,
                                                        Pageable pageable);
 
-    @Query(value = getAllPAAcsByIndentNoAndStatus, countQuery = countByPAAcsIndentNoAndStatusAcs, nativeQuery = true)
+    @Query(value = GET_ALL_PA_ACS_BY_INDENT_NO_AND_STATUS, countQuery = COUNT_ALL_PA_ACS_BY_INDENT_NO_AND_STATUS, nativeQuery = true)
     Page<AcsPendingItem> findAllPendingApprovalAcs(Optional<String> indentNo,String nextApproverId,
                                                    List<String> status,
                                                    LocalDateTime fromDate, LocalDateTime toDate,
                                                    Pageable pageable);
 
-    @Query(value = getAllActiveCsByIndentNo, countQuery = countAllActiveCsByIndentNo, nativeQuery = true)
+    @Query(value = GET_ALL_ACTIVE_CS_BY_INDENT_NO, countQuery = COUNT_ALL_ACTIVE_CS_BY_INDENT_NO, nativeQuery = true)
     Page<AcsPendingItem> findAllActiveCs(String indentNo, List<String> status,
                                          Long categoryId, Long subCategoryId,
                                          LocalDateTime fromDate, LocalDateTime toDate,
                                          Pageable pageable);
 
-    @Query(value = getAllExpiredCsByIndentNo, countQuery = countAllExpiredCsByIndentNo, nativeQuery = true)
+    @Query(value = GET_ALL_EXPIRED_CS_BY_INDENT_NO, countQuery = COUNT_ALL_EXPIRED_CS_BY_INDENT_NO, nativeQuery = true)
     Page<AcsPendingItem> findAllExpiredCs(String indentNo, List<String> status, Pageable pageable);
 
     Optional<CsAccount> findByCsId(Long id);

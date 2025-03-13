@@ -14,14 +14,15 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore
 
 @Repository
 public interface WarehouseStoreRepository extends JpaRepository<WarehouseStore,Long>{
-
-    String storeList = """
-            SELECT 
+    String COUNT_START="SELECT COUNT(*) FROM (";
+    String COUNT_END=") as TOTAL";
+    String STORE_LIST = """
+            SELECT
             ws.id as id,
             ws.active as active,
             ws.store_name as storeName,
             w.name as warehouseName,
-            (SELECT COUNT(*) FROM scm_category_warehouse_stores scws 
+            (SELECT COUNT(*) FROM scm_category_warehouse_stores scws
             LEFT JOIN scm_item_categories sic ON sic.id = scws.category_id
             WHERE scws.warehouse_store_id = ws.id
             AND sic.parent_category_id IS NULL
@@ -32,8 +33,8 @@ public interface WarehouseStoreRepository extends JpaRepository<WarehouseStore,L
             WHERE ws.active=:active
             AND ws.warehouse_id = :warehouseId
             """;
-    String countStoreList = "SELECT COUNT(*) FROM ("+storeList+") as total";
-    @Query(value = storeList,countQuery = countStoreList,nativeQuery = true)
+    String COUNT_STORE_LIST = COUNT_START+STORE_LIST+COUNT_END;
+    @Query(value = STORE_LIST,countQuery = COUNT_STORE_LIST,nativeQuery = true)
     Page<WarehouseStoreInfoV2> findAllByActiveAndWarehouseId(Boolean active, Long warehouseId, Pageable pageable);
 
     List<WarehouseStore> findAllByWarehouseIdIn(List<Long> warehouseId);
@@ -47,7 +48,7 @@ public interface WarehouseStoreRepository extends JpaRepository<WarehouseStore,L
     }
 
     @Query(value = """
-                SELECT 
+                SELECT
                     ws.id as id,
                     ws.warehouse_id as warehouseId,
                     w.name as warehouseName,

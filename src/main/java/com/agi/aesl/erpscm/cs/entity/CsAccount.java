@@ -15,9 +15,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "cs_accounts")
 public class CsAccount extends VerifyableEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
     @OneToOne
     private Cs cs;

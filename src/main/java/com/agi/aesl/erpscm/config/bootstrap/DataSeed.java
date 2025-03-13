@@ -1,20 +1,20 @@
 package com.agi.aesl.erpscm.config.bootstrap;
 
 import com.agi.aesl.erpscm.common.AppVersion;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import com.agi.aesl.erpscm.network.NetworkService;
 
 @Component
+@RequiredArgsConstructor
 public class DataSeed implements CommandLineRunner{
     
-    @Autowired
-    private NetworkService networkService;
 
-    @Autowired
-    private AppVersion appVersion;
+    private final NetworkService networkService;
+
+    private final AppVersion appVersion;
 
     private void initialize(){
         appVersion.showVersion();

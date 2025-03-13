@@ -4,10 +4,11 @@ import java.util.List;
 import java.util.Optional;
 
 import com.agi.aesl.erpscm.common.DataFilter;
+import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseQuery;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.filter.WarehouseFilterService;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,28 +25,29 @@ import com.agi.aesl.erpscm.inventory.repository.CategoryWarehouseStoreRepository
 import jakarta.transaction.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class WarehouseServiceImpl implements WarehouseService{
 
-    @Autowired
-    private WarehouseRepository warehouseRepository;
 
-    @Autowired
-    private CategoryWarehouseStoreRepository categoryWarehouseStoreRepository;
+    private final WarehouseRepository warehouseRepository;
 
-    @Autowired
-    private WarehouseStoreRepository warehouseStoreRepository;
 
-    @Autowired
-    private IntegrationWriterService integrationWriterService;
+    private final CategoryWarehouseStoreRepository categoryWarehouseStoreRepository;
 
-    @Autowired
-    private IntegrationReaderService integrationReaderService;
 
-    @Autowired
-    private WarehouseFilterService warehouseFilterService;
+    private final WarehouseStoreRepository warehouseStoreRepository;
 
-    @Autowired
-    private ClaimResolver claimResolver;
+
+    private final IntegrationWriterService integrationWriterService;
+
+
+    private final IntegrationReaderService integrationReaderService;
+
+
+    private final WarehouseFilterService warehouseFilterService;
+
+
+    private final ClaimResolver claimResolver;
 
 
     @Override
@@ -57,12 +59,7 @@ public class WarehouseServiceImpl implements WarehouseService{
             throw new AesException("Name already exist");
         }
 
-
         warehouseRepository.save(warehouse);
-
-//        if(warehouse.getId()!=null){
-//            integrationWriterService.createWarehouse(token, warehouse);
-//        }
 
     }
 
@@ -75,29 +72,18 @@ public class WarehouseServiceImpl implements WarehouseService{
         }
         Optional<Warehouse> warehouseExistOptional = warehouseRepository.findByNameAndActive(warehouse.getName(),true);
 
-        if(warehouseExistOptional.isPresent()){
-            if(!warehouseExistOptional.get().getId().equals(warehouseOptional.get().getId())){
-                throw new RuntimeException("Sorry! This warehouse name already exist with different #ID["+warehouseExistOptional.get().getId()+"]");
-            }
-//            throw new AesException("Name already exist");
+        if(warehouseExistOptional.isPresent() && !warehouseExistOptional.get().getId().equals(warehouseOptional.get().getId())){
+                throw new AesException("Sorry! This warehouse name already exist with different #ID["+warehouseExistOptional.get().getId()+"]");
         }
 
         Warehouse newWarehouse = new Warehouse(warehouse.getId());
         newWarehouse.setName(warehouse.getName());
         newWarehouse.setLocation(warehouse.getLocation());
-        // warehouse.setWarehouseStores(warehouse.getWarehouseStores().stream().map(warehouseStore -> {
-        //     warehouseStore.setWarehouse(warehouse);
-        //     return warehouseStore;
-        // }).collect(Collectors.toList()));
         warehouseRepository.save(newWarehouse);
-//        if(newWarehouse.getId()!=null){
-//
-//            integrationWriterService.updateWarehouse(token,oldName, newWarehouse);
-//        }
     }
 
     @Override
-    public Page<?> getWarehouses(Jwt token, Optional<String> name, Optional<Integer> page, Optional<Integer> size) {
+    public Page<WarehouseQuery.WarehouseInfo> getWarehouses(Jwt token, Optional<String> name, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         String moduleUri="inventory-control/warehouse";
 
@@ -108,7 +94,7 @@ public class WarehouseServiceImpl implements WarehouseService{
         dataFilter.setDataFilterService(warehouseFilterService);
         warehouseFilterService.setName(name.orElse(null));
 
-        Page<?> filteredData = dataFilter.fetchData();
+        Page<WarehouseQuery.WarehouseInfo> filteredData = dataFilter.fetchData();
         if(!filteredData.isEmpty()) {
             return filteredData;
         }
@@ -121,7 +107,7 @@ public class WarehouseServiceImpl implements WarehouseService{
     }
 
     @Override
-    public List<?> getWarehouses(Jwt token, Optional<String> name) {
+    public List<WarehouseQuery.WarehouseInfo> getWarehouses(Jwt token, Optional<String> name) {
         claimResolver.setToken(token);
         String moduleUri="inventory-control/warehouse";
         DataFilter dataFilter = new DataFilter(moduleUri,claimResolver);
@@ -152,7 +138,6 @@ public class WarehouseServiceImpl implements WarehouseService{
 
     @Override
     public Optional<Warehouse> getWarehouseByName(String warehouseName) {
-        System.out.printf("HERE:" +warehouseName.trim());
         return warehouseRepository.findByName(warehouseName.trim());
     }
     

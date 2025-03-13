@@ -14,7 +14,8 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 
 @Repository
 public interface WarehouseRepository extends JpaRepository<Warehouse,Long>, WarehouseQuery {
-    @Query(value = getWarehouses, countQuery = countWarehouseWithPagination, nativeQuery = true)
+
+    @Query(value = GET_WAREHOUSES, countQuery = COUNT_WAREHOUSE_WITH_PAGINATION, nativeQuery = true)
     Page<WarehouseInfo> findAllByName(@Param("name") Optional<String> name, Pageable pageable);
 
     @Query(value = """
@@ -24,22 +25,22 @@ public interface WarehouseRepository extends JpaRepository<Warehouse,Long>, Ware
     Optional<Warehouse> findByName(String name);
     Optional<Warehouse> findByNameAndActive(String name,Boolean active);
 
-    @Query(value = getWarehouses, nativeQuery = true)
+    @Query(value = GET_WAREHOUSES, nativeQuery = true)
     List<WarehouseInfo> findAllByName(Optional<String> name);
 
-    @Query(value = getWarehouseLists, nativeQuery = true)
+    @Query(value = GET_WAREHOUSE_LIST, nativeQuery = true)
     List<WarehouseInfo> findAllByIdsAndName(List<Long> warehouseIds, Optional<String> name);
 
-    @Query(value = getWarehousesDetail)
+    @Query(value = GET_WAREHOUSE_DETAIL)
     Optional<Warehouse> findWarehouseById(Long id);
 
-    @Query(value = getWarehousesWithFilter, countQuery = countWarehouseWithPaginationFilter, nativeQuery = true)
+    @Query(value = GET_WAREHOUSES_WITH_FILTER, countQuery = COUNT_WAREHOUSE_WITH_PAGINATION_FILTER, nativeQuery = true)
     Page<WarehouseInfo> findAllByNameAndId(List<Long> warehouseIds, String name, Pageable pageable);
 
-    @Query(value = getFinishGoodsWarehouse, countQuery=countFinishGoodsWarehouse,nativeQuery = true)
+    @Query(value = GET_FINISH_GOODS_WAREHOUSES, countQuery=COUNT_FINISH_GOODS_WAREHOUSES,nativeQuery = true)
     Page<WarehouseInfoExt> findOnlyFinishedGoodsWarehouse(String name, Pageable pageable);
 
-    @Query(value = getFinishGoodsWarehouseForIds,nativeQuery = true)
+    @Query(value = GET_FINISH_GOODS_WAREHOUSES_FOR_IDS,nativeQuery = true)
     List<Long> findOnlyFinishedGoodsWarehouse(String name);
     public interface WarehouseInfoExt {
     

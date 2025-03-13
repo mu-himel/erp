@@ -4,6 +4,7 @@ import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualItemDetailDto;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualRequestDto;
 import com.agi.aesl.erpscm.goods_receive.dto.response.GoodReceiveNoteItemDetailInfo;
@@ -26,7 +27,7 @@ import com.agi.aesl.erpscm.quality_control.repository.QcQuery;
 import com.agi.aesl.erpscm.quality_control.service.QcMailService;
 import com.agi.aesl.erpscm.quality_control.service.QcService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +38,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -45,37 +47,38 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class GrnServiceImpl implements GrnService{
 
-    @Autowired
-    private GrnRepository grnRepository;
 
-    @Autowired
-    private ClaimResolver claimResolver;
+    private final GrnRepository grnRepository;
 
-    @Autowired
-    private IntegrationReaderService integrationReaderService;
 
-    @Autowired
-    private ItemService itemService;
+    private final ClaimResolver claimResolver;
 
-    @Autowired
-    private QcService qcService;
 
-    @Autowired
-    private GrnDetailRepository grnDetailRepository;
+    private final IntegrationReaderService integrationReaderService;
 
-    @Autowired
-    private QcMailService qcMailService;
 
-    @Autowired
-    private OrgService orgService;
+    private final ItemService itemService;
 
-    @Autowired
-    private CpsServerConfig cpsConfig;
 
-    @Autowired
-    private NetworkService networkService;
+    private final QcService qcService;
+
+
+    private final GrnDetailRepository grnDetailRepository;
+
+
+    private final QcMailService qcMailService;
+
+
+    private final OrgService orgService;
+
+
+    private final CpsServerConfig cpsConfig;
+
+
+    private final NetworkService networkService;
 
     @Override
     public String getNextGrnNumber() {
@@ -88,52 +91,12 @@ public class GrnServiceImpl implements GrnService{
         return String.format("%05d",1);
     }
 
-//    @Override
-//    @Transactional
-//    public void addGrn(Jwt token, GoodReceiveNoteDto goodReceiveNoteDto) {
-//        claimResolver.setToken(token);
-//        GoodReceiveNote goodReceiveNote = new GoodReceiveNote();
-//        goodReceiveNote.setGrnNo(goodReceiveNote.getGrnNo());
-//        goodReceiveNote.setGrnStatus(GrnStatus.PENDING_QC);
-//        if(token != null)
-//            goodReceiveNote.setCreatedBy(claimResolver.getEmployee().get());
-//
-//        goodReceiveNote.setGoodReceiveItemDetails(
-//                goodReceiveNoteDto.getGoodReceiveItemDetails().stream().map(
-//                        goodReceiveItemDetailDto -> {
-//                            goodReceiveNote.setWarehouse(new Warehouse(goodReceiveItemDetailDto.getWarehouse().getId()));
-//
-//                            GoodReceiveItemDetail goodReceiveItemDetail = new GoodReceiveItemDetail();
-//                            goodReceiveItemDetail.setItem(new Item(goodReceiveItemDetailDto.getItem().getId()));
-//                            goodReceiveItemDetail.setCategory(new ItemCategory(goodReceiveItemDetailDto.getCategory().getId()));
-//                            goodReceiveItemDetail.setSubCategory(new ItemCategory(goodReceiveItemDetailDto.getSubCategory().getId()));
-//                            goodReceiveItemDetail.setWarehouse(new Warehouse(goodReceiveItemDetailDto.getWarehouse().getId()));
-//                            if(goodReceiveItemDetailDto.getWarehouseStore()!=null){
-//                                goodReceiveItemDetail.setWarehouseStore(new WarehouseStore(goodReceiveItemDetailDto.getWarehouseStore().getId()));
-//                            }
-//                            goodReceiveItemDetail.setReceiveQty(BigDecimal.valueOf(goodReceiveItemDetailDto.getOrderQty()));
-//                            if(goodReceiveItemDetailDto.getManufactureDate()!=null){
-//                                goodReceiveItemDetail.setManufactureDate(goodReceiveItemDetailDto.getManufactureDate());
-//                            }
-//                            if(goodReceiveItemDetailDto.getExpireDate()!=null){
-//                                goodReceiveItemDetail.setExpireDate(goodReceiveItemDetailDto.getExpireDate());
-//                            }
-//                            goodReceiveItemDetail.setGoodReceiveNote(goodReceiveNote);
-//                            return goodReceiveItemDetail;
-//                        }
-//                ).collect(Collectors.toList())
-//        );
-//        grnRepository.save(goodReceiveNote);
-//    }
-
     @Override
     @Transactional
     public String createManualGrn(Jwt token, GrnManualRequestDto grnManualDto, GrnMode mode) {
         claimResolver.setToken(token);
         String uri = "";
-//        if(claimResolver.getEmployee()==null){
-//            throw new RuntimeException("Sorry! Employee profile required");
-//        }
+
         GoodReceiveNote grn = new GoodReceiveNote();
         grn.setGrnDate(LocalDate.now());
         if(mode.equals(GrnMode.AUTO)) {
@@ -143,9 +106,6 @@ public class GrnServiceImpl implements GrnService{
         grn.setPoNo(grnManualDto.getPoNo());
         grn.setIndentNo(grnManualDto.getIndentNo() );
         grn.setGrnMode(mode);
-//        if(mode.equals(GrnMode.MANUAL)) {
-//            grn.setGrnStatus(GrnStatus.PENDING_QC);
-//        }
 
         grn.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
         if(token != null && claimResolver.getEmployee().isPresent()){
@@ -185,7 +145,7 @@ public class GrnServiceImpl implements GrnService{
                 grid.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
                 grid.setGoodReceiveNote(grn);
                 return grid;
-            }).collect(Collectors.toList())
+            }).toList()
         );
 
 
@@ -212,8 +172,6 @@ public class GrnServiceImpl implements GrnService{
         grn.setGrnNo(getNextGrnNumber());
         grnRepository.save(grn);
 
-//        Optional<GoodReceiveNote> qcOp = (Optional<GoodReceiveNote>) qcService.getByGrnId(grn.getId());
-
         qcMailService.setClaimResolver(claimResolver);
         qcMailService.setQualityControl(grn);
         qcMailService.getAuthorizedUsers(uri);
@@ -222,19 +180,19 @@ public class GrnServiceImpl implements GrnService{
     }
 
     @Override
+    @Transactional
     public void createAutoGrn(Jwt token, GrnManualRequestDto grnManualDto) {
-//        grnManualDto.setGrnNo(getNextGrnNumber());
         createManualGrn(token,grnManualDto,GrnMode.AUTO);
     }
 
     @Override
-    public Page<?> getAllGrn(Jwt token, Optional<Integer> page,
-                             Optional<Integer> size, Optional<String> grnNo,
-                             Optional<Integer> qty,Optional<Integer> receivedQty,
-                             Optional<String> fromDate, Optional<String> toDate, Optional<String> grnStatus) {
+    public Page<GrnRepository.GoodReceiveNoteInfo> getAllGrn(Jwt token, Optional<Integer> page,
+                                                             Optional<Integer> size, Optional<String> grnNo,
+                                                             Optional<Integer> qty, Optional<Integer> receivedQty,
+                                                             Optional<String> fromDate, Optional<String> toDate, Optional<String> grnStatus) {
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
-            throw new RuntimeException("Sorry! Store Profile Required");
+            throw new AesException("Sorry! Store Profile Required");
         }
         String uri = "inventory-management/good-receive/good-receive-note";
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
@@ -251,7 +209,7 @@ public class GrnServiceImpl implements GrnService{
             fromDateObj = LocalDateTime.parse(fromDate.get()+"T00:00:00");
             toDateObj = LocalDateTime.parse(toDate.get()+"T23:59:59");
         }
-        warehouseIds.add(claimResolver.getEmployee().get().getWarehouseId());
+        claimResolver.getEmployee().ifPresent(employee->warehouseIds.add(employee.getWarehouseId()));
         return grnRepository.findAllGrn(pageable,
                 warehouseIds,categoryIds,
                 grnNo.orElse(null),
@@ -260,12 +218,12 @@ public class GrnServiceImpl implements GrnService{
     }
 
     @Override
-    public Optional<?> getGrnById(Long id, Boolean returnTypeEntity) {
-        if(returnTypeEntity){
-            return grnRepository.findById(id);
+    public <T> T getGrnById(Long id, Boolean returnTypeEntity) {
+        if(Boolean.TRUE.equals(returnTypeEntity)){
+            return (T) grnRepository.findById(id);
         }else{
             Optional<GoodReceiveNoteDetailInfo> goodReceiveItemDetailOp = grnRepository.findGrnById(id);
-            Map<String, Object> _detailInfo = new HashMap<>();
+            Map<String, Object> detailInfoMap = new HashMap<>();
             if(goodReceiveItemDetailOp.isPresent()) {
                 GoodReceiveNoteDetailInfo detailInfo = goodReceiveItemDetailOp.get();
                 GrnDetailInfo grnDetailInfo = new GrnDetailInfo();
@@ -278,46 +236,11 @@ public class GrnServiceImpl implements GrnService{
                 grnDetailInfo.setIsReceivedByStore(detailInfo.getIsReceivedByStore());
                 grnDetailInfo.setCreatedBy(detailInfo.getCreatedBy());
                 grnDetailInfo.setDeclineNote(detailInfo.getDeclineNote());
-                Long vendorId = detailInfo.getVendorId();
 
                 List<GoodReceiveNoteItemDetailInfo> detailInfos = new ArrayList<>();
                 detailInfo.getGoodReceiveItemDetails().stream().forEach(goodReceiveNoteItemDetailInfo -> {
                     GoodReceiveNoteItemDetailInfo grnidi = new GoodReceiveNoteItemDetailInfo();
-                    if(detailInfo.getGrnMode().equals(GrnMode.AUTO)) {
 
-//                        Optional<PriceQuotationDetailInfo> pqDetailOp = priceQuotationDetailRepository.findByItemAttribute(
-//                                vendorId,
-//                                goodReceiveNoteItemDetailInfo.getWarehouse().getId(),
-//                                goodReceiveNoteItemDetailInfo.getItemAttribute()
-//                        );
-//                    if (pqDetailOp.isPresent()) {
-//                        PriceQuotationDetailInfo pqd = pqDetailOp.get();
-//                        String itemAttribute = pqd.getItemAttribute() + " - " + pqd.getExtendedAttributes();
-//
-//                        grnidi.setEsitmatedDays(pqd.getEstDeliveryDays());
-//                        grnidi.setTotalPrice(pqd.getTotalPrice());
-//                        grnidi.setUnitPrice(pqd.getUnitPrice());
-//                        grnidi.setItemAttribute(itemAttribute);
-//                        grnidi.setVatPercent(pqd.getVatPercent());
-//                        grnidi.setVatAmount(pqd.getVatAmount());
-//
-//                        grnidi.setDeliveryCharge(pqd.getDeliveryCharge().equals("Included") ? DeliveryCharge.Included :
-//                                DeliveryCharge.Excluded);
-//                        grnidi.setDeliveryChargeAmount(pqd.getDeliveryChargeAmount());
-//                        if (pqd.getDeliveryOrderQty() != null) {
-//                            grnidi.setOrderQty(pqd.getDeliveryOrderQty());
-//                        } else {
-//                            grnidi.setOrderQty(pqd.getRfqQty());
-//                        }
-//                        grnDetailInfo.setMushakIncluded(pqd.getMushakIncluded());
-//                        grnDetailInfo.setIndentId(pqd.getIndentId());
-//                        grnDetailInfo.setVendorName(pqd.getVendorName());
-//                        grnDetailInfo.setVendorEmail(pqd.getVendorEmail());
-//                        grnDetailInfo.setVendorPhoneNo(pqd.getVendorPhoneNo());
-//                        grnDetailInfo.setCreditPaymentDuration(pqd.getCreditPaymentDuration());
-//                    }
-
-                    }
                     grnidi.setApproveComment(goodReceiveNoteItemDetailInfo.getApproveComment());
                     grnidi.setDeclineComment(goodReceiveNoteItemDetailInfo.getDeclineComment());
                     grnidi.setCreatedAt(goodReceiveNoteItemDetailInfo.getCreatedAt());
@@ -333,17 +256,17 @@ public class GrnServiceImpl implements GrnService{
                     detailInfos.add(grnidi);
                 });
                 grnDetailInfo.setGoodReceiveItemDetails(detailInfos);
-                List<QcQuery.QcResultItem> qcResultByGrn = (List<QcQuery.QcResultItem>)qcService.getQcResultByGrn(detailInfo.getId());
+                List<QcQuery.QcResultItem> qcResultByGrn = qcService.getQcResultByGrn(detailInfo.getId());
 
-                _detailInfo.put("detailInfo", grnDetailInfo);
-                _detailInfo.put("qcComment", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getComment():""));
-                _detailInfo.put("qcId", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getId():null));
-                _detailInfo.put("reviewerId", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getReviewerId():null));
-                _detailInfo.put("qcStatus", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getQcStatus():""));
-                _detailInfo.put("prevStatus", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getPrevStatus():""));
-                _detailInfo.put("qcResult", qcResultByGrn);
+                detailInfoMap.put("detailInfo", grnDetailInfo);
+                detailInfoMap.put("qcComment", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getComment():""));
+                detailInfoMap.put("qcId", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getId():null));
+                detailInfoMap.put("reviewerId", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getReviewerId():null));
+                detailInfoMap.put("qcStatus", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getQcStatus():""));
+                detailInfoMap.put("prevStatus", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getPrevStatus():""));
+                detailInfoMap.put("qcResult", qcResultByGrn);
             }
-                return Optional.ofNullable(_detailInfo);
+                return (T) Optional.of(detailInfoMap);
             }
 
 
@@ -352,14 +275,14 @@ public class GrnServiceImpl implements GrnService{
 
 
     @Override
-    public Page<?> getAllGrnPendingQC(Jwt token, Optional<Integer> page, Optional<Integer> size,
+    public Page<GrnRepository.GoodReceiveNoteInfo> getAllGrnPendingQC(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                       Optional<String> grnNo, Optional<Integer> qty, Optional<String> grnMode,
                                       Optional<String> poNo,
                                       Optional<Integer> receivedQty,
                                       Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
-            throw new RuntimeException("Sorry! Qc Relevant Employee Profile Required");
+            throw new AesException("Sorry! Qc Relevant Employee Profile Required");
         }
         String uri="inventory-management/good-receive/quality-check";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
@@ -368,7 +291,7 @@ public class GrnServiceImpl implements GrnService{
         dataFilter.setReaderService(integrationReaderService);
         List<Long> warehouseIds= dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
         List<Long> categoryIds = dataFilter.getCategoryIds();
-        warehouseIds.add(claimResolver.getEmployee().get().getWarehouseId());
+        claimResolver.getEmployee().ifPresent(employee->warehouseIds.add(employee.getWarehouseId()));
         LocalDateTime fromDateObj = null;
         LocalDateTime toDateObj = null;
 
@@ -396,41 +319,23 @@ public class GrnServiceImpl implements GrnService{
     }
 
     @Override
-    public Optional<?> getGRNById(Long id, boolean returnTypeEntity) {
+    public <T> T getGrn(Long id, boolean returnTypeEntity) {
         if(returnTypeEntity){
-            return grnRepository.findById(id);
+            //noinspection unchecked
+            return (T) grnRepository.findById(id);
         }else{
 
             Optional<GrnRepository.GoodReceiveNoteDetailInfo> goodReceiveItemDetailOp = grnRepository.findGrnById(id);
-            Map<String, Object> _detailInfo = new HashMap<>();
+            Map<String, Object> detailInfoMap = new HashMap<>();
             if(goodReceiveItemDetailOp.isPresent()) {
                 GrnRepository.GoodReceiveNoteDetailInfo detailInfo =  goodReceiveItemDetailOp.get();
 
-                GrnDetailInfo grnDetailInfo = new GrnDetailInfo();
-//                grnDetailInfo.setId(detailInfo.getId());
-//                grnDetailInfo.setGrnNo(detailInfo.getGrnNo());
-//                grnDetailInfo.setGrnStatus(detailInfo.getGrnStatus());
-//                grnDetailInfo.setWarehouse(detailInfo.getWarehouse());
-//                grnDetailInfo.setIsReceivedByStore(detailInfo.getIsReceivedByStore());
-//                grnDetailInfo.setCreatedBy(detailInfo.getCreatedBy());
-//                List<GoodReceiveNoteItemDetailInfo> detailInfos = new ArrayList<>();
-//                detailInfo.getGoodReceiveItemDetails().stream().forEach(goodReceiveNoteItemDetailInfo -> {
-//                    GoodReceiveNoteItemDetailInfo grnidi = new GoodReceiveNoteItemDetailInfo();
-//                    grnidi.setId(goodReceiveNoteItemDetailInfo.getId());
-//                    grnidi.setReceiveQty(goodReceiveNoteItemDetailInfo.getReceiveQty());
-//                    grnidi.setExpireDate(goodReceiveNoteItemDetailInfo.getExpireDate());
-//                    grnidi.setManufactureDate(goodReceiveNoteItemDetailInfo.getManufactureDate());
-//                    grnidi.setItem(itemService.getItemDetailWithWarehouse(goodReceiveNoteItemDetailInfo.getItem().getId()));
-//                    detailInfos.add(grnidi);
-//                });
-//                grnDetailInfo.setGoodReceiveNoteItemDetailInfoList(detailInfos);
-
-                _detailInfo.put("detailInfo",detailInfo);
-                _detailInfo.put("qcResult",qcService.getQcResultByGrn(detailInfo.getId()));
-
+                detailInfoMap.put("detailInfo",detailInfo);
+                detailInfoMap.put("qcResult",qcService.getQcResultByGrn(detailInfo.getId()));
 
             }
-            return Optional.ofNullable(_detailInfo);
+            //noinspection unchecked
+            return (T) Optional.of(detailInfoMap);
         }
     }
 
@@ -459,12 +364,10 @@ public class GrnServiceImpl implements GrnService{
 
             }
         }
-        if(grn!=null) {
-            Long remotePoId = grn.getRemotePoId();
-            if(grn.getGrnMode().equals(GrnMode.AUTO)) {
+        if(grn!=null && grn.getGrnMode().equals(GrnMode.AUTO)) {
                 sentGrnReceived(token, grn.getPoNo(), GrnStatus.RECEIVED, new NoteDto());
             }
-        }
+
     }
 
     @Override
@@ -480,20 +383,17 @@ public class GrnServiceImpl implements GrnService{
         }
     }
 
-    @Transactional
-    private void sentGrnReceived(Jwt token,String id,GrnStatus status, NoteDto noteDto){
+    public void sentGrnReceived(Jwt token,String id,GrnStatus status, NoteDto noteDto){
         HttpHeaders headers = new HttpHeaders();
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
-        if(orgOp.isPresent()){
-            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
-        }
+        orgOp.ifPresent(organization -> headers.set("orgId", organization.getCpsVendorRegistrationId().toString()));
 
         HttpEntity<NoteDto> payload = new HttpEntity<>(noteDto,headers);
         String url = (status.equals(GrnStatus.RECEIVED))? cpsConfig.getPoReceiveEndpoint(id): cpsConfig.getPoRejectEndpoint(id);
-        System.out.println(url);
+
         ResponseEntity<?> response = networkService.put(url, payload, Void.class);
         if(response.getStatusCode()!= HttpStatus.NO_CONTENT){
-            throw new RuntimeException("Sorry! Something wrong");
+            throw new AesException("Sorry! Something wrong");
         }
 
     }

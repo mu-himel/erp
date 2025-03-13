@@ -1,9 +1,12 @@
 package com.agi.aesl.erpscm.control_panel.inventory_control.service;
 
-// import com.agi.aesl.erpscm.control_panel.inventory_control.dto.CopyToStoreDto;
+
 import com.agi.aesl.erpscm.control_panel.inventory_control.dto.StoreDto;
 
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
+import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseRepository;
+import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseStoreRepository;
+import com.agi.aesl.erpscm.inventory.repository.CategoryRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -15,20 +18,18 @@ public interface WarehouseStoreService {
 
     void deleteWarehouseStore(Long id);
 
-    Page<?> getStores(Long warehouseId, Optional<Integer> page, Optional<Integer> size);
+    Page<WarehouseStoreRepository.WarehouseStoreInfoV2> getStores(Long warehouseId, Optional<Integer> page, Optional<Integer> size);
 
-    List<?> getStoresByWarehouse(Jwt token,Optional<String> name, Optional<Long> warehouseId);
+    List<WarehouseStoreRepository.WarehouseStoreInfo> getStoresByWarehouse(Jwt token, Optional<String> name, Optional<Long> warehouseId);
     List<WarehouseStore> getStoresByWarehouseId( Long warehouseId);
     List<WarehouseStore> getStoresByWarehouseIdIn( List<Long> warehouseId);
 
-    Optional<?> getStore(Long warehouseStoreId);
+    Optional<WarehouseStoreRepository.WarehouseStoreInfoSingle> getStore(Long warehouseStoreId);
     Optional<WarehouseStore> getStoreById(Long warehouseStoreId);
 
-    // void copyToStore(Long wId, CopyToStoreDto copyToStoreDto);
+    Page<WarehouseRepository.WarehouseInfoExt> getFinishedGoodsStoreWarehouses(Optional<String> name, Pageable pageable);
 
-    Page<?> getFinishedGoodsStoreWarehouses(Optional<String> name, Pageable pageable);
-
-    List<?> getStoreSubCategories(Long warehouseId, Long storeId);
+    List<CategoryRepository.ItemCategoryInfo> getStoreSubCategories(Long warehouseId, Long storeId);
 
     void createStore(StoreDto storeDto);
 

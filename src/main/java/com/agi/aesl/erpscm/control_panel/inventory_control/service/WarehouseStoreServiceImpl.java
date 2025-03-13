@@ -10,11 +10,12 @@ import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.entity.CategoryWarehouseStore;
 import com.agi.aesl.erpscm.inventory.entity.ItemStock;
+import com.agi.aesl.erpscm.inventory.repository.CategoryRepository;
 import com.agi.aesl.erpscm.inventory.repository.CategoryWarehouseStoreRepository;
 import com.agi.aesl.erpscm.inventory.repository.ItemStockRepository;
 import com.agi.aesl.erpscm.inventory.service.CategoryService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,29 +28,17 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class WarehouseStoreServiceImpl implements WarehouseStoreService{
 
     public static final int SIZE = 10;
-    @Autowired
-    private WarehouseStoreRepository warehouseStoreRepository;
-
-    @Autowired
-    private CategoryService categoryService;
-
-    @Autowired
-    private WarehouseRepository warehouseRepository;
-
-    @Autowired
-    private IntegrationReaderService integrationReaderService;
-
-    @Autowired
-    private ClaimResolver claimResolver;
-
-    @Autowired
-    private CategoryWarehouseStoreRepository cwsRepository;
-
-    @Autowired
-    private ItemStockRepository itemStockRepository;
+    private final WarehouseStoreRepository warehouseStoreRepository;
+    private final CategoryService categoryService;
+    private final WarehouseRepository warehouseRepository;
+    private final IntegrationReaderService integrationReaderService;
+    private final ClaimResolver claimResolver;
+    private final CategoryWarehouseStoreRepository cwsRepository;
+    private final ItemStockRepository itemStockRepository;
 
     @Override
     @Transactional
@@ -67,13 +56,13 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
     }
 
     @Override
-    public Page<?> getStores(Long warehouseId, Optional<Integer> page, Optional<Integer> size) {
+    public Page<WarehouseStoreRepository.WarehouseStoreInfoV2> getStores(Long warehouseId, Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(SIZE));
         return warehouseStoreRepository.findAllByActiveAndWarehouseId(true,warehouseId,pageable);
     }
 
     @Override
-    public List<?> getStoresByWarehouse(Jwt token,Optional<String>name, Optional<Long> warehouseId) {
+    public List<WarehouseStoreRepository.WarehouseStoreInfo> getStoresByWarehouse(Jwt token, Optional<String>name, Optional<Long> warehouseId) {
         claimResolver.setToken(token);
         String uri = "inventory-control/store";
         List<Long> ids = new ArrayList<>();
@@ -98,7 +87,7 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
     }
 
     @Override
-    public Optional<?> getStore(Long warehouseStoreId) {
+    public Optional<WarehouseStoreRepository.WarehouseStoreInfoSingle> getStore(Long warehouseStoreId) {
         return warehouseStoreRepository.findStoreById(warehouseStoreId);
     }
 
@@ -108,7 +97,7 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
     }
 
     @Override
-    public List<?> getStoreSubCategories(Long warehouseId ,Long storeId) {
+    public List<CategoryRepository.ItemCategoryInfo> getStoreSubCategories(Long warehouseId , Long storeId) {
         Optional<WarehouseStoreRepository.WarehouseStoreInfoSingle> warehouseStoreOptional = warehouseStoreRepository
                 .findByIdAndWarehouseId(storeId,warehouseId);
         if(warehouseStoreOptional.isEmpty()){
@@ -156,10 +145,9 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
         Warehouse warehouse = warehouseOp.get();
         Optional<WarehouseStore> storeOp = warehouseStoreRepository.findByStoreNameAndWarehouseIdAndActive(storeDto.getName(),
                 warehouse.getId(),true);
-        if(storeOp.isPresent()){
-            if(!storeOp.get().getId().equals(id)){
+        if(storeOp.isPresent() && !storeOp.get().getId().equals(id)){
                 throw new AesException("Sorry! This store name already exist with different #ID["+storeOp.get().getId()+"]");
-            }
+
         }
 
         WarehouseStore warehouseStore = warehouseStoreOp.get();
@@ -171,7 +159,7 @@ public class WarehouseStoreServiceImpl implements WarehouseStoreService{
     }
 
     @Override
-    public Page<?> getFinishedGoodsStoreWarehouses(Optional<String> name, Pageable pageable) {
+    public Page<WarehouseRepository.WarehouseInfoExt> getFinishedGoodsStoreWarehouses(Optional<String> name, Pageable pageable) {
         
         return warehouseRepository.findOnlyFinishedGoodsWarehouse(name.orElse(null), pageable);
     }

@@ -8,7 +8,7 @@ import com.agi.aesl.erpscm.cs.enums.CsOperation;
 import com.agi.aesl.erpscm.cs.service.CsService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,13 +19,13 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/cs")
+@RequiredArgsConstructor
 public class CsController extends BaseController {
 
-    @Autowired
-    private CsService csService;
+    private final CsService csService;
 
     @GetMapping
-    public ResponseEntity<?> getAllPendingCs(
+    public ResponseEntity<Object> getAllPendingCs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -41,7 +41,7 @@ public class CsController extends BaseController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createCs(
+    public ResponseEntity<Void> createCs(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @RequestBody CsRequestDto csRequestDto
@@ -51,7 +51,7 @@ public class CsController extends BaseController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateCs(
+    public ResponseEntity<Void> updateCs(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @PathVariable("id") Long id,
@@ -62,12 +62,12 @@ public class CsController extends BaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getCsDetail(@PathVariable("id") Long id){
+    public ResponseEntity<Object> getCsDetail(@PathVariable("id") Long id){
         return new ResponseEntity<>(csService.getDetailById(id),HttpStatus.OK);
     }
 
     @GetMapping("/{vendorId}/{csNo}")
-    public ResponseEntity<?> getItemInfoByVendorAndCsNo(
+    public ResponseEntity<Object> getItemInfoByVendorAndCsNo(
             @PathVariable("vendorId") Long vendorId,
             @PathVariable("csNo") String csNo
     ){
@@ -78,7 +78,7 @@ public class CsController extends BaseController {
     }
 
     @PostMapping("/{rfqId}/item-wise-vendors")
-    public ResponseEntity<?> getItemWiseVendors(
+    public ResponseEntity<Object> getItemWiseVendors(
             @PathVariable("rfqId") Long id,
             @RequestBody CsGetItemWiseVendorsDto dto
     ){
@@ -89,7 +89,7 @@ public class CsController extends BaseController {
     }
 
     @PostMapping("/{rfqId}/item-wise-vendors/{vendorId}")
-    public ResponseEntity<?> getItemWiseVendors(
+    public ResponseEntity<Object> getItemWiseVendors(
             @PathVariable("rfqId") Long id,
             @PathVariable("vendorId") Long vendorId,
             @RequestBody CsGetItemWiseVendorsDto dto
@@ -101,7 +101,7 @@ public class CsController extends BaseController {
     }
 
     @PutMapping("/{id}/add-vendor")
-    public ResponseEntity<?> addVendorCs(
+    public ResponseEntity<Void> addVendorCs(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody @Valid CsUpdateRequestDto csDto){
@@ -110,7 +110,7 @@ public class CsController extends BaseController {
     }
 
     @PutMapping("/{id}/remove-vendor")
-    public ResponseEntity<?> removeVendorCs(
+    public ResponseEntity<Void> removeVendorCs(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody @Valid CsUpdateRequestDto csDto
@@ -120,7 +120,7 @@ public class CsController extends BaseController {
     }
 
     @GetMapping("/pending-verification")
-    public ResponseEntity<?> getAllPendingVerificationCs(
+    public ResponseEntity<Object> getAllPendingVerificationCs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("status") Optional<String> status,
@@ -137,7 +137,7 @@ public class CsController extends BaseController {
     }
 
     @GetMapping("/pending-approval")
-    public ResponseEntity<?> getAllPendingApprovalCs(
+    public ResponseEntity<Object> getAllPendingApprovalCs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("status") Optional<String> status,
@@ -151,7 +151,7 @@ public class CsController extends BaseController {
     }
 
     @GetMapping("/approved")
-    public ResponseEntity<?> getAllApprovedCs(
+    public ResponseEntity<Object> getAllApprovedCs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("status") Optional<String> status,
@@ -165,7 +165,7 @@ public class CsController extends BaseController {
     }
 
     @GetMapping("/closed")
-    public ResponseEntity<?> getAllClosedCs(
+    public ResponseEntity<Object> getAllClosedCs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("status") Optional<String> status,
@@ -178,7 +178,7 @@ public class CsController extends BaseController {
     }
 
     @PutMapping("/{id}/reject")
-    public ResponseEntity<?> rejectCs(
+    public ResponseEntity<Void> rejectCs(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id, @RequestBody @Valid NoteDto noteDto){
         csService.rejectCs(token,id,noteDto);
@@ -186,7 +186,7 @@ public class CsController extends BaseController {
     }
 
     @PutMapping("/{id}/review")
-    public ResponseEntity<?> reviewCs(
+    public ResponseEntity<Void> reviewCs(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id, @RequestBody @Valid NoteDto noteDto){
         csService.reviewCs(token, id, noteDto);
@@ -194,14 +194,14 @@ public class CsController extends BaseController {
     }
 
     @PutMapping("/{id}/resent-to-pr")
-    public ResponseEntity<?> resentToPr(@AuthenticationPrincipal Jwt token,
+    public ResponseEntity<Void> resentToPr(@AuthenticationPrincipal Jwt token,
                                         @PathVariable Long id) {
         csService.resentToPr(token,id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/{id}/resubmit")
-    public ResponseEntity<?> resubmitForVerification(
+    public ResponseEntity<Void> resubmitForVerification(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id){
             csService.resubmit(token,id);

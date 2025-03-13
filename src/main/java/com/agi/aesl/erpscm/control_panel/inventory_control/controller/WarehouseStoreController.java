@@ -1,14 +1,11 @@
 package com.agi.aesl.erpscm.control_panel.inventory_control.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
-// import com.agi.aesl.erpscm.control_panel.inventory_control.dto.CopyToStoreDto;
 import com.agi.aesl.erpscm.control_panel.inventory_control.dto.StoreDto;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseStoreService;
 
-// import io.swagger.annotations.Api;
-// import io.swagger.annotations.ApiOperation;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,20 +16,19 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/warehouses/stores")
+@RequiredArgsConstructor
 public class WarehouseStoreController extends BaseController{
 
-    @Autowired
-    private WarehouseStoreService warehouseStoreService;
+    private final WarehouseStoreService warehouseStoreService;
 
     @PostMapping
-    // @ApiOperation(value = "Create Store")
-    public ResponseEntity<?> createStore(@RequestBody @Valid  StoreDto storeDto){
+    public ResponseEntity<Void> createStore(@RequestBody @Valid  StoreDto storeDto){
         warehouseStoreService.createStore(storeDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @GetMapping(value = "/{warehouseId}",params = "page")
-    public ResponseEntity<?> getStoresByWarehouse(@PathVariable("warehouseId") Long warehouseId,
+    public ResponseEntity<Object> getStoresByWarehouse(@PathVariable("warehouseId") Long warehouseId,
                                                   @RequestParam("page") Optional<Integer> page,
                                                   @RequestParam("size") Optional<Integer> size
                                                   ){
@@ -43,7 +39,7 @@ public class WarehouseStoreController extends BaseController{
     }
 
     @GetMapping(value = "/{warehouseId}",params = "single")
-    public ResponseEntity<?> getStoresByWarehouse(@PathVariable("warehouseId") Long warehouseId
+    public ResponseEntity<Object> getStoresByWarehouse(@PathVariable("warehouseId") Long warehouseId
     ){
         return new ResponseEntity<>(
                 warehouseStoreService.getStore(warehouseId),
@@ -52,7 +48,7 @@ public class WarehouseStoreController extends BaseController{
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllStoresByWarehouse(
+    public ResponseEntity<Object> getAllStoresByWarehouse(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("name") Optional<String> name,
             @RequestParam("warehouseId") Optional<Long> warehouseId
@@ -64,21 +60,20 @@ public class WarehouseStoreController extends BaseController{
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateWarehouseStore(@PathVariable("id") Long id, @RequestBody StoreDto storeDto){
+    public ResponseEntity<Void> updateWarehouseStore(@PathVariable("id") Long id, @RequestBody StoreDto storeDto){
         warehouseStoreService.updateStore(id,storeDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
 
     @DeleteMapping("/{id}")
-    // @ApiOperation(value = "Delete Warehouse store by id")
-    public ResponseEntity<?> deleteWarehouseStore(@PathVariable("id") Long id){
+    public ResponseEntity<Void> deleteWarehouseStore(@PathVariable("id") Long id){
         warehouseStoreService.deleteWarehouseStore(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping("/store-sub-categories")
-    public ResponseEntity<?> getStoreSubCategories(
+    public ResponseEntity<Object> getStoreSubCategories(
             @RequestParam("warehouseId") Long warehouseId,
             @RequestParam("storeId") Long storeId
     ){
@@ -86,12 +81,4 @@ public class WarehouseStoreController extends BaseController{
                 HttpStatus.OK);
     }
 
-    // @PostMapping("/copy-to-store/{warehouseId}")
-    // public ResponseEntity<?> copyToFinishGoods(
-    //         @PathVariable("warehouseId") Long warehouseId,
-    //         @RequestBody CopyToStoreDto copyToStoreDto
-    //                                            ){
-    //     warehouseStoreService.copyToStore(warehouseId, copyToStoreDto);
-    //     return new ResponseEntity<>(HttpStatus.CREATED);
-    // }
 }

@@ -5,7 +5,7 @@ import com.agi.aesl.erpscm.cs.dto.AcsUpdateDto;
 import com.agi.aesl.erpscm.cs.service.CsAccountService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,13 +16,13 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/acs")
+@RequiredArgsConstructor
 public class AcsController extends BaseController {
 
-    @Autowired
-    private CsAccountService csAccountService;
+    private final CsAccountService csAccountService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getDetail(@PathVariable("id") Long id){
+    public ResponseEntity<Object> getDetail(@PathVariable("id") Long id){
         return new ResponseEntity<>(
                 csAccountService.getDetailById(id),
                 HttpStatus.OK
@@ -30,7 +30,7 @@ public class AcsController extends BaseController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> submitForVerifyApproval(
+    public ResponseEntity<Void> submitForVerifyApproval(
             @PathVariable("id") Long id,
             @RequestHeader("uri") String uri,
             @AuthenticationPrincipal Jwt token,
@@ -41,7 +41,7 @@ public class AcsController extends BaseController {
     }
 
     @GetMapping("/pending")
-    public ResponseEntity<?> getPendingAcs(
+    public ResponseEntity<Object> getPendingAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("status") Optional<String> status,
@@ -56,7 +56,7 @@ public class AcsController extends BaseController {
     }
 
     @GetMapping("/pending-verifications")
-    public ResponseEntity<?> getPendingVerificationAcs(
+    public ResponseEntity<Object> getPendingVerificationAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("status") Optional<String> status,
@@ -71,7 +71,7 @@ public class AcsController extends BaseController {
     }
 
     @GetMapping("/pending-approvals")
-    public ResponseEntity<?> getPendingApprovalAcs(
+    public ResponseEntity<Object> getPendingApprovalAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("status") Optional<String> status,
@@ -86,7 +86,7 @@ public class AcsController extends BaseController {
     }
 
     @GetMapping("/approved")
-    public ResponseEntity<?> getApprovedAcs(
+    public ResponseEntity<Object> getApprovedAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("status") Optional<String> status,
@@ -100,7 +100,7 @@ public class AcsController extends BaseController {
     }
 
     @GetMapping("/rejected")
-    public ResponseEntity<?> getRejectedAcs(
+    public ResponseEntity<Object> getRejectedAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("status") Optional<String> status,
@@ -114,7 +114,7 @@ public class AcsController extends BaseController {
     }
 
     @GetMapping("/closed")
-    public ResponseEntity<?> getClosedAcs(
+    public ResponseEntity<Object> getClosedAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("status") Optional<String> status,
@@ -128,7 +128,7 @@ public class AcsController extends BaseController {
     }
 
     @GetMapping("/active-cs")
-    public ResponseEntity<?> getActiveAcs(
+    public ResponseEntity<Object> getActiveAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("categoryId") Optional<Long> categoryId,
@@ -143,7 +143,7 @@ public class AcsController extends BaseController {
     }
 
     @GetMapping("/expired-cs")
-    public ResponseEntity<?> getExpiredAcs(
+    public ResponseEntity<Object> getExpiredAcs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("page") Optional<Integer> page,
@@ -155,7 +155,7 @@ public class AcsController extends BaseController {
     }
 
     @PutMapping("/{id}/review")
-    public ResponseEntity<?> reviewCs(
+    public ResponseEntity<Void> reviewCs(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id, @RequestBody @Valid NoteDto noteDto){
         csAccountService.reviewAcs(token, id, noteDto);

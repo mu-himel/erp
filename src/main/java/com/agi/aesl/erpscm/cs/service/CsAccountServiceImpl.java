@@ -21,7 +21,6 @@ import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationVa
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -76,7 +75,7 @@ public class CsAccountServiceImpl implements CsAccountService{
         claimResolver.setToken(token);
         Optional<Employee> empOp = claimResolver.getEmployee();
         if(empOp.isEmpty()){
-            throw new RuntimeException("Sorry! no employee profile found");
+            throw new AesException("Sorry! no employee profile found");
         }
         Employee employee = empOp.get();
         Optional<CsAccount> csAccountOp = csAccountRepository.findById(id);
@@ -199,10 +198,10 @@ public class CsAccountServiceImpl implements CsAccountService{
     
 
     @Override
-    public Page<?> getPendingAcs(Jwt token,
-                                 Optional<String> indentNo, Optional<String> status,
-                                 Optional<String> fromDateStr, Optional<String> toDateStr,
-                                 Optional<Integer> page, Optional<Integer> size) {
+    public Page<CsAccountRepository.AcsPendingItem> getPendingAcs(Jwt token,
+                                                                  Optional<String> indentNo, Optional<String> status,
+                                                                  Optional<String> fromDateStr, Optional<String> toDateStr,
+                                                                  Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
         LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
@@ -232,7 +231,7 @@ public class CsAccountServiceImpl implements CsAccountService{
     }
 
     @Override
-    public Page<?> getPendingVerificationAcs(Jwt token, Optional<String> indentNo, Optional<String> status,
+    public Page<CsAccountRepository.AcsPendingItem> getPendingVerificationAcs(Jwt token, Optional<String> indentNo, Optional<String> status,
                                              Optional<String> fromDateStr,Optional<String> toDateStr,
                                              Optional<Integer> page,Optional<Integer> size
     ) {
@@ -253,7 +252,7 @@ public class CsAccountServiceImpl implements CsAccountService{
     }
 
     @Override
-    public Page<?> getPendingApprovalAcs(Jwt token,
+    public Page<CsAccountRepository.AcsPendingItem> getPendingApprovalAcs(Jwt token,
                                          Optional<String> indentNo, Optional<String> status,
                                          Optional<String> fromDateStr, Optional<String> toDateStr,
                                          Optional<Integer> page, Optional<Integer> size) {
@@ -275,13 +274,13 @@ public class CsAccountServiceImpl implements CsAccountService{
     }
 
     @Override
-    public Page<?> getApprovedAcs(Jwt token,
+    public Page<CsAccountRepository.AcsPendingItem> getApprovedAcs(Jwt token,
                                   Optional<String> indentNo, Optional<String> status,
                                   Optional<String> fromDateStr, Optional<String> toDateStr,
                                   Optional<Integer> page,Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(fromDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(fromDateStr,DATE_TIME_END);
         List<String> csStatus = new ArrayList<>();
         csStatus.add(CsStatus.APPROVED.toString());
         csStatus.add(CsStatus.COMPLETED.toString());
@@ -294,13 +293,13 @@ public class CsAccountServiceImpl implements CsAccountService{
     }
 
     @Override
-    public Page<?> getRejectedAcs(Jwt token,
+    public Page<CsAccountRepository.AcsPendingItem> getRejectedAcs(Jwt token,
                                   Optional<String> indentNo, Optional<String> status,
                                   Optional<String> fromDateStr, Optional<String> toDateStr,
                                   Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(fromDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(fromDateStr,DATE_TIME_END);
         List<String> csStatus = new ArrayList<>();
         csStatus.add(CsStatus.REJECTED.toString());
         if(status.isPresent()){
@@ -311,13 +310,13 @@ public class CsAccountServiceImpl implements CsAccountService{
     }
 
     @Override
-    public Page<?> getClosedAcs(Jwt token,
+    public Page<CsAccountRepository.AcsPendingItem> getClosedAcs(Jwt token,
                                 Optional<String> indentNo, Optional<String> status,
                                 Optional<String> fromDateStr, Optional<String> toDateStr,
                                 Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(fromDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(fromDateStr,DATE_TIME_END);
         List<String> csStatus = new ArrayList<>();
         if(status.isEmpty()) {
             csStatus.add(CsStatus.APPROVED.toString());
@@ -333,7 +332,7 @@ public class CsAccountServiceImpl implements CsAccountService{
     }
 
     @Override
-    public Page<?> getActiveCsList(Jwt token, Optional<String> indentNo,
+    public Page<CsAccountRepository.AcsPendingItem> getActiveCsList(Jwt token, Optional<String> indentNo,
                                    Optional<Long> categoryId,
                                    Optional<Long> subCategoryId,
                                    Optional<String> fromDateStr,
@@ -342,7 +341,7 @@ public class CsAccountServiceImpl implements CsAccountService{
                                    Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> csStatus = new ArrayList<>();
 
         csStatus.add(CsStatus.APPROVED.toString());
@@ -354,7 +353,7 @@ public class CsAccountServiceImpl implements CsAccountService{
     }
 
     @Override
-    public Page<?> getExpiredCsList(Jwt token, Optional<String> indentNo,
+    public Page<CsAccountRepository.AcsPendingItem> getExpiredCsList(Jwt token, Optional<String> indentNo,
                                     Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
         List<String> csStatus = new ArrayList<>();
@@ -389,7 +388,7 @@ public class CsAccountServiceImpl implements CsAccountService{
     }
 
     @Override
-    public Optional<?> getDetailById(Long id) {
+    public Optional<Map<String,Object>> getDetailById(Long id) {
         Optional<CsAccount> csAccountOp = csAccountRepository.findById(id);
         if(csAccountOp.isEmpty()){
             throw new AesException("Sorry! Account Cs not found");

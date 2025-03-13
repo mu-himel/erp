@@ -731,7 +731,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public List<?> getSubCategories(Optional<Long> storeId, Optional<Long> id, Optional<String> name, Optional<String> code) {
+    public List<CategoryRepository.ItemCategoryInfo> getSubCategories(Optional<Long> storeId, Optional<Long> id, Optional<String> name, Optional<String> code) {
 
         return categoryRepository.findAllSubCategories(
                 storeId.orElse(null),

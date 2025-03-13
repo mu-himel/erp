@@ -43,6 +43,9 @@ public class CpsServerConfig {
 
     private String erpIpAddress;
 
+    private static final String REMOTE_OFFER_ID_TEMPLATE="{remoteOfferId}";
+    private static final String VENDOR_ID_TEMPLATE="{vendorId}";
+
     public String getTenderEndpoint(){
         StringBuilder sb = new StringBuilder();
         sb.append(this.host).append(this.tenderEndpoint);
@@ -58,23 +61,23 @@ public class CpsServerConfig {
     public String getLockOfferEndpoint(Long offerId, Long vendorId){
         StringBuilder sb =  new StringBuilder();
         sb.append(this.host).append(this.lockOfferEndpoint
-            .replace("{remoteOfferId}", offerId.toString())
-            .replace("{vendorId}",vendorId.toString()));
+            .replace(REMOTE_OFFER_ID_TEMPLATE, offerId.toString())
+            .replace(VENDOR_ID_TEMPLATE,vendorId.toString()));
         return sb.toString();
     }
     public String getDeclineOfferEndpoint(Long offerId, Long vendorId){
         StringBuilder sb =  new StringBuilder();
         sb.append(this.host).append(this.declineOfferEndpoint
-            .replace("{remoteOfferId}", offerId.toString())
-            .replace("{vendorId}",vendorId.toString()));
+            .replace(REMOTE_OFFER_ID_TEMPLATE, offerId.toString())
+            .replace(VENDOR_ID_TEMPLATE,vendorId.toString()));
         return sb.toString();
     }
 
     public String getAwardedOfferEndpoint(Long offerId, Long vendorId){
         StringBuilder sb =  new StringBuilder();
         sb.append(this.host).append(this.awardedOfferEndpoint
-                .replace("{remoteOfferId}", offerId.toString())
-                .replace("{vendorId}",vendorId.toString()));
+                .replace(REMOTE_OFFER_ID_TEMPLATE, offerId.toString())
+                .replace(VENDOR_ID_TEMPLATE,vendorId.toString()));
         return sb.toString();
     }
 

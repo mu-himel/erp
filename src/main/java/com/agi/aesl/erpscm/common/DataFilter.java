@@ -1,6 +1,6 @@
 package com.agi.aesl.erpscm.common;
 
-import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseQuery;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import lombok.Data;
@@ -79,7 +79,7 @@ public class DataFilter {
 
 
 
-    public Page<?> fetchData(){
+    public Page<WarehouseQuery.WarehouseInfo> fetchData(){
         this.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
         if(!this.ids.isEmpty()) {
             return dataFilterService.getFilteredData(ids, pageable);

@@ -9,7 +9,7 @@ import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,13 +23,14 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/goods-receive-note")
+@RequiredArgsConstructor
 public class GrnController extends BaseController {
 
-    @Autowired
-    private GrnService grnService;
+
+    private final GrnService grnService;
 
     @GetMapping("/next-id")
-    public ResponseEntity<?> getNextGrnNumber(){
+    public ResponseEntity<Object> getNextGrnNumber(){
         Map<String,Object> response = new HashMap<>();
         response.put("code", grnService.getNextGrnNumber());
         return new ResponseEntity<>(
@@ -38,7 +39,7 @@ public class GrnController extends BaseController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createGrn(
+    public ResponseEntity<Void> createGrn(
             @AuthenticationPrincipal Jwt token,
             @RequestBody @Valid GrnManualRequestDto goodReceiveNoteDto
             ){
@@ -48,7 +49,7 @@ public class GrnController extends BaseController {
 
 
     @PostMapping("/manual")
-    public ResponseEntity<?> createManualGrn(
+    public ResponseEntity<Object> createManualGrn(
             @AuthenticationPrincipal Jwt token,
             @RequestBody @Valid GrnManualRequestDto grnManualDto
     ){
@@ -60,7 +61,7 @@ public class GrnController extends BaseController {
 
 
     @GetMapping("/all")
-    public ResponseEntity<?> getAllGrn(
+    public ResponseEntity<Object> getAllGrn(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("grnNo") Optional<String> grnNo,
             @RequestParam("itemQty") Optional<Integer> qty,
@@ -78,14 +79,14 @@ public class GrnController extends BaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getGrnById(
+    public ResponseEntity<Object> getGrnById(
             @PathVariable("id") Long id
     ){
         return new ResponseEntity<>(grnService.getGrnById(id,true),HttpStatus.OK);
     }
 
     @PutMapping("/{id}/receive-po")
-    public ResponseEntity<?> receiveGrn(
+    public ResponseEntity<Void> receiveGrn(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody List<GrnManualItemDetailDto> grnManualRequestDto
@@ -95,7 +96,7 @@ public class GrnController extends BaseController {
     }
 
     @PutMapping("/{id}/decline-po")
-    public ResponseEntity<?> declineGrn(@PathVariable("id") Long id,
+    public ResponseEntity<Void> declineGrn(@PathVariable("id") Long id,
                                         @AuthenticationPrincipal Jwt token,
                                         @RequestBody NoteDto noteDto
     ){
