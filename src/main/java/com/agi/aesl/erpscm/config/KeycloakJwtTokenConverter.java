@@ -13,8 +13,7 @@ public class KeycloakJwtTokenConverter implements Converter<Jwt,Collection<Grant
 
     @Override
     public Collection<GrantedAuthority> convert(Jwt source) {
-        Collection<GrantedAuthority> authorities = new ArrayList<>();
-        return authorities;
+        return new ArrayList<>();
     }
     
     

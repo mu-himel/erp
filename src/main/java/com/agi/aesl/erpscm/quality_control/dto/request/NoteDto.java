@@ -3,7 +3,6 @@ package com.agi.aesl.erpscm.quality_control.dto.request;
 import com.agi.aesl.erpscm.comment.entity.CommentAttachment;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

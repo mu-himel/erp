@@ -1,14 +1,9 @@
 package com.agi.aesl.erpscm.goods_receive.repository;
 
-import com.agi.aesl.erpscm.common.ReferenceObjectDto;
-import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseStoreRepository;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
-import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
-import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
-import com.agi.aesl.erpscm.inventory.entity.ItemStock;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

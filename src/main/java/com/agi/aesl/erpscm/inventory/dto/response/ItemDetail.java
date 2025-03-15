@@ -2,7 +2,6 @@ package com.agi.aesl.erpscm.inventory.dto.response;
 
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import com.agi.aesl.erpscm.inventory.entity.ItemFunctionalUnit;
-import com.agi.aesl.erpscm.inventory.enums.ItemUnit;
 import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;

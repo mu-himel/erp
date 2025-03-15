@@ -6,7 +6,6 @@ import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.quality_control.dto.request.QcDto;
 import com.agi.aesl.erpscm.quality_control.service.QcService;
-import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -34,11 +34,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -274,8 +271,8 @@ public class IrServiceImpl implements IrService {
             List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
             List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
                     .getVerificationsByDomainTypeAndDomainId(DomainType.IR, irDetail.getId());
-            vrs.stream().forEach(verifier->{
-                if(verifier.getIsApproval()==false){
+            vrs.forEach(verifier->{
+                if(Boolean.FALSE.equals(verifier.getIsApproval())){
                     verifiers.add(verifier);
                 }else{
                     approvers.add(verifier);
@@ -287,7 +284,7 @@ public class IrServiceImpl implements IrService {
             detailMap.put("verifiers", verifiers);
             detailMap.put("approvers",approvers);
         }
-        return Optional.ofNullable(detailMap);
+        return Optional.of(detailMap);
     }
 
     @Override
@@ -401,7 +398,7 @@ public class IrServiceImpl implements IrService {
 
                     bi = bi.add(stock);
 //                    stock.addAndGet((int)wi.get("stockQty"));
-                };
+                }
                 map.put("currentStock",  bi);
                 wMaps.add(map);
             });

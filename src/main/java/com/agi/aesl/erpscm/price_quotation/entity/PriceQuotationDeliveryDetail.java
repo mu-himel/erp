@@ -24,7 +24,7 @@ public class PriceQuotationDeliveryDetail {
     private Warehouse warehouse;
 
     @Enumerated(EnumType.STRING)
-    private DeliveryCharge DeliveryCharge;
+    private DeliveryCharge deliveryCharge;
 
     @Column(precision = 38,scale = 4)
     private BigDecimal deliveryOrderQty;

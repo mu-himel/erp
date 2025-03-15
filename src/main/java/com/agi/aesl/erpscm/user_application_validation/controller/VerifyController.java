@@ -8,7 +8,6 @@ import com.agi.aesl.erpscm.internal_requisition.service.IrService;
 import com.agi.aesl.erpscm.internal_requisition.service.IrStoreService;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryCategoryRequestService;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryRequestService;
-import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
 import com.agi.aesl.erpscm.purchase_order.service.PurchaseOrderService;
 import com.agi.aesl.erpscm.quality_control.service.QcService;
 import com.agi.aesl.erpscm.store_receive.service.SrnService;

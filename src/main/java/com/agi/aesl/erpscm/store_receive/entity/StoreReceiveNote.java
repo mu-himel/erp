@@ -1,9 +1,7 @@
 package com.agi.aesl.erpscm.store_receive.entity;
 
 import com.agi.aesl.erpscm.employee.entity.Employee;
-import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
-import com.agi.aesl.erpscm.quality_control.enums.QcStatus;
 import com.agi.aesl.erpscm.store_receive.enums.SrnStatus;
 import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import jakarta.persistence.*;

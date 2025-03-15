@@ -17,8 +17,10 @@ import java.util.Optional;
 
 @Repository
 public interface InternalRequisitionRepository extends JpaRepository<InternalRequisition,Long> {
-    String allIr = """
-        SELECT 
+    String COUNT_START=" SELECT count(*) FROM (";
+    String COUNT_END=") as TOTAL";
+    String ALL_IR = """
+        SELECT
             ir.id as id,
             ir.internal_requisition_no as irNo,
             c.name as categoryName,
@@ -26,16 +28,16 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             ir.ir_status as status,
             ir.delivery_date as deliveryDate,
             ir.created_at as createdAt
-        FROM internal_requisitions ir 
+        FROM internal_requisitions ir
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN scm_item_categories c ON c.id = ir.category_id
         WHERE ir.ir_status IN ('PENDING','PENDING_VERIFICATION','PENDING_APPROVAL', 'REVIEW','PROCESSING')
-        AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate)) 
+        AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate))
         GROUP BY ir.id
         """;
 
-    String allClosedIr = """
-            SELECT 
+    String ALL_CLOSED_IR = """
+            SELECT
                 ir.id as id,
                 ir.internal_requisition_no as irNo,
                 c.name as categoryName,
@@ -43,25 +45,17 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
                 ir.ir_status as status,
                 ir.delivery_date as deliveryDate,
                 w.name as warehouse
-            FROM internal_requisitions ir 
+            FROM internal_requisitions ir
             LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
             LEFT JOIN scm_item_categories c ON c.id = ir.category_id
             LEFT JOIN scm_warehouses w ON w.id=ir.warehouse_id
             WHERE ir.ir_status IN ('RECEIVED', 'REJECTED','COMPLETED')
-            AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate)) 
+            AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate))
             GROUP BY ir.id
-            """;//    Page<IrListInfo> findAllClosedIr(Pageable pageable);
-//
-//    Page<?> findAllPendingVerificationIr(String id, Pageable pageable);
-//
-//    Page<?> findAllPendingApprovalIr(String id, Pageable pageable);
-//
-//    Page<?> findAllVerifiedOrApprovedIr(Pageable pageable);
-//
-//    Page<?> findAllProcessedIr(Pageable pageable);
+            """;
 
-    String allPendingVerificationIr = """
-        SELECT 
+    String ALL_PV_IR = """
+        SELECT
             ir.id as id,
             ir.internal_requisition_no as irNo,
             CONCAT(e.employee_id, '-' , e.employee_name) as employeeName,
@@ -70,18 +64,18 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             ir.ir_status as status,
             ir.delivery_date as deliveryDate,
             ir.created_at as createdAt
-        FROM internal_requisitions ir 
+        FROM internal_requisitions ir
         LEFT JOIN acl_users e ON e.id = ir.requested_by_id
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN scm_item_categories c ON c.id = ir.category_id
         WHERE ir.ir_status IN ('PENDING_VERIFICATION', 'REVIEW','VERIFIED')
         AND ir.next_verifier_id = :nextVerifierId
-        AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate)) 
+        AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate))
         GROUP BY ir.id
         """;
 
-    String allPendingApprovalIr = """
-        SELECT 
+    String ALL_PA_IR = """
+        SELECT
             ir.id as id,
             ir.internal_requisition_no as irNo,
             CONCAT(e.employee_id, '-' , e.employee_name) as employeeName,
@@ -89,18 +83,18 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             count(ird.id) as itemsQty,
             ir.ir_status as status,
             ir.delivery_date as deliveryDate
-        FROM internal_requisitions ir 
+        FROM internal_requisitions ir
         LEFT JOIN acl_users e ON e.id = ir.requested_by_id
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN scm_item_categories c ON c.id = ir.category_id
         WHERE ir.ir_status IN ('PENDING_APPROVAL', 'REVIEW','APPROVED')
         AND ir.next_approver_id = :nextApproverId
-        AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate)) 
+        AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate))
         GROUP BY ir.id
         """;
 
-    String allVerifiedOrApprovedIr = """
-        SELECT 
+    String ALL_VA_IR = """
+        SELECT
             ir.id as id,
             ir.internal_requisition_no as irNo,
             CONCAT(e.employee_id, '-' , e.employee_name) as employeeName,
@@ -110,18 +104,18 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             ir.delivery_date as deliveryDate,
             ir.created_at as createdAt,
             w.name as warehouse
-        FROM internal_requisitions ir 
+        FROM internal_requisitions ir
         LEFT JOIN acl_users e ON e.id = ir.requested_by_id
         LEFT JOIN scm_warehouses w ON w.id = ir.warehouse_id
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN scm_item_categories c ON c.id = ir.category_id
         WHERE ir.ir_status IN ('VERIFIED','APPROVED') AND (ir.is_processed IS NULL OR ir.is_processed=0)
-        AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate)) 
+        AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate))
         GROUP BY ir.id
         """;
 
-    String allProcessedIr = """
-        SELECT 
+    String ALL_PROCESSED_IR = """
+        SELECT
             ir.id as id,
             ir.internal_requisition_no as irNo,
             CONCAT(e.employee_id, '-' , e.employee_name) as employeeName,
@@ -131,25 +125,25 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
             ir.delivery_date as deliveryDate,
             ir.created_at as createdAt,
             w.name as warehouse
-        FROM internal_requisitions ir 
+        FROM internal_requisitions ir
         LEFT JOIN scm_warehouses w ON w.id = ir.warehouse_id
         LEFT JOIN acl_users e ON e.id = ir.requested_by_id
         LEFT JOIN internal_requisition_details ird ON ird.ir_id = ir.id
         LEFT JOIN scm_item_categories c ON c.id = ir.category_id
         WHERE ir.ir_status IN ('VERIFIED','APPROVED') AND ir.is_processed=1
-        AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate)) 
+        AND (COALESCE(:fromDate) IS NULL OR (ir.delivery_date BETWEEN :fromDate AND :toDate))
         GROUP BY ir.id
         """;
 
-    String countAllIr = " SELECT count(*) FROM ("  + allIr + " ) as total";
-    String countAllClosedIr = " SELECT count(*) FROM ("  + allClosedIr + " ) as total";
-    String countAllPendingVerificationIr = " SELECT count(*) FROM ("  + allPendingVerificationIr + " ) as total";
-    String countAllPendingApprovalIr = " SELECT count(*) FROM ("  + allPendingApprovalIr + " ) as total";
-    String countAllVerifiedOrApprovedIr = " SELECT count(*) FROM ("  + allVerifiedOrApprovedIr + " ) as total";
-    String countAllProcessedIr = " SELECT count(*) FROM ("  + allProcessedIr + " ) as total";
+    String COUNT_ALL_IR =   COUNT_START + ALL_IR + COUNT_END;
+    String COUNT_ALL_CLOSED_IR = COUNT_START  + ALL_CLOSED_IR + COUNT_END;
+    String COUNT_ALL_PV_IR = COUNT_START  + ALL_PV_IR + COUNT_END;
+    String COUNT_ALL_PA_IR = COUNT_START  + ALL_PA_IR + COUNT_END;
+    String COUNT_ALL_VA_IR = COUNT_START  + ALL_VA_IR + COUNT_END;
+    String COUNT_ALL_PROCESSED_IR = COUNT_START + ALL_PROCESSED_IR + COUNT_END;
 
 
-    @Query(value = allIr, countQuery = countAllIr, nativeQuery = true)
+    @Query(value = ALL_IR, countQuery = COUNT_ALL_IR, nativeQuery = true)
     Page<IrListInfo> findAllIr(LocalDateTime fromDate, LocalDateTime toDate,Pageable pageable);
 
 
@@ -157,24 +151,24 @@ public interface InternalRequisitionRepository extends JpaRepository<InternalReq
     @Query("select max(ir.id) from InternalRequisition ir")
     Optional<Long> findMaxOrderById();
 
-    @Query(value = allClosedIr, countQuery = countAllIr, nativeQuery = true)
+    @Query(value = ALL_CLOSED_IR, countQuery = COUNT_ALL_CLOSED_IR, nativeQuery = true)
     Page<IrListInfo> findAllClosedIr(LocalDateTime fromDate, LocalDateTime toDate,Pageable pageable);
 
-    @Query(value = allPendingVerificationIr, countQuery = countAllPendingVerificationIr, nativeQuery = true)
+    @Query(value = ALL_PV_IR, countQuery = COUNT_ALL_PV_IR, nativeQuery = true)
     Page<IrVerifierListInfo> findAllPendingVerificationIr(@Param("nextVerifierId") String nextVerifierId,
                                                           LocalDateTime fromDate,LocalDateTime toDate,
                                                           Pageable pageable);
 
-    @Query(value = allPendingApprovalIr, countQuery = countAllPendingApprovalIr, nativeQuery = true)
+    @Query(value = ALL_PA_IR, countQuery = COUNT_ALL_PA_IR, nativeQuery = true)
     Page<IrVerifierListInfo> findAllPendingApprovalIr(@Param("nextApproverId") String nextApproverId,
                                                       LocalDateTime fromDate, LocalDateTime toDate,
                                                       Pageable pageable);
 
-    @Query(value = allVerifiedOrApprovedIr, countQuery = countAllVerifiedOrApprovedIr, nativeQuery = true)
+    @Query(value = ALL_VA_IR, countQuery = COUNT_ALL_VA_IR, nativeQuery = true)
     Page<IrListInfo> findAllVerifiedOrApprovedIr(LocalDateTime fromDate,
                                                  LocalDateTime toDate, Pageable pageable);
 
-    @Query(value = allProcessedIr, countQuery = countAllProcessedIr, nativeQuery = true)
+    @Query(value = ALL_PROCESSED_IR, countQuery = COUNT_ALL_PROCESSED_IR, nativeQuery = true)
     Page<IrListInfo> findAllProcessedIr(LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
     <T> Optional<T> findById(Long id, Class<T> t);

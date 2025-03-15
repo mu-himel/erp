@@ -1,11 +1,7 @@
 package com.agi.aesl.erpscm.purchase_order.repository;
 
-import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.employee.entity.Employee;
-import com.agi.aesl.erpscm.indent.entity.Indent;
-import com.agi.aesl.erpscm.indent.repository.IndentRepository;
 import com.agi.aesl.erpscm.price_quotation.entity.PriceQuotationDetail;
-import com.agi.aesl.erpscm.price_quotation.repository.PqQuery;
 import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
 import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrderWarehouseDetail;
 import com.agi.aesl.erpscm.purchase_order.enums.PurchaseOrderStatus;

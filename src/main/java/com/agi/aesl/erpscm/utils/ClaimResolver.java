@@ -4,14 +4,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.employee.service.EmployeeService;
 
+@Data
 @Component
 @RequiredArgsConstructor
 public class ClaimResolver {
@@ -19,14 +20,6 @@ public class ClaimResolver {
     private Jwt token;
 
     private final EmployeeService employeeService;
-
-    public void setToken(Jwt token){
-        this.token = token;
-    }
-
-    public Jwt getToken(){
-        return this.token;
-    }
 
     private Map<String,Object> getRealmAccess(){
         return token.getClaimAsMap("realm_access");

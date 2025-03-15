@@ -1,7 +1,6 @@
 package com.agi.aesl.erpscm.goods_receive.dto.request;
 
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
-import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

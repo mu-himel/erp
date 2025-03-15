@@ -9,7 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 @Data
 @NoArgsConstructor
-public class PrItemInfo {String brandName;String categoryName; String subCategoryName; String itemName;
+public class PrItemInfo {
+    String brandName;
+    String categoryName;
+    String subCategoryName;
+    String itemName;
     String productRequirementIds;
     BigDecimal prQty;
 
@@ -17,7 +21,7 @@ public class PrItemInfo {String brandName;String categoryName; String subCategor
     Long daysRemain;
     LocalDateTime priorityDate;
 
-    public List<PrWarehouseInfo> warehouses=new ArrayList<>();
+    private List<PrWarehouseInfo> warehouses=new ArrayList<>();
 
     public PrItemInfo(String productRequirementIds,String brandName, String categoryName, String subCategoryName, String itemName, BigDecimal prQty, List<PrWarehouseInfo> warehouses) {
         if(this.productRequirementIds!=null){

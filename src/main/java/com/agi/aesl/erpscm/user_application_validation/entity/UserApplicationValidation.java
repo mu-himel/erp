@@ -2,8 +2,6 @@ package com.agi.aesl.erpscm.user_application_validation.entity;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.ManyToAny;
-
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 

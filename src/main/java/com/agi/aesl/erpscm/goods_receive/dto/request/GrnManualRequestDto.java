@@ -1,12 +1,9 @@
 package com.agi.aesl.erpscm.goods_receive.dto.request;
 
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
-import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import lombok.Data;
-import org.hibernate.engine.jdbc.batch.spi.Batch;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 @Data

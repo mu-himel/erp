@@ -2,7 +2,6 @@ package com.agi.aesl.erpscm.internal_requisition.entity;
 
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.employee.entity.Employee;
-import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
 import com.agi.aesl.erpscm.internal_requisition.enums.IrStatus;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;

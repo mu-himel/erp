@@ -1,6 +1,6 @@
 package com.agi.aesl.erpscm.inventory.service;
 
-// import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
+
 
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryApproveRequestDto;
@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface CategoryService {
@@ -95,27 +96,27 @@ public interface CategoryService {
 
     Optional<ItemCategory> getCategoryByCode(String subCategoryCode);
 
-    List<?> getPendingCategories(Jwt token, Optional<Long> warehouseId,
-                                 Optional<Long> warehouseStoreId,
-                                 Optional<String> name,
-                                 Optional<String> code);
+    List<CategoryRepository.ItemCategoryInfo> getPendingCategories(Jwt token, Optional<Long> warehouseId,
+                                                                   Optional<Long> warehouseStoreId,
+                                                                   Optional<String> name,
+                                                                   Optional<String> code);
 
-    Page<?> getPendingCategories(Jwt token, Optional<Long> warehouseId,
-                                 Optional<Long> warehouseStoreId,
-                                 Optional<String> name,
-                                 Optional<String> code,
-                                 Optional<Integer> page,
-                                 Optional<Integer> size
+    Page<CategoryRepository.ItemCategoryInfo> getPendingCategories(Jwt token, Optional<Long> warehouseId,
+                                                                   Optional<Long> warehouseStoreId,
+                                                                   Optional<String> name,
+                                                                   Optional<String> code,
+                                                                   Optional<Integer> page,
+                                                                   Optional<Integer> size
 
     );
 
-    List<?> getPendingSubCategoriesForInventoryControl(
+    List<CategoryRepository.ItemCategoryInfo> getPendingSubCategoriesForInventoryControl(
             Jwt token,
             Optional<Long> categoryId, Optional<Long> warehouseId,
                                                        Optional<Long> storeId, Optional<String> name,
                                                        Optional<String> code);
 
-    Page<?> getPendingSubCategoriesForInventoryControl(
+    Page<CategoryRepository.ItemCategoryInfo> getPendingSubCategoriesForInventoryControl(
             Jwt token,
             Optional<Long> categoryId, Optional<Long> warehouseId,
             Optional<Long> storeId, Optional<String> name,
@@ -129,7 +130,7 @@ public interface CategoryService {
 
     void setYearlyBudget(Integer year,ItemCategory category);
 
-    Optional<?> getItemCategoryDetail(Long id);
+    Optional<Map<String, Object>> getItemCategoryDetail(Long id);
 
     Optional<ItemCategory> getItemCategoryById(Long id);
 
@@ -137,7 +138,7 @@ public interface CategoryService {
 
     void importCategories(Optional<MultipartFile> file);
 
-    List<?> getTemplateData(Long categoryId,  Long warehouseId, Long warehouseStoreId);
+    List<CategoryRepository.SubcategoryTemplate> getTemplateData(Long categoryId, Long warehouseId, Long warehouseStoreId);
 
     void syncCategories(Jwt token, CpsServerConfig cpsServerConfig,Long warehouseId,
                         Long warehouseStoreId,List<Long> categoryIds);

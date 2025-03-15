@@ -2,19 +2,15 @@ package com.agi.aesl.erpscm.demand.service;
 
 
 import com.agi.aesl.erpscm.demand.entity.Demand;
-import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
-import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
-import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.service.VerifierMailService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
 public interface DemandMailService extends VerifierMailService<Demand> {
 
-    String demandDetailMsgTpl = """
+    String DEMAND_DETAIL_MSG_TPL = """
             <h5>{mailFor},</h5>
             <p>Greetings from Anwar Enterprise system. There is a pending demand waiting for 
             your {actionType}</p>

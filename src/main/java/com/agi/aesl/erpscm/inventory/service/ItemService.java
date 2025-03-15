@@ -1,11 +1,8 @@
 package com.agi.aesl.erpscm.inventory.service;
 
 import com.agi.aesl.erpscm.common.ItemAttributeInterface;
-import com.agi.aesl.erpscm.common.ItemInterface;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
-// import com.agi.aesl.erpscm.authentication.dto.ClaimResponseDto;
-//import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 import com.agi.aesl.erpscm.inventory.dto.request.ForceActiveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
@@ -40,7 +37,7 @@ public interface ItemService {
     Optional<?> getItemDetailWithWarehouse(Long id);
     Optional<?> getItemDetailWithWarehouseWithoutInTransit(Long id);
 
-    <T extends Item> void sendItemToCps(ClaimResolver claimResolver, String _employee,T item,
+    <T extends Item> void sendItemToCps(ClaimResolver claimResolver, String employee,T item,
                                                  List<ItemAttributeInterface> attributes,
                                                  WarehouseStore warehouseStore
     );

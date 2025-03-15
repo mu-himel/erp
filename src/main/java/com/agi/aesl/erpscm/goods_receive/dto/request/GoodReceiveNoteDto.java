@@ -1,6 +1,5 @@
 package com.agi.aesl.erpscm.goods_receive.dto.request;
 
-import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import lombok.Data;
 
 import java.util.List;

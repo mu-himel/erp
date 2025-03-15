@@ -1,9 +1,7 @@
 package com.agi.aesl.erpscm.purchase_order.entity;
 
 import com.agi.aesl.erpscm.cs.entity.Cs;
-import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
 import com.agi.aesl.erpscm.purchase_order.enums.PurchaseOrderStatus;
-import com.agi.aesl.erpscm.purchase_order.service.PurchaseOrderService;
 import com.agi.aesl.erpscm.user_application_validation.entity.VerifyableEntity;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

@@ -5,8 +5,6 @@ import java.util.List;
 import com.agi.aesl.erpscm.comment.entity.CommentAttachment;
 import com.agi.aesl.erpscm.comment.enums.ActionType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
-import com.agi.aesl.erpscm.common.ReferenceObjectDto;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

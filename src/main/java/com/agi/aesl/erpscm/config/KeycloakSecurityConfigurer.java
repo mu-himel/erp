@@ -3,11 +3,9 @@ package com.agi.aesl.erpscm.config;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
+import com.agi.aesl.erpscm.exception.AesException;
 import org.keycloak.adapters.authorization.integration.jakarta.ServletPolicyEnforcerFilter;
-import org.keycloak.adapters.authorization.spi.ConfigurationResolver;
-import org.keycloak.adapters.authorization.spi.HttpRequest;
 import org.keycloak.representations.adapters.config.PolicyEnforcerConfig;
 import org.keycloak.util.JsonSerialization;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,18 +42,16 @@ public class KeycloakSecurityConfigurer {
             new JwtGrantedAuthoritiesConverter(),
             new KeycloakJwtTokenConverter());
 
-        httpSecurity.oauth2ResourceServer(server -> {
+        httpSecurity.oauth2ResourceServer(server ->
             
-            server.jwt().jwtAuthenticationConverter(jwt ->{
-                
-                return new JwtAuthenticationToken(jwt, djgac.convert(jwt));
-            } );
-        });
+            server.jwt(jwtConfigurer -> jwtConfigurer
+                    .jwtAuthenticationConverter(jwt->new JwtAuthenticationToken(jwt,djgac.convert(jwt))))
+        );
 
         httpSecurity
-                .csrf(csrf -> csrf.disable()).authorizeHttpRequests((authorize) -> {
-            authorize.requestMatchers("/warehouses").permitAll().anyRequest().authenticated();
-        }).addFilterBefore(createServletPolicyFilter(), BearerTokenAuthenticationFilter.class)
+                .csrf(csrf -> csrf.disable()).authorizeHttpRequests(authorize ->
+            authorize.requestMatchers("/warehouses").permitAll().anyRequest().authenticated()
+        ).addFilterBefore(createServletPolicyFilter(), BearerTokenAuthenticationFilter.class)
         
                 .sessionManagement(management -> management
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -91,17 +87,16 @@ public class KeycloakSecurityConfigurer {
             addExcludedPaths(config);
         } catch (IOException e) {
             
-            throw new RuntimeException(e);
+            throw new AesException(e.getMessage());
         }
-        return new ServletPolicyEnforcerFilter(new ConfigurationResolver() {
+        return new ServletPolicyEnforcerFilter(request-> {
 
-            @Override
-            public PolicyEnforcerConfig resolve(HttpRequest request) {
+
                 if(request.getPrincipal() == null){
-                    throw new RuntimeException("Sorry! Token not valid");
+                    throw new AesException("Sorry! Token not valid");
                 }
                 return config;
-            }
+
             
         });
     

@@ -1,9 +1,7 @@
 package com.agi.aesl.erpscm.inventory.user_request.service;
 
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
-import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.UserItemRequestDto;
-import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryApproveDto;
 import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryRejectDto;
 import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomainService;
 import org.springframework.data.domain.Page;

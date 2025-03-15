@@ -1,9 +1,7 @@
 package com.agi.aesl.erpscm.quality_control.service;
 
-import com.agi.aesl.erpscm.demand.entity.Demand;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
-import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
 import com.agi.aesl.erpscm.user_application_validation.service.VerifierMailService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 

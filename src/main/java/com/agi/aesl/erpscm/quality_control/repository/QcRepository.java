@@ -2,7 +2,6 @@ package com.agi.aesl.erpscm.quality_control.repository;
 
 import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository;
 import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
-import com.agi.aesl.erpscm.quality_control.entity.QualityControlKpi;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

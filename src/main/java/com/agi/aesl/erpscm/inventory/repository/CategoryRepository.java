@@ -33,7 +33,7 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
     @Query("SELECT ic FROM ItemCategory ic LEFT JOIN FETCH ic.budgets b " +
             "WHERE ic.id=:id and b.category.id=:id and (:year IS NULL OR b.currentYear<=:year) " +
             "GROUP BY ic.id")
-    Optional<ItemCategory> findById(@Param("id") Long id, @Param("year") Integer Year);
+    Optional<ItemCategory> findById(@Param("id") Long id, @Param("year") Integer year);
 
 
 
@@ -58,13 +58,15 @@ public interface CategoryRepository extends JpaRepository<ItemCategory, Long>, C
             @Param("warehouseStoreId") Long warehouseStoreId,
             Pageable pageable);
 
-    @Query(value = "select ic.id,ic.name,pc.name as mainCategoryName,ic.code, sum(amount) currentYearBudget," +
-            "(select count(i.id) from scm_items i where i.item_category_id in (ic.id)) as productCount " +
-            "FROM scm_item_categories ic\n" +
-            " LEFT JOIN scm_item_categories as pc on pc.id = ic.parent_category_id" +
-            " LEFT JOIN scm_category_budgets cb on ic.id = cb.category_id \n" +
-            "WHERE ic.parent_category_id =:parentCategoryId AND cb.current_year=:year " +
-            "GROUP BY ic.id",nativeQuery = true)
+    @Query(value = """
+            select ic.id,ic.name,pc.name as mainCategoryName,ic.code, sum(amount) currentYearBudget,
+            (select count(i.id) from scm_items i where i.item_category_id in (ic.id)) as productCount
+            FROM scm_item_categories ic
+            LEFT JOIN scm_item_categories as pc on pc.id = ic.parent_category_id
+            LEFT JOIN scm_category_budgets cb on ic.id = cb.category_id
+            WHERE ic.parent_category_id =:parentCategoryId AND cb.current_year=:year
+            GROUP BY ic.id
+            """,nativeQuery = true)
     Page<SubCategoryInfoExt> findAllSubCategories(@Param("parentCategoryId") Long id,
                                                    @Param("year") Integer year, Pageable pageable);
 

@@ -1,6 +1,5 @@
 package com.agi.aesl.erpscm.purchase_order.dto.request;
 
-import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import lombok.Data;
 
 import java.util.List;

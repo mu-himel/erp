@@ -29,7 +29,7 @@ public class ItemController extends BaseController{
     @Autowired
     private ItemService itemService;
 
-    private record SyncItemReqDto(Long warehouseId, Long warehouseStoreId, String subCatCode){};
+    private record SyncItemReqDto(Long warehouseId, Long warehouseStoreId, String subCatCode){}
 
     @PostMapping
     public ResponseEntity<?> addItem(

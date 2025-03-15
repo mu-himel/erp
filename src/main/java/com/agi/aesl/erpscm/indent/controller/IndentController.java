@@ -2,7 +2,6 @@ package com.agi.aesl.erpscm.indent.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
-import com.agi.aesl.erpscm.indent.dto.request.IndentRejectDto;
 import com.agi.aesl.erpscm.indent.dto.request.IndentRequestDto;
 import com.agi.aesl.erpscm.indent.service.IndentService;
 import jakarta.validation.Valid;

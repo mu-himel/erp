@@ -1,7 +1,5 @@
 package com.agi.aesl.erpscm.purchase_order.dto.request;
 
-import com.agi.aesl.erpscm.common.ReferenceObjectDto;
-import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import lombok.Data;
 
 import java.math.BigDecimal;
