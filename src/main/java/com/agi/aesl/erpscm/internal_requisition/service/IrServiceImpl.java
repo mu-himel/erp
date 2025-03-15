@@ -5,6 +5,7 @@ import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.internal_requisition.dto.request.CreateIRDto;
 import com.agi.aesl.erpscm.internal_requisition.dto.request.UpdateIRDetailDto;
 import com.agi.aesl.erpscm.internal_requisition.entity.*;
@@ -26,7 +27,7 @@ import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicatio
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,32 +37,43 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class IrServiceImpl implements IrService {
 
     private static final Integer PAGE_SIZE = 20;
-    @Autowired
-    private ClaimResolver claimResolver;
 
-    @Autowired
-    private InternalRequisitionRepository irRepository;
+    private final ClaimResolver claimResolver;
 
-    @Autowired
-    private UserApplicationValidatorService<InternalRequisition> verificationService;
 
-    @Autowired
-    private CommentService commentService;
+    private final InternalRequisitionRepository irRepository;
 
-    @Autowired
-    private IrVAHistoryRepository irVAHistoryRepository;
+    private final UserApplicationValidatorService<InternalRequisition> verificationService;
 
-    @Autowired
-    private ItemService itemService;
 
-    @Autowired
-    private StoreIrRepository storeIrRepository;
+    private final CommentService commentService;
+
+
+    private final IrVAHistoryRepository irVAHistoryRepository;
+
+
+    private final ItemService itemService;
+
+
+    private final StoreIrRepository storeIrRepository;
+
+    private static final String DATE_START="T00:00:00";
+    private static final String DATE_END="T23:59:59";
+
+    private String getEmpId(ClaimResolver claimResolver){
+        Employee em = claimResolver.getEmployee().orElse(null);
+        return (em!=null)? em.getId() :null;
+    }
+
+    private Employee getEmp(ClaimResolver claimResolver){
+        return claimResolver.getEmployee().orElse(null);
+    }
 
     @Override
     public void createInternalRequisition(Jwt token, String uri, CreateIRDto createDto) {
@@ -73,7 +85,7 @@ public class IrServiceImpl implements IrService {
         ir.setPriority(createDto.getPriority());
         ir.setCategory(new ItemCategory(createDto.getCategoryId()));
         cateIds.add(createDto.getCategoryId().toString());
-        ir.setRequestedBy(new Employee(claimResolver.getEmployee().get().getId()));
+        claimResolver.getEmployee().ifPresent(ir::setRequestedBy);
         ir.setWarehouse(new Warehouse(createDto.getWarehouseId()));
         ir.setIrStatus(IrStatus.PENDING);
         ir.setDetails(createDto.getDetails().stream().map(irDto->{
@@ -95,12 +107,10 @@ public class IrServiceImpl implements IrService {
                 irdw.setSafetyStock(irdW.getSafetyStock());
                 irdw.setQty(irdW.getQty());
                 return irdw;
-            }).collect(Collectors.toList()));
+            }).toList());
             return ird;
-        }).collect(Collectors.toList()));
+        }).toList());
 
-//        String categories = "";
-//        categories = String.join(",", cateIds);
 
         irRepository.save(ir);
 
@@ -111,49 +121,20 @@ public class IrServiceImpl implements IrService {
             ir.setIrStatus(IrStatus.COMPLETED);
         }
 
-//        var verifierOp =  verificationService.getVerifiers(token, uri, categories);
-//        if(verifierOp instanceof Optional){
-//            List<Verifier> verifiers = new ArrayList<>();
-//            if (verifierOp.isPresent()) {
-//
-//                var verification =  (Map<String,Object>)verifierOp.get();
-//
-//                verifiers = (List<Verifier>) verification.get("verifiers");
-//
-//
-//                Boolean verificationRequired = (Boolean) verification.get("verificationRequired");
-//                if (verificationRequired != null && verificationRequired == true && verifiers != null && verifiers.size() > 0) {
-//                    ir.setStatus(IrStatus.PENDING_VERIFICATION);
-//                } else {
-//                    ir.setStatus(IrStatus.PENDING);
-//                }
-//
-//            } else {
-//                ir.setStatus(IrStatus.PENDING);
-//            }
-//
-//            verificationService.setVerifiers(ir, verifiers, DomainType.IR);
-//
-//            List<ApprovalSettingQuery.ApprovalPanel> approvalPanels = approvalSettingService
-//                    .getModuleWiseApprovalSetting(uri,
-//                            Optional.ofNullable(categories),Optional.empty());
-//
-//            verificationService.setApprovers(ir, approvalPanels, DomainType.IR);
 
-//        }
     }
 
     @Override
-    public Page<?> getAllInternalRequisitions(Optional<Integer> page, Optional<Integer> size,
-                                              Optional<String> fromDateStr, Optional<String> toDateStr) {
+    public Page<InternalRequisitionRepository.IrListInfo> getAllInternalRequisitions(Optional<Integer> page, Optional<Integer> size,
+                                                                                     Optional<String> fromDateStr, Optional<String> toDateStr) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
         LocalDateTime fromDate = null;
         LocalDateTime toDate = null;
         if(fromDateStr.isPresent()){
-            fromDate = LocalDateTime.parse(fromDateStr.get()+"T00:00:00");
+            fromDate = LocalDateTime.parse(fromDateStr.get()+DATE_START);
         }
         if(toDateStr.isPresent()){
-            toDate = LocalDateTime.parse(toDateStr.get()+"T23:59:59");
+            toDate = LocalDateTime.parse(toDateStr.get()+DATE_END);
         }
         return irRepository.findAllIr(fromDate,toDate,pageable);
     }
@@ -170,88 +151,90 @@ public class IrServiceImpl implements IrService {
     }
 
     @Override
-    public Page<?> getAllClosedIr(Optional<Integer> page, Optional<Integer> size,
-                                  Optional<String> fromDateOp, Optional<String> toDateOp) {
+    public Page<InternalRequisitionRepository.IrListInfo> getAllClosedIr(Optional<Integer> page, Optional<Integer> size,
+                                                                         Optional<String> fromDateOp, Optional<String> toDateOp) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
         LocalDateTime fromDate = null;
         LocalDateTime toDate = null;
         if(fromDateOp.isPresent()){
-            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
+            fromDate = LocalDateTime.parse(fromDateOp.get()+DATE_START);
         }
         if(toDateOp.isPresent()){
-            toDate = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+            toDate = LocalDateTime.parse(toDateOp.get()+DATE_END);
         }
         return irRepository.findAllClosedIr(fromDate,toDate,pageable);
     }
 
     @Override
-    public Page<?> getAllPendingVerificationIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                                                Optional<String> fromDateOp, Optional<String> toDateOp) {
+    public Page<InternalRequisitionRepository.IrVerifierListInfo> getAllPendingVerificationIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                                                               Optional<String> fromDateOp, Optional<String> toDateOp) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
         LocalDateTime fromDate = null;
         LocalDateTime toDate = null;
         if(fromDateOp.isPresent()){
-            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
+            fromDate = LocalDateTime.parse(fromDateOp.get()+DATE_START);
         }
         if(toDateOp.isPresent()){
-            toDate = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+            toDate = LocalDateTime.parse(toDateOp.get()+DATE_END);
         }
-        return irRepository.findAllPendingVerificationIr(claimResolver.getEmployee().get().getId(),
+
+        return irRepository.findAllPendingVerificationIr(getEmpId(claimResolver),
                 fromDate,toDate,
                 pageable);
     }
 
     @Override
-    public Page<?> getAllPendingApprovalIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                                            Optional<String> fromDateOp, Optional<String> toDateOp) {
+    public Page<InternalRequisitionRepository.IrVerifierListInfo> getAllPendingApprovalIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                                                           Optional<String> fromDateOp, Optional<String> toDateOp) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE));
         LocalDateTime fromDate = null;
         LocalDateTime toDate = null;
         if(fromDateOp.isPresent()){
-            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
+            fromDate = LocalDateTime.parse(fromDateOp.get()+DATE_START);
         }
         if(toDateOp.isPresent()){
-            toDate = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+            toDate = LocalDateTime.parse(toDateOp.get()+DATE_END);
         }
-        return irRepository.findAllPendingApprovalIr(claimResolver.getEmployee().get().getId(),
+
+        return irRepository.findAllPendingApprovalIr(getEmpId(claimResolver),
                 fromDate,toDate,pageable);
     }
 
     @Override
-    public Page<?> getAllVerifiedOrApprovedIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                                               Optional<String> fromDateOp, Optional<String> toDateOp) {
+    public Page<InternalRequisitionRepository.IrListInfo> getAllVerifiedOrApprovedIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                                                      Optional<String> fromDateOp, Optional<String> toDateOp) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE));
         LocalDateTime fromDate = null;
         LocalDateTime toDate = null;
         if(fromDateOp.isPresent()){
-            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
+            fromDate = LocalDateTime.parse(fromDateOp.get()+DATE_START);
         }
         if(toDateOp.isPresent()){
-            toDate = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+            toDate = LocalDateTime.parse(toDateOp.get()+DATE_END);
         }
         return irRepository.findAllVerifiedOrApprovedIr(fromDate, toDate, pageable);
     }
 
     @Override
-    public Page<?> getAllProcessedIrs(Optional<Integer> page, Optional<Integer> size,
-                                      Optional<String> fromDateOp, Optional<String> toDateOp) {
+    public Page<InternalRequisitionRepository.IrListInfo> getAllProcessedIrs(Optional<Integer> page, Optional<Integer> size,
+                                                                             Optional<String> fromDateOp, Optional<String> toDateOp) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
         LocalDateTime fromDate = null;
         LocalDateTime toDate = null;
         if(fromDateOp.isPresent()){
-            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
+            fromDate = LocalDateTime.parse(fromDateOp.get()+DATE_START);
         }
         if(toDateOp.isPresent()){
-            toDate = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+            toDate = LocalDateTime.parse(toDateOp.get()+DATE_END);
         }
         return irRepository.findAllProcessedIr(fromDate, toDate,pageable);
     }
 
     @Override
-    public <T> Optional<?> getDetail(Long id, Class<T> t) {
+    public <T> Optional<Map<String,Object>> getDetail(Long id, Class<T> t) {
         var irOp = irRepository.findById(id,t);
         Map<String,Object> detailMap = new HashMap<>();
         if(irOp instanceof Optional){
@@ -264,7 +247,7 @@ public class IrServiceImpl implements IrService {
             detailMap.put("details",irDetail.getDetails());
             detailMap.put("requestedBy",irDetail.getRequestedBy());
             detailMap.put("warehouse",irDetail.getWarehouse());
-            detailMap.put("deliveryDate",irDetail.getDeliveryDate());
+
 
 
             List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
@@ -284,7 +267,7 @@ public class IrServiceImpl implements IrService {
             detailMap.put("verifiers", verifiers);
             detailMap.put("approvers",approvers);
         }
-        return Optional.of(detailMap);
+        return  Optional.of(detailMap);
     }
 
     @Override
@@ -293,18 +276,18 @@ public class IrServiceImpl implements IrService {
         claimResolver.setToken(token);
         Optional<InternalRequisition> irOp = irRepository.findById(id);
         if(irOp.isEmpty()){
-            throw new RuntimeException("Demand not found");
+            throw new AesException("Demand not found");
         }
         InternalRequisition ir = irOp.get();
         ir.setReviewerId(null);
 
         if(ir.getNextVerifierId()!=null &&  ir.getNextApproverId()==null){
             ir.setIrStatus(IrStatus.PENDING_VERIFICATION);
-        }else if(ir.getNextVerifierId()!=null &&  ir.getNextApproverId()!=null){
+        }else if(ir.getNextApproverId()!=null){
             ir.setIrStatus(IrStatus.PENDING_APPROVAL);
         }
         commentService.addComment(commentService.prepareComment(
-                claimResolver.getEmployee().get(),
+                getEmp(claimResolver),
                 reviewDto.getDomainType(),
                 ir.getId(),
                 reviewDto.getMessage(),
@@ -318,13 +301,13 @@ public class IrServiceImpl implements IrService {
         claimResolver.setToken(token);
         Optional<InternalRequisition> irOp = irRepository.findById(id);
         if(irOp.isEmpty()){
-            throw new RuntimeException("Sorry! IR not found");
+            throw new AesException("Sorry! IR not found");
         }
 
         InternalRequisition ir = irOp.get();
         ir.setIrStatus(IrStatus.REJECTED);
         commentService.addComment(commentService.prepareComment(
-                claimResolver.getEmployee().get(),
+                getEmp(claimResolver),
                 DomainType.IR,
                 ir.getId(),
                 noteDto.getNote(),
@@ -338,24 +321,24 @@ public class IrServiceImpl implements IrService {
         claimResolver.setToken(token);
         Optional<InternalRequisition> irOp = irRepository.findById(updateIrDto.getId());
         if(irOp.isEmpty()){
-            throw new RuntimeException("Sorry! Ir Not found");
+            throw new AesException("Sorry! Ir Not found");
         }
 
         InternalRequisition ir = irOp.get();
         ir.setIsProcessed(true);
-        updateIrDto.getDetails().stream().forEach(uid->{
+        updateIrDto.getDetails().forEach(uid->{
             Optional<InternalRequisitionDetail> irdOp = ir.getDetails().stream().filter(ird->ird.getId().equals(uid.getId())).findFirst();
             if(irdOp.isPresent()){
                 InternalRequisitionDetail ird = irdOp.get();
                 List<InternalRequisitionDetailWarehouse> irdwList = uid.getWarehouses().stream().map(uidw->{
                     if(uidw.getFromWarehouseId()==null){
-                        throw new RuntimeException("Sorry! From Warehouse not selected");
+                        throw new AesException("Sorry! From Warehouse not selected");
                     }
                     if(uidw.getToWarehouseId()==null){
-                        throw new RuntimeException("Sorry! To Warehouse not selected");
+                        throw new AesException("Sorry! To Warehouse not selected");
                     }
                     if(uidw.getQty()==null){
-                        throw new RuntimeException("Sorry! Quantity Missing");
+                        throw new AesException("Sorry! Quantity Missing");
                     }
                     InternalRequisitionDetailWarehouse irdw = new InternalRequisitionDetailWarehouse();
                     irdw.setFromWarehouse(new Warehouse(uidw.getFromWarehouseId()));
@@ -365,7 +348,7 @@ public class IrServiceImpl implements IrService {
                     irdw.setCurrentStock(uidw.getCurrentStock());
                     irdw.setSafetyStock(uidw.getSafetyStock());
                     return irdw;
-                }).collect(Collectors.toList());
+                }).toList();
                 ird.setWarehouses(irdwList);
             }
         });
@@ -373,12 +356,12 @@ public class IrServiceImpl implements IrService {
         StoreIR storeIR =  new StoreIR();
         storeIR.setIr(ir);
         storeIR.setIrStatus(IrStatus.PENDING);
-        storeIR.setRequestedBy(new Employee(claimResolver.getEmployee().get().getId()));
+        storeIR.setRequestedBy(getEmp(claimResolver));
         storeIrRepository.save(storeIR);
     }
 
     @Override
-    public List<?> getWarehouses(Long id) {
+    public List<Map<String,Object>> getWarehouses(Long id) {
 
         List<Map<String,Object>> wMaps = new ArrayList<>();
         var itemDetailOp = itemService.getItemDetailWithWarehouse(id);
@@ -386,10 +369,9 @@ public class IrServiceImpl implements IrService {
             ItemDetail itemDetail = (ItemDetail) itemDetailOp.get();
 
 
-            itemDetail.getWarehouses().values().stream().forEach(w->{
+            itemDetail.getWarehouses().values().forEach(w->{
                 Map<String,Object> map = new HashMap<>();
                 map.put("safetyStock", itemDetail.getStockThresholdQty());
-//                AtomicBigInteger stock = new AtomicInteger() ;
                 BigDecimal bi = new BigDecimal(0L);
                 for(Map<String,Object> wi : w){
                     map.put("warehouseId",wi.get("warehouseId"));
@@ -397,7 +379,6 @@ public class IrServiceImpl implements IrService {
                     BigDecimal stock = (BigDecimal) wi.get("stockQty");
 
                     bi = bi.add(stock);
-//                    stock.addAndGet((int)wi.get("stockQty"));
                 }
                 map.put("currentStock",  bi);
                 wMaps.add(map);
@@ -484,7 +465,7 @@ public class IrServiceImpl implements IrService {
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
         Optional<InternalRequisition> irOp = irRepository.findById(domainId);
         if(irOp.isEmpty()){
-            throw new RuntimeException("Sorry! IR not found");
+            throw new AesException("Sorry! IR not found");
         }
 
         InternalRequisition ir = irOp.get();

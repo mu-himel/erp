@@ -6,14 +6,12 @@ import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
-import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -73,7 +71,7 @@ public class QcMailServiceImpl implements QcMailService{
                 productName += detail.getItem().getBrand().getName() + " - ";
             }
             productName += generateItemAttribute(detail.getItem().getAttributes())+"</p></div>";
-            productDetail += productName;
+            productDetail = productDetail.concat(productName);
         }
 
         template = setProductDetail(template,productDetail);
@@ -85,14 +83,14 @@ public class QcMailServiceImpl implements QcMailService{
     private String generateItemAttribute(List<ItemAttribute> attributes){
         StringBuilder sb = new StringBuilder();
 
-        attributes.stream().forEach(attribute -> {
-            sb.append(attribute.getAttributeType().trim()
+        attributes.forEach(attribute -> {
+            String s = (attribute.getAttributeType().trim()
                     +" "+attribute.getAttributeValue().trim()
                     +" "+attribute.getAttributeUnit().trim());
-            sb.append(" - ");
+            sb.append(s).append(" - ");
         });
 
-        return (sb.isEmpty())? "" :  sb.toString().substring(0,sb.length()-3);
+        return (sb.isEmpty())? "" :  sb.substring(0,sb.length()-3);
     }
 
     private String setActionType(String tmp, String actionType){
@@ -132,7 +130,7 @@ public class QcMailServiceImpl implements QcMailService{
             emailSenderService.addRecipient(to);
 //                emailSenderService.sendEmail(subject,template);
         }else{
-            if(this.users.size()>0 && to==null){
+            if(!this.users.isEmpty() && to==null){
                 for(UserAssignInfo uai :users){
                     emailSenderService.refreshRecipient();
                     template = setMailFor(uai.getUser().getEmployeeName());

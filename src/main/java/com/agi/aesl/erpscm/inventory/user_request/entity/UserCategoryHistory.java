@@ -1,8 +1,6 @@
 package com.agi.aesl.erpscm.inventory.user_request.entity;
 
 import com.agi.aesl.erpscm.employee.entity.Employee;
-import com.agi.aesl.erpscm.indent.entity.Indent;
-import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

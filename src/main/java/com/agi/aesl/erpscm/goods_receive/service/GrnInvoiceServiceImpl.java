@@ -1,9 +1,10 @@
 package com.agi.aesl.erpscm.goods_receive.service;
 
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
 import com.agi.aesl.erpscm.fileupload.service.FileUploadService;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -14,13 +15,12 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class GrnInvoiceServiceImpl implements GrnInvoiceService{
 
-    @Autowired
-    private FileUploadService fileUploadService;
+    private final FileUploadService fileUploadService;
 
-    @Autowired
-    private GrnService grnService;
+    private final GrnService grnService;
 
     @Value("${upload.dir}")
     private String uploadDir;
@@ -29,9 +29,9 @@ public class GrnInvoiceServiceImpl implements GrnInvoiceService{
     @Transactional
     public FileUploadResponse uploadInvoice(Jwt token, String id, Optional<MultipartFile> fileOp) {
 
-        Optional<GoodReceiveNote> goodReceiveNoteOp = (Optional<GoodReceiveNote>) grnService.getByGrnNo(id);
+        Optional<GoodReceiveNote> goodReceiveNoteOp = grnService.getByGrnNo(id);
         if(goodReceiveNoteOp.isEmpty()){
-            throw new RuntimeException("Sorry! Grn not found");
+            throw new AesException("Sorry! Grn not found");
         }
 
         GoodReceiveNote goodReceiveNote = goodReceiveNoteOp.get();
@@ -39,8 +39,8 @@ public class GrnInvoiceServiceImpl implements GrnInvoiceService{
         if(fileOp.isPresent()){
             MultipartFile file = fileOp.get();
 
-            if(!fileUploadService.validFileSize(file.getSize(), Long.valueOf(5L*(1024*1024)))){
-                throw new RuntimeException("Sorry! Valid file size upto 5M");
+            if(Boolean.FALSE.equals(fileUploadService.validFileSize(file.getSize(), 5L * (1024 * 1024)))){
+                throw new AesException("Sorry! Valid file size up to 5M");
             }
 
 

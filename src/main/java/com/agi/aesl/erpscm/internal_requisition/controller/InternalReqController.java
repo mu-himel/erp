@@ -7,7 +7,7 @@ import com.agi.aesl.erpscm.internal_requisition.dto.request.UpdateIRDetailDto;
 import com.agi.aesl.erpscm.internal_requisition.repository.InternalRequisitionRepository;
 import com.agi.aesl.erpscm.internal_requisition.service.IrService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,12 +20,13 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/internal-requisitions")
+@RequiredArgsConstructor
 public class InternalReqController extends BaseController {
-    @Autowired
-    private IrService internalRequisitionService;
+
+    private final IrService internalRequisitionService;
 
     @PostMapping
-    public ResponseEntity<?> createIR(
+    public ResponseEntity<Void> createIR(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @RequestBody CreateIRDto createIrDto){
@@ -34,7 +35,7 @@ public class InternalReqController extends BaseController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllIR(
+    public ResponseEntity<Object> getAllIR(
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
             @RequestParam("fromDate") Optional<String> fromDate,
@@ -47,7 +48,7 @@ public class InternalReqController extends BaseController {
     }
 
     @GetMapping("/pending-verification")
-    public ResponseEntity<?> getPendingVerificationIR(
+    public ResponseEntity<Object> getPendingVerificationIR(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -61,7 +62,7 @@ public class InternalReqController extends BaseController {
     }
 
     @GetMapping("/pending-approval")
-    public ResponseEntity<?> getPendingApprovalIR(
+    public ResponseEntity<Object> getPendingApprovalIR(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -75,7 +76,7 @@ public class InternalReqController extends BaseController {
     }
 
     @GetMapping("/closed")
-    public ResponseEntity<?> getClosedIR(
+    public ResponseEntity<Object> getClosedIR(
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
             @RequestParam("fromDate") Optional<String> fromDate,
@@ -90,7 +91,7 @@ public class InternalReqController extends BaseController {
     }
 
     @GetMapping("/pending-requisitions")
-    public ResponseEntity<?> getPendingRequisitionForController(
+    public ResponseEntity<Object> getPendingRequisitionForController(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -104,7 +105,7 @@ public class InternalReqController extends BaseController {
     }
 
     @GetMapping("/processing-requisitions")
-    public ResponseEntity<?> getProcessingIrsForController(
+    public ResponseEntity<Object> getProcessingIrsForController(
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
             @RequestParam("fromDate") Optional<String> fromDate,
@@ -117,7 +118,7 @@ public class InternalReqController extends BaseController {
     }
 
     @GetMapping("/next-ir-no")
-    public ResponseEntity<?> getNextIrNo(){
+    public ResponseEntity<Object> getNextIrNo(){
         Map<String,Object> response = new HashMap<>();
         response.put("code",internalRequisitionService.getNextIrNo());
         return new ResponseEntity<>(
@@ -127,7 +128,7 @@ public class InternalReqController extends BaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getDetail(@PathVariable("id") Long id){
+    public ResponseEntity<Object> getDetail(@PathVariable("id") Long id){
         return new ResponseEntity<>(
                 internalRequisitionService.getDetail(id, InternalRequisitionRepository.IrDetail.class),
                 HttpStatus.OK
@@ -136,7 +137,7 @@ public class InternalReqController extends BaseController {
 
 
     @PutMapping("/review/{id}")
-    public ResponseEntity<?> reviewIr(
+    public ResponseEntity<Void> reviewIr(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody ReviewDto reviewDto
@@ -148,7 +149,7 @@ public class InternalReqController extends BaseController {
     }
 
     @PutMapping("/reject/{id}")
-    public ResponseEntity<?> rejectIr(
+    public ResponseEntity<Void> rejectIr(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody NoteDto noteDto
@@ -158,7 +159,7 @@ public class InternalReqController extends BaseController {
     }
 
     @PutMapping("/update")
-    public ResponseEntity<?> updateWarehouseRequirement(
+    public ResponseEntity<Void> updateWarehouseRequirement(
             @AuthenticationPrincipal Jwt token,
             @RequestBody UpdateIRDetailDto updateIrDto
     ){
@@ -167,7 +168,7 @@ public class InternalReqController extends BaseController {
     }
 
     @GetMapping("/stats-by-item-attribute/{id}")
-    public ResponseEntity<?> getWarehouseListByItemId(@PathVariable("id") Long id){
+    public ResponseEntity<Object> getWarehouseListByItemId(@PathVariable("id") Long id){
         return new ResponseEntity<>(internalRequisitionService.getWarehouses(id), HttpStatus.OK);
     }
 }

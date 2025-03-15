@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import com.agi.aesl.erpscm.comment.entity.Comment;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.demand.dto.request.*;
@@ -160,14 +161,16 @@ public class DemandServiceImpl implements DemandService{
                     }
                 }
             }
-            if(demandReceiveDto.getNote() !=null && !demandReceiveDto.getNote().isEmpty()){
-                claimResolver.getEmployee().ifPresent(emp->
-                commentService.addComment(commentService.prepareComment(emp,
-                        DomainType.DEMAND, demandDetail.getId(), demandReceiveDto.getNote(),
-                        demandReceiveDto.getAttachments()
-                        ))
-                );
-            }
+
+            claimResolver.getEmployee().ifPresent(emp-> {
+                    Comment comment = commentService.prepareComment(emp,
+                            DomainType.DEMAND, demandDetail.getId(), demandReceiveDto.getNote(),
+                            demandReceiveDto.getAttachments()
+                    );
+                    commentService.addComment(comment);
+                }
+            );
+
             demandDetail.setStatus(DemandStatus.CLOSED_BY_STORE);
             if(details.size()==detailCount) {
                 demand.setStatus(DemandStatus.CLOSED_BY_STORE);
@@ -179,22 +182,22 @@ public class DemandServiceImpl implements DemandService{
     private void setVerifiers(Demand demand, List<VerifierInfo> verifiers) {
         if(!verifiers.isEmpty()){
             Optional<VerifierInfo> firstOp = verifiers.stream().findFirst();
-            VerifierInfo nextVerifier = firstOp.get();
+            firstOp.ifPresent(nextVerifier->{
+                demandMailService.prepareMailContent(nextVerifier.getName(), "Verification", demand);
+                demandMailService.sentMail(nextVerifier.getEmail(), "Pending Demand Verification Request");
 
-            demandMailService.prepareMailContent(nextVerifier.getName(), "Verification", demand);
-            demandMailService.sentMail(nextVerifier.getEmail(),"Pending Demand Verification Request");
-
-            List<UserApplicationValidation> verifications = verifiers.stream().map(verifier -> {
-                UserApplicationValidation verification = new UserApplicationValidation();
-                verification.setDomainId(demand.getId());
-                verification.setDomainType(DomainType.DEMAND);
-                verification.setVerified(false);
-                verification.setIsApproval(false);
-                verification.setVerifier(new Employee(verifier.getId()));
-                return verification;
-            }).toList();
-            demand.setNextVerifierId(nextVerifier.getId());
-            verificationService.addVerification(verifications);
+                List<UserApplicationValidation> verifications = verifiers.stream().map(verifier -> {
+                    UserApplicationValidation verification = new UserApplicationValidation();
+                    verification.setDomainId(demand.getId());
+                    verification.setDomainType(DomainType.DEMAND);
+                    verification.setVerified(false);
+                    verification.setIsApproval(false);
+                    verification.setVerifier(new Employee(verifier.getId()));
+                    return verification;
+                }).toList();
+                demand.setNextVerifierId(nextVerifier.getId());
+                verificationService.addVerification(verifications);
+            });
         }
     }
 

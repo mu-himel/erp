@@ -79,9 +79,9 @@ public class IrStoreServiceImpl implements IrStoreService{
         List<String> cateIds = new ArrayList<>();
         cateIds.add(ir.getCategory().getId().toString());
 
-        ir.getDetails().stream().forEach(ird->{
-            cateIds.add(ird.getSubCategory().getId().toString());
-        });
+        ir.getDetails().forEach(ird->
+            cateIds.add(ird.getSubCategory().getId().toString())
+        );
 
         AppliedVADto appliedVADto = verificationService.applyVerifyApprovalProcess(sIR, DomainType.PSIR,
                 IrStatus.APPROVED.toString(), uri, "CATEGORY", cateIds, null);
@@ -281,10 +281,10 @@ public class IrStoreServiceImpl implements IrStoreService{
                 var itemDetailOp = itemService.getItemDetailWithWarehouse(item.getId());
                 if(itemDetailOp instanceof Optional && itemDetailOp.isPresent()){
                     ItemDetail itemDetail = (ItemDetail) itemDetailOp.get();
-                    List<Map<String,Object>> warehouses = (List<Map<String,Object>>)itemDetail
+                    List<Map<String,Object>> warehouses = itemDetail
                             .getWarehouses()
                             .get(receiveStockDto.getWarehouseId().toString());
-                    if(warehouses.size()>0){
+                    if(!warehouses.isEmpty()){
                         Map<String,Object> warehouseStoreInfo = warehouses.get(0);
                         itemService.stockIn(new Item(itemDetail.getId()), irdw.getInTransitReturn(),
                                 (Long)warehouseStoreInfo.get("warehouseId"),

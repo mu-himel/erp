@@ -529,13 +529,13 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Page<?> getItemCategories(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                                        Optional<String> name, Optional<String> code,
-                                     Optional<Integer> year,
-                                     Optional<BigDecimal> currentYearBudget,
-                                     Optional<Long> productCount,
-                                     Optional<Long> warehouseId,
-                                     Optional<Long> warehouseStoreId
+    public Page<CategoryRepository.ItemCategoryInfoExt> getItemCategories(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                                          Optional<String> name, Optional<String> code,
+                                                                          Optional<Integer> year,
+                                                                          Optional<BigDecimal> currentYearBudget,
+                                                                          Optional<Long> productCount,
+                                                                          Optional<Long> warehouseId,
+                                                                          Optional<Long> warehouseStoreId
                                      ) {
 
         claimResolver.setToken(token);
@@ -562,19 +562,19 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Page<?> getItemCategories(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                                      Optional<String> name, Optional<String> code,Optional<Integer> year,
-                                      Optional<BigDecimal> currentYearBudget, Optional<Long> productCount,
-                                      Optional<Long> categoryId,
-                                      Optional<Long> warehouseId,
-                                      Optional<Long> warehouseStoreId
+    public Page<CategoryRepository.SubCategoryInfoExt> getItemCategories(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                                         Optional<String> name, Optional<String> code, Optional<Integer> year,
+                                                                         Optional<BigDecimal> currentYearBudget, Optional<Long> productCount,
+                                                                         Optional<Long> categoryId,
+                                                                         Optional<Long> warehouseId,
+                                                                         Optional<Long> warehouseStoreId
                                       ) {
 
         claimResolver.setToken(token);
         String uri = "inventory-management/sub-category";
 
 
-        Page<?> result = null;
+
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(10));
 
         List<Long> warehouseIds = new ArrayList<>();
@@ -586,7 +586,7 @@ public class CategoryServiceImpl implements CategoryService {
             warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
         }
 
-        result = categoryRepository.findAllSubCategories(
+        return categoryRepository.findAllSubCategories(
                             name.orElse(null),
                             code.orElse(null),
                             currentYearBudget.orElse(null),
@@ -597,7 +597,7 @@ public class CategoryServiceImpl implements CategoryService {
                             warehouseStoreId.orElse(null)
                             ,pageable);
 
-        return result;
+
     }
 
 
@@ -743,7 +743,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public List<?> getPendingSubCategoriesForInventoryControl(
+    public List<CategoryRepository.ItemCategoryInfo> getPendingSubCategoriesForInventoryControl(
             Jwt token,
             Optional<Long> categoryId,
                                                               Optional<Long> warehouseId,
@@ -770,7 +770,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Page<?> getPendingSubCategoriesForInventoryControl(Jwt token, Optional<Long> categoryId, Optional<Long> warehouseId, Optional<Long> storeId, Optional<String> name, Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
+    public Page<CategoryRepository.ItemCategoryInfo> getPendingSubCategoriesForInventoryControl(Jwt token, Optional<Long> categoryId, Optional<Long> warehouseId, Optional<Long> storeId, Optional<String> name, Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
 
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
@@ -811,7 +811,7 @@ public class CategoryServiceImpl implements CategoryService {
 
             Optional<WarehouseStore> wsOptional = warehouseStoreRepository.findById(storeId);
             if(wsOptional.isEmpty()){
-                throw new AesException("Sorry! Store not found");
+                throw new AesException(ERR_STORE_NOT_FOUND);
             }
 
             CategoryWarehouseStore cws = new CategoryWarehouseStore();
@@ -919,7 +919,7 @@ public class CategoryServiceImpl implements CategoryService {
 
 
     @Override
-    public List<?> getPendingCategories(
+    public List<CategoryRepository.ItemCategoryInfo> getPendingCategories(
             Jwt token,
             Optional<Long> warehouseId,
             Optional<Long> warehouseStoreId,
@@ -942,9 +942,9 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Page<?> getPendingCategories(Jwt token, Optional<Long> warehouseId,
-                                        Optional<Long> warehouseStoreId, Optional<String> name,
-                                        Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
+    public Page<CategoryRepository.ItemCategoryInfo> getPendingCategories(Jwt token, Optional<Long> warehouseId,
+                                                                          Optional<Long> warehouseStoreId, Optional<String> name,
+                                                                          Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
 
         claimResolver.setToken(token);
         String uri="inventory-control/categories";
@@ -1222,8 +1222,8 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Optional<?> getItemCategoryDetail(Long id) {
-        record CategoryWarehouse(Long id, String warehouseName,String storeName){};
+    public Optional<Map<String, Object>> getItemCategoryDetail(Long id) {
+        record CategoryWarehouse(Long id, String warehouseName,String storeName){}
         Optional<ItemCategory> catOp = categoryRepository.findAnyCategoryById(id);
         if(catOp.isPresent()) {
 
@@ -1263,7 +1263,7 @@ public class CategoryServiceImpl implements CategoryService {
     
     private Iterable<CSVRecord> getItemRecords(FileUploadResponse fileUploadResponse) throws IOException{
         FileReader in = new FileReader(fileUploadResponse.getPath()+"/"+fileUploadResponse.getFilename());
-        Iterable<CSVRecord> records  = CSVFormat.RFC4180.withHeader(CategoryHeader.class).parse(in);
+        Iterable<CSVRecord> records  = CSVFormat.DEFAULT.builder().setHeader(CategoryHeader.class).build().parse(in);
         records.iterator().next();
         return records;
     }
@@ -1321,7 +1321,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public List<?> getTemplateData(Long categoryId, Long warehouseId, Long warehouseStoreId) {
+    public List<CategoryRepository.SubcategoryTemplate> getTemplateData(Long categoryId, Long warehouseId, Long warehouseStoreId) {
         return categoryRepository.findSubCategoryTemplate(categoryId,warehouseId,warehouseStoreId);
     }
 

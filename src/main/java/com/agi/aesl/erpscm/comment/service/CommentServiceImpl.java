@@ -73,14 +73,16 @@ public class CommentServiceImpl implements CommentService{
     @Override
     public Comment prepareComment(Employee employee, DomainType domainType, Long domainId, String msg,
             List<CommentAttachment> attachments) {
-                
-        Comment comment = new Comment();
-        comment.setCommentedBy(employee);
-        comment.setMessage(msg);
-        comment.setDomainType(domainType);
-        comment.setDomainId(domainId);
-        comment.setAttachments(attachments);
-        return comment;
+            if(msg!=null) {
+                Comment comment = new Comment();
+                comment.setCommentedBy(employee);
+                comment.setMessage(msg);
+                comment.setDomainType(domainType);
+                comment.setDomainId(domainId);
+                comment.setAttachments(attachments);
+                return comment;
+            }
+            return null;
     }
 
     @Override

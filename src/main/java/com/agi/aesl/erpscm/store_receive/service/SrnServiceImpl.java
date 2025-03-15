@@ -34,7 +34,6 @@ import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicatio
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -46,7 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
@@ -89,7 +88,7 @@ public class SrnServiceImpl implements SrnService{
         storeReceiveNote.setSrnNo(srnDto.getSrnNo());
         storeReceiveNote.setComment(srnDto.getComment());
         claimResolver.getEmployee().ifPresent(storeReceiveNote::setEmployee);
-        ;
+
         Optional<GoodReceiveNote> goodReceiveNoteOp = grnService.getByGrnNo(srnDto.getSrnNo());
         if(goodReceiveNoteOp.isEmpty()){
             throw new AesException("Grn not found");
@@ -187,15 +186,16 @@ public class SrnServiceImpl implements SrnService{
     @Override
     public List<?> getPendingDemandListBySrnItems(Jwt token, String attributes) {
         claimResolver.setToken(token);
-        Long warehouseId=null;
-        if(claimResolver.getEmployee().isPresent()){
-            Employee emp = claimResolver.getEmployee().get();
-            warehouseId = emp.getWarehouseId();
-        }
-        if(warehouseId==null){
+        AtomicReference<Long> warehouseId= new AtomicReference<>();
+
+        claimResolver.getEmployee().ifPresent( emp->
+
+                warehouseId.set(emp.getWarehouseId())
+        );
+        if(warehouseId.get() ==null){
             throw new AesException("Sorry! warehouse information missing for user");
         }
-        return srnRepository.getPendingDemandsBySrnForSrnItems(warehouseId,attributes);
+        return srnRepository.getPendingDemandsBySrnForSrnItems(warehouseId.get(),attributes);
     }
 
     @Override
@@ -247,7 +247,7 @@ public class SrnServiceImpl implements SrnService{
     public Page<?> getPendingApprovals(Jwt token, Optional<String> fromDate, Optional<String> toDate,
                                        Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
-        String uri="";
+
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
         LocalDateTime fromDateObj = null;

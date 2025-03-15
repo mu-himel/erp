@@ -1,6 +1,5 @@
 package com.agi.aesl.erpscm.inventory.user_request.service;
 
-import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.common.DataFilter;
@@ -11,16 +10,12 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseServ
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
-import com.agi.aesl.erpscm.indent.entity.Indent;
-import com.agi.aesl.erpscm.indent.entity.IndentVerificationApprovalHistory;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.indent.enums.IndentVerificationStatus;
-import com.agi.aesl.erpscm.indent.enums.RfqStatus;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryRequestDto;
-import com.agi.aesl.erpscm.inventory.dto.request.RemoteCategoryRequestDto;
 import com.agi.aesl.erpscm.inventory.entity.CategoryAttribute;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.service.CategoryService;
-import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryApproveDto;
 import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryRejectDto;
 import com.agi.aesl.erpscm.inventory.user_request.entity.UserCategory;
@@ -31,10 +26,7 @@ import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryHistoryRepository;
 import com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryRepository;
 import com.agi.aesl.erpscm.network.NetworkService;
-import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
-import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
-import com.agi.aesl.erpscm.quality_control.entity.QualityControl;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
@@ -50,10 +42,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -108,28 +96,23 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         userCategory.setCreatedBy(claimResolver.getEmployee().orElse(null));
         userCategory.setStore(new WarehouseStore(categoryRequestDto.getWarehouseStore().getId()));
         Boolean exists = userCategoryRepository.existsByName(categoryRequestDto.getName());
-        if(exists){
-            throw new RuntimeException("Sorry! Category already exist");
+        if(Boolean.TRUE.equals(exists)){
+            throw new AesException("Sorry! Category already exist");
         }
 
         DomainType domainType = DomainType.INVENTORY_REQ_CATEGORY;
         if(categoryRequestDto.getParentCategory()!=null) {
             domainType = DomainType.INVENTORY_REQ_SUB_CATEGORY;
-//            Optional<UserCategory> catOp = userCategoryRepository.findById(categoryRequestDto.getParentCategory().getId());
-//            if(catOp.isPresent()) {
-//                userCategory.setParentCategory(catOp.get());
-//            } else {
-            Optional<ItemCategory> _catOp = categoryService.getItemCategoryById(categoryRequestDto.getParentCategory().getId());
-            _catOp.ifPresent(userCategory::setActiveParentCategory);
-//            }
+            Optional<ItemCategory> catOp = categoryService.getItemCategoryById(categoryRequestDto.getParentCategory().getId());
+            catOp.ifPresent(userCategory::setActiveParentCategory);
 
             userCategory.setVat(categoryRequestDto.getVat());
 
             userCategory.setAttributes(categoryRequestDto.getAttributes().stream()
                     .map(ca-> new UserCategoryAttribute(ca,userCategory))
-                    .collect(Collectors.toList()));
+                    .toList());
             userCategory.setBrands(categoryRequestDto.getBrands().stream()
-                    .map(cb->new UserCategoryBrand(cb,userCategory)).collect(Collectors.toList()));
+                    .map(cb->new UserCategoryBrand(cb,userCategory)).toList());
         }
 
         userCategoryRepository.save(userCategory);
@@ -141,13 +124,6 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
 
         if(appliedVADto.getVerifiers().isEmpty() && appliedVADto.getPanels().isEmpty()){
               userCategory.setCategoryStatus(UserCategoryStatus.PENDING);
-//            ObjectMapper mapper = new ObjectMapper();
-//            try {
-//                String employee = mapper.writeValueAsString(userCategory.getCreatedBy());
-//                categoryService.sendToCps(token, userCategory, employee);
-//            }catch (Exception ex){
-//                throw new RuntimeException(ex.getMessage());
-//            }
         }
     }
 
@@ -199,7 +175,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
-        if(isCategory){
+        if(Boolean.TRUE.equals(isCategory)){
             return userCategoryRepository.findAllCategoryByNextVerifierId(
                     claimResolver.getUserId(),
                     pageable
@@ -295,8 +271,8 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         Map<String,Object> detail = new HashMap<>();
         UserCategory category = catOp.get();
         if(category.getCategoryStatus().equals(UserCategoryStatus.COMPLETED)){
-            Optional<ItemCategory> _catOp = categoryService.getCategoryByUserCategory(category.getId());
-            _catOp.ifPresent((_cat)->category.setCode(_cat.getCode()));
+            Optional<ItemCategory> userCatOp = categoryService.getCategoryByUserCategory(category.getId());
+            userCatOp.ifPresent(cat->category.setCode(cat.getCode()));
         }
         detail.put("detail",category);
         detail.put("warehouse",warehouseService.getWarehouse(category.getCreatedBy().getWarehouseId()));
@@ -306,8 +282,8 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
                 DomainType.INVENTORY_REQ_CATEGORY;
         List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
                 .getVerificationsByDomainTypeAndDomainId(domainType, category.getId());
-        vrs.stream().forEach(verifier->{
-            if(verifier.getIsApproval()==false){
+        vrs.forEach(verifier->{
+            if(Boolean.FALSE.equals(verifier.getIsApproval())){
                 verifiers.add(verifier);
             }else{
                 approvers.add(verifier);
@@ -358,18 +334,6 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
             } else {
 
                 category.setCategoryStatus(UserCategoryStatus.VERIFIED);
-//                ObjectMapper mapper = new ObjectMapper();
-//                try {
-//                    String employee = mapper.writeValueAsString(category.getCreatedBy());
-//                    categoryService.sendToCps(claimResolver.getToken(),category,employee);
-//                } catch (JsonProcessingException e) {
-//                    throw new RuntimeException(e);
-//                }
-//                IndentVerificationApprovalHistory userCatHistory = new IndentVerificationApprovalHistory();
-//                userCatHistory.setIndent(indent);
-//                userCatHistory.setEmployee(new Employee(indent.getNextVerifierId()));
-//                userCatHistory.setIndentStatus(IndentVerificationStatus.VERIFIED);
-//                indentVARepository.save(userCatHistory);
             }
             saveHistory(category, new Employee(category.getNextVerifierId()),UserCategoryStatus.VERIFIED);
         }
@@ -393,16 +357,6 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
             category.setStatus(String.valueOf(IndentVerificationStatus.APPROVED));
 
             saveHistory(category,new Employee(category.getNextApproverId()),UserCategoryStatus.APPROVED);
-//            ObjectMapper mapper = new ObjectMapper();
-
-//            try {
-//                String employee = mapper.writeValueAsString(category.getCreatedBy());
-//                categoryService.sendToCps(claimResolver.getToken(),category,employee);
-//            } catch (JsonProcessingException e) {
-//                throw new RuntimeException(e);
-//            }
-
-
         }
     }
 
@@ -451,19 +405,19 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     @Transactional
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
         Optional<UserCategory> catOp = userCategoryRepository.findById(domainId);
-        catOp.ifPresent((cat)->{
-            cat.setCategoryStatus(UserCategoryStatus.REJECTED);
-        });
+        catOp.ifPresent(cat->
+            cat.setCategoryStatus(UserCategoryStatus.REJECTED)
+        );
     }
 
     @Override
     @Transactional
     public void approveByStore(Jwt token, Long domainId, CategoryApproveDto categoryApproveDto) {
         if(categoryApproveDto.getPrefix()==null){
-            throw new RuntimeException("Sorry! prefix required");
+            throw new AesException("Sorry! prefix required");
         }
         Optional<UserCategory> catOp = userCategoryRepository.findById(domainId);
-        catOp.ifPresent((cat)->{
+        catOp.ifPresent(cat->{
             cat.setCategoryStatus(UserCategoryStatus.PENDING_CPS);
             cat.setIsApprovedByStore(true);
             CategoryRequestDto categoryRequestDto = new CategoryRequestDto();
@@ -476,8 +430,8 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
                 cattr.setAttributeValue(ca.getAttributeValue());
                 cattr.setAttributeUnit(ca.getAttributeUnit());
                 return cattr;
-            }).collect(Collectors.toList()));
-            categoryRequestDto.setBrands(cat.getBrands().stream().map(UserCategoryBrand::getName).collect(Collectors.toList()));
+            }).toList());
+            categoryRequestDto.setBrands(cat.getBrands().stream().map(UserCategoryBrand::getName).toList());
             if(cat.getParentCategory()!=null){
                 ItemCategory category = new ItemCategory(cat.getParentCategory().getId());
                 categoryRequestDto.setParentCategory(category);
@@ -492,7 +446,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
             try {
                 jsonStr = objectMapper.writeValueAsString(cat.getCreatedBy());
             } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+                throw new AesException(e.getMessage());
             }
             categoryRequestDto.setEmployee(jsonStr);
             categoryRequestDto.setWarehouse(new ReferenceObjectDto(cat.getStore().getWarehouse().getId()));
@@ -508,52 +462,10 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     @Transactional
     public void rejectByStore(Long domainId, CategoryRejectDto noteDto) {
         Optional<UserCategory> catOp = userCategoryRepository.findById(domainId);
-        catOp.ifPresent((cat)->{
+        catOp.ifPresent(cat->{
             cat.setIsApprovedByStore(false);
             cat.setRejectNoteFromStore(noteDto.getNote());
             cat.setCategoryStatus(UserCategoryStatus.REJECTED);
         });
     }
-
-    //    private void sentToCps(Jwt token, UserCategory category){
-//        RemoteCategoryRequestDto remoteCategoryRequestDto = new RemoteCategoryRequestDto();
-//        remoteCategoryRequestDto.setName(category.getName());
-//        remoteCategoryRequestDto.setCode(category.getCode());
-//
-//        if(category.getParentCategory()!=null) {
-//            Optional<UserCategory> parentCategoryOp = userCategoryRepository.findById(category.getParentCategory().getId());
-//
-//            if (parentCategoryOp.isPresent()) {
-//                remoteCategoryRequestDto.setParentCategory(new ReferenceObjectDto(parentCategoryOp.get().getCpsCategoryId()));
-//            }
-//
-//            remoteCategoryRequestDto.setAttributes(category.getAttributes().stream().map(attr->{
-//                CategoryAttribute ca = new CategoryAttribute();
-//                ca.setAttributeType(attr.getAttributeType());
-//                ca.setAttributeUnit(attr.getAttributeUnit());
-//                ca.setAttributeValue(attr.getAttributeValue());
-//                return ca;
-//            }).collect(Collectors.toList()));
-//            remoteCategoryRequestDto.setBrands(category.getBrands().stream().map(b->b.getName()).collect(Collectors.toList()));
-//            remoteCategoryRequestDto.setVat(category.getVat());
-//        }
-//        remoteCategoryRequestDto.setScmCategoryId(category.getId());
-//        remoteCategoryRequestDto.setCreatedBy(category.getCreatedBy().getId());
-//        remoteCategoryRequestDto.setCategoryStatus("PENDING");
-//        remoteCategoryRequestDto.setIsUserGenerated(true);
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_JSON);
-//        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
-//        if(orgOp.isPresent()){
-//            headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
-//        }
-//        HttpEntity<RemoteCategoryRequestDto> payload = new HttpEntity<>(remoteCategoryRequestDto,headers);
-//        String url = cpsServerConfig.getItemCategoriesEndpoint();
-//        ResponseEntity<?> response = networkService.post(url,payload,Void.class);
-//        HttpHeaders httpHeaders = response.getHeaders();
-//        List<String> headerId = httpHeaders.get("id");
-//        if(headerId.size()>0){
-//            category.setCpsCategoryId(Long.parseLong(headerId.get(0)));
-//        }
-//    }
 }

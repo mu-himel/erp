@@ -7,6 +7,7 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.indent.dto.request.IndentRequestDto;
 import com.agi.aesl.erpscm.indent.dto.request.MoveIndentRequestDto;
 import com.agi.aesl.erpscm.indent.entity.*;
@@ -25,7 +26,7 @@ import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationVal
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -42,30 +43,31 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class IndentServiceImpl implements IndentService{
 
-    @Autowired
-    private IndentRepository indentRepository;
 
-    @Autowired
-    private PrIndentRepository prIndentRepository;
+    private final IndentRepository indentRepository;
 
-    @Autowired
-    private IndentVerificationApprovalRepository indentVARepository;
 
-    @Autowired
-    private UserApplicationValidatorService<Indent> verificationService;
+    private final PrIndentRepository prIndentRepository;
 
-    @Autowired
-    private IntegrationReaderService integrationReaderService;
 
-    @Autowired
-    private CommentService commentService;
+    private final IndentVerificationApprovalRepository indentVARepository;
 
-    @Autowired
-    private ClaimResolver claimResolver;
 
-    private final Integer PAGE_SIZE = 10;
+    private final UserApplicationValidatorService<Indent> verificationService;
+
+
+    private final IntegrationReaderService integrationReaderService;
+
+
+    private final CommentService commentService;
+
+
+    private final ClaimResolver claimResolver;
+
+    private static final Integer PAGE_SIZE = 10;
 
     @Override
     public String getNextIndentNo() {
@@ -105,12 +107,12 @@ public class IndentServiceImpl implements IndentService{
                     ipd.setQty(pd.getQty());
                     ipd.setIndentDeliveryDetail(idd);
                     return ipd;
-                }).collect(Collectors.toList()));
+                }).toList());
                 return idd;
-            }).collect(Collectors.toList()));
+            }).toList());
 
             return indentDetail;
-        }).collect(Collectors.toList()));
+        }).toList());
     }
 
     @Override
@@ -118,9 +120,7 @@ public class IndentServiceImpl implements IndentService{
     public void createIndent(Jwt token, String uri, IndentRequestDto indentRequestDto) {
         claimResolver.setToken(token);
         List<String> ids = new ArrayList<>();
-//        if(indentRequestDto.getIndentNo()==null || indentRequestDto.getIndentNo().trim().length()<=0){
-//            throw new RuntimeException("Sorry! Indent No Required");
-//        }
+
         ids.add(indentRequestDto.getCategoryId().toString());
 
         Indent indent = indentRequestDto.getEntity();
@@ -128,7 +128,7 @@ public class IndentServiceImpl implements IndentService{
         if(claimResolver.getEmployee().isPresent()) {
             indent.setWarehouse(new Warehouse(claimResolver.getEmployee().get().getWarehouseId()));
         }
-        if(indentRequestDto.getIsDevliverToSingleWarehouse()){
+        if(Boolean.TRUE.equals(indentRequestDto.getIsDevliverToSingleWarehouse())){
             indent.setIsDevliverToSingleWarehouse(true);
             indent.setSingleWarehouse(new Warehouse(indentRequestDto.getSingleWarehouse().getId()));
         }
@@ -139,15 +139,12 @@ public class IndentServiceImpl implements IndentService{
         if(claimResolver.getEmployee().isPresent()) {
             indent.setRequestedBy(new Employee(claimResolver.getEmployee().get().getId()));
         }
-//        indent.setPriority(IndentPriority.valueOf(indentRequestDto.getPriority()));
         indent.setPriorityDateTime(indentRequestDto.getPriorityDate());
 
         setIndentDetail(indent,indentRequestDto,ids,true);
         indent.setIstatus(IndentStatus.INIT);
 
-        List<String> prids = indentRequestDto.getPrIds().stream().map(prid->{
-            return prid.toString();
-        }).toList();
+        List<String> prids = indentRequestDto.getPrIds().stream().map(Object::toString).toList();
         indent.setPrIndents(String.join(",",prids));
         indent.setIndentNo(getNextIndentNo());
         indentRepository.save(indent);
@@ -174,12 +171,12 @@ public class IndentServiceImpl implements IndentService{
 
         Optional<Indent> indentOp = indentRepository.findById(id);
         if(indentOp.isEmpty()){
-            throw new RuntimeException("Sorry! Indent not found");
+            throw new AesException("Sorry! Indent not found");
         }
         Indent indent = indentOp.get();
 
 
-        if(indentRequestDto.getIsDevliverToSingleWarehouse()){
+        if(Boolean.TRUE.equals(indentRequestDto.getIsDevliverToSingleWarehouse())){
             indent.setIsDevliverToSingleWarehouse(true);
             indent.setSingleWarehouse(new Warehouse(indentRequestDto.getSingleWarehouse().getId()));
         }
@@ -303,7 +300,7 @@ public class IndentServiceImpl implements IndentService{
 
         }
 
-        return null;
+        return Collections.emptyMap();
     }
 
     private void prepareDetail(Indent indent, List<IndentRepository.IndentViewInfo> result, Map<String, Object> response){
@@ -318,7 +315,7 @@ public class IndentServiceImpl implements IndentService{
         response.put("subCategoryId",indent.getSubCategory().getId());
         response.put("subCategoryName",indent.getSubCategory().getName());
         response.put("reviewerId",indent.getReviewerId());
-        response.put("isDevliverToSingleWarehouse", isDeliverInSingleWarehouse!=null? isDeliverInSingleWarehouse:false);
+        response.put("isDevliverToSingleWarehouse", isDeliverInSingleWarehouse!=null && isDeliverInSingleWarehouse);
         response.put("singleWarehouseId",(warehouse!=null)? warehouse.getId(): null);
         response.put("singleWarehouseName",(warehouse!=null)? warehouse.getName(): null);
         response.put("indentDetails", getProcessedResult(result));
@@ -330,8 +327,8 @@ public class IndentServiceImpl implements IndentService{
         List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
         List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
                 .getVerificationsByDomainTypeAndDomainId(DomainType.INDENT, indent.getId());
-        vrs.stream().forEach(verifier->{
-            if(verifier.getIsApproval()==false){
+        vrs.forEach(verifier->{
+            if(Boolean.FALSE.equals(verifier.getIsApproval())){
                 verifiers.add(verifier);
             }else{
                 approvers.add(verifier);
@@ -349,15 +346,15 @@ public class IndentServiceImpl implements IndentService{
     private List<?> getProcessedResult(List<IndentRepository.IndentViewInfo> result){
         List<Map<String,Object>> items = new ArrayList<>();
         AtomicReference<BigDecimal> prQty= new AtomicReference<>(new BigDecimal(0L));
-        result.stream().forEach(indentViewInfo->{
+        result.forEach(indentViewInfo->{
             Map<String,Object> item = new HashMap<>();
             String warehouseKey = indentViewInfo.getBrandName()+"_"+indentViewInfo.getItemName()+"_"+indentViewInfo.getWarehouseId();
 
-            Optional<Map<String,Object>> anyItemOp = items.stream().filter(_item->{
-                if(_item.get("brandName") !=null) {
-                    return _item.get("brandName").equals(indentViewInfo.getBrandName()) && _item.get("itemName").equals(indentViewInfo.getItemName());
+            Optional<Map<String,Object>> anyItemOp = items.stream().filter(itm->{
+                if(itm.get("brandName") !=null) {
+                    return itm.get("brandName").equals(indentViewInfo.getBrandName()) && itm.get("itemName").equals(indentViewInfo.getItemName());
                 }
-                return _item.get("itemName").equals(indentViewInfo.getItemName());
+                return itm.get("itemName").equals(indentViewInfo.getItemName());
             }).findAny();
 
             if(anyItemOp.isEmpty()){
@@ -409,7 +406,7 @@ public class IndentServiceImpl implements IndentService{
 
                 items.add(item);
             }else{
-                Map<String,Object> existItem = (Map<String,Object>)anyItemOp.get();
+                Map<String,Object> existItem = anyItemOp.get();
                 prQty.getAndUpdate(v -> v.add(indentViewInfo.getPrQty()));
                 existItem.put("prQty",prQty);
                 if(existItem.containsKey("warehouses")){
@@ -426,9 +423,9 @@ public class IndentServiceImpl implements IndentService{
                             BigDecimal orderQty = (BigDecimal)warehousKeyMap.get("orderQty");
                             orderQty =indentViewInfo.getOrderQty().add(orderQty);
                             warehousKeyMap.replace("orderQty",orderQty);
-                            BigDecimal _prQty = (BigDecimal) warehousKeyMap.get("prQty");
-                            _prQty = _prQty.add( indentViewInfo.getPrQty());
-                            warehousKeyMap.replace("prQty",_prQty);
+                            BigDecimal wPrQty = (BigDecimal) warehousKeyMap.get("prQty");
+                            wPrQty = wPrQty.add( indentViewInfo.getPrQty());
+                            warehousKeyMap.replace("prQty",wPrQty);
 
                             warehousKeyMap.replace("key", currentkey);
                         }
@@ -462,7 +459,6 @@ public class IndentServiceImpl implements IndentService{
                             warehouseInfo.put("partialDeliveries", new ArrayList<>());
                         }
 
-//                        Map<String,Object> warehousKeyMap = new HashMap<>();
 
                         existWarehouseProp.put(warehouseKey, warehouseInfo);
                         existItem.put("warehouses",existWarehouseProp);
@@ -471,13 +467,12 @@ public class IndentServiceImpl implements IndentService{
             }
         });
 
-        List<?> fitems = items.stream().map(_item->{
-            Map<String,Object> warehouses = (Map<String,Object>)_item.get("warehouses");
-            _item.replace("warehouses", warehouses.values());
-            return _item;
-        }).collect(Collectors.toList());
+        return items.stream().map(itm->{
+            Map<String,Object> warehouses = (Map<String,Object>)itm.get("warehouses");
+            itm.replace("warehouses", warehouses.values());
+            return itm;
+        }).toList();
 
-        return fitems;
     }
 
     @Override
@@ -493,21 +488,19 @@ public class IndentServiceImpl implements IndentService{
 
     @Override
     public List<?> getIndentByIds(Optional<List<Long>> indentIds) {
-        List<?> results = indentRepository.getIndentByIds(
+        return indentRepository.getIndentByIds(
                 indentIds.orElseThrow(()->new RuntimeException("Indent ids should not empty"))
         );
-        return results;
     }
 
     @Override
     @Transactional
     public int moveIndentByIds(MoveIndentRequestDto moveIndent) {
         if (CollectionUtils.isEmpty(moveIndent.getIds())) {
-            throw new RuntimeException("Indents should not empty");
+            throw new AesException("Indents should not empty");
         }
-        int result = indentRepository.moveIndentByIds(moveIndent.getIds());
+        return indentRepository.moveIndentByIds(moveIndent.getIds());
 
-        return result;
     }
 
     @Override
@@ -606,12 +599,12 @@ public class IndentServiceImpl implements IndentService{
     public void reviewIndent(Jwt token, Long id, ReviewDto reviewDto) {
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
-            throw new RuntimeException("Sorry! Employee Profile Required");
+            throw new AesException("Sorry! Employee Profile Required");
         }
 
         Optional<Indent> indentOp = indentRepository.findById(id);
         if(indentOp.isEmpty()){
-            throw new RuntimeException("Indent not found");
+            throw new AesException("Indent not found");
         }
         Indent indent = indentOp.get();
         indent.setReviewerId(null);
@@ -635,9 +628,9 @@ public class IndentServiceImpl implements IndentService{
     @Transactional
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
         Optional<Indent> indentOp = indentRepository.findById(domainId);
-        indentOp.ifPresent(indent -> {
-            indent.setIndentStatus(IndentVerificationStatus.REJECTED);
-        });
+        indentOp.ifPresent(indent ->
+            indent.setIndentStatus(IndentVerificationStatus.REJECTED)
+        );
     }
 
     @Override
@@ -652,7 +645,7 @@ public class IndentServiceImpl implements IndentService{
         }
 
         if(indentOp.isEmpty()){
-            throw new RuntimeException("Sorry! Rfq not found");
+            throw new AesException("Sorry! Rfq not found");
         }
         return indentOp;
     }

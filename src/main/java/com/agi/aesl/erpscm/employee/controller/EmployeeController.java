@@ -1,7 +1,7 @@
 package com.agi.aesl.erpscm.employee.controller;
 
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,13 +18,13 @@ import com.agi.aesl.erpscm.employee.service.EmployeeService;
 
 @RestController
 @RequestMapping("/api/v1/users")
+@RequiredArgsConstructor
 public class EmployeeController extends BaseController{
-    
-    @Autowired
-    private EmployeeService userService;
+
+    private final EmployeeService userService;
 
     @PostMapping
-    public ResponseEntity<?> createUser(
+    public ResponseEntity<Void> createUser(
         @AuthenticationPrincipal Jwt token,
         @RequestBody Employee user
     ){
@@ -33,7 +33,7 @@ public class EmployeeController extends BaseController{
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteUser(
+    public ResponseEntity<Void> deleteUser(
         @AuthenticationPrincipal Jwt token,
         @RequestBody Employee user
     ){

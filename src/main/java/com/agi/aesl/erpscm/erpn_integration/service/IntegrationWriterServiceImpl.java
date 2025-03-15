@@ -6,14 +6,13 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.cs.entity.CsAccount;
 import com.agi.aesl.erpscm.cs.repository.CsAccountRepository;
-import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.dto.request.PurchaseRequest;
 import com.agi.aesl.erpscm.erpn_integration.dto.request.PurchaseRequestItem;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveItemDetail;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
-import com.agi.aesl.erpscm.inventory.entity.ItemImportLog;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
 import com.agi.aesl.erpscm.inventory.repository.ItemImportLogRepository;
 import com.agi.aesl.erpscm.network.NetworkService;
@@ -76,6 +75,8 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     @Autowired
     private ItemImportLogRepository itemImportLogRepository;
 
+    private static final String PATH_SEPARATOR="/";
+
     @Override
     @Transactional
     public void createWarehouse(Jwt token, Warehouse warehouse) {
@@ -88,8 +89,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         HttpEntity<?> payload = new HttpEntity<>(data,headers);
         Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
         if(serviceExist.isPresent()){
-            ResponseEntity<Void> response = networkService.post(warehouseCreateEndpoint, payload, Void.class);
-            System.out.println(response.getStatusCode());
+            networkService.post(warehouseCreateEndpoint, payload, Void.class);
         }
 
         
@@ -132,29 +132,17 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
         if(serviceExist.isPresent()) {
         claimResolver.setToken(token);
-//        Optional<Employee> employeeOptional = claimResolver.getEmployee();
-//        if(employeeOptional.isEmpty()){
-//            throw new RuntimeException("Sorry! required employee profile");
-//        }
-//        Employee employee = employeeOptional.get();
         Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(ledgerAccount.getWarehouse().getId());
         if(warehouseOp.isEmpty()){
             throw new RuntimeException("Sorry! warehouse not found");
         }
-        Warehouse warehouse = warehouseOp.get();
 
         HttpHeaders headers = networkService.setHttpHeaders(token);
 
         Item item = ledgerAccount.getItem();
         ItemCategory category = item.getItemParentCategory();
         ItemCategory subCategory = item.getItemCategory();
-//        item.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
-//        Optional<ItemImportLog> importLogOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouse.getId());
-//        if(importLogOp.isEmpty()){
-//            throw new RuntimeException("Sorry! Sorry no item found for cps approval");
-//        }
-//        ItemImportLog importLog = importLogOp.get();
-//        importLog.setItemInactiveStatus(ItemInactiveStatus.APPROVED);
+
 
         RemoteLedgerAccDto remoteLedgerAccountDto = new RemoteLedgerAccDto();
         remoteLedgerAccountDto.setWarehouseId(ledgerAccount.getWarehouse().getId());
@@ -216,7 +204,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
                 purchaseRequest.setVatType(csAccount.getVatType().replaceAll("_", "").trim().toUpperCase());
             }
             purchaseRequest.setInvoice(grn.getInvoicePath());
-            receiveNote.getSrnDetails().stream().forEach(srnd->{
+            receiveNote.getSrnDetails().forEach(srnd->{
                 Item item = srnd.getItem();
                 Optional<GoodReceiveItemDetail> grndetailOp = grn.getGoodReceiveItemDetails().stream().filter(grnd->grnd.getItem().getId().equals(item.getId())).findFirst();
 
@@ -241,16 +229,14 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
             HttpEntity<PurchaseRequest> getPayload = new HttpEntity<>(headers);
             HttpEntity<PurchaseRequest> payload = new HttpEntity<>(purchaseRequest,headers);
 
-            String path = vendorLedgerExist + "/" + receiveNote.getGrn().getVendorId();
-            System.out.println(path);
+            String path = vendorLedgerExist + PATH_SEPARATOR+ receiveNote.getGrn().getVendorId();
 
             ResponseEntity<String> stringResponseEntity = networkService.get(path, getPayload, String.class);
             if(stringResponseEntity.getStatusCode().value() == HttpStatus.OK.value()){
-                System.out.println(purchaseReceivedEndpoint);
 
                 networkService.post(purchaseReceivedEndpoint, payload, Void.class);
             }else{
-                throw new RuntimeException(stringResponseEntity.getBody());
+                throw new AesException(stringResponseEntity.getBody());
             }
 
 
@@ -300,12 +286,10 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
             HttpEntity<PurchaseRequest> getPayload = new HttpEntity<>(headers);
             HttpEntity<PurchaseRequest> payload = new HttpEntity<>(purchaseRequest,headers);
 
-            String path = vendorLedgerExist + "/" + receiveNote.getGrn().getVendorId();
-            System.out.println(path);
+            String path = vendorLedgerExist + PATH_SEPARATOR + receiveNote.getGrn().getVendorId();
 
             ResponseEntity<String> stringResponseEntity = networkService.get(path, getPayload, String.class);
             if(stringResponseEntity.getStatusCode().value() == HttpStatus.OK.value()) {
-                System.out.println(purchaseReceivedEndpoint);
                 networkService.post(purchaseReceivedEndpoint, payload, Void.class);
             }else{
                 String errorMsg = stringResponseEntity.getBody();

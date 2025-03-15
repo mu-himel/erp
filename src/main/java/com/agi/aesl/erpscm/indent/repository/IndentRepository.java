@@ -16,16 +16,18 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
-public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuery{
+import static com.agi.aesl.erpscm.indent.repository.IndentQuery.*;
 
-    @Query(value = getAllIndents, countQuery = countAllIndents, nativeQuery = true)
+@Repository
+public interface IndentRepository extends JpaRepository<Indent,Long>{
+
+    @Query(value = GET_ALL_INDENT, countQuery = COUNT_ALL_INDENT, nativeQuery = true)
     Page<IndentInfo> getAllIndents(List<Long> categoryIds, List<Long> warehouseIds,
                                    LocalDateTime fromDate, LocalDateTime toDate,
                                    String indentNo,
                                    Pageable pageable);
 
-    @Query(value = getIndentPendingVerifications, countQuery = countAllPendingVerifications, nativeQuery = true)
+    @Query(value = GET_INDENT_PV, countQuery = COUNT_INDENT_PV, nativeQuery = true)
     Page<IndentInfo> getAllPendingVerifications(String nextVerifierId,
                                                 List<Long> categoryIds,
                                                 List<Long> warehouseIds,
@@ -34,7 +36,7 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
                                                 String indentNo,
                                                 Pageable pageable);
 
-    @Query(value = getIndentPendingApprovals, countQuery = countAllPendingVerifications, nativeQuery = true)
+    @Query(value = GET_INDENT_PA, countQuery = COUNT_INDENT_PA, nativeQuery = true)
     Page<IndentInfo> getAllPendingApprovals(String nextApproverId,
                                                 List<Long> categoryIds,
                                                 List<Long> warehouseIds,
@@ -42,16 +44,16 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
                                                 LocalDateTime toDate,
                                                 String indentNo,
                                                 Pageable pageable);
-    @Query(value = getClosedIndents, countQuery = countAllClosed, nativeQuery = true)
+    @Query(value = GET_CLOSED_INDENTS, countQuery = COUNT_ALL_CLOSED, nativeQuery = true)
     Page<IndentInfo> getAllClosedIndents(List<Long> categoryIds, List<Long> warehouseIds,
                                          String indentNo,Pageable pageable);
 
-    @Query(value = getIndentDetail, nativeQuery = true)
+    @Query(value = GET_INDENT_DETAIL, nativeQuery = true)
     List<IndentViewInfo> getIndentById(Long id);
 
     Optional<Indent> findByRfqUuid(String code);
 
-    @Query(value = getIndentDetailWithIdRange, nativeQuery = true)
+    @Query(value = GET_INDENT_DETAIL_WITH_ID_RANGE, nativeQuery = true)
     List<IndentViewInfo> getIndentByIds(List<Long> ids);
 
     @Modifying
@@ -61,19 +63,19 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
     @Query("SELECT MAX(i.id) FROM Indent i")
     Optional<Long> findMaxIndentById();
 
-    @Query(value = getIndentApprovedAndPendingRFqWithSearch, countQuery = countPendingRfqs, nativeQuery = true)
+    @Query(value = GET_INDENT_APPROVED_AND_PENDING_RFQ_WITH_SEARCH, countQuery = COUNT_PENDING_RFQ, nativeQuery = true)
     Page<IndentInfo> getAllApprovedIndents(String indentNo, Long category, Long subCategory, String priority,
                                   Integer daysRemain, LocalDateTime fromDate, LocalDateTime toDate,
                                   Pageable pageable);
 
-    @Query(value = getApprovedIndentWithOpenRfq, countQuery = countApprovedIndentWithOpenRfq, nativeQuery = true)
+    @Query(value = GET_APPROVED_INDENT_WITH_OPEN_RFQ, countQuery = COUNT_APPROVED_INDENT_WITH_OPEN_RFQ, nativeQuery = true)
     Page<SentRfqListItem> getAllIndentsWithOpenRfqStatus(String indentNo, Long category, Long subCategory,
                                                          String priority, Integer daysRemain, LocalDateTime fromDate,
                                                          LocalDateTime toDate, Pageable pageable);
 
 
-    @Query(value = getAllIndentsByExpireDateTimeWithSearch,
-            countQuery = countAllIndentsByExpireDateTimeWithSearch,
+    @Query(value = GET_ALL_INDENT_BY_EXP_DATETIME_WITH_SEARCH,
+            countQuery = COUNT_ALL_INDENT_BY_EXP_DATETIME_WITH_SEARCH,
             nativeQuery = true
     )
     Page<CsListInfo> getAllIndentsByExpireDateTime(@Param("expiredDateTime") LocalDateTime currentDateTime,
@@ -83,8 +85,8 @@ public interface IndentRepository extends JpaRepository<Indent,Long>, IndentQuer
                                                    LocalDateTime toDate,
                                                    Pageable pageable);
 
-    @Query(value = getAllClosedRfq,
-            countQuery = countAllClosedRfq,
+    @Query(value = GET_ALL_CLOSED_RFQ,
+            countQuery = COUNT_ALL_CLOSED_RFQ,
             nativeQuery = true
     )
     Page<CsListInfo> getAllIndentsWithCloseRfqStatus(String indentNo, String category, String subCategory,

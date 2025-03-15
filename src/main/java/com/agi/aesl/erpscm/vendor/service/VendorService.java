@@ -1,10 +1,11 @@
 package com.agi.aesl.erpscm.vendor.service;
 
+import com.agi.aesl.erpscm.erpn_integration.dto.response.VendorListInfo;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface VendorService {
-    List<?> getAvailableVendors(Jwt token, Optional<String> name);
+    List<VendorListInfo> getAvailableVendors(Jwt token, Optional<String> name);
 }

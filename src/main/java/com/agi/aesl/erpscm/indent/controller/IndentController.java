@@ -6,7 +6,7 @@ import com.agi.aesl.erpscm.indent.dto.request.IndentRequestDto;
 import com.agi.aesl.erpscm.indent.service.IndentService;
 import jakarta.validation.Valid;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,20 +20,21 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/indents")
+@RequiredArgsConstructor
 public class IndentController extends BaseController {
 
-    @Autowired
-    private IndentService indentService;
+
+    private final IndentService indentService;
 
     @GetMapping("/next-id")
-    public ResponseEntity<?> getNextId(){
+    public ResponseEntity<Object> getNextId(){
         Map<String,Object> code = new HashMap<>();
         code.put("code",indentService.getNextIndentNo());
         return new ResponseEntity<>(code,HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<?> addIndent(
+    public ResponseEntity<Void> addIndent(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @RequestBody @Valid IndentRequestDto indentRequestDto
@@ -43,7 +44,7 @@ public class IndentController extends BaseController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateIndent(
+    public ResponseEntity<Void> updateIndent(
             @PathVariable("id") Long id,
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
@@ -54,7 +55,7 @@ public class IndentController extends BaseController {
     }
 
     @GetMapping("/getByIds")
-    public ResponseEntity<?> getIndentByIds(
+    public ResponseEntity<Object> getIndentByIds(
             @RequestParam("indentIds") Optional<List<Long>> indentIds
     ) {
 
@@ -65,7 +66,7 @@ public class IndentController extends BaseController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getIndents(@AuthenticationPrincipal Jwt token,
+    public ResponseEntity<Object> getIndents(@AuthenticationPrincipal Jwt token,
                                         @RequestParam("page") Optional<Integer> page,
                                         @RequestParam("size") Optional<Integer> size,
                                         @RequestParam("categoryId") Optional<Long> categoryId,
@@ -82,7 +83,7 @@ public class IndentController extends BaseController {
     }
 
     @GetMapping("/pending-verification")
-    public ResponseEntity<?> getPendingVerificationIndents(
+    public ResponseEntity<Object> getPendingVerificationIndents(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -100,7 +101,7 @@ public class IndentController extends BaseController {
     }
 
     @GetMapping("/pending-approval")
-    public ResponseEntity<?> getPendingApprovalIndents(
+    public ResponseEntity<Object> getPendingApprovalIndents(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -120,7 +121,7 @@ public class IndentController extends BaseController {
     }
 
     @GetMapping("/closed")
-    public ResponseEntity<?> closedIndents(
+    public ResponseEntity<Object> closedIndents(
         @AuthenticationPrincipal Jwt token,
         @RequestParam("page") Optional<Integer> page,
         @RequestParam("size") Optional<Integer> size,
@@ -136,7 +137,7 @@ public class IndentController extends BaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getIndentById(
+    public ResponseEntity<Object> getIndentById(
             @PathVariable("id") Long id
     ){
         return new ResponseEntity<>(
@@ -146,7 +147,7 @@ public class IndentController extends BaseController {
     }
 
     @PostMapping("/review/{id}")
-    public ResponseEntity<?> review(
+    public ResponseEntity<Void> review(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody ReviewDto reviewDto

@@ -2,14 +2,15 @@ package com.agi.aesl.erpscm.user_application_validation.service;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import com.agi.aesl.erpscm.account_finance.enums.AccountType;
 import com.agi.aesl.erpscm.comment.enums.ActionType;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -32,33 +33,32 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
+@RequiredArgsConstructor
 public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> implements UserApplicationValidatorService<T>{
 
-    @Autowired
-    private ModuleService moduleService;
 
-    @Autowired
-    private UserApplicationValidationRepository verificationRepository;
+    private final ModuleService moduleService;
 
+
+    private final UserApplicationValidationRepository verificationRepository;
+
+    @Setter
     private VerificationDomainService verificationDomainService;
 
-    private Map<DomainType, VerificationDomainService> verificationDomainServiceMap=new HashMap<>();
+    private Map<String, VerificationDomainService> verificationDomainServiceMap=new HashMap<>();
 
-    @Autowired
-    private CommentService commentService;
 
-    @Autowired
-    private ClaimResolver claimResolver;
+    private final CommentService commentService;
+
+
+    private final ClaimResolver claimResolver;
 
     @Override
     @Transactional
     public Optional<VerifierConfig> prepareLogicForVerifiers(ClaimResolver claimResolver, String uri, String criteriaGroup, String categories) {
-        
-        // Map<String,Object> data = new HashMap<>();
-        Optional<VerifierConfig> moduleVerifierConfigs = moduleService.getVerifierConfigByModuleAndCriteriaGroup(claimResolver, uri, criteriaGroup, categories);
-        
-        
-        return moduleVerifierConfigs;
+
+        return moduleService.getVerifierConfigByModuleAndCriteriaGroup(claimResolver, uri, criteriaGroup, categories);
+
     }
 
     
@@ -67,20 +67,20 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Transactional
     public void setApprovers(T t, List<VerifierInfo> verifiers,List<ApprovalPanel> approvalPanels, DomainType domainType,
                              VerifierMailService<T> verifierMailService) {
-        if(verifiers.size()==0 && approvalPanels.size()>0){
+        if(verifiers.isEmpty() && !approvalPanels.isEmpty()){
             Optional<ApprovalPanel> firstPanel = approvalPanels.stream().findFirst();
-            if(firstPanel.isPresent()){
-                ApprovalPanel panel = firstPanel.get();
+            firstPanel.ifPresent( fp->{
                 if(verifierMailService!=null) {
-                    verifierMailService.prepareMailContent(panel.getName(), "Approval", t);
-                    verifierMailService.sentMail(panel.getEmail(),"Pending "+domainType.toString()+" Approval Request");
+                    verifierMailService.prepareMailContent(fp.getName(), "Approval", t);
+                    verifierMailService.sentMail(fp.getEmail(),"Pending "+domainType.toString()+" Approval Request");
                 }
                 t.setStatus("PENDING_APPROVAL");
-                t.setNextApproverId(panel.getUserId());
-            }
+                t.setNextApproverId(fp.getUserId());
+                }
+            );
         }
 
-        if(approvalPanels.size()>0){
+        if(!approvalPanels.isEmpty()){
 
             List<UserApplicationValidation> verifications = approvalPanels.stream().map(approvalPanel -> {
                 UserApplicationValidation verification = new UserApplicationValidation();
@@ -90,7 +90,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
                 verification.setIsApproval(true);
                 verification.setVerifier(new Employee(approvalPanel.getUserId()));
                 return verification;
-            }).collect(Collectors.toList());
+            }).toList();
             addVerification(verifications);
         }
         
@@ -102,25 +102,25 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Transactional
     public UserApplicationValidatorService<T> setVerifiers(T t, List<VerifierInfo> verifiers,
                                        DomainType domainType, VerifierMailService<T> verifierMailService) {
-        if (verifiers.size() > 0) {
+        if (!verifiers.isEmpty()) {
             Optional<VerifierInfo> firstOp = verifiers.stream().findFirst();
-            VerifierInfo _verifier = firstOp.get();
+            VerifierInfo verifier = firstOp.get();
 
             if(verifierMailService!=null) {
-                verifierMailService.prepareMailContent(_verifier.getName(), "Verification", t);
-                verifierMailService.sentMail(_verifier.getEmail(),"Pending "+domainType.toString()+" Verification Request");
+                verifierMailService.prepareMailContent(verifier.getName(), "Verification", t);
+                verifierMailService.sentMail(verifier.getEmail(),"Pending "+domainType.toString()+" Verification Request");
             }
 
-            List<UserApplicationValidation> verifications = verifiers.stream().map(verifier -> {
+            List<UserApplicationValidation> verifications = verifiers.stream().map(vf -> {
                 UserApplicationValidation verification = new UserApplicationValidation();
                 verification.setDomainId(t.getId());
                 verification.setDomainType(domainType);
                 verification.setVerified(false);
                 verification.setIsApproval(false);
-                verification.setVerifier(new Employee(verifier.getId()));
+                verification.setVerifier(new Employee(vf.getId()));
                 return verification;
-            }).collect(Collectors.toList());
-            t.setNextVerifierId(_verifier.getId());
+            }).toList();
+            t.setNextVerifierId(verifier.getId());
             addVerification(verifications);
         }
         return this;
@@ -137,7 +137,6 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Transactional
     public void addVerification(List<UserApplicationValidation> verifications) {
         verificationRepository.saveAll(verifications);
-        System.out.println(verifications);
     }
 
     @Override
@@ -164,7 +163,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Transactional
     public void verify(Jwt token, VerifyDto verifyDto) {
         claimResolver.setToken(token);
-        verificationDomainService = this.verificationDomainServiceMap.get(verifyDto.getDomainType());
+        verificationDomainService = this.verificationDomainServiceMap.get(verifyDto.getDomainType().name());
         Employee verifier = new Employee(verifyDto.getVerifier().getId());
         DomainType domainType = verifyDto.getDomainType();
         Long domainId = verifyDto.getDomainId();
@@ -194,7 +193,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
                         .findAllByDomainTypeAndDomainIdAndVerifiedAndIsApproval(
                                 domainType, domainId,false,true);
                 Optional<VerificationResponse> firstApprover = Optional.empty();
-                if(approvalCount.size()>0){
+                if(!approvalCount.isEmpty()){
                     firstApprover = approvalCount.stream().findFirst();
                 }
                 verificationDomainService.verifyComplete(domainId,firstApprover);
@@ -211,7 +210,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Transactional
     public void approve(Jwt token, ApproveDto verifyDto) {
         claimResolver.setToken(token);
-        verificationDomainService = this.verificationDomainServiceMap.get(verifyDto.getDomainType());
+        verificationDomainService = this.verificationDomainServiceMap.get(verifyDto.getDomainType().name());
         Employee verifier = new Employee(verifyDto.getVerifier().getId());
         DomainType domainType = verifyDto.getDomainType();
         Long domainId = verifyDto.getDomainId();
@@ -229,11 +228,10 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
             verification.setVerified(true);
             verification.setVerificationDate(LocalDateTime.now());
 
-            if(count!=null && count.size()>1 && verificationDomainService!=null){
-                if(count.get(1)!=null) {
+            if(count!=null && count.size()>1 && verificationDomainService!=null && count.get(1)!=null) {
                     verificationDomainService.onApprove(domainId,verification, count.get(1));
-                }
             }
+
             if(count!=null && count.size()==1 && verificationDomainService!=null){
                 verificationDomainService.approveComplete(domainId);
             }
@@ -248,10 +246,10 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Override
     @Transactional
     public void review(VerifyDto verifyDto) {
-        verificationDomainService = this.verificationDomainServiceMap.get(verifyDto.getDomainType());
+        verificationDomainService = this.verificationDomainServiceMap.get(verifyDto.getDomainType().name());
         if(verificationDomainService!=null){
             if((verifyDto.getComment()==null || verifyDto.getComment().isEmpty())){
-                throw new RuntimeException("Message Required");
+                throw new AesException("Message Required");
             }
             verificationDomainService.sendForReview(verifyDto.getDomainId(),verifyDto.getReviewer(),verifyDto.getComment());
 
@@ -269,21 +267,16 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
         }
     }
 
-    private void comment(Employee verifier, DomainType domainType, Long domainId, String msg, List<CommentAttachment> attachments) {
-        if(msg !=null && !msg.isEmpty()){
-            Comment comment = commentService.prepareComment(verifier,domainType,domainId,msg, attachments);
-            commentService.addComment(comment);
-        }
-    }
+
 
     @Override
     @Transactional
     public void reject(Jwt token, RejectDto rejectDto) {
         claimResolver.setToken(token);
-        verificationDomainService = this.verificationDomainServiceMap.get(rejectDto.getDomainType());
+        verificationDomainService = this.verificationDomainServiceMap.get(rejectDto.getDomainType().name());
         if(verificationDomainService!=null){
             if((rejectDto.getComment()==null || rejectDto.getComment().isEmpty())){
-                throw new RuntimeException("Message Required");
+                throw new AesException("Message Required");
             }
 
             verificationDomainService.onRejected(claimResolver.getEmployee().get(),rejectDto.getDomainId(), rejectDto);
@@ -295,12 +288,9 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
         }
     }
 
-    public void setVerificationDomainService(VerificationDomainService verificationDomainService){
-        this.verificationDomainService = verificationDomainService;
-    }
 
     @Override
-    public void addVerificationDomainService(DomainType domainType, VerificationDomainService verificationDomainService) {
+    public void addVerificationDomainService(String  domainType, VerificationDomainService verificationDomainService) {
         if(!this.verificationDomainServiceMap.containsKey(domainType)){
             this.verificationDomainServiceMap.put(domainType,verificationDomainService);
         }
@@ -323,7 +313,7 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
                 verifiers = verification.getVerifiers();
             }
             Boolean verificationRequired = verification.getVerificationRequired();
-            if(verificationRequired!=null && verificationRequired==true && verifiers!=null && verifiers.size()>0){
+            if(verificationRequired != null && verificationRequired && !verifiers.isEmpty()){
                 t.setStatus(AccountType.PENDING_VERIFICATION.toString());
             }else{
                 t.setStatus(status);
@@ -338,9 +328,8 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
     @Override
     @Transactional
     public List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver, String uri, String categories) {
-        List<ApprovalPanel> approvalPanels = moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
+        return moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
                 Optional.ofNullable(categories),Optional.empty());
-        return approvalPanels;
     }
 
     @Override

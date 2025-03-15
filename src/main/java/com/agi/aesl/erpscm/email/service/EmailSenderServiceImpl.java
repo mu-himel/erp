@@ -41,7 +41,7 @@ public class EmailSenderServiceImpl implements EmailSenderService{
     @Async
     @Override
     public void sendEmail(String subject, String mailContent) {
-        if(recipients.size()>0){
+        if(!recipients.isEmpty()){
             Map<String,Object> loginDto = new HashMap<>();
             loginDto.put("username", emailServerConfig.getUser());
             loginDto.put("password", emailServerConfig.getPassword());
@@ -60,8 +60,8 @@ public class EmailSenderServiceImpl implements EmailSenderService{
                 payload,EmailLoginResponse.class);
         if(response.getBody()!=null){
             LinkedHashMap<String,Object> content = (LinkedHashMap<String, Object>) response.getBody().getContent();
-            String token = (String) content.get("token");
-            return token;
+            return (String) content.get("token");
+
         }
         return null;
     }

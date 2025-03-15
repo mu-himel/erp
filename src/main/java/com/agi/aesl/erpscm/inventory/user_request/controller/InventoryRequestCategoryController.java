@@ -7,9 +7,7 @@ import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryApproveDto;
 import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryRejectDto;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryCategoryRequestService;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryRequestService;
-import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
-import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,20 +15,20 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 
 @RestController
 @RequestMapping("/api/v1/inventory-requests")
+@RequiredArgsConstructor
 public class InventoryRequestCategoryController extends BaseController {
 
-    @Autowired
-    private InventoryRequestService inventoryRequestService;
 
-    @Autowired
-    private InventoryCategoryRequestService categoryRequestService;
+    private final InventoryRequestService inventoryRequestService;
+
+
+    private final InventoryCategoryRequestService categoryRequestService;
 
     @GetMapping("/categories/my-requests")
-    public ResponseEntity<?> getMyCategories(
+    public ResponseEntity<Object> getMyCategories(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size")Optional<Integer> size
@@ -41,7 +39,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @PostMapping("/categories")
-    public ResponseEntity<?> createCategory(
+    public ResponseEntity<Void> createCategory(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @RequestBody CategoryRequestDto categoryRequestDto){
@@ -50,7 +48,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @GetMapping("/categories/{id}")
-    public ResponseEntity<?> getCategory(@PathVariable("id") Long id){
+    public ResponseEntity<Object> getCategory(@PathVariable("id") Long id){
         return new ResponseEntity<>(
                 categoryRequestService.getDetail(id),
             HttpStatus.OK
@@ -58,7 +56,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @PostMapping("/subcategories")
-    public ResponseEntity<?> createSubCategory(
+    public ResponseEntity<Void> createSubCategory(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @RequestBody CategoryRequestDto categoryRequestDto){
@@ -67,7 +65,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @GetMapping("/categories/list")
-    public ResponseEntity<?> getList(
+    public ResponseEntity<Object> getList(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("name") Optional<String> name,
             @RequestParam("code") Optional<String> code,
@@ -81,7 +79,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @GetMapping("/subcategories/list")
-    public ResponseEntity<?> getList(
+    public ResponseEntity<Object> getList(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Long categoryId,
             @RequestParam("name") Optional<String> name,
@@ -94,7 +92,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @GetMapping("/subcategories/my-requests")
-    public ResponseEntity<?> getMySubCategories(
+    public ResponseEntity<Object> getMySubCategories(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("page") Optional<Integer> page,
@@ -106,7 +104,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @GetMapping("/categories/pending-verifications")
-    public ResponseEntity<?> getPendingVerification(
+    public ResponseEntity<Object> getPendingVerification(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
@@ -117,7 +115,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @GetMapping("/subcategories/pending-verifications")
-    public ResponseEntity<?> getSubCatPendingVerification(
+    public ResponseEntity<Object> getSubCatPendingVerification(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("page") Optional<Integer> page,
@@ -129,7 +127,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @GetMapping("/categories/pending-approvals")
-    public ResponseEntity<?> getPendingApprovals(
+    public ResponseEntity<Object> getPendingApprovals(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
@@ -140,7 +138,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @GetMapping("/subcategories/pending-approvals")
-    public ResponseEntity<?> getSubCatPendingApprovals(
+    public ResponseEntity<Object> getSubCatPendingApprovals(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("page") Optional<Integer> page,
@@ -152,7 +150,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @GetMapping("/categories/closed")
-    public ResponseEntity<?> getClosed(
+    public ResponseEntity<Object> getClosed(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
@@ -163,7 +161,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @GetMapping("/categories/pending-approvals-store")
-    public ResponseEntity<?> getPendingApprovalCategoriesByStore(
+    public ResponseEntity<Object> getPendingApprovalCategoriesByStore(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -181,7 +179,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @GetMapping("/subcategories/pending-approvals-store")
-    public ResponseEntity<?> getPendingApprovalSubCategoriesByStore(
+    public ResponseEntity<Object> getPendingApprovalSubCategoriesByStore(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("name") Optional<String> name,
@@ -198,7 +196,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @GetMapping("/subcategories/closed")
-    public ResponseEntity<?> getClosedSubCategories(
+    public ResponseEntity<Object> getClosedSubCategories(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("page") Optional<Integer> page,
@@ -210,7 +208,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @PutMapping("/categories/review/{id}")
-    public ResponseEntity<?> reviewCat(
+    public ResponseEntity<Void> reviewCat(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody ReviewDto reviewDto
@@ -220,7 +218,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @PutMapping("/subcategories/review/{id}")
-    public ResponseEntity<?> reviewSubCat(
+    public ResponseEntity<Void> reviewSubCat(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody ReviewDto reviewDto
@@ -230,7 +228,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @PutMapping("/{id}/approve-by-store")
-    public ResponseEntity<?> approveByStore(
+    public ResponseEntity<Void> approveByStore(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody CategoryApproveDto approveDto){
@@ -239,7 +237,7 @@ public class InventoryRequestCategoryController extends BaseController {
     }
 
     @PutMapping("/{id}/reject-by-store")
-    public ResponseEntity<?> rejectByStore(@PathVariable("id") Long id,
+    public ResponseEntity<Void> rejectByStore(@PathVariable("id") Long id,
                                            @RequestBody CategoryRejectDto rejectDto
                                            ){
         categoryRequestService.rejectByStore(id, rejectDto);

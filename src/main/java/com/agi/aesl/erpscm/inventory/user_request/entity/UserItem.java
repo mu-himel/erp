@@ -5,10 +5,8 @@ import com.agi.aesl.erpscm.common.ItemInterface;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore;
 import com.agi.aesl.erpscm.employee.entity.Employee;
-import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.UserItemRequestDto;
 import com.agi.aesl.erpscm.inventory.entity.CategoryBrand;
-import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.inventory.entity.UserItemFunctionalUnit;
 import com.agi.aesl.erpscm.inventory.user_request.enums.UserCategoryStatus;
@@ -23,7 +21,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -32,10 +29,6 @@ import java.util.stream.Collectors;
 @Table(name = "user_items")
 public class UserItem extends VerifyableEntity implements ItemInterface {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(updatable = false)
-    private Long id;
 
     @ManyToOne
     private ItemCategory category;
@@ -102,20 +95,20 @@ public class UserItem extends VerifyableEntity implements ItemInterface {
         this.code = itemRequestDto.getCode();
         this.itemUnit = itemRequestDto.getItemUnit();
         this.attributes = itemRequestDto.getAttributes().stream()
-                .map(attr-> new UserItemAttribute(attr,this)).collect(Collectors.toList());
+                .map(attr-> new UserItemAttribute(attr,this)).toList();
 
         this.functionalUnits = itemRequestDto.getFunctionalUnits().stream()
-                .map(unit->new UserItemFunctionalUnit((UserItemFunctionalUnit) unit,this))
-                .collect(Collectors.toList());
+                .map(unit->new UserItemFunctionalUnit(unit,this))
+                .toList();
     }
 
     public List<ItemAttributeInterface> getItemAttributes() {
-        return this.getAttributes().stream().map((attr)->{
-            ItemAttributeInterface iattr = new UserItemAttribute();
-            iattr.setAttributeType(attr.getAttributeType());
-            iattr.setAttributeUnit(attr.getAttributeUnit());
-            iattr.setAttributeValue(attr.getAttributeValue());
-            return iattr;
-        }).collect(Collectors.toList());
+        return this.getAttributes().stream().map(attr->{
+            ItemAttributeInterface iAttr = new UserItemAttribute();
+            iAttr.setAttributeType(attr.getAttributeType());
+            iAttr.setAttributeUnit(attr.getAttributeUnit());
+            iAttr.setAttributeValue(attr.getAttributeValue());
+            return iAttr;
+        }).toList();
     }
 }

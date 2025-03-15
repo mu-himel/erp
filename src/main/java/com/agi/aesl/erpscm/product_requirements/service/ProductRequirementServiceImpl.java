@@ -1,23 +1,17 @@
 package com.agi.aesl.erpscm.product_requirements.service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
-import com.agi.aesl.erpscm.demand.service.DemandService;
-import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
 import com.agi.aesl.erpscm.product_requirements.dto.response.PrItemInfo;
 import com.agi.aesl.erpscm.product_requirements.dto.response.PrWarehouseInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -96,7 +90,7 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
                                              Optional<Integer> daysRemain) {
 
         claimResolver.setToken(token);
-        String uri="";
+
 
 //        Sort sort = Sort.by(Sort.Direction.DESC, "categoryId");
         Page<?> result = null;
@@ -119,32 +113,28 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
             subCategoryId.orElseThrow(()->new RuntimeException("Sorry! Sub Category should not empty"))
         );
 
-
-
-
         Map<String, PrItemInfo> map = new HashMap<>();
 
-//        List<ItemInfo> itemList = new ArrayList<>();
         for(ProductRequirementRepository.ProductRequirementViewInfoV2 res: result){
-            String _key=res.getBrandName()+" - "+res.getItemName();
-            if(map.containsKey(_key)){
-                PrItemInfo itemInfo = map.get(_key);
+            String key=res.getBrandName()+" - "+res.getItemName();
+            if(map.containsKey(key)){
+                PrItemInfo itemInfo = map.get(key);
                 PrWarehouseInfo warehouseInfo= new PrWarehouseInfo(res.getWarehouseIds(),
                         res.getWarehouses(),res.getCurrentStock(),res.getSafetytStock(),res.getPrQty(),
                         res.getTransitQty(),res.getItemsQty());
                 List<PrWarehouseInfo> warehouses = itemInfo.getWarehouses();
-                List<PrWarehouseInfo> _warehouses = new ArrayList<>();
+                List<PrWarehouseInfo> prWarehouses = new ArrayList<>();
                 for(PrWarehouseInfo w: warehouses){
                     if(w.getWarehouseIds().equals(res.getWarehouseIds())){
                         w.setPrQty(w.getPrQty().add(res.getPrQty()));
                     }else{
-                        _warehouses.add(warehouseInfo);
+                        prWarehouses.add(warehouseInfo);
 
                     }
                 }
-                _warehouses.stream().forEach(w->{
-                    itemInfo.setWarehouses(warehouseInfo);
-                });
+                prWarehouses.forEach(w->
+                    itemInfo.setWarehouses(warehouseInfo)
+                );
                 itemInfo.setProductRequirementIds(res.getProductRequirementsIds());
                 itemInfo.setPrQty(itemInfo.getPrQty().add(res.getPrQty()));
                 itemInfo.setDaysRemain(res.getDaysRemain());
@@ -164,7 +154,7 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
                 itemInfo.setDaysRemain(res.getDaysRemain());
                 itemInfo.setBrandId(res.getBrandId());
                 itemInfo.setPriorityDate(res.getDemandDeadline());
-                map.put(_key,itemInfo);
+                map.put(key,itemInfo);
             }
         }
         return map.values().stream().toList();
@@ -179,7 +169,7 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
     @Transactional
     public void reOpen(String productRequirementsIds) {
         List<Long> ids = List.of(productRequirementsIds.split(",")).stream()
-        .map(id->Long.parseLong(id))
+        .map(Long::parseLong)
         .collect(Collectors.toList());
         productRequirementRepository.updateStatusByIds(ids);
     }
@@ -187,15 +177,15 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
     @Override
     public int updateStatusByCategoryAndSubCategory(ProductRequirementStatus toStatus,
             ProductRequirementStatus fromStatus, Long categoryId, Long subCategoryId) {
-        int result = productRequirementRepository
+        return  productRequirementRepository
                     .updateStatusByCategoryAndSubCategory(toStatus,fromStatus,
                         categoryId, subCategoryId);
-        return result;
+
     }
 
     @Override
     public List<?> getDemandByProductRequirementIds(String prIds) {
-        List<Long> ids = Arrays.stream(prIds.split(",")).map(s -> Long.parseLong(s)).collect(Collectors.toList());
+        List<Long> ids = Arrays.stream(prIds.split(",")).map(Long::parseLong).toList();
 
         Optional<List<Long>> indentIds = Optional.of(ids);
         return productRequirementRepository.getDemandByProductRequirementIds(

@@ -39,7 +39,7 @@ import com.agi.aesl.erpscm.utils.ClaimResolver;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Lazy;
+import lombok.Setter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -67,8 +67,8 @@ public class QcServiceImpl implements QcService{
     private final QcRepository qcRepository;
 
 
-    @Lazy
-    private final GrnService grnService;
+    @Setter
+    private  GrnService grnService;
 
 
     private final UserApplicationValidatorService<QualityControl> verificationService;

@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.price_quotation.service;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
 import com.agi.aesl.erpscm.fileupload.service.FileUploadService;
 import com.agi.aesl.erpscm.indent.entity.Indent;
@@ -13,7 +14,6 @@ import com.agi.aesl.erpscm.organization.entity.Organization;
 import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.price_quotation.dto.request.*;
 import com.agi.aesl.erpscm.price_quotation.entity.*;
-import com.agi.aesl.erpscm.price_quotation.enums.CreditType;
 import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStateStatus;
 import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStatus;
 import com.agi.aesl.erpscm.price_quotation.repository.PqRepository;
@@ -27,7 +27,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -74,12 +73,14 @@ public class PqServiceImpl implements PqService{
     @Value("${upload.dir}")
     private String uploadDir;
 
+    private static final String DIR_SEPARATOR="/";
+
     @Override
     @Transactional
     public void onReceivePq(Jwt token, PriceQuotationReqDto pqDto) {
         claimResolver.setToken(token);
         Optional<Indent> indentOp = indentService.getIndentFactory(pqDto);
-        this._savePq(indentOp,pqDto,PriceQuotationStatus.INIT,PriceQuotationStateStatus.RECEIVED);
+        this.savePq(indentOp,pqDto,PriceQuotationStatus.INIT,PriceQuotationStateStatus.RECEIVED);
     }
 
     @Override
@@ -103,15 +104,15 @@ public class PqServiceImpl implements PqService{
     }
 
     @Transactional
-    private Long _savePq(Optional<Indent> indentOp, PriceQuotationReqDto pqDto,
+    private Long savePq(Optional<Indent> indentOp, PriceQuotationReqDto pqDto,
                          PriceQuotationStatus priceQuotationStatus,
                          PriceQuotationStateStatus priceQuotationStateStatus){
         if(indentOp.isEmpty()){
-            throw new RuntimeException("Sorry! indent not found");
+            throw new AesException("Sorry! indent not found");
         }
         Indent indent = indentOp.get();
         if(indent.getExpireDateTime().isBefore(LocalDateTime.now())){
-            throw new RuntimeException("Sorry! Tender submission time has been expired");
+            throw new AesException("Sorry! Tender submission time has been expired");
         }
 
         PriceQuotation pq = new PriceQuotation();
@@ -123,18 +124,16 @@ public class PqServiceImpl implements PqService{
 
         pq.setNegotiationHistoryId(pqDto.getNegotiationHistoryId());
         pq.setRemoteOfferId(pqDto.getRemoteOfferId());
-        if(pqDto.getIsFinal()){
-            pq.setIsFinal(pqDto.getIsFinal());
-        }else{
-            pq.setIsFinal(false);
-        }
+
+        pq.setIsFinal(Boolean.TRUE.equals(pqDto.getIsFinal()));
+
 
         pq.setVendorId(pqDto.getVendorId());
         pq.setVendorName(pqDto.getVendorName());
         pq.setVendorEmail(pqDto.getVendorEmail());
         pq.setVendorPhoneNo(pqDto.getVendorPhoneNo());
         pq.setVendorType(pqDto.getVendorType());
-        if(pqDto.getTermsAndConditions().size()>0) {
+        if(!pqDto.getTermsAndConditions().isEmpty()) {
             pq.setTermsAndConditions(pqDto.getTermsAndConditions().stream().map(tnc -> {
                 PqTermsAndCondition pqTermsAndCondition = new PqTermsAndCondition();
                 pqTermsAndCondition.setPriceQuotation(pq);
@@ -142,13 +141,12 @@ public class PqServiceImpl implements PqService{
                 pqTermsAndCondition.setVendorId(pqDto.getVendorId());
                 pqTermsAndCondition.setRfq(indent);
                 return pqTermsAndCondition;
-            }).collect(Collectors.toList()));
+            }).toList());
         }
         if(priceQuotationStateStatus.equals(PriceQuotationStateStatus.SENT)){
             Optional<PqRepository.PriceQuotationInfo> pqOp = pqRepository.getPrevPqByVendorId(pq.getVendorId());
-            if(pqOp.isPresent()){
-                pq.setScore(pqOp.get().getScore());
-            }
+            pqOp.ifPresent(epq->pq.setScore(epq.getScore()));
+
         }else{
             pq.setScore(pqDto.getScore());
         }
@@ -167,44 +165,46 @@ public class PqServiceImpl implements PqService{
             pqd.setUnitPrice(detail.getUnitPrice());
             pqd.setTotalPrice(pqd.getUnitPrice().multiply(detail.getRfqQty()));
             pqd.setEstDeliveryDays(detail.getEstDeliveryDays());
-            pqd.setDeliveryDetails(detail.getDeliveryDetails().stream().map(_pqdd->{
+            pqd.setDeliveryDetails(detail.getDeliveryDetails().stream().map(pqdrd->{
                 PriceQuotationDeliveryDetail pqdd = new PriceQuotationDeliveryDetail();
-                pqdd.setDeliveryCharge(_pqdd.getDeliveryChargeType());
-                pqdd.setDeliveryChargeAmount(_pqdd.getDeliveryChargeAmount());
-                Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(_pqdd.getWarehouseId());
+                pqdd.setDeliveryCharge(pqdrd.getDeliveryChargeType());
+                pqdd.setDeliveryChargeAmount(pqdrd.getDeliveryChargeAmount());
+                Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(pqdrd.getWarehouseId());
                 if(warehouseOp.isEmpty()){
-                    throw new RuntimeException("Warehouse not found");
+                    throw new AesException("Warehouse not found");
                 }
                 if(priceQuotationStateStatus.equals(PriceQuotationStateStatus.SENT)){
-                    Optional<DeliveryDetailDto> deliveryDetailDtoOp = pqDto.getWarehouses().stream().filter(w->{
-                       return w.getWarehouseId().equals(_pqdd.getWarehouseId());
-                    }).findFirst();
-                    if(deliveryDetailDtoOp.isPresent()){
-                        Optional<ItemDeliveryDetailDto> itemOp = deliveryDetailDtoOp.get().getItems().stream().filter(itemDeliveryDetailDto -> {
-                           return itemDeliveryDetailDto.getItemName().equals(detail.getItemAttributeName());
-                        }).findFirst();
-                        if(itemOp.isPresent()){
-                            pqdd.setDeliveryOrderQty(itemOp.get().getDeliveryOrderQty());
-                        }
+                    Optional<DeliveryDetailDto> deliveryDetailDtoOp = pqDto.getWarehouses().stream().filter(w->
+                       w.getWarehouseId().equals(pqdrd.getWarehouseId())
+                    ).findFirst();
+                    deliveryDetailDtoOp.ifPresent(deliveryDetailDto->{
+                        Optional<ItemDeliveryDetailDto> itemOp = deliveryDetailDto.getItems().stream()
+                                .filter(itemDeliveryDetailDto ->
+                                                itemDeliveryDetailDto.getItemName()
+                                                        .equals(detail.getItemAttributeName())
+                        ).findFirst();
+                        itemOp.ifPresent(itm->
+                            pqdd.setDeliveryOrderQty(itm.getDeliveryOrderQty())
+                        );
 
-                    }
+                    });
                 }else {
-                    pqdd.setDeliveryOrderQty(_pqdd.getDeliveryOrderQty());
+                    pqdd.setDeliveryOrderQty(pqdrd.getDeliveryOrderQty());
                 }
                 pqdd.setWarehouse(warehouseOp.get());
                 pqdd.setPriceQuotationDetail(pqd);
                 return pqdd;
-            }).collect(Collectors.toList()));
+            }).toList());
 
             return pqd;
-        }).collect(Collectors.toList()));
+        }).toList());
 
         PriceQuotation pqSaved =pqRepository.save(pq);
 
-        this._savePriceQuotationSummary(pq,pqDto);
+        this.savePriceQuotationSummary(pq,pqDto);
 
         if(priceQuotationStateStatus.equals(PriceQuotationStateStatus.SENT)){
-            CounterPqDto offerRequestDto = _preparePayloadForSentCounterOffer(pqDto);
+            CounterPqDto offerRequestDto = preparePayloadForSentCounterOffer(pqDto);
             Optional<Long> remoteOfferIdOp = tenderService.sentCounterOffer(claimResolver, indent, offerRequestDto);
             pq.setRemoteOfferId(remoteOfferIdOp.orElse(null));
         }
@@ -212,7 +212,7 @@ public class PqServiceImpl implements PqService{
     }
 
     @Transactional
-    private void _savePriceQuotationSummary(PriceQuotation priceQuotation, PriceQuotationReqDto pqDto){
+    private void savePriceQuotationSummary(PriceQuotation priceQuotation, PriceQuotationReqDto pqDto){
         PriceQuotationSummary pqs = new PriceQuotationSummary();
         pqs.setMushakIncluded(pqDto.getPriceQuotationSummary().getMushak());
         pqs.setDeliveryCharge(pqDto.getPriceQuotationSummary().getDeliveryCharge());
@@ -252,70 +252,7 @@ public class PqServiceImpl implements PqService{
         pqSummaryRepository.save(pqs);
     }
 
-    private CounterPqDto _preparePayloadForSentCounterOffer(PriceQuotationReqDto pqDto, PriceQuotation pq, PriceQuotationSummary pqs){
-        CounterPqDto offerRequestDto = new CounterPqDto();
-        offerRequestDto.setCreditPaymentDays(pqs.getCreditPaymentDuration());
-        offerRequestDto.setCreditType(CreditType.valueOf(pq.getPaymentMethod()));
-        offerRequestDto.setVatIncluded(pqs.getIsVatAdded());
-        offerRequestDto.setAitIncluded(pqs.getIsAitAdded());
-        offerRequestDto.setVatPercent(pqs.getVatPercent());
-//        if(pqs.getVatAmount().contains(".")){
-//            offerRequestDto.setVatAmount(BigDecimal.valueOf(Double.parseDouble(pqDto.getPriceQuotationSummary().getVatAmount())));
-//        }else{
-//            offerRequestDto.setVatAmount(BigDecimal.valueOf(Long.parseLong(pqDto.getPriceQuotationSummary().getVatAmount())));
-//        }
-        offerRequestDto.setVatAmount(pqs.getVatAmount());
-
-        offerRequestDto.setIsFinal(pq.getIsFinal());
-        offerRequestDto.setNegotiationHistoryId(pq.getNegotiationHistoryId());
-        if(pqs.getMushakIncluded()!=null){
-            offerRequestDto.setMushakIncluded(true);
-        }else{
-            offerRequestDto.setMushakIncluded(false);
-        }
-        offerRequestDto.setFinalOfferPrice(pqs.getSubTotalPrice());
-        offerRequestDto.setTotalDeliveryChargeAmount(pqs.getDeliveryChargeAmount());
-
-        offerRequestDto.setNote(pqs.getNote());
-        List<CounterItemDto> offerItems = new ArrayList<>();
-
-
-        pq.getQuotationDetails().stream().forEach(d->{
-            CounterItemDto offerItemDto = new CounterItemDto();
-            offerItemDto.setWarrantyDuration(d.getWarrantyDuration());
-            offerItemDto.setWarrantyUnit(d.getWarrantyUnit());
-            offerItemDto.setEstimatedDeliveryDays(Long.valueOf(d.getEstDeliveryDays()));
-            offerItemDto.setItemQuantity(d.getRfqQty());
-            String desc = (d.getBrandName()!=null)? d.getBrandName() + "-"+ d.getItemAttribute() : d.getItemAttribute();
-            offerItemDto.setProductDescription(desc);
-            offerItemDto.setSpecification("Must be a good condition");
-            CounterPriceQuotation opq = new CounterPriceQuotation();
-            opq.setTotalPrice(d.getUnitPrice().multiply(d.getRfqQty()));
-            opq.setPricePerUnit(d.getUnitPrice());
-            offerItemDto.setPriceQuotation(opq);
-            offerItems.add(offerItemDto);
-
-        });
-        offerRequestDto.setTermsAndConditions(pq.getTermsAndConditions()
-                .stream().map(ta-> new CounterTermAndConditionDto(ta.getTermAndCondition())).collect(Collectors.toList())
-        );
-        offerRequestDto.setOfferItems(offerItems);
-        offerRequestDto.setWarehouses(pqDto.getWarehouses().stream().map(pd->{
-            DeliveryDetailDto odd = new DeliveryDetailDto();
-            odd.setDeliveryChargeAmount(pd.getDeliveryChargeAmount());
-            odd.setDeliveryChargeMode(pd.getDeliveryChargeMode().toString());
-            odd.setWarehouseId(pd.getWarehouseId());
-            odd.setItems(pd.getItems().stream().map(pdid->{
-                ItemDeliveryDetailDto oidd= new ItemDeliveryDetailDto();
-                oidd.setDeliveryOrderQty(pdid.getDeliveryOrderQty());
-                oidd.setItemName(pdid.getItemName());
-                return oidd;
-            }).collect(Collectors.toList()));
-            return odd;
-        }).collect(Collectors.toList()));
-        return offerRequestDto;
-    }
-    private CounterPqDto _preparePayloadForSentCounterOffer(PriceQuotationReqDto pqDto){
+    private CounterPqDto preparePayloadForSentCounterOffer(PriceQuotationReqDto pqDto){
         CounterPqDto offerRequestDto = new CounterPqDto();
         offerRequestDto.setCreditPaymentDays(pqDto.getPriceQuotationSummary().getCreditPaymentDuration());
         offerRequestDto.setCreditType(pqDto.getPaymentMethod());
@@ -337,11 +274,9 @@ public class PqServiceImpl implements PqService{
 
         offerRequestDto.setIsFinal(pqDto.getIsFinal());
         offerRequestDto.setNegotiationHistoryId(pqDto.getNegotiationHistoryId());
-        if(pqDto.getPriceQuotationSummary().getMushak()!=null){
-            offerRequestDto.setMushakIncluded(true);
-        }else{
-            offerRequestDto.setMushakIncluded(false);
-        }
+
+        offerRequestDto.setMushakIncluded(Boolean.TRUE.equals(pqDto.getPriceQuotationSummary().getMushak()));
+
         offerRequestDto.setFinalOfferPrice(pqDto.getPriceQuotationSummary().getSubTotalPrice());
         offerRequestDto.setTotalDeliveryChargeAmount(pqDto.getPriceQuotationSummary().getDeliveryChargeAmount());
 
@@ -349,7 +284,7 @@ public class PqServiceImpl implements PqService{
         List<CounterItemDto> offerItems = new ArrayList<>();
 
 
-        pqDto.getDetails().stream().forEach(d->{
+        pqDto.getDetails().forEach(d->{
             CounterItemDto offerItemDto = new CounterItemDto();
             offerItemDto.setWarrantyDuration(d.getWarrantyDuration());
             offerItemDto.setWarrantyUnit(d.getWarrantyUnit());
@@ -372,16 +307,16 @@ public class PqServiceImpl implements PqService{
         offerRequestDto.setWarehouses(pqDto.getWarehouses().stream().map(pd->{
             DeliveryDetailDto odd = new DeliveryDetailDto();
             odd.setDeliveryChargeAmount(pd.getDeliveryChargeAmount());
-            odd.setDeliveryChargeMode(pd.getDeliveryChargeMode().toString());
+            odd.setDeliveryChargeMode(pd.getDeliveryChargeMode());
             odd.setWarehouseId(pd.getWarehouseId());
             odd.setItems(pd.getItems().stream().map(pdid->{
                 ItemDeliveryDetailDto oidd= new ItemDeliveryDetailDto();
                 oidd.setDeliveryOrderQty(pdid.getDeliveryOrderQty());
                 oidd.setItemName(pdid.getItemName());
                 return oidd;
-            }).collect(Collectors.toList()));
+            }).toList());
             return odd;
-        }).collect(Collectors.toList()));
+        }).toList());
         return offerRequestDto;
     }
 
@@ -414,7 +349,6 @@ public class PqServiceImpl implements PqService{
                 tnc->tnc.getVendorId().equals(pq.getVendorId())
         ).map(tnc->tnc.getTermAndCondition()).collect(Collectors.toList());
         result.put("termsAndConditions",termsAndConditions);
-        //TODO Fetch Terms and conditions
 
         if(sOptional.isPresent()){
             PriceQuotationSummary pqs = sOptional.get();
@@ -457,26 +391,24 @@ public class PqServiceImpl implements PqService{
     public List<?> getHistoriesByRfq(Long id, Long vendorId) {
         List<PriceQuotation> priceQuotations = pqRepository.findByRfqIdAndVendorId(id,vendorId);
 
-        record NegotiationHistory(Long id, String title){ };
+        record NegotiationHistory(Long id, String title){ }
 
-        List<NegotiationHistory> histories = priceQuotations.stream().map(priceQuotation->{
-            StringBuilder sb = new StringBuilder();
+        return priceQuotations.stream().map(priceQuotation->{
+            String sb = "";
             if(priceQuotation.getIsFinal()!=null && priceQuotation.getIsFinal().equals(true)){
-                sb.append("Final ");
+                sb = sb.concat("Final ");
             }
             if(priceQuotation.getPriceQuotationStatus().equals(PriceQuotationStatus.INIT)){
-                sb.append("Initial Quotation Received From "+priceQuotation.getVendorName());
+                sb = sb.concat("Initial Quotation Received From "+priceQuotation.getVendorName());
             }
             if(priceQuotation.getPriceQuotationStatus().equals(PriceQuotationStatus.COUNTER_TO_VENDOR)){
-                sb.append("Counter Offer to "+priceQuotation.getVendorName());
+                sb = sb.concat("Counter Offer to "+priceQuotation.getVendorName());
             }
             if(priceQuotation.getPriceQuotationStatus().equals(PriceQuotationStatus.COUNTER_TO_COMPANY)){
-                sb.append("Counter Offer Received from "+priceQuotation.getVendorName());
+                sb = sb.concat("Counter Offer Received from "+priceQuotation.getVendorName());
             }
-            return new NegotiationHistory(priceQuotation.getId(), sb.toString());
-        }).collect(Collectors.toList());
-
-        return histories;
+            return new NegotiationHistory(priceQuotation.getId(), sb);
+        }).toList();
     }
 
     @Override
@@ -551,7 +483,7 @@ public class PqServiceImpl implements PqService{
     public void sendPq(Jwt token, PriceQuotationReqDto pqDto) {
         claimResolver.setToken(token);
         Optional<Indent> indentOp = indentService.getIndentFactory(pqDto);
-        this._savePq(indentOp,pqDto,PriceQuotationStatus.COUNTER_TO_VENDOR,PriceQuotationStateStatus.SENT);
+        this.savePq(indentOp,pqDto,PriceQuotationStatus.COUNTER_TO_VENDOR,PriceQuotationStateStatus.SENT);
     }
 
     @Override
@@ -559,7 +491,7 @@ public class PqServiceImpl implements PqService{
     public void addManualPq(Jwt token, PriceQuotationReqDto pqDto) {
         claimResolver.setToken(token);
         Optional<Indent> indentOp = indentService.getIndentFactory(pqDto);
-        Long id = this._savePq(indentOp,pqDto,PriceQuotationStatus.INIT,PriceQuotationStateStatus.RECEIVED);
+        Long id = this.savePq(indentOp,pqDto,PriceQuotationStatus.INIT,PriceQuotationStateStatus.RECEIVED);
         lockPq(token,id, PriceQuotationStateStatus.LOCKED);
     }
 
@@ -568,7 +500,7 @@ public class PqServiceImpl implements PqService{
     public void recommendPq(Jwt token, Long id) {
         claimResolver.setToken(token);
 
-        setStatus(id,PriceQuotationStateStatus.AWARDED,(pq)->{
+        setStatus(id,PriceQuotationStateStatus.AWARDED,pq->{
             pq.setIsRecommendForCs(true);
             pq.setStatus(PriceQuotationStateStatus.LOCKED);
 
@@ -592,22 +524,22 @@ public class PqServiceImpl implements PqService{
     @Transactional
     public void onReceiveCounterPq(Jwt token, PriceQuotationReqDto pqDto) {
         Optional<Indent> indentOp = indentService.getIndentFactory(pqDto);
-        this._savePq(indentOp,pqDto,PriceQuotationStatus.COUNTER_TO_COMPANY,PriceQuotationStateStatus.RECEIVED);
+        this.savePq(indentOp,pqDto,PriceQuotationStatus.COUNTER_TO_COMPANY,PriceQuotationStateStatus.RECEIVED);
     }
 
     @Override
     public FileUploadResponse uploadDoc(Long rfqId, MultipartFile file) {
-        if(!fileUploadService.checkMimeType(file.getContentType(),
+        if(Boolean.FALSE.equals(fileUploadService.checkMimeType(file.getContentType(),
                 "application/pdf",
                 "image/jpeg","image/png",
                 "application/vnd.oasis.opendocument.text",
                 "application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 "application/vnd.ms-excel",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "text/csv")){
+                "text/csv"))){
             throw new RuntimeException("Sorry! not file not a valid type (pdf,odt,doc,docx,xls,xlsx,csv)");
         }
-        Path path = Path.of(uploadDir+"/"+rfqId+"/pq/", file.getOriginalFilename());
+        Path path = Path.of(uploadDir+DIR_SEPARATOR+rfqId+"/pq/", file.getOriginalFilename());
         return fileUploadService.uploadFile(path, file);
     }
 }

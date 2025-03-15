@@ -2,12 +2,11 @@ package com.agi.aesl.erpscm.inventory.user_request.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
-import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.UserItemRequestDto;
 import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryApproveDto;
 import com.agi.aesl.erpscm.inventory.user_request.dto.CategoryRejectDto;
 import com.agi.aesl.erpscm.inventory.user_request.service.InventoryRequestService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,13 +17,14 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/inventory-requests")
+@RequiredArgsConstructor
 public class InventoryRequestProductController extends BaseController {
 
-    @Autowired
-    private InventoryRequestService inventoryRequestService;
+
+    private final InventoryRequestService inventoryRequestService;
 
     @PostMapping("/products")
-    public ResponseEntity<?> createProduct(
+    public ResponseEntity<Void> createProduct(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @RequestBody UserItemRequestDto itemRequestDto
@@ -34,7 +34,7 @@ public class InventoryRequestProductController extends BaseController {
     }
 
     @GetMapping("/products/my-requests")
-    public ResponseEntity<?> getMyProducts(
+    public ResponseEntity<Object> getMyProducts(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("subCategoryId") Optional<Long> subCategoryId,
@@ -47,7 +47,7 @@ public class InventoryRequestProductController extends BaseController {
     }
 
     @GetMapping("/products/{id}")
-    public ResponseEntity<?> getDetail(
+    public ResponseEntity<Object> getDetail(
             @PathVariable("id") Long id
     ){
         return new ResponseEntity<>(
@@ -57,7 +57,7 @@ public class InventoryRequestProductController extends BaseController {
     }
 
     @GetMapping("/products/pending-verifications")
-    public ResponseEntity<?> getPendingVerifications(
+    public ResponseEntity<Object> getPendingVerifications(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("subCategoryId") Optional<Long> subCategoryId,
@@ -72,7 +72,7 @@ public class InventoryRequestProductController extends BaseController {
     }
 
     @GetMapping("/products/pending-approvals")
-    public ResponseEntity<?> getPendingApprovals(
+    public ResponseEntity<Object> getPendingApprovals(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("subCategoryId") Optional<Long> subCategoryId,
@@ -86,7 +86,7 @@ public class InventoryRequestProductController extends BaseController {
     }
 
     @GetMapping("/products/closed")
-    public ResponseEntity<?> getClosed(
+    public ResponseEntity<Object> getClosed(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("subCategoryId") Optional<Long> subCategoryId,
@@ -100,7 +100,7 @@ public class InventoryRequestProductController extends BaseController {
     }
 
     @GetMapping("/products/pending-approvals-store")
-    public ResponseEntity<?> getPendingApprovalsByStore(
+    public ResponseEntity<Object> getPendingApprovalsByStore(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("subCategoryId") Optional<Long> subCategoryId,
@@ -119,7 +119,7 @@ public class InventoryRequestProductController extends BaseController {
 
 
     @PutMapping("/products/review/{id}")
-    public ResponseEntity<?> reviewProduct(
+    public ResponseEntity<Void> reviewProduct(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody ReviewDto reviewDto
@@ -129,7 +129,7 @@ public class InventoryRequestProductController extends BaseController {
     }
 
     @PutMapping("/products/approve-by-store/{id}")
-    public ResponseEntity<?> approveByStore(
+    public ResponseEntity<Void> approveByStore(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody CategoryApproveDto itemApproveDto){
@@ -138,7 +138,7 @@ public class InventoryRequestProductController extends BaseController {
     }
 
     @PutMapping("/products/reject-by-store/{id}")
-    public ResponseEntity<?> rejectByStore(@PathVariable("id") Long id,
+    public ResponseEntity<Void> rejectByStore(@PathVariable("id") Long id,
                                            @RequestBody CategoryRejectDto rejectDto){
         inventoryRequestService.rejectByStore(id,rejectDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

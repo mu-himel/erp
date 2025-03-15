@@ -2,7 +2,6 @@ package com.agi.aesl.erpscm.pr_indent.dto.reqeust;
 
 import com.agi.aesl.erpscm.common.EntityConvertable;
 import com.agi.aesl.erpscm.common.ReferenceObjectDto;
-import com.agi.aesl.erpscm.common.enums.IndentPriority;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.inventory.entity.ItemCategory;
 import com.agi.aesl.erpscm.pr_indent.entity.PrIndent;
@@ -50,15 +49,15 @@ public class PrIndentRequestDto implements EntityConvertable<PrIndent> {
     public PrIndent getEntity() {
 
         PrIndent prIndent = new PrIndent(id);
-        List<PrIndentDetail> prIndentDetails = new ArrayList<>();
+        List<PrIndentDetail> prIndentDetailList = new ArrayList<>();
         BeanUtils.copyProperties(this, prIndent);
         prIndent.setCategory(new ItemCategory(this.category.getId()));
         prIndent.setSubCategory(new ItemCategory(this.subCategory.getId()));
-        this.getPrIndentDetails().stream().forEach(_prDetail -> {
+        this.getPrIndentDetails().forEach(prDetail -> {
             PrIndentDetail prIndentDetail = new PrIndentDetail();
-            BeanUtils.copyProperties(_prDetail, prIndentDetail);
+            BeanUtils.copyProperties(prDetail, prIndentDetail);
 
-            prIndentDetail.setWarehouses(_prDetail.getWarehouses().stream().map(warehouse->{
+            prIndentDetail.setWarehouses(prDetail.getWarehouses().stream().map(warehouse->{
                 PrIndentWarehouseDetail prIndentWarehouseDetail = new PrIndentWarehouseDetail();
                 prIndentWarehouseDetail.setWarehouse(new Warehouse(warehouse.getWarehouseId()));
                 prIndentWarehouseDetail.setOrderQty(warehouse.getOrderQty());
@@ -74,12 +73,12 @@ public class PrIndentRequestDto implements EntityConvertable<PrIndent> {
                         }).collect(Collectors.toList())
                 );
                 return prIndentWarehouseDetail;
-            }).collect(Collectors.toList()));
+            }).toList());
 
             prIndentDetail.setPrIndent(prIndent);
-            prIndentDetails.add(prIndentDetail);
+            prIndentDetailList.add(prIndentDetail);
         });
-        prIndent.setPrIndentDetails(prIndentDetails);
+        prIndent.setPrIndentDetails(prIndentDetailList);
 
         return prIndent;
     }

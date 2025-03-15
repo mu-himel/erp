@@ -12,11 +12,12 @@ public abstract class VerifyableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(updatable = false)
     protected Long id;
-    public String nextVerifierId;
-    public String reviewerId;
-    public String nextApproverId;
-    public LocalDateTime reviewDate;
+    protected String nextVerifierId;
+    protected String reviewerId;
+    protected String nextApproverId;
+    protected LocalDateTime reviewDate;
 
     @Transient
     @JsonIgnore

@@ -11,7 +11,6 @@ import com.agi.aesl.erpscm.cs.entity.Cs;
 import com.agi.aesl.erpscm.cs.entity.CsVendorDetail;
 import com.agi.aesl.erpscm.cs.repository.CsRepository;
 import com.agi.aesl.erpscm.cs.repository.CsVendorDetailRepository;
-import com.agi.aesl.erpscm.cs.service.CsService;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.inventory.dto.request.PendingItemAttributeDto;
@@ -55,9 +54,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -266,7 +263,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
             HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(payloadDto,headers);
             String url = cpsServerConfig.getPendingItemReqEndpoint();
-            ResponseEntity<Void> response = (ResponseEntity<Void>)networkService.post(url, payload,Void.class);
+            ResponseEntity<Void> response = networkService.post(url, payload,Void.class);
             if(!response.getStatusCode().equals(HttpStatus.CREATED)){
                 throw new RuntimeException("Sorry! Something wrong");
             }
@@ -284,16 +281,15 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
 
             for(String attr : attrs){
-                String _attr="";
-                Optional<CategoryAttribute> catAttrOp = cat.getAttributes().stream().filter(c->{
-                    return attr.contains(c.getAttributeType());
-
-                }).findFirst();
+                String attrStr="";
+                Optional<CategoryAttribute> catAttrOp = cat.getAttributes().stream().filter(c->
+                    attr.contains(c.getAttributeType())
+                ).findFirst();
 
                 if(catAttrOp.isPresent()){
-                    _attr = attr.replace(catAttrOp.get().getAttributeType(),"");
+                    attrStr = attr.replace(catAttrOp.get().getAttributeType(),"");
 
-                    String[] args = _attr.trim().split(" ");
+                    String[] args = attrStr.trim().split(" ");
                     PendingItemAttributeDto pia = new PendingItemAttributeDto();
                     pia.setAttributeType(catAttrOp.get().getAttributeType());
                     pia.setAttributeValue(args[0].trim());
@@ -331,12 +327,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 PurchaseOrderStatus.REVIEW.name()
         );
         if(status.isPresent()){
-            statuses = statuses.stream().filter(st->{
-                if(st.equals(status.get())){
-                    return true;
-                }
-               return false;
-            }).toList();
+            statuses = statuses.stream().filter(st->
+                st.equals(status.get())
+            ).toList();
 
         }
         return purchaseOrderRepository.findAllPendingPOs(
@@ -366,9 +359,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 PurchaseOrderStatus.REVIEW.name()
         );
         if(status.isPresent()){
-            statuses = statuses.stream().filter(st->{
-                return st.equals(status.get());
-            }).toList();
+            statuses = statuses.stream().filter(st->
+                st.equals(status.get())
+            ).toList();
         }
         return purchaseOrderRepository.findAllPendingVerificationPOs(
                 claimResolver.getUserId(),
@@ -396,9 +389,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 PurchaseOrderStatus.REVIEW.name()
         );
         if(status.isPresent()){
-            statuses = statuses.stream().filter(st->{
-                return st.equals(status.get());
-            }).toList();
+            statuses = statuses.stream().filter(st->
+                st.equals(status.get())
+            ).toList();
         }
         return purchaseOrderRepository.findAllPendingApprovalPOs(
                 claimResolver.getUserId(), vendor.orElse(null),
@@ -424,9 +417,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 PurchaseOrderStatus.COMPLETED.name()
         );
         if(status.isPresent()){
-            statuses = statuses.stream().filter(st->{
-                return st.equals(status.get());
-            }).toList();
+            statuses = statuses.stream().filter(st->
+                st.equals(status.get())
+            ).toList();
         }
         return purchaseOrderRepository.findAllApprovedPos(
                 vendor.orElse(null),
@@ -453,9 +446,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 PurchaseOrderStatus.REJECTED.name()
         );
         if(status.isPresent()){
-            statuses = statuses.stream().filter(st->{
-                return st.equals(status.get());
-            }).toList();
+            statuses = statuses.stream().filter(st->
+                st.equals(status.get())
+            ).toList();
         }
         return purchaseOrderRepository.findAllClosedPOs(
                 vendor.orElse(null),
@@ -482,8 +475,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
                 List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
                         .getVerificationsByDomainTypeAndDomainId(DomainType.PO, poGroup.getId());
-                vrs.stream().forEach(verifier -> {
-                    if (verifier.getIsApproval() == false) {
+                vrs.forEach(verifier -> {
+                    if (Boolean.FALSE.equals(verifier.getIsApproval())) {
                         verifiers.add(verifier);
                     } else {
                         approvers.add(verifier);
@@ -512,8 +505,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
             List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
                     .getVerificationsByDomainTypeAndDomainId(DomainType.PO, poGroup.getId());
-            vrs.stream().forEach(verifier->{
-                if(verifier.getIsApproval()==false){
+            vrs.forEach(verifier->{
+                if(Boolean.FALSE.equals(verifier.getIsApproval())){
                     verifiers.add(verifier);
                 }else{
                     approvers.add(verifier);
@@ -527,8 +520,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             map.put("comments",comments);
 
 
-
-            // Indent indent = poGroup.getCs().getIndent();
             map.put("categories",indent.getCategory().getId()+","+indent.getSubCategory().getId());
             map.put("categoryName", indent.getCategory().getName()+"-"+indent.getSubCategory().getName());
 
@@ -543,7 +534,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 //                AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(new BigDecimal(0));
                 for (PurchaseOrderRepository.PqDetailInfo pqDetail : pqDetailInfo){
                     Optional<PurchaseOrderRepository.POD> podOp = po.getPurchaseOrderDetails().stream()
-                            .filter(_pod->_pod.getId().equals(pqDetail.getPodId())).findFirst();
+                            .filter(pod->pod.getId().equals(pqDetail.getPodId())).findFirst();
                     Map<String,Object> detailMap = new HashMap<>();
                     detailMap.put("poId",pqDetail.getPoId());
                     detailMap.put("vendorPartialVatAmount", pqDetail.getVendorPartialVatAmount());
@@ -645,44 +636,11 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         List<String> ids =new ArrayList<>();
         ids.add(indent.getCategory().getId().toString());
         ids.add(indent.getSubCategory().getId().toString());
-//        StringBuilder sb = new StringBuilder();
-//        sb.append(indent.getCategory().getId()).append(",").append(indent.getSubCategory().getId());
-//
-//        String categories = sb.toString();
 
-
-//        @SuppressWarnings("unchecked")
-//        Optional<Map<String, Object>> verifierOp = (Optional<Map<String, Object>>) verificationService.getVerifiers(loggedInUser, uri, categories);
-//
-//        List<Verifier> verifiers = new ArrayList<>();
-//        if (verifierOp.isPresent()) {
-//            Map<String, Object> verification = verifierOp.get();
-//
-//            verifiers = (List<Verifier>) verification.get("verifiers");
-//
-//            Boolean verificationRequired = (Boolean) verification.get("verificationRequired");
-//            if (verificationRequired != null && verificationRequired == true && verifiers != null && verifiers.size() > 0) {
-//                po.setStatus(PurchaseOrderStatus.PENDING_VERIFICATION);
-//            } else {
-//                po.setStatus(PurchaseOrderStatus.PENDING);
-//            }
-//        }
-//
-//        List<ApprovalSettingQuery.ApprovalPanel> approvalPanels = approvalSettingService.getModuleWiseApprovalSetting(uri,
-//                Optional.ofNullable(categories.toString()),Optional.empty());
-//
-//        if(po.getStatus().equals(PurchaseOrderStatus.PENDING) && approvalPanels.size()>0){
-//            po.setStatus(PurchaseOrderStatus.PENDING_APPROVAL);
-//        }
-
-        // po.setStatus(PurchaseOrderStatus.PENDING_VERIFICATION);
         po.setIsVerifyApproveEnabled(true);
 
         verificationService.applyVerifyApprovalProcess(po, DomainType.PO, PurchaseOrderStatus.APPROVED.toString(),
                 uri,"CATEGORY",ids,null);
-
-//        verificationService.setVerifiers(po, verifiers, DomainType.PO);
-//        verificationService.setApprovers(po, approvalPanels, DomainType.PO);
     }
 
     @Override

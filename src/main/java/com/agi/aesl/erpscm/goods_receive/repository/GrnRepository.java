@@ -18,14 +18,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.agi.aesl.erpscm.goods_receive.repository.GrnQuery.*;
+
 @Repository
-public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, GrnQuery {
+public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long> {
 
     @Query("select max(g.id) from GoodReceiveNote g")
     Optional<Long> findMaxOrderById();
 
-    @Query(value = getAllGrn,
-            countQuery = countAllGrn, nativeQuery = true)
+    @Query(value = GET_ALL_GRN,
+            countQuery = COUNT_ALL_GRN, nativeQuery = true)
     Page<GoodReceiveNoteInfo> findAllGrn(Pageable pageable,
                                          @Param("warehouseIds") List<Long> warehouseIds,
                                          @Param("categoryIds") List<Long> categoryIds,
@@ -42,7 +44,7 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
             """)
     Optional<GoodReceiveNoteDetailInfo> findGrnById(Long id);
 
-    @Query(value = getAllGrnByStatus,countQuery = countAllGrnByStatus, nativeQuery = true)
+    @Query(value = GET_ALL_GRN_BY_STATUS,countQuery = COUNT_ALL_GRN_BY_STATUS, nativeQuery = true)
     Page<GoodReceiveNoteInfo> findAllGrnByStatus(
             @Param("warehouseIds") List<Long> warehouseIds,
             @Param("categoryIds") List<Long> categoryIds,
@@ -69,7 +71,6 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
         String getVendorPhone();
         String getVendorEmail();
         GrnMode getGrnMode();
-//        PurchaseOrder getPurchaseOrder();
         WarehouseInfo getWarehouse();
         Employee getCreatedBy();
 
@@ -156,10 +157,7 @@ public interface GrnRepository extends JpaRepository<GoodReceiveNote, Long>, Grn
 
         String getItemAttributeName();
 
-//        List<ItemStock> getStocks();
-//        List<ItemAttribute> getAttributes();
-//
-//         WarehouseStoreInfo getWarehouseStore();
+
     }
 
     interface WarehouseStoreInfo{

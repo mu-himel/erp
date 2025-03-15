@@ -2,7 +2,7 @@ package com.agi.aesl.erpscm.vendor.controller;
 
 import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.vendor.service.VendorService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,13 +16,14 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/vendors")
+@RequiredArgsConstructor
 public class VendorController extends BaseController {
 
-    @Autowired
-    private VendorService vendorService;
+
+    private final VendorService vendorService;
 
     @GetMapping("/available-vendors")
-    public ResponseEntity<?> getAvailableVendors(
+    public ResponseEntity<Object> getAvailableVendors(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("name") Optional<String> name){
         return new ResponseEntity<>(

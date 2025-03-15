@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.quality_control.service;
 
 import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
+import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.quality_control.dto.request.QcDto;
 import com.agi.aesl.erpscm.quality_control.repository.QcQuery;
@@ -12,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface QcService extends VerificationDomainService {
+
+    void setGrnService(GrnService grnService);
     void addQc(Jwt token,String uri, QcDto qcDto) throws IllegalAccessException;
 
     Optional<?> getDetailByGrnId(Long id);

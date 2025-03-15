@@ -5,9 +5,7 @@ import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 import com.agi.aesl.erpscm.demand.entity.DemandDetailAttribute;
 import com.agi.aesl.erpscm.email.service.EmailSenderService;
 import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
-import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
-import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,7 +13,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,12 +52,12 @@ public class DemandMailServiceImpl implements DemandMailService{
     @Transactional
     public void prepareMailContentForInitiator(String name, String actionType, Demand demand) {
         template = setMailFor(name);
-        template.replaceAll("pending demand","pending qc");
+        template = template.replace("pending demand","pending qc");
         processTemplate(actionType,demand);
     }
 
     @Transactional
-    private void processTemplate(String actionType, Demand demand){
+    public void processTemplate(String actionType, Demand demand){
         template = setInitiatorName(
                 setActionType(template,actionType),demand.getRequestedBy().getEmployeeName()
         );
@@ -70,10 +67,10 @@ public class DemandMailServiceImpl implements DemandMailService{
             ++i;
             String productName = "<div><h4>Item "+i+"</h4><p style='font-size:15px;font-weight:bold;color:#333;'><span style='color:#cacaca;'>Product</span> ";
             if(demandDetail.getBrand()!=null) {
-                productName += demandDetail.getBrand().getName() + " - ";
+                productName = productName.concat( demandDetail.getBrand().getName() + " - ");
             }
-            productName += generateItemAttribute(demandDetail.getAttributes())+"</p></div>";
-            productDetail += productName;
+            productName = productName.concat(generateItemAttribute(demandDetail.getAttributes())+"</p></div>");
+            productDetail = productDetail.concat(productName);
         }
 
         template = setProductDetail(template,productDetail);
@@ -83,25 +80,25 @@ public class DemandMailServiceImpl implements DemandMailService{
     }
 
     private String setDemandDate(String tmp, String date){
-        return tmp.replaceAll("\\{demandDate\\}",date);
+        return tmp.replace("\\{demandDate\\}",date);
     }
 
     private String setDemandViewLink(String tmp, String link){
-        return tmp.replaceAll("\\{demandViewLink\\}",link);
+        return tmp.replace("\\{demandViewLink\\}",link);
     }
 
     private String setActionType(String tmp, String actionType){
-        return tmp.replaceAll("\\{actionType\\}",(actionType!=null)? actionType:"");
+        return tmp.replace("\\{actionType\\}",(actionType!=null)? actionType:"");
     }
 
     private String setProductDetail(String tmp, String productDetail){
-        return tmp.replaceAll("\\{itemList\\}",productDetail);
+        return tmp.replace("\\{itemList\\}",productDetail);
     }
     private String setInitiatorName(String tmp, String name){
-        return tmp.replaceAll("\\{initiatorName\\}",name);
+        return tmp.replace("\\{initiatorName\\}",name);
     }
     private String setMailFor(String mailFor){
-        return demandDetailMsgTpl.replaceAll("\\{mailFor\\}",mailFor);
+        return DEMAND_DETAIL_MSG_TPL.replaceAll("\\{mailFor\\}",mailFor);
     }
 
     private String generateItemAttribute(List<DemandDetailAttribute> attributes){
@@ -126,7 +123,7 @@ public class DemandMailServiceImpl implements DemandMailService{
                 emailSenderService.addRecipient(to);
 //                emailSenderService.sendEmail(subject,template);
         }else{
-            if(this.users.size()>0 && to==null){
+            if(!this.users.isEmpty() && to==null){
                 for(UserAssignInfo uai :users){
                     emailSenderService.refreshRecipient();
                     template = setMailFor(uai.getUser().getEmployeeName());

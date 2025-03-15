@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.pr_indent.service;
 
 
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.service.CategoryService;
 import com.agi.aesl.erpscm.pr_indent.dto.reqeust.PrIndentRequestDto;
 import com.agi.aesl.erpscm.pr_indent.dto.reqeust.UpdatePrIndentDetailRequestDto;
@@ -13,7 +14,7 @@ import com.agi.aesl.erpscm.pr_indent.repository.PrIndentRepository;
 import com.agi.aesl.erpscm.pr_indent.repository.PrIndentWarehouseDetailRepository;
 import com.agi.aesl.erpscm.product_requirements.enums.ProductRequirementStatus;
 import com.agi.aesl.erpscm.product_requirements.service.ProductRequirementService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,25 +26,25 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class PrIndentServiceImpl implements PrIndentService {
 
-    @Autowired
-    private ProductRequirementService productRequirementService;
 
-    @Autowired
-    private PrIndentRepository prIndentRepository;
+    private final ProductRequirementService productRequirementService;
 
-    @Autowired
-    private CategoryService categoryService;
 
-    @Autowired
-    private PrIndentWarehouseDetailRepository prIndentWarehouseDetailRepository;
+    private final PrIndentRepository prIndentRepository;
 
-    @Autowired
-    private PrIndentPartialDeliveryRepository prIndentPartialDeliveryRepository;
+
+    private final CategoryService categoryService;
+
+
+    private final PrIndentWarehouseDetailRepository prIndentWarehouseDetailRepository;
+
+
+    private final PrIndentPartialDeliveryRepository prIndentPartialDeliveryRepository;
 
     @Override
     public void createPrIndent(Jwt token, PrIndentRequestDto prIndentRequestDto) {
@@ -87,13 +88,12 @@ public class PrIndentServiceImpl implements PrIndentService {
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(10), sort);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
         LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
-        Page<?> result = prIndentRepository.getAllPrIndents(
+        return prIndentRepository.getAllPrIndents(
                 categoryId.orElse(null),
                 subCategoryId.orElse(null),
                 fromDate,
                 toDate,
                 pageable);
-        return result;
     }
 
     @Override
@@ -110,27 +110,24 @@ public class PrIndentServiceImpl implements PrIndentService {
         List<PrIndentRepository.PrIndentViewInfo> result = prIndentRepository.getPrIndentByIds(
                 prIndentIds.orElseThrow(() -> new RuntimeException("PrIndent id should not empty"))
         );
-
-//        return result;
         return getProcessedResults(result);
     }
 
     private List<?> getProcessedResult(List<PrIndentRepository.PrIndentViewInfo> result) {
         List<Map<String, Object>> items = new ArrayList<>();
         Map<String, Object> warehousKeyMap = new HashMap<>();
-//        AtomicReference<Long> prQty= new AtomicReference<>(0L);
         for (PrIndentRepository.PrIndentViewInfo prIndentViewInfo : result) {
 
             Map<String, Object> item = new HashMap<>();
             String warehouseKey = prIndentViewInfo.getBrandName()+"_"+prIndentViewInfo.getPrAttribute() + "_" + prIndentViewInfo.getWarehouseId();
 
-            Optional<Map<String, Object>> anyItemOp = items.stream().filter(_item -> {
-                if (_item.get("brandName") != null) {
+            Optional<Map<String, Object>> anyItemOp = items.stream().filter(itm -> {
+                if (itm.get("brandName") != null) {
 
-                return _item.get("brandName").equals(prIndentViewInfo.getBrandName()) &&
-                        _item.get("itemName").equals(prIndentViewInfo.getPrAttribute());
+                return itm.get("brandName").equals(prIndentViewInfo.getBrandName()) &&
+                        itm.get("itemName").equals(prIndentViewInfo.getPrAttribute());
                 }else{
-                    return _item.get("itemName").equals(prIndentViewInfo.getPrAttribute());
+                    return itm.get("itemName").equals(prIndentViewInfo.getPrAttribute());
                 }
             }).findAny();
 
@@ -182,7 +179,6 @@ public class PrIndentServiceImpl implements PrIndentService {
                 BigDecimal existingPrQty = (BigDecimal) existItem.get("prQty");
 
                 if (prDetailId.equals(prIndentViewInfo.getPrDetailId())) {
-//                    prQty.getAndUpdate(v -> v + prIndentViewInfo.getPrQty());
                     existItem.put("prQty", existingPrQty.add(prIndentViewInfo.getPrQty()));
 
                 }
@@ -193,16 +189,15 @@ public class PrIndentServiceImpl implements PrIndentService {
                         warehousKeyMap = (Map<String, Object>) existWarehouseProp.get(warehouseKey);
                         String key = (String) warehousKeyMap.get("key");
                         String currentkey = prIndentViewInfo.getPrDetailId() + "_" + prIndentViewInfo.getPiwId();
-                        System.out.println(String.valueOf(!key.contains(currentkey)));
                         if (!key.contains(currentkey)) {
                             BigDecimal orderQty = (BigDecimal) warehousKeyMap.get("orderQty");
                             orderQty = orderQty.add(prIndentViewInfo.getOrderQty());
                             warehousKeyMap.replace("orderQty", orderQty);
-                            BigDecimal _prQty = (BigDecimal) warehousKeyMap.get("prQty");
+                            BigDecimal wPrQty = (BigDecimal) warehousKeyMap.get("prQty");
                             BigDecimal existingVal = (item.get("prQty") != null) ? (BigDecimal) item.get("prQty") : new BigDecimal(0L);
-                            existItem.put("prQty", existingVal.add(_prQty));
-                            _prQty = _prQty.add(prIndentViewInfo.getPrQty());
-                            warehousKeyMap.replace("prQty", _prQty);
+                            existItem.put("prQty", existingVal.add(wPrQty));
+                            wPrQty = wPrQty.add(prIndentViewInfo.getPrQty());
+                            warehousKeyMap.replace("prQty", wPrQty);
 
                             warehousKeyMap.replace("key", currentkey);
                         }
@@ -235,35 +230,30 @@ public class PrIndentServiceImpl implements PrIndentService {
                         }
                         existWarehouseProp.put(warehouseKey, warehouseInfo);
                     }
-                } else {
-                    // add missing warehouse info
-
                 }
             }
 
 
         }
 
-        List<?> fitems = items.stream().map(_item -> {
-            Map<String, Object> warehouses = (Map<String, Object>) _item.get("warehouses");
-            _item.replace("warehouses", warehouses.values());
-            return _item;
-        }).collect(Collectors.toList());
+        return items.stream().map(itm -> {
+            Map<String, Object> warehouses = (Map<String, Object>) itm.get("warehouses");
+            itm.replace("warehouses", warehouses.values());
+            return itm;
+        }).toList();
 
-        return fitems;
     }
 
     private List<?> getProcessedResults(List<PrIndentRepository.PrIndentViewInfo> result) {
         List<Map<String, Object>> items = new ArrayList<>();
         Map<String, Object> warehousKeyMap = new HashMap<>();
-//        AtomicReference<Long> prQty= new AtomicReference<>(0L);
         for (PrIndentRepository.PrIndentViewInfo prIndentViewInfo : result) {
 
             Map<String, Object> item = new HashMap<>();
             String warehouseKey = prIndentViewInfo.getBrandName() + "_" + prIndentViewInfo.getPrAttribute() + "_" + prIndentViewInfo.getWarehouseId();
-            Optional<Map<String, Object>> anyItemOp = items.stream().filter(_item -> {
-                String itemName = (String) _item.get("itemName");
-                String brandName = (String) _item.get("brandName");
+            Optional<Map<String, Object>> anyItemOp = items.stream().filter(itm -> {
+                String itemName = (String) itm.get("itemName");
+                String brandName = (String) itm.get("brandName");
                 String prAttribute = prIndentViewInfo.getPrAttribute();
                 if(brandName!=null){
                     return brandName.equals(prIndentViewInfo.getBrandName()) && itemName.equals(prAttribute);
@@ -318,10 +308,9 @@ public class PrIndentServiceImpl implements PrIndentService {
                 items.add(item);
             } else {
                 Map<String, Object> existItem = anyItemOp.get();
-                Long prDetailId = (Long) existItem.get("prDetailId");
                 BigDecimal existingPrQty = (BigDecimal) existItem.get("prQty");
                 BigDecimal existingOrderQty = (BigDecimal) existItem.get("orderQty");
-                String _prIds = (String) existItem.get("productRequirementsIds");
+                String ePrIds = (String) existItem.get("productRequirementsIds");
                 String brandName = (String) existItem.get("brandName");
                 String prAttribute = (String) existItem.get("itemName");
                 if(brandName!=null){
@@ -330,7 +319,7 @@ public class PrIndentServiceImpl implements PrIndentService {
                         existItem.put("orderQty", existingOrderQty.add( prIndentViewInfo.getOrderQty()));
 
                         List<String> prIds = new ArrayList<>();
-                        prIds.add(_prIds);
+                        prIds.add(ePrIds);
                         prIds.add(prIndentViewInfo.getProductRequirementsIds());
                         existItem.put("productRequirementsIds", String.join(",", prIds));
                     }
@@ -340,7 +329,7 @@ public class PrIndentServiceImpl implements PrIndentService {
                         existItem.put("orderQty", existingOrderQty.add(prIndentViewInfo.getOrderQty()));
 
                         List<String> prIds = new ArrayList<>();
-                        prIds.add(_prIds);
+                        prIds.add(ePrIds);
                         prIds.add(prIndentViewInfo.getProductRequirementsIds());
                         existItem.put("productRequirementsIds", String.join(",", prIds));
                     }
@@ -352,16 +341,15 @@ public class PrIndentServiceImpl implements PrIndentService {
                         warehousKeyMap = (Map<String, Object>) existWarehouseProp.get(warehouseKey);
                         String key = (String) warehousKeyMap.get("key");
                         String currentkey = prIndentViewInfo.getBrandName() + " " + prIndentViewInfo.getPrAttribute();
-                        System.out.println(String.valueOf(!key.contains(currentkey)));
                         if (!key.contains(currentkey)) {
                             BigDecimal orderQty = (BigDecimal) warehousKeyMap.get("orderQty");
                             orderQty = orderQty.add(prIndentViewInfo.getOrderQty());
                             warehousKeyMap.replace("orderQty", orderQty);
-                            BigDecimal _prQty = (BigDecimal) warehousKeyMap.get("prQty");
+                            BigDecimal wPrQty = (BigDecimal) warehousKeyMap.get("prQty");
                             BigDecimal existingVal = (item.get("prQty") != null) ? (BigDecimal) item.get("prQty") : new BigDecimal(0L);
-                            existItem.put("prQty", existingVal.add(_prQty));
-                            _prQty = _prQty.add(prIndentViewInfo.getPrQty());
-                            warehousKeyMap.replace("prQty", _prQty);
+                            existItem.put("prQty", existingVal.add(wPrQty));
+                            wPrQty = wPrQty.add(prIndentViewInfo.getPrQty());
+                            warehousKeyMap.replace("prQty", wPrQty);
 
                             warehousKeyMap.replace("key", currentkey);
                         }
@@ -394,22 +382,18 @@ public class PrIndentServiceImpl implements PrIndentService {
                         }
                         existWarehouseProp.put(warehouseKey, warehouseInfo);
                     }
-                } else {
-                    // add missing warehouse info
-
                 }
             }
 
 
         }
 
-        List<?> fitems = items.stream().map(_item -> {
-            Map<String, Object> warehouses = (Map<String, Object>) _item.get("warehouses");
-            _item.replace("warehouses", warehouses.values());
-            return _item;
-        }).collect(Collectors.toList());
+        return items.stream().map(itm -> {
+            Map<String, Object> warehouses = (Map<String, Object>) itm.get("warehouses");
+            itm.replace("warehouses", warehouses.values());
+            return itm;
+        }).toList();
 
-        return fitems;
     }
 
 
@@ -418,28 +402,30 @@ public class PrIndentServiceImpl implements PrIndentService {
     public void updateOrderDetailsOrderQty(UpdatePrIndentDetailRequestDto updatePrIndentDetailRequestDto) {
 
         if (updatePrIndentDetailRequestDto.getPrIndentDetails() != null && updatePrIndentDetailRequestDto
-                .getPrIndentDetails().size() == 0) {
-            throw new RuntimeException("Pr Indent details should not empty");
+                .getPrIndentDetails().isEmpty()) {
+            throw new AesException("Pr Indent details should not empty");
         }
 
-        updatePrIndentDetailRequestDto.getPrIndentDetails().stream().forEach(prd -> {
-            Optional<PrIndentWarehouseDetail> piwdOp = prIndentWarehouseDetailRepository.findById(prd.getId());
-            if (piwdOp.isPresent()) {
-                PrIndentWarehouseDetail piwd = piwdOp.get();
-                piwd.setOrderQty(prd.getOrderQty());
+        if(updatePrIndentDetailRequestDto.getPrIndentDetails()!=null) {
+            updatePrIndentDetailRequestDto.getPrIndentDetails().forEach(prd -> {
+                Optional<PrIndentWarehouseDetail> piwdOp = prIndentWarehouseDetailRepository.findById(prd.getId());
+                if (piwdOp.isPresent()) {
+                    PrIndentWarehouseDetail piwd = piwdOp.get();
+                    piwd.setOrderQty(prd.getOrderQty());
 
-                prd.getPartialDeliveries().stream().forEach(pd -> {
-                    PrIndentPartialDelivery pipd = new PrIndentPartialDelivery();
-                    if (pd.getId() != null) {
-                        pipd.setId(pd.getId());
-                    }
-                    pipd.setPdDate(pd.getPdDate());
-                    pipd.setQty(pd.getQty());
-                    pipd.setPrIndentWarehouseDetail(piwd);
-                    prIndentPartialDeliveryRepository.save(pipd);
-                });
-            }
-        });
+                    prd.getPartialDeliveries().forEach(pd -> {
+                        PrIndentPartialDelivery pipd = new PrIndentPartialDelivery();
+                        if (pd.getId() != null) {
+                            pipd.setId(pd.getId());
+                        }
+                        pipd.setPdDate(pd.getPdDate());
+                        pipd.setQty(pd.getQty());
+                        pipd.setPrIndentWarehouseDetail(piwd);
+                        prIndentPartialDeliveryRepository.save(pipd);
+                    });
+                }
+            });
+        }
 
     }
 

@@ -6,7 +6,7 @@ import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.quality_control.dto.request.QcDto;
 import com.agi.aesl.erpscm.quality_control.service.QcService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,13 +17,14 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/qc")
+@RequiredArgsConstructor
 public class QcController extends BaseController {
 
-    @Autowired
-    private QcService qcService;
 
-    @Autowired
-    private GrnService grnService;
+    private final QcService qcService;
+
+
+    private final GrnService grnService;
 
     @GetMapping
     public ResponseEntity<?> getAllForQc(
@@ -132,6 +133,7 @@ public class QcController extends BaseController {
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @RequestBody QcDto qualityControlDto) throws IllegalAccessException {
+        qcService.setGrnService(grnService);
         qcService.addQc(token, uri, qualityControlDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
@@ -142,12 +144,14 @@ public class QcController extends BaseController {
             @PathVariable("id") Long id,
             @RequestBody NoteDto noteDto
             ){
+        qcService.setGrnService(grnService);
         qcService.rejectQc(token,id, noteDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getQcDetail(@PathVariable("id") Long id){
+        qcService.setGrnService(grnService);
         return new ResponseEntity<>(qcService.getDetailByGrnId(id),
                 HttpStatus.OK);
     }

@@ -2,6 +2,7 @@ package com.agi.aesl.erpscm.organization.service;
 
 import java.util.Optional;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -21,16 +22,17 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class OrgServiceImpl implements OrgService{
 
-    @Autowired
-    private OrgRepository orgRepository;
 
-    @Autowired
-    private NetworkService networkService;
+    private final OrgRepository orgRepository;
 
-    @Autowired
-    private CpsServerConfig cpsServerConfig;
+
+    private final NetworkService networkService;
+
+
+    private final CpsServerConfig cpsServerConfig;
 
     @Value("${acl.apiEndpoint}")
     private String aclApiEndpoint;
@@ -61,11 +63,11 @@ public class OrgServiceImpl implements OrgService{
         HttpEntity<OrgRequestDto> payload = new HttpEntity<>(orgRequestDto, headers);
         try{
             String url = cpsServerConfig.getOrgRegisterEndpoint();
-            ResponseEntity<Void> response = (ResponseEntity<Void>) networkService.post(url, payload, Void.class);
+            ResponseEntity<Void> response = networkService.post(url, payload, Void.class);
             if(response.getStatusCode().equals(HttpStatus.CREATED)){
                 String orgId = response.getHeaders().get("orgId").get(0);
                 if(orgId != null && !orgId.isEmpty()){
-                    return Optional.ofNullable(Long.parseLong(orgId));
+                    return Optional.of(Long.parseLong(orgId));
                 }
             }
             return Optional.empty();
@@ -92,7 +94,7 @@ public class OrgServiceImpl implements OrgService{
             String url = aclApiEndpoint.concat("/organization");
             log.info("Token get from: "+ url);
             log.info("TOKEN: "+token);
-            ResponseEntity<Organization> response = (ResponseEntity<Organization>) networkService.get(url, payload, Organization.class);
+            ResponseEntity<Organization> response = networkService.get(url, payload, Organization.class);
             return Optional.ofNullable(response.getBody());
         }catch(Exception ex){
             log.error(ex.getLocalizedMessage());

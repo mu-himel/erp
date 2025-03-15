@@ -7,8 +7,7 @@ import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStateStatus;
 import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStatus;
 import com.agi.aesl.erpscm.price_quotation.service.PqService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,13 +17,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/pq")
+@RequiredArgsConstructor
 public class PriceQuotationController extends BaseController {
 
-    @Autowired
-    private PqService pqService;
+
+    private final PqService pqService;
 
     @PostMapping("/add")
-    public ResponseEntity<?> addPriceQuotation(
+    public ResponseEntity<Void> addPriceQuotation(
             @AuthenticationPrincipal Jwt token,
             @RequestBody PriceQuotationReqDto pqDto
             ){
@@ -33,14 +33,14 @@ public class PriceQuotationController extends BaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getPriceQuotationDetail(@PathVariable("id") Long id){
+    public ResponseEntity<Object> getPriceQuotationDetail(@PathVariable("id") Long id){
         return new ResponseEntity<>(
                 pqService.getDetail(id),
                 HttpStatus.OK);
     }
 
     @GetMapping("/rfq/{id}")
-    public ResponseEntity<?> getAllPriceQuotationsByRfq(@PathVariable("id") Long id){
+    public ResponseEntity<Object> getAllPriceQuotationsByRfq(@PathVariable("id") Long id){
         return new ResponseEntity<>(
                 pqService.getPriceQuotationsByIndent(id),
                 HttpStatus.OK
@@ -48,7 +48,7 @@ public class PriceQuotationController extends BaseController {
     }
 
     @GetMapping("/rfq/{id}/negotiation-history/{vendorId}")
-    public ResponseEntity<?> getNegotiationHistories(@PathVariable("id") Long id,
+    public ResponseEntity<Object> getNegotiationHistories(@PathVariable("id") Long id,
                                                      @PathVariable("vendorId") Long vendorId){
 
         return new ResponseEntity<>(
@@ -57,7 +57,7 @@ public class PriceQuotationController extends BaseController {
     }
 
     @PutMapping("/{id}/lock")
-    public ResponseEntity<?> lockPriceQuotation(
+    public ResponseEntity<Void> lockPriceQuotation(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id) {
         pqService.lockPq(token,id, PriceQuotationStateStatus.LOCKED);
@@ -65,7 +65,7 @@ public class PriceQuotationController extends BaseController {
     }
 
     @PutMapping("/{id}/recommended-for-cs")
-    public ResponseEntity<?> recommendPq(
+    public ResponseEntity<Void> recommendPq(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id){
         pqService.recommendPq(token, id);
@@ -73,7 +73,7 @@ public class PriceQuotationController extends BaseController {
     }
 
     @PutMapping("/{id}/decline")
-    public ResponseEntity<?> declinePq(
+    public ResponseEntity<Void> declinePq(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody NoteDto noteDto
@@ -83,7 +83,7 @@ public class PriceQuotationController extends BaseController {
     }
 
     @PostMapping("/sent-counter")
-    public ResponseEntity<?> sentCounterPq(
+    public ResponseEntity<Void> sentCounterPq(
             @AuthenticationPrincipal Jwt token,
             @RequestBody PriceQuotationReqDto pqDto
     ){
@@ -92,7 +92,7 @@ public class PriceQuotationController extends BaseController {
     }
 
     @PostMapping("/upload/{id}")
-    public ResponseEntity<?> uploadDoc(@RequestPart MultipartFile file, @PathVariable("id") Long id) {
+    public ResponseEntity<Object> uploadDoc(@RequestPart MultipartFile file, @PathVariable("id") Long id) {
         return new ResponseEntity<>(
                 pqService.uploadDoc(id,file),
                 HttpStatus.CREATED

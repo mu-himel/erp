@@ -13,7 +13,7 @@ import com.agi.aesl.erpscm.quality_control.service.QcService;
 import com.agi.aesl.erpscm.store_receive.service.SrnService;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.VerifyDto;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,69 +29,70 @@ import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationVa
 
 @RestController
 @RequestMapping("/api/v1/verify")
+@RequiredArgsConstructor
 public class VerifyController extends BaseController{
 
-    @Autowired
-    private UserApplicationValidatorService<?> verificationService;
 
-    @Autowired
-    private DemandService demandService;
+    private final UserApplicationValidatorService<?> verificationService;
 
-    @Autowired
-    private AccountService accountService;
 
-    @Autowired
-    private IndentService indentService;
+    private final DemandService demandService;
 
-    @Autowired
-    private CsService csService;
 
-    @Autowired
-    private CsAccountService acsService;
+    private final AccountService accountService;
 
-    @Autowired
-    private PurchaseOrderService purchaseOrderService;
 
-    @Autowired
-    private QcService qcService;
+    private final IndentService indentService;
 
-    @Autowired
-    private SrnService srnService;
 
-    @Autowired
-    private InventoryCategoryRequestService categoryRequestService;
+    private final CsService csService;
 
-    @Autowired
-    private InventoryRequestService inventoryRequestService;
 
-    @Autowired
-    private IrService irService;
+    private final CsAccountService acsService;
 
-    @Autowired
-    private IrStoreService irStoreService;
+
+    private final PurchaseOrderService purchaseOrderService;
+
+
+    private final QcService qcService;
+
+
+    private final SrnService srnService;
+
+
+    private final InventoryCategoryRequestService categoryRequestService;
+
+
+    private final InventoryRequestService inventoryRequestService;
+
+
+    private final IrService irService;
+
+
+    private final IrStoreService irStoreService;
 
     private void setVerifiableServices(){
-        verificationService.addVerificationDomainService(DomainType.DEMAND,demandService);
-        verificationService.addVerificationDomainService(DomainType.ACCOUNT_LEDGER,accountService);
-        verificationService.addVerificationDomainService(DomainType.INDENT,indentService);
-        verificationService.addVerificationDomainService(DomainType.CS,csService);
-        verificationService.addVerificationDomainService(DomainType.ACS,acsService);
-        verificationService.addVerificationDomainService(DomainType.PO,purchaseOrderService);
-        verificationService.addVerificationDomainService(DomainType.QC,qcService);
-        verificationService.addVerificationDomainService(DomainType.SRN,srnService);
-        verificationService.addVerificationDomainService(DomainType.INVENTORY_REQ_CATEGORY,categoryRequestService);
-        verificationService.addVerificationDomainService(DomainType.INVENTORY_REQ_SUB_CATEGORY,categoryRequestService);
-        verificationService.addVerificationDomainService(DomainType.INVENTORY_REQ_PRODUCT,inventoryRequestService);
-        verificationService.addVerificationDomainService(DomainType.IR,irService);
-        verificationService.addVerificationDomainService(DomainType.PSIR,irStoreService);
-        verificationService.addVerificationDomainService(DomainType.BANK_ACCOUNT,null);
-        verificationService.addVerificationDomainService(DomainType.LEDGER_SETUP,null);
-        verificationService.addVerificationDomainService(DomainType.PURCHASE_RECEIPT,null);
-        verificationService.addVerificationDomainService(DomainType.PURCHASE_VOUCHER,null);
-        verificationService.addVerificationDomainService(DomainType.PAYMENT_VOUCHER,null);
+        verificationService.addVerificationDomainService(DomainType.DEMAND.name(),demandService);
+        verificationService.addVerificationDomainService(DomainType.ACCOUNT_LEDGER.name(),accountService);
+        verificationService.addVerificationDomainService(DomainType.INDENT.name(),indentService);
+        verificationService.addVerificationDomainService(DomainType.CS.name(),csService);
+        verificationService.addVerificationDomainService(DomainType.ACS.name(),acsService);
+        verificationService.addVerificationDomainService(DomainType.PO.name(),purchaseOrderService);
+        verificationService.addVerificationDomainService(DomainType.QC.name(),qcService);
+        verificationService.addVerificationDomainService(DomainType.SRN.name(),srnService);
+        verificationService.addVerificationDomainService(DomainType.INVENTORY_REQ_CATEGORY.name(),categoryRequestService);
+        verificationService.addVerificationDomainService(DomainType.INVENTORY_REQ_SUB_CATEGORY.name(),categoryRequestService);
+        verificationService.addVerificationDomainService(DomainType.INVENTORY_REQ_PRODUCT.name(),inventoryRequestService);
+        verificationService.addVerificationDomainService(DomainType.IR.name(),irService);
+        verificationService.addVerificationDomainService(DomainType.PSIR.name(),irStoreService);
+        verificationService.addVerificationDomainService(DomainType.BANK_ACCOUNT.name(),null);
+        verificationService.addVerificationDomainService(DomainType.LEDGER_SETUP.name(),null);
+        verificationService.addVerificationDomainService(DomainType.PURCHASE_RECEIPT.name(),null);
+        verificationService.addVerificationDomainService(DomainType.PURCHASE_VOUCHER.name(),null);
+        verificationService.addVerificationDomainService(DomainType.PAYMENT_VOUCHER.name(),null);
     }
     @PutMapping("/approve")
-    public ResponseEntity<?> approve(
+    public ResponseEntity<Void> approve(
             @AuthenticationPrincipal Jwt token,
             @RequestBody ApproveDto approveDto){
         setVerifiableServices();
@@ -100,7 +101,7 @@ public class VerifyController extends BaseController{
     }
 
     @PutMapping("/verify")
-    public ResponseEntity<?> verify(
+    public ResponseEntity<Void> verify(
             @AuthenticationPrincipal Jwt token,
             @RequestBody VerifyDto verifyDto){
         setVerifiableServices();
@@ -109,14 +110,14 @@ public class VerifyController extends BaseController{
     }
 
     @PutMapping("/review")
-    public ResponseEntity<?> review(@RequestBody VerifyDto verifyDto){
+    public ResponseEntity<Void> review(@RequestBody VerifyDto verifyDto){
         setVerifiableServices();
         verificationService.review(verifyDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/reject")
-    public ResponseEntity<?> reject(
+    public ResponseEntity<Void> reject(
             @AuthenticationPrincipal Jwt token,
             @RequestBody RejectDto rejectDto){
         setVerifiableServices();

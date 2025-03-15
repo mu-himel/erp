@@ -1,8 +1,10 @@
 package com.agi.aesl.erpscm.indent.repository;
 
-public interface IndentQuery {
-
-    String getAllIndents =
+public class IndentQuery {
+    private IndentQuery(){}
+    public static final String COUNT_START="SELECT COUNT(*) FROM (";
+    public static final String COUNT_END=") AS TOTAL";
+    public static final String GET_ALL_INDENT =
             """
                     SELECT i.id                                    as id,
                            i.indent_no                             as indentNo,
@@ -17,7 +19,7 @@ public interface IndentQuery {
                              LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
                              LEFT JOIN scm_item_categories c on i.category_id = c.id
                              LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
-                    WHERE 
+                    WHERE
                     (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%'))
                     AND (COALESCE(:warehouseIds) IS NULL OR i.warehouse_id IN (:warehouseIds))
                     AND 
@@ -30,9 +32,9 @@ public interface IndentQuery {
                     GROUP BY i.id
                                                                                 """;
 
-    String countAllIndents = "SELECT COUNT(*) FROM ("+getAllIndents+") as total";
+    public static final String COUNT_ALL_INDENT = COUNT_START+GET_ALL_INDENT+COUNT_END;
 
-    String getIndentPendingVerifications = """
+    public static final String GET_INDENT_PV = """
             SELECT i.id                                    as id,
                            i.indent_no                             as indentNo,
                            i.indent_date                           as indentDate,
@@ -42,7 +44,7 @@ public interface IndentQuery {
                            COUNT(ide.id)                           as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
                            i.priority_date_time                    as priority,
-                           CASE WHEN i.indent_status != 'REVIEW' AND (ivah.id IS NOT NULL AND ivah.indent_id = i.id 
+                           CASE WHEN i.indent_status != 'REVIEW' AND (ivah.id IS NOT NULL AND ivah.indent_id = i.id
                            AND ivah.employee_id = :nextVerifierId AND ivah.indent_status IN ('VERIFIED')) THEN
                                     ivah.indent_status
                                 ELSE
@@ -58,24 +60,24 @@ public interface IndentQuery {
                              LEFT JOIN scm_item_categories c on i.category_id = c.id
                              LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                              LEFT JOIN acl_users e ON e.id = i.requested_by_id
-                     
+
                     WHERE  ((i.next_verifier_id = :nextVerifierId AND i.indent_status IN ('PENDING_VERIFICATION', 'REVIEW','VERIFIED'))
                         OR (ivah.employee_id = :nextVerifierId AND ivah.indent_status = 'VERIFIED'))
                         AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%'))
                         AND (COALESCE(:warehouseIds) IS NULL OR i.warehouse_id IN (:warehouseIds))
-                        AND 
+                        AND
                         (
                             (COALESCE(:categoryIds) IS NULL OR c.id IN (:categoryIds))
-                            OR 
+                            OR
                             (COALESCE(:categoryIds) IS NULL OR sc.id IN (:categoryIds))
                         )
                         AND (COALESCE(:fromDate) IS NULL OR i.priority_date_time BETWEEN :fromDate AND :toDate)
                     GROUP BY i.id
             """;
 
-    String countAllPendingVerifications="SELECT COUNT(*) FROM ("+getIndentPendingVerifications+") as total";
+    public static final String COUNT_INDENT_PV=COUNT_START+GET_INDENT_PV+COUNT_END;
 
-    String getIndentPendingApprovals = """
+    public static final String GET_INDENT_PA = """
                     SELECT i.id                                    as id,
                            i.indent_no                             as indentNo,
                            i.indent_date                           as indentDate,
@@ -85,7 +87,7 @@ public interface IndentQuery {
                            COUNT(ide.id)                           as itemsCount,
                            COALESCE(SUM(idd.order_qty), 0)         as orderQty,
                            i.priority_date_time                              as priority,
-                           CASE WHEN i.indent_status != 'REVIEW' AND (ivah.id IS NOT NULL AND ivah.indent_id = i.id 
+                           CASE WHEN i.indent_status != 'REVIEW' AND (ivah.id IS NOT NULL AND ivah.indent_id = i.id
                            AND ivah.employee_id = :nextApproverId AND ivah.indent_status IN ('APPROVED')) THEN
                                     ivah.indent_status
                                 ELSE
@@ -101,24 +103,24 @@ public interface IndentQuery {
                              LEFT JOIN scm_item_categories c on i.category_id = c.id
                              LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                              LEFT JOIN acl_users e ON e.id = i.requested_by_id
-                     
+
                     WHERE  ((i.next_approver_id = :nextApproverId AND i.indent_status IN ('PENDING_APPROVAL', 'REVIEW','APPROVED'))
                         OR (ivah.employee_id = :nextApproverId AND ivah.indent_status = 'APPROVED'))
                         AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo,'%'))
                         AND (COALESCE(:warehouseIds) IS NULL OR i.warehouse_id IN (:warehouseIds))
-                        AND 
+                        AND
                         (
                             (COALESCE(:categoryIds) IS NULL OR c.id IN (:categoryIds))
-                            OR 
+                            OR
                             (COALESCE(:categoryIds) IS NULL OR sc.id IN (:categoryIds))
                         )
                         AND (COALESCE(:fromDate) IS NULL OR i.priority_date_time BETWEEN :fromDate AND :toDate)
                     GROUP BY i.id
             """;
 
-    String countAllPendingApprovals="SELECT COUNT(*) FROM ("+getIndentPendingApprovals+") as total";
+    public static final String COUNT_INDENT_PA=COUNT_START+GET_INDENT_PA+COUNT_END;
 
-    String getClosedIndents = """
+    public static final String GET_CLOSED_INDENTS = """
             SELECT i.id                                    as id,
                            i.indent_no                             as indentNo,
                            i.category_id                           as categoryId,
@@ -143,13 +145,12 @@ public interface IndentQuery {
                             (COALESCE(:categoryIds) IS NULL OR sc.id IN (:categoryIds))
                         )
                       AND (COALESCE(:warehouseIds) IS NULL OR i.warehouse_id IN (:warehouseIds))
-                     
                     GROUP BY i.id
             """;
 
-    String countAllClosed="SELECT COUNT(*) FROM ("+getClosedIndents+") as total";
+    public static final String COUNT_ALL_CLOSED=COUNT_START+GET_CLOSED_INDENTS+COUNT_END;
 
-    String getIndentDetail= """
+    public static final String GET_INDENT_DETAIL= """
             SELECT i.id                                              as id,
                            ide.id                                            as detailId,
                            idd.warehouse_id                                  as warehouseId,
@@ -187,7 +188,7 @@ public interface IndentQuery {
                     group by ipd.id,idd.id
             """;
 
-    String getIndentDetailWithIdRange= """
+    public static final String GET_INDENT_DETAIL_WITH_ID_RANGE= """
             SELECT i.id                                                      as id,
                            ide.id                                            as detailId,
                            idd.warehouse_id                                  as warehouseId,
@@ -229,7 +230,7 @@ public interface IndentQuery {
                     END
             """;
 
-    String getIndentApprovedAndPendingRFqWithSearch =
+    public static final String GET_INDENT_APPROVED_AND_PENDING_RFQ_WITH_SEARCH =
             """
                     SELECT i.id                                    as id,
                             i.indent_no                             as indentNo,
@@ -243,14 +244,14 @@ public interface IndentQuery {
                             i.rfq_status                            as status,
                             CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
                             DATEDIFF(i.priority_date_time , CURRENT_DATE) as daysRemain
-                            
+
                     FROM indents i
                                     LEFT JOIN indent_details ide on i.id = ide.indent_id
                                     LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
                                     LEFT JOIN scm_item_categories c on i.category_id = c.id
                                     LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                                     LEFT JOIN acl_users e ON e.id = i.requested_by_id
-                            
+
                     WHERE  i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.rfq_status = 'INIT'
                             AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo))
                             AND (:category IS NULL OR  c.id = :category)
@@ -261,13 +262,9 @@ public interface IndentQuery {
                     GROUP BY i.id
             """;
 
-    String countPendingRfqs="SELECT COUNT(*) FROM ("+getIndentApprovedAndPendingRFqWithSearch+") as total";
+    public static final String COUNT_PENDING_RFQ=COUNT_START+GET_INDENT_APPROVED_AND_PENDING_RFQ_WITH_SEARCH+COUNT_END;
 
-    // price quotations COALESCE((SELECT count(pq.id) FROM price_quotations pq
-    //                                        WHERE pq.status = 'RECEIVED' AND pq.rfq_id = i.id),0)
-    // total receive qty COALESCE((SELECT count(pq.id) FROM price_quotations pq
-    //                                        WHERE pq.rfq_id = i.id),0)
-    String getApprovedIndentWithOpenRfq= """
+    public static final String GET_APPROVED_INDENT_WITH_OPEN_RFQ= """
             SELECT i.id                                    as id,
                                 i.indent_no                             as indentNo,
                                 i.indent_date                           as indentDate,
@@ -302,16 +299,16 @@ public interface IndentQuery {
                         GROUP BY i.id
             """;
 
-    String countApprovedIndentWithOpenRfq="SELECT COUNT(*) FROM ("+getApprovedIndentWithOpenRfq+") as total";
+    public static final String COUNT_APPROVED_INDENT_WITH_OPEN_RFQ=COUNT_START+GET_APPROVED_INDENT_WITH_OPEN_RFQ+COUNT_END;
 
-    String getAllIndentsByExpireDateTimeWithSearch= """
+    public static final String GET_ALL_INDENT_BY_EXP_DATETIME_WITH_SEARCH= """
             SELECT * FROM (SELECT  i.id                                    as id,
                         csheet.id                               as csId,
                         i.indent_no                             as indentNo,
                         i.sent_date                             as sentDate,
                         CASE WHEN csheet.id IS NULL THEN
-                            i.indent_date               
-                        ELSE 
+                            i.indent_date
+                        ELSE
                             csheet.created_at
                         END                                     as indentDate,
                         i.category_id                           as categoryId,
@@ -326,7 +323,7 @@ public interface IndentQuery {
                                 csheet.cs_status
                         END                                as status,
                         CONCAT(e.employee_id,'-',e.employee_name)        as employeeName,
-                        (SELECT count(*) FROM price_quotations pq 
+                        (SELECT count(*) FROM price_quotations pq
                                 WHERE status='LOCKED' AND rfq_id = i.id) as lockedVendor
                 FROM indents i
                         LEFT JOIN indent_details ide on i.id = ide.indent_id
@@ -341,10 +338,10 @@ public interface IndentQuery {
                 AND (:fromDate IS NULL OR r.indentDate BETWEEN :fromDate AND :toDate)
             """;
 
-    String countAllIndentsByExpireDateTimeWithSearch = "SELECT COUNT(*) FROM ("+
-            getAllIndentsByExpireDateTimeWithSearch+") as total";
+    public static final String COUNT_ALL_INDENT_BY_EXP_DATETIME_WITH_SEARCH = COUNT_START+
+            GET_ALL_INDENT_BY_EXP_DATETIME_WITH_SEARCH+COUNT_END;
 
-    String getAllClosedRfq= """
+    public static final String GET_ALL_CLOSED_RFQ= """
             SELECT i.id                                    as id,
                                 i.indent_no                             as indentNo,
                                 i.indent_date                           as indentDate,
@@ -361,21 +358,19 @@ public interface IndentQuery {
                                 ELSE
                                         i.indent_status
                                 END as status,
-                                COALESCE((SELECT count(pq.id) FROM price_quotations pq 
+                                COALESCE((SELECT count(pq.id) FROM price_quotations pq
                                         WHERE pq.status = 'RECEIVED' AND pq.rfq_id = i.id),0) as receivedQty,
-                                COALESCE((SELECT count(pq.id) FROM price_quotations pq 
+                                COALESCE((SELECT count(pq.id) FROM price_quotations pq
                                         WHERE pq.rfq_id = i.id),0) as totalReceivedPq,
                                 CONCAT(e.employee_id,'-',e.employee_name)        as employeeName
-                                
                         FROM indents i
                                         LEFT JOIN indent_details ide on i.id = ide.indent_id
                                         LEFT JOIN indent_delivery_details idd ON idd.indent_detail_id = ide.id
                                         LEFT JOIN scm_item_categories c on i.category_id = c.id
                                         LEFT JOIN scm_item_categories sc on ide.sub_category_id = sc.id
                                         LEFT JOIN acl_users e ON e.id = i.requested_by_id
-                                
                         WHERE   (
-                                        (i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.rfq_status = 'OPEN' AND i.expire_date_time < SYSDATE()) 
+                                        (i.indent_status IN ('APPROVED','VERIFIED','COMPLETED') AND i.rfq_status = 'OPEN' AND i.expire_date_time < SYSDATE())
                                         OR i.rfq_status = 'REJECTED'
                                 )
                                 AND (:indentNo IS NULL OR i.indent_no LIKE CONCAT('%',:indentNo))
@@ -384,8 +379,7 @@ public interface IndentQuery {
                                 AND (:priority IS NULL OR i.priority = :priority)
                                 AND (:daysRemain IS NULL OR DATEDIFF(i.priority_date_time , CURRENT_DATE) = :daysRemain)
                                 AND (:fromDate IS NULL OR (i.sent_date BETWEEN :fromDate AND :toDate))
-                                
                         GROUP BY i.id
             """;
-    String countAllClosedRfq="SELECT COUNT(*) FROM ("+getAllClosedRfq+") as total";
+    public static final String COUNT_ALL_CLOSED_RFQ=COUNT_START+GET_ALL_CLOSED_RFQ+COUNT_END;
 }

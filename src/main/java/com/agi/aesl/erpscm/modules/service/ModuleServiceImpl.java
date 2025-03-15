@@ -1,14 +1,13 @@
 package com.agi.aesl.erpscm.modules.service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -24,10 +23,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
+@RequiredArgsConstructor
 public class ModuleServiceImpl implements ModuleService{
 
-    @Autowired
-    private NetworkService networkService;
+    private final NetworkService networkService;
 
     @Value("${acl.apiEndpoint}")
     private String aclAPIEndpoint;
@@ -40,10 +39,8 @@ public class ModuleServiceImpl implements ModuleService{
         httpHeaders.set("uri",uri);
         String url = aclAPIEndpoint+"/verifiers?criteriaGroup="+criteriaGroup+"&categories="+criteriaValues;
         HttpEntity<?> payload = new HttpEntity<>(httpHeaders);
-        System.out.println(url);
         ResponseEntity<VerifierConfig> response = networkService.get(url, payload, VerifierConfig.class);
-        
-        System.out.println(response.getBody());
+
         return Optional.ofNullable(response.getBody());
     }
 
@@ -51,22 +48,20 @@ public class ModuleServiceImpl implements ModuleService{
     @Transactional
     public List<ApprovalPanel> getModuleWiseApprovalSetting(ClaimResolver claimResolver, String uri, Optional<String> categoryId,
             Optional<BigDecimal> amount) {
+
                 HttpHeaders httpHeaders = networkService.setHttpHeaders(claimResolver.getToken());
                 httpHeaders.set("uri", uri);
-                String url = aclAPIEndpoint+"/approval-settings?categories="+categoryId.get();
+                String catId = categoryId.orElse("");
+                String url = aclAPIEndpoint+"/approval-settings?categories="+catId;
                 HttpEntity<?> payload = new HttpEntity<>(httpHeaders);
-                ResponseEntity<String> response = (ResponseEntity<String>) networkService.get(url, payload, String.class);
+                ResponseEntity<String> response =  networkService.get(url, payload, String.class);
                 ObjectMapper mapper = new ObjectMapper();
                 try {
-                    List<ApprovalPanel> panels = mapper.readValue(response.getBody(),
+                    return mapper.readValue(response.getBody(),
                             new TypeReference<List<ApprovalPanel>>() {});
-                    return panels;
                 } catch (JsonProcessingException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                    throw new AesException(e.getMessage());
                 }
-                System.out.println(response.getBody());
-                return new ArrayList<>();
     }
 
     @Override
@@ -75,16 +70,13 @@ public class ModuleServiceImpl implements ModuleService{
         httpHeaders.set("uri", uri);
         String url = aclAPIEndpoint+"/modules/permissions/get-users-by-permission";
         HttpEntity<?> payload = new HttpEntity<>(httpHeaders);
-        ResponseEntity<String> response = (ResponseEntity<String>) networkService.get(url, payload, String.class);
+        ResponseEntity<String> response = networkService.get(url, payload, String.class);
         ObjectMapper mapper = new ObjectMapper();
         try {
-            List<UserAssignInfo> panels = mapper.readValue(response.getBody(),
+            return mapper.readValue(response.getBody(),
                     new TypeReference<List<UserAssignInfo>>() {});
-            return panels;
         } catch (JsonProcessingException e) {
-
-            e.printStackTrace();
+            throw new AesException(e.getMessage());
         }
-        return new ArrayList<>();
     }
 }

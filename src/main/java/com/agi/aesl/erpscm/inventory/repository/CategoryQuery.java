@@ -1,7 +1,13 @@
 package com.agi.aesl.erpscm.inventory.repository;
 
-public interface CategoryQuery {
-    String getCategoriesWithSearch="""
+public class CategoryQuery {
+
+    private CategoryQuery(){}
+
+
+    public static final String COUNT_START="SELECT COUNT(*) as total FROM (";
+    public static final String COUNT_END=") AS TOTAL";
+    public static final String GET_CATEGORIES_WITH_SEARCH="""
             SELECT cat.id, cat.code, cat.name, cat.currentYearBudget, cat.productCount,
             cat.warehouse_id as warehouseId, cat.warehouseName as warehouseName, cat.storeName as storeName,
             (select count(*) from scm_item_categories ic3 
@@ -47,18 +53,18 @@ public interface CategoryQuery {
 
 
 
-    String countCategoriesWithSearch="SELECT COUNT(*) FROM ("+getCategoriesWithSearch+") as c";
+    public static final String COUNT_CATEGORIES_WITH_SEARCH=COUNT_START+GET_CATEGORIES_WITH_SEARCH+COUNT_END;
 
 
-    String getSubCategoriesWithSearch="""
-            SELECT  
-                cat.id, 
-                cat.code, 
-                cat.name, 
-                cat.currentYearBudget, 
-                cat.productCount, 
-                cat.mainCategoryId, 
-                cat.mainCategoryName, 
+    public static final String GET_SUB_CATEGORIES_WITH_SEARCH="""
+            SELECT
+                cat.id,
+                cat.code,
+                cat.name,
+                cat.currentYearBudget,
+                cat.productCount,
+                cat.mainCategoryId,
+                cat.mainCategoryName,
                 cat.mainCategoryCode,
                 cat.warehouse_id as warehouseId,
                 cat.warehouse_store_id as warehouseStoreId,
@@ -66,53 +72,53 @@ public interface CategoryQuery {
                 cat.warehouseName as warehouseName
             FROM (
                 SELECT
-                    ic.id, 
-                    ic.code,   
-                    ic.name, 
+                    ic.id,
+                    ic.code,
+                    ic.name,
                     ipc.id as mainCategoryId,
-                    ipc.name as mainCategoryName, 
-                    ipc.code as mainCategoryCode, 
+                    ipc.name as mainCategoryName,
+                    ipc.code as mainCategoryCode,
                     sws.store_name as storeName,
                     sw.name as warehouseName,
-                    cws.warehouse_id, 
+                    cws.warehouse_id,
                     cws.warehouse_store_id,
                     (sum(amount) + COALESCE((
-                            SELECT sum(amount) FROM scm_item_categories childCat 
-                            LEFT JOIN scm_category_budgets cb2 ON childCat.id = cb2.category_id 
-                        WHERE childCat.parent_category_id = ic.id 
+                            SELECT sum(amount) FROM scm_item_categories childCat
+                            LEFT JOIN scm_category_budgets cb2 ON childCat.id = cb2.category_id
+                        WHERE childCat.parent_category_id = ic.id
                         AND (:year IS NULL OR cb2.current_year = :year )
-                        ),0) ) as currentYearBudget, 
+                        ),0) ) as currentYearBudget,
                     ( select count(distinct item_id) from scm_item_stocks is2
                                  LEFT JOIN scm_items i on i.id=is2.item_id
                                  LEFT JOIN scm_category_warehouse_stores cws1 ON is2.warehouse_id  = cws1.warehouse_id
                                         AND is2.warehouse_store_id = cws1.warehouse_store_id
                                         AND i.item_category_id = cws1.category_id
-                              WHERE i.active = 1 AND cws1.category_id=ic.id 
+                              WHERE i.active = 1 AND cws1.category_id=ic.id
                               AND (COALESCE(:warehouseId) IS NULL OR is2.warehouse_id IN (:warehouseId))
                               AND (:warehouseStoreId IS NULL OR is2.warehouse_store_id = :warehouseStoreId)
                     ) as productCount
-                FROM scm_item_categories ic 
-                 LEFT JOIN scm_item_categories ipc ON ipc.id = ic.parent_category_id 
-                 LEFT JOIN scm_category_budgets cb ON ic.id = cb.category_id 
+                FROM scm_item_categories ic
+                 LEFT JOIN scm_item_categories ipc ON ipc.id = ic.parent_category_id
+                 LEFT JOIN scm_category_budgets cb ON ic.id = cb.category_id
                  LEFT JOIN scm_category_warehouse_stores cws ON cws.category_id = ic.id
                  LEFT JOIN scm_warehouse_stores sws ON sws.id = cws.warehouse_store_id
                  LEFT JOIN scm_warehouses sw ON sw.id = cws.warehouse_id
-                WHERE ic.active=1 AND ic.parent_category_id IS NOT NULL 
+                WHERE ic.active=1 AND ic.parent_category_id IS NOT NULL
                 AND (:year IS NULL OR cb.current_year = :year)
                  AND (COALESCE(:warehouseId) IS NULL OR cws.warehouse_id IN (:warehouseId))
                  AND (:warehouseStoreId IS NULL OR cws.warehouse_store_id = :warehouseStoreId)
-                 GROUP BY ic.id) cat 
-            WHERE (:name IS NULL OR cat.name LIKE concat('%',:name,'%')) 
-             AND (:code IS NULL OR cat.code LIKE concat('%',:code,'%')) 
-             AND (:currentYearBudget IS NULL OR cat.currentYearBudget LIKE concat(:currentYearBudget,'%')) 
-             AND (:categoryId IS NULL OR cat.mainCategoryId =:categoryId) 
-             AND (:productCount IS NULL OR cat.productCount=:productCount) 
+                 GROUP BY ic.id) cat
+            WHERE (:name IS NULL OR cat.name LIKE concat('%',:name,'%'))
+             AND (:code IS NULL OR cat.code LIKE concat('%',:code,'%'))
+             AND (:currentYearBudget IS NULL OR cat.currentYearBudget LIKE concat(:currentYearBudget,'%'))
+             AND (:categoryId IS NULL OR cat.mainCategoryId =:categoryId)
+             AND (:productCount IS NULL OR cat.productCount=:productCount)
             ORDER BY cat.id DESC
             """;
 
-    String countSubCategoriesWithSearch="SELECT count(*) FROM (" + getSubCategoriesWithSearch +") p";
+    public static final String COUNT_SUB_CATEGORIES_WITH_SEARCH=COUNT_START + GET_SUB_CATEGORIES_WITH_SEARCH +COUNT_END;
 
-    String getMainCategoriesForInventoryControl= """
+    public static final String GET_MAIN_CATEGORIES_FOR_INVENTORY_CONTROL= """
             SELECT ic.id as id, ic.name as name, ic.code as code,
             ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses,
             GROUP_CONCAT(w.name) as warehouseName,
@@ -136,10 +142,10 @@ public interface CategoryQuery {
             AND (:code IS NULL OR ic.code LIKE concat('%',:code,'%'))
             GROUP BY ic.id
             """;
-    String countMainCategoriesForInventoryControl="SELECT COUNT(*) as total FROM ("+getMainCategoriesForInventoryControl+") as t";
+    public static final String COUNT_MAIN_CATEGORIES_FOR_INVENTORY_CONTROL=COUNT_START+GET_MAIN_CATEGORIES_FOR_INVENTORY_CONTROL+COUNT_END;
 
 
-    String getPendingMainCategories = """
+    public static final String GET_PENDING_MAIN_CATEGORIES = """
             SELECT ic.id as id, ic.name as name, ic.code as code,
             ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses,
             ic.cps_category_id as cpsCategoryId,
@@ -164,9 +170,9 @@ public interface CategoryQuery {
             GROUP BY ic.id
             """;
 
-    String countPendingMainCategories="SELECT COUNT(*) as total FROM ("+getPendingMainCategories+") as t";
+    public static final String COUNT_PENDING_MAIN_CATEGORIES=COUNT_START+GET_PENDING_MAIN_CATEGORIES+COUNT_END;
 
-    String getSubCategoriesForInventoryControl="""
+    public static final String GET_SUB_CATEGORIES_FOR_INVENTORY_CONTROL="""
             SELECT ic.id as id, ic.name as name, ic.code as code,
             ipc.name as parentCategoryName, ipc.code as parentCategoryCode,
             ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses,
@@ -186,9 +192,9 @@ public interface CategoryQuery {
             AND (:code IS NULL OR ic.code LIKE concat('%',:code,'%'))
             GROUP BY ic.id
             """;
-    String countSubCategoriesForInventoryControl="SELECT COUNT(*) FROM ("+getSubCategoriesForInventoryControl+") as t";
+    public static final String COUNT_SUB_CATEGORIES_FOR_INVENTORY_CONTROL=COUNT_START+GET_SUB_CATEGORIES_FOR_INVENTORY_CONTROL+COUNT_END;
 
-    String getPendingSubcategoriesForInventoryControl="""
+    public static final String GET_PENDING_SUB_CATEGORIES_FOR_INVENTORY_CONTROL="""
             SELECT ic.id as id, ic.name as name, ic.code as code,
             ipc.name as parentCategoryName, ipc.code as parentCategoryCode,
             ic.active as active,
@@ -209,9 +215,10 @@ public interface CategoryQuery {
             AND (:code IS NULL OR ic.code LIKE concat('%',:code,'%'))
             GROUP BY ic.id
             """;
-    String countPendingSubCategoriesForInventoryControl="SELECT COUNT(*) FROM ("+getPendingSubcategoriesForInventoryControl+") as t";
+    public static final String COUNT_PENDING_SUB_CATEGORIES_FOR_INVENTORY_CONTROL=COUNT_START+
+            GET_PENDING_SUB_CATEGORIES_FOR_INVENTORY_CONTROL+COUNT_END;
 
-    String findAllSubCategories="""
+    public static final String FIND_ALL_SUB_CATEGORIES="""
             SELECT ic.id as id, ic.name as name, ic.code as code,
             ic.active as active,GROUP_CONCAT(cws.warehouse_id) as warehouses
             FROM scm_item_categories ic
@@ -224,8 +231,8 @@ public interface CategoryQuery {
            GROUP BY ic.id""";
 
 
-    String getSubCategoriesTemplate="""
-            SELECT  
+    public static final String GET_SUB_CATEGORIES_TEMPLATE="""
+            SELECT
                 cat.id, 
                 cat.warehouse_id as warehouseId,
                 cat.warehouseName as warehouseName,
@@ -262,7 +269,7 @@ public interface CategoryQuery {
             ORDER BY cat.id DESC
             """;
 
-    String getCategoriesForSales="""
+    public static final String GET_CATEGORIES_FOR_SALES="""
                 SELECT ic.cps_category_id as cpsCategoryId, ic.id as id, ic.name as name, ic.code as code,
             ic.active as active,cws.warehouse_id as warehouseId, sw.name as warehouseName, cws.warehouse_store_id as storeId,
             (select count(*) from scm_item_categories ic3 
@@ -281,9 +288,9 @@ public interface CategoryQuery {
              AND (COALESCE(:warehouseStoreId) IS NULL OR cws.warehouse_store_id IN (:warehouseStoreId)) 
             GROUP BY ic.id """;
 
-    String countCategoriesForSales="SELECT COUNT(*) FROM ("+getCategoriesForSales+") as total";
+    public static final String COUNT_CATEGORIES_FOR_SALES=COUNT_START+GET_CATEGORIES_FOR_SALES+COUNT_END;
 
-    String getSubCategoriesForSales="""
+    public static final String GET_SUB_CATEGORIES_FOR_SALES="""
                 SELECT ic.cps_category_id as cpsCategoryId, ic.id as id, ic.name as name, ic.code as code,
             ic.active as active,cws.warehouse_id as warehouseId, sw.name as warehouseName,
             cws.warehouse_store_id as storeId,0 as productCount,
@@ -298,5 +305,5 @@ public interface CategoryQuery {
              AND (COALESCE(:finisGoodStoreIds) IS NULL OR cws.warehouse_store_id IN (:finisGoodStoreIds)) 
             GROUP BY ic.id """;
 
-    String countSubCategoriesForSales="SELECT COUNT(*) FROM ("+getSubCategoriesForSales+") as total";
+    public static final String COUNT_SUB_CATEGORIES_FOR_SALES=COUNT_START+GET_SUB_CATEGORIES_FOR_SALES+COUNT_END;
 }

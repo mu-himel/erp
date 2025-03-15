@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.rfq.service.service;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.indent.entity.IndentDeliveryDetail;
 import com.agi.aesl.erpscm.indent.enums.RfqStatus;
@@ -78,16 +79,16 @@ public class RfqServiceImpl implements RfqService{
         indent.setSentDate(currenDateTime);
         indent.setExpireDateTime(currenDateTime.plusDays(indent.getRfqDays()));
         indent.setRfqStatus(RfqStatus.OPEN);
-        indent.setIndentDetails(indent.getIndentDetails().stream().map((indentDetail)->{
+        indent.setIndentDetails(indent.getIndentDetails().stream().map(indentDetail->{
             Optional<RfqItemDto> rfqItemDtoOp = requestDto.getItems().stream().filter(item->item.getId().equals(indentDetail.getId()))
                     .findFirst();
             if(rfqItemDtoOp.isPresent()){
 
                 List<IndentDeliveryDetail> deliveryDetails = new ArrayList<>();
-                rfqItemDtoOp.get().getWarehouses().stream().forEach(w->{
-                    Optional<IndentDeliveryDetail> iddOp = indentDetail.getWarehouses().stream().filter(_w ->{
-                        return _w.getId().equals(w.getId());
-                    }).findFirst();
+                rfqItemDtoOp.get().getWarehouses().forEach(w->{
+                    Optional<IndentDeliveryDetail> iddOp = indentDetail.getWarehouses().stream().filter(fw ->
+                         fw.getId().equals(w.getId())
+                    ).findFirst();
                     if(iddOp.isPresent()){
                         IndentDeliveryDetail idd = iddOp.get();
                         idd.setRfqQty(w.getRfqQty());
@@ -98,7 +99,7 @@ public class RfqServiceImpl implements RfqService{
             }
 
             return indentDetail;
-        }).collect(Collectors.toList()));
+        }).toList());
 
         // Processing CPS Tender Creation
         TenderRequestDto tenderRequestDto = new TenderRequestDto();
@@ -119,20 +120,17 @@ public class RfqServiceImpl implements RfqService{
                 }
 
                 TenderItemDeliveryDetail tid = new TenderItemDeliveryDetail();
-                // totalOrderQty.addAndGet(w.getOrderQty());
                 tid.setWarehouseId(warehosueOp.get().getId());
                 tid.setWareHouseName(warehosueOp.get().getName());
                 tid.setWareHouseAddress(warehosueOp.get().getLocation());
                 tid.setDeliveryOrderQTY(w.getRfqQty());
                 return tid;
-            }).collect(Collectors.toList()));
-
-            // tenderItemDto.setOrderQuantity(totalOrderQty.get());
+            }).toList());
             tenderItemDto.setSpecification("Must be in a good condition");
             tenderItemDto.setProductDescription(item.getAttribute());
             tenderItemDto.setBrandName(item.getBrandName());
             return tenderItemDto;
-        }).collect(Collectors.toList()));
+        }).toList());
 
         createTender(tenderRequestDto);
     }
@@ -158,7 +156,7 @@ public class RfqServiceImpl implements RfqService{
                                      Optional<String> toDateOp, Optional<Integer> page, Optional<Integer> size) {
 
         claimResolver.setToken(token);
-        String uri="";
+
         // add data filter
 
         if((fromDateOp.isPresent() && toDateOp.isEmpty()) ||
@@ -170,8 +168,6 @@ public class RfqServiceImpl implements RfqService{
         if(fromDateOp.isPresent() && toDateOp.isPresent()){
             fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
             toDate   = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
-            System.out.println(fromDate);
-            System.out.println(toDate);
         }
 
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
@@ -195,8 +191,6 @@ public class RfqServiceImpl implements RfqService{
                                   Optional<Integer> size) {
 
         claimResolver.setToken(token);
-        String uri="";
-
         if((fromDateOp.isPresent() && toDateOp.isEmpty()) ||
                 (fromDateOp.isEmpty() && toDateOp.isPresent())){
             throw new RuntimeException("Please select both date filter");
@@ -227,11 +221,10 @@ public class RfqServiceImpl implements RfqService{
                                     Optional<Integer> daysRemain, Optional<String> fromDateOp,
                                     Optional<String> toDateOp, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
-        String uri="";
 
         if((fromDateOp.isPresent() && toDateOp.isEmpty()) ||
                 (fromDateOp.isEmpty() && toDateOp.isPresent())){
-            throw new RuntimeException("Please select both date filter");
+            throw new AesException("Please select both date filter");
         }
         LocalDateTime fromDate = null;
         LocalDateTime toDate = null;
@@ -259,12 +252,12 @@ public class RfqServiceImpl implements RfqService{
         claimResolver.setToken(token);
 
         if(indentOp.isEmpty()){
-            throw new RuntimeException("Sorry! Indent not found");
+            throw new AesException("Sorry! Indent not found");
         }
 
         ItemCategory subCategory = indentOp.get().getSubCategory();
         if(subCategory==null){
-            throw new RuntimeException("Sorry! Indent's Sub Category not found");
+            throw new AesException("Sorry! Indent's Sub Category not found");
         }
 
         return getVendorCount(subCategory.getCode().substring(2));
@@ -273,18 +266,17 @@ public class RfqServiceImpl implements RfqService{
     private Optional<?> getVendorCount(String subCatCode){
         HttpHeaders headers = new HttpHeaders();
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
-        if(orgOp.isPresent()){
-            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
-        }
-        System.out.println(cpsConfig.getVendorCountEndpoint(subCatCode));
+        orgOp.ifPresent(org->
+            headers.set("orgId",org.getCpsVendorRegistrationId().toString())
+        );
         HttpEntity<?> payload = new HttpEntity<>(headers);
-        ResponseEntity<AvailableVendorCount> resposne = networkService.get(
+        ResponseEntity<AvailableVendorCount> response = networkService.get(
                 cpsConfig.getVendorCountEndpoint(subCatCode),
                 payload,
                 AvailableVendorCount.class
         );
-        if(resposne.getStatusCode().equals(HttpStatus.OK)){
-            return Optional.ofNullable(resposne.getBody());
+        if(response.getStatusCode().equals(HttpStatus.OK)){
+            return Optional.ofNullable(response.getBody());
         }
         return Optional.empty();
     }
@@ -303,13 +295,12 @@ public class RfqServiceImpl implements RfqService{
     private void expireTender(Indent indent){
         HttpHeaders headers = new HttpHeaders();
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
-        if(orgOp.isPresent()){
-            System.out.println("HHHHHHHHHHHHHHHHHHH");
-            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
-        }
+        orgOp.ifPresent(org->
+            headers.set("orgId",org.getCpsVendorRegistrationId().toString())
+        );
         HttpEntity<CounterPqDto> payload = new HttpEntity<>(headers);
         String url = cpsConfig.getTenderEndpoint()+"/expire/"+indent.getIndentNo();
-        System.out.println(url);
-        ResponseEntity<?> response = networkService.put(url, payload, Void.class);
+
+        networkService.put(url, payload, Void.class);
     }
 }
