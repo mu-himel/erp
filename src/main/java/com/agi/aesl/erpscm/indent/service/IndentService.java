@@ -4,6 +4,7 @@ import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.indent.dto.request.IndentRequestDto;
 import com.agi.aesl.erpscm.indent.dto.request.MoveIndentRequestDto;
 import com.agi.aesl.erpscm.indent.entity.Indent;
+import com.agi.aesl.erpscm.indent.repository.IndentRepository;
 import com.agi.aesl.erpscm.price_quotation.dto.request.PriceQuotationReqDto;
 import com.agi.aesl.erpscm.user_application_validation.service.VerificationDomainService;
 import org.springframework.data.domain.Page;
@@ -19,7 +20,7 @@ public interface IndentService extends VerificationDomainService {
 
     void updateIndent(Jwt token, String uri, Long id, IndentRequestDto indentRequestDto);
     
-    Page<?> getAllIndents(
+    Page<IndentRepository.IndentInfo> getAllIndents(
             Jwt token,
             Optional<Integer> page,
             Optional<Integer> size,
@@ -30,7 +31,7 @@ public interface IndentService extends VerificationDomainService {
             Optional<String> indentNo
     );
 
-    Page<?> getAllPendingVerificationIndents(
+    Page<IndentRepository.IndentInfo> getAllPendingVerificationIndents(
             Jwt token,
             Optional<Long> categoryId,
             Optional<Long> subCategoryId,
@@ -41,14 +42,14 @@ public interface IndentService extends VerificationDomainService {
             Optional<Integer> size
     );
 
-    Page<?> getAllPendingApprovalIndents(Jwt token,
-                                         Optional<Long> categoryId,
-                                         Optional<Long> subCategoryId,
-                                         Optional<String> fromDate,
-                                         Optional<String> toDate,
-                                         Optional<String> indentNo,
-                                         Optional<Integer> page,
-                                         Optional<Integer> size);
+    Page<IndentRepository.IndentInfo> getAllPendingApprovalIndents(Jwt token,
+                                                                   Optional<Long> categoryId,
+                                                                   Optional<Long> subCategoryId,
+                                                                   Optional<String> fromDate,
+                                                                   Optional<String> toDate,
+                                                                   Optional<String> indentNo,
+                                                                   Optional<Integer> page,
+                                                                   Optional<Integer> size);
 
     Map<String,Object> getIndentDetailById(Long indentId);
 
@@ -56,13 +57,13 @@ public interface IndentService extends VerificationDomainService {
 
     Optional<Indent> getIndentById(Long id);
 
-    List<?> getIndentByIds(Optional<List<Long>> indentIds);
+    List<IndentRepository.IndentViewInfo> getIndentByIds(Optional<List<Long>> indentIds);
 
     int moveIndentByIds(MoveIndentRequestDto moveIndent);
 
 
-    Page<?> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
-                                Optional<Long> subCategoryId, Optional<String> priority,Optional<String> indentNo);
+    Page<IndentRepository.IndentInfo> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
+                                                          Optional<Long> subCategoryId, Optional<String> priority, Optional<String> indentNo);
 
     void reviewIndent(Jwt token, Long id, ReviewDto reviewDto);
 

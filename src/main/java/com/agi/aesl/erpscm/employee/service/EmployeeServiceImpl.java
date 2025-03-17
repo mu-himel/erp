@@ -2,7 +2,7 @@ package com.agi.aesl.erpscm.employee.service;
 
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -12,10 +12,11 @@ import com.agi.aesl.erpscm.employee.repository.EmployeeRepository;
 import jakarta.transaction.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class EmployeeServiceImpl implements EmployeeService{
 
-    @Autowired
-    private EmployeeRepository userRepository;
+
+    private final EmployeeRepository userRepository;
 
     @Override
     public void createUser(Jwt token, Employee user) {
@@ -31,9 +32,7 @@ public class EmployeeServiceImpl implements EmployeeService{
     @Transactional
     public void deleteUser(Employee user) {
         Optional<Employee> eOptional = userRepository.findByEmployeeId(user.getEmployeeId());
-        if(eOptional.isPresent()){
-            userRepository.delete(eOptional.get());
-        }
+        eOptional.ifPresent(userRepository::delete);
     }
 
     

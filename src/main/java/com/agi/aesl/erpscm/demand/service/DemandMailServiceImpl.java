@@ -7,7 +7,8 @@ import com.agi.aesl.erpscm.email.service.EmailSenderService;
 import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class DemandMailServiceImpl implements DemandMailService{
 
     private String template;
@@ -30,11 +33,11 @@ public class DemandMailServiceImpl implements DemandMailService{
 
     private List<UserAssignInfo> users = new ArrayList<>();
 
-    @Autowired
-    private EmailSenderService emailSenderService;
 
-    @Autowired
-    private ModuleService moduleService;
+    private final EmailSenderService emailSenderService;
+
+
+    private final ModuleService moduleService;
 
     @Value("${scm.frontend.demandDetailLink}")
     private String demandDetailLink;
@@ -56,7 +59,7 @@ public class DemandMailServiceImpl implements DemandMailService{
         processTemplate(actionType,demand);
     }
 
-    @Transactional
+
     public void processTemplate(String actionType, Demand demand){
         template = setInitiatorName(
                 setActionType(template,actionType),demand.getRequestedBy().getEmployeeName()
@@ -98,40 +101,46 @@ public class DemandMailServiceImpl implements DemandMailService{
         return tmp.replace("\\{initiatorName\\}",name);
     }
     private String setMailFor(String mailFor){
-        return DEMAND_DETAIL_MSG_TPL.replaceAll("\\{mailFor\\}",mailFor);
+        return DEMAND_DETAIL_MSG_TPL.replace("\\{mailFor\\}",mailFor);
     }
 
     private String generateItemAttribute(List<DemandDetailAttribute> attributes){
         StringBuilder sb = new StringBuilder();
 
-        attributes.stream().forEach(attribute -> {
-            sb.append(attribute.getAttributeType().trim()
+        attributes.forEach(attribute -> {
+            String s = "";
+            s=s.concat(attribute.getAttributeType().trim()
                     +" "+attribute.getAttributeValue().trim()
                     +" "+attribute.getAttributeUnit().trim());
-            sb.append(" - ");
+            s=s.concat(" - ");
+            sb.append(s);
         });
 
-        return (sb.isEmpty())? "" :  sb.toString().substring(0,sb.length()-3);
+        return (sb.isEmpty())? "" :  sb.substring(0,sb.length()-3);
     }
 
     @Override
     @Async
     @Transactional
     public void sentMail(String to, String subject) {
-        if(template!=null){
+        try {
+            if (template != null) {
                 emailSenderService.refreshRecipient();
                 emailSenderService.addRecipient(to);
-//                emailSenderService.sendEmail(subject,template);
-        }else{
-            if(!this.users.isEmpty() && to==null){
-                for(UserAssignInfo uai :users){
-                    emailSenderService.refreshRecipient();
-                    template = setMailFor(uai.getUser().getEmployeeName());
-                    emailSenderService.addRecipient(uai.getUser().getEmail());
-                    processTemplate(null,demand);
-//                    emailSenderService.sendEmail(subject,template);
+                emailSenderService.sendEmail(subject, template);
+            } else {
+                if (!this.users.isEmpty() && to == null) {
+                    for (UserAssignInfo uai : users) {
+                        emailSenderService.refreshRecipient();
+                        template = setMailFor(uai.getUser().getEmployeeName());
+                        emailSenderService.addRecipient(uai.getUser().getEmail());
+                        processTemplate(null, demand);
+                        emailSenderService.sendEmail(subject, template);
+                    }
                 }
             }
+        }catch (Exception e){
+            log.info(e.getMessage());
         }
     }
 

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.agi.aesl.erpscm.erpn_integration.dto.response.ServiceIntegrationDto;
 import com.agi.aesl.erpscm.erpn_integration.dto.response.VendorListInfo;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -13,5 +14,5 @@ public interface IntegrationReaderService {
 
     List<VendorListInfo> getAvailableVendors(String name);
 
-    Optional<?> getActiveServiceByClientId(Jwt token, String clientId);
+    Optional<ServiceIntegrationDto> getActiveServiceByClientId(Jwt token, String clientId);
 }

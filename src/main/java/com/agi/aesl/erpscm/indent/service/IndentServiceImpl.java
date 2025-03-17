@@ -40,7 +40,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -68,6 +67,25 @@ public class IndentServiceImpl implements IndentService{
     private final ClaimResolver claimResolver;
 
     private static final Integer PAGE_SIZE = 10;
+    private static final String DATE_TIME_END = "23:59:59";
+    private static final String ITEM_NAME_KEY = "itemName";
+    private static final String BRAND_NAME_KEY = "brandName";
+    private static final String WAREHOUSES_KEY = "warehouses";
+    private static final String PR_QTY_KEY = "prQty";
+    private static final String ORDER_QTY_KEY = "orderQty";
+    private static final String PD_DATE_KEY = "pdDate";
+    private static final String PARTIAL_DELIVERIES_KEY = "partialDeliveries";
+
+    private Employee getEmp(){
+        return claimResolver.getEmployee().orElse(null);
+    }
+
+    private Long getEmpWarehouseId(){
+        Employee emp = claimResolver.getEmployee().orElse(null);
+        return emp!=null? emp.getWarehouseId():null;
+    }
+
+
 
     @Override
     public String getNextIndentNo() {
@@ -126,7 +144,7 @@ public class IndentServiceImpl implements IndentService{
         Indent indent = indentRequestDto.getEntity();
 
         if(claimResolver.getEmployee().isPresent()) {
-            indent.setWarehouse(new Warehouse(claimResolver.getEmployee().get().getWarehouseId()));
+            indent.setWarehouse(new Warehouse(getEmpWarehouseId()));
         }
         if(Boolean.TRUE.equals(indentRequestDto.getIsDevliverToSingleWarehouse())){
             indent.setIsDevliverToSingleWarehouse(true);
@@ -137,7 +155,7 @@ public class IndentServiceImpl implements IndentService{
         indent.setSubCategory(new ItemCategory(indentRequestDto.getSubCategoryId()));
 
         if(claimResolver.getEmployee().isPresent()) {
-            indent.setRequestedBy(new Employee(claimResolver.getEmployee().get().getId()));
+            indent.setRequestedBy(getEmp());
         }
         indent.setPriorityDateTime(indentRequestDto.getPriorityDate());
 
@@ -205,15 +223,15 @@ public class IndentServiceImpl implements IndentService{
     }
 
     @Override
-    public Page<?> getAllIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
-                                 Optional<Long> subCategoryId, Optional<String> fromDateStr,Optional<String> toDateStr,
-                                 Optional<String> indentNo) {
+    public Page<IndentRepository.IndentInfo> getAllIndents(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
+                                                           Optional<Long> subCategoryId, Optional<String> fromDateStr, Optional<String> toDateStr,
+                                                           Optional<String> indentNo) {
         claimResolver.setToken(token);
         String uri="";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         DataFilter dataFilter = new DataFilter(uri,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> warehouseIds = dataFilter.getFilterConfig();
@@ -225,16 +243,16 @@ public class IndentServiceImpl implements IndentService{
     }
 
     @Override
-    public Page<?> getAllPendingVerificationIndents(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
-                                 Optional<String> fromDateStr, Optional<String> toDateStr,
-                                 Optional<String> indentNo,
-                                 Optional<Integer> page, Optional<Integer> size) {
+    public Page<IndentRepository.IndentInfo> getAllPendingVerificationIndents(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                                                              Optional<String> fromDateStr, Optional<String> toDateStr,
+                                                                              Optional<String> indentNo,
+                                                                              Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         String uri="";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         DataFilter dataFilter = new DataFilter(uri,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> warehouseIds = dataFilter.getFilterConfig();
@@ -247,17 +265,17 @@ public class IndentServiceImpl implements IndentService{
     }
 
     @Override
-    public Page<?> getAllPendingApprovalIndents(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+    public Page<IndentRepository.IndentInfo> getAllPendingApprovalIndents(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
 
-                Optional<String> fromDateStr,Optional<String> toDateStr,
-                Optional<String> indentNo,
-                Optional<Integer> page, Optional<Integer> size) {
+                                                                          Optional<String> fromDateStr, Optional<String> toDateStr,
+                                                                          Optional<String> indentNo,
+                                                                          Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         String uri = "";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE), sort);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         DataFilter dataFilter = new DataFilter(uri,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> warehouseIds = dataFilter.getFilterConfig();
@@ -269,9 +287,9 @@ public class IndentServiceImpl implements IndentService{
     }
 
     @Override
-    public Page<?> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                                       Optional<Long> categoryId, Optional<Long> subCategoryId,
-                                       Optional<String> priority, Optional<String> indentNo) {
+    public Page<IndentRepository.IndentInfo> getAllClosedIndents(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                                 Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                                                 Optional<String> priority, Optional<String> indentNo) {
         claimResolver.setToken(token);
         String uri = "";
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
@@ -351,10 +369,11 @@ public class IndentServiceImpl implements IndentService{
             String warehouseKey = indentViewInfo.getBrandName()+"_"+indentViewInfo.getItemName()+"_"+indentViewInfo.getWarehouseId();
 
             Optional<Map<String,Object>> anyItemOp = items.stream().filter(itm->{
-                if(itm.get("brandName") !=null) {
-                    return itm.get("brandName").equals(indentViewInfo.getBrandName()) && itm.get("itemName").equals(indentViewInfo.getItemName());
+                if(itm.get(BRAND_NAME_KEY) !=null) {
+                    return itm.get(BRAND_NAME_KEY).equals(indentViewInfo.getBrandName()) && itm.get(ITEM_NAME_KEY)
+                            .equals(indentViewInfo.getItemName());
                 }
-                return itm.get("itemName").equals(indentViewInfo.getItemName());
+                return itm.get(ITEM_NAME_KEY).equals(indentViewInfo.getItemName());
             }).findAny();
 
             if(anyItemOp.isEmpty()){
@@ -365,9 +384,9 @@ public class IndentServiceImpl implements IndentService{
 
                 prQty.getAndUpdate(v -> v.add(indentViewInfo.getPrQty()));
 
-                item.put("prQty",prQty);
+                item.put(PR_QTY_KEY,prQty);
 
-                item.put("itemName",indentViewInfo.getItemName());
+                item.put(ITEM_NAME_KEY,indentViewInfo.getItemName());
                 item.put("categoryName", indentViewInfo.getCategoryName());
                 item.put("subCategoryName", indentViewInfo.getSubCategoryName());
                 item.put("categoryId", indentViewInfo.getCategoryId());
@@ -376,13 +395,13 @@ public class IndentServiceImpl implements IndentService{
                 item.put("priority",indentViewInfo.getPriority());
                 item.put("priorityDate",indentViewInfo.getPriorityDate());
                 item.put("brandId", indentViewInfo.getBrandId());
-                item.put("brandName",indentViewInfo.getBrandName());
+                item.put(BRAND_NAME_KEY,indentViewInfo.getBrandName());
                 Map<String,Object> warehouseInfo = new HashMap<>();
                 warehouseInfo.put("id", indentViewInfo.getPiwId());
                 warehouseInfo.put("warehouseId",indentViewInfo.getWarehouseId());
                 warehouseInfo.put("warehouseName",indentViewInfo.getWarehouseName());
-                warehouseInfo.put("orderQty", indentViewInfo.getOrderQty());
-                warehouseInfo.put("prQty", indentViewInfo.getPrQty());
+                warehouseInfo.put(ORDER_QTY_KEY, indentViewInfo.getOrderQty());
+                warehouseInfo.put(PR_QTY_KEY, indentViewInfo.getPrQty());
                 warehouseInfo.put("rfqQty", indentViewInfo.getRfqQty());
                 // add key for unique check in existing block
                 warehouseInfo.put("key", indentViewInfo.getDetailId()+"_"+indentViewInfo.getPiwId());
@@ -390,27 +409,27 @@ public class IndentServiceImpl implements IndentService{
                 List<Map<String,Object>> pdList = new ArrayList<>();
                 Map<String,Object> pd = new HashMap<>();
                 pd.put("id",indentViewInfo.getPdId());
-                pd.put("pdDate",indentViewInfo.getPdDate());
+                pd.put(PD_DATE_KEY,indentViewInfo.getPdDate());
                 pd.put("qty",indentViewInfo.getPdQty());
                 pdList.add(pd);
                 if(indentViewInfo.getPdDate()!= null && indentViewInfo.getPdQty()!=null){
-                    warehouseInfo.put("partialDeliveries",pdList);
+                    warehouseInfo.put(PARTIAL_DELIVERIES_KEY,pdList);
                 }else{
-                    warehouseInfo.put("partialDeliveries", new ArrayList<>());
+                    warehouseInfo.put(PARTIAL_DELIVERIES_KEY, new ArrayList<>());
                 }
 
                 Map<String,Object> warehousKeyMap = new HashMap<>();
 
                 warehousKeyMap.put(warehouseKey, warehouseInfo);
-                item.put("warehouses",warehousKeyMap);
+                item.put(WAREHOUSES_KEY,warehousKeyMap);
 
                 items.add(item);
             }else{
                 Map<String,Object> existItem = anyItemOp.get();
                 prQty.getAndUpdate(v -> v.add(indentViewInfo.getPrQty()));
-                existItem.put("prQty",prQty);
-                if(existItem.containsKey("warehouses")){
-                    Map<String,Object> existWarehouseProp = (Map<String,Object>)existItem.get("warehouses");
+                existItem.put(PR_QTY_KEY,prQty);
+                if(existItem.containsKey(WAREHOUSES_KEY)){
+                    Map<String,Object> existWarehouseProp = (Map<String,Object>)existItem.get(WAREHOUSES_KEY);
 
                     if(existWarehouseProp.containsKey(warehouseKey)){
                         Map<String,Object> warehousKeyMap = (Map<String,Object>)existWarehouseProp.get(warehouseKey);
@@ -420,20 +439,20 @@ public class IndentServiceImpl implements IndentService{
 
                         if(!key.contains(currentkey))
                         {
-                            BigDecimal orderQty = (BigDecimal)warehousKeyMap.get("orderQty");
+                            BigDecimal orderQty = (BigDecimal)warehousKeyMap.get(ORDER_QTY_KEY);
                             orderQty =indentViewInfo.getOrderQty().add(orderQty);
-                            warehousKeyMap.replace("orderQty",orderQty);
-                            BigDecimal wPrQty = (BigDecimal) warehousKeyMap.get("prQty");
+                            warehousKeyMap.replace(ORDER_QTY_KEY,orderQty);
+                            BigDecimal wPrQty = (BigDecimal) warehousKeyMap.get(PR_QTY_KEY);
                             wPrQty = wPrQty.add( indentViewInfo.getPrQty());
-                            warehousKeyMap.replace("prQty",wPrQty);
+                            warehousKeyMap.replace(PR_QTY_KEY,wPrQty);
 
                             warehousKeyMap.replace("key", currentkey);
                         }
 
-                        List<Map<String,Object>> pdList = (List<Map<String,Object>>)warehousKeyMap.get("partialDeliveries");
+                        List<Map<String,Object>> pdList = (List<Map<String,Object>>)warehousKeyMap.get(PARTIAL_DELIVERIES_KEY);
                         Map<String,Object> pd = new HashMap<>();
                         pd.put("id",indentViewInfo.getPdId());
-                        pd.put("pdDate",indentViewInfo.getPdDate());
+                        pd.put(PD_DATE_KEY,indentViewInfo.getPdDate());
                         pd.put("qty",indentViewInfo.getPdQty());
                         pdList.add(pd);
                     }else{
@@ -441,8 +460,8 @@ public class IndentServiceImpl implements IndentService{
                         warehouseInfo.put("id", indentViewInfo.getPiwId());
                         warehouseInfo.put("warehouseId",indentViewInfo.getWarehouseId());
                         warehouseInfo.put("warehouseName",indentViewInfo.getWarehouseName());
-                        warehouseInfo.put("orderQty", indentViewInfo.getOrderQty());
-                        warehouseInfo.put("prQty", indentViewInfo.getPrQty());
+                        warehouseInfo.put(ORDER_QTY_KEY, indentViewInfo.getOrderQty());
+                        warehouseInfo.put(PR_QTY_KEY, indentViewInfo.getPrQty());
                         warehouseInfo.put("rfqQty", indentViewInfo.getRfqQty());
                         // add key for unique check in existing block
                         warehouseInfo.put("key", indentViewInfo.getDetailId()+"_"+indentViewInfo.getPiwId());
@@ -450,26 +469,26 @@ public class IndentServiceImpl implements IndentService{
                         List<Map<String,Object>> pdList = new ArrayList<>();
                         Map<String,Object> pd = new HashMap<>();
                         pd.put("id",indentViewInfo.getPdId());
-                        pd.put("pdDate",indentViewInfo.getPdDate());
+                        pd.put(PD_DATE_KEY,indentViewInfo.getPdDate());
                         pd.put("qty",indentViewInfo.getPdQty());
                         pdList.add(pd);
                         if(indentViewInfo.getPdDate()!= null && indentViewInfo.getPdQty()!=null){
-                            warehouseInfo.put("partialDeliveries",pdList);
+                            warehouseInfo.put(PARTIAL_DELIVERIES_KEY,pdList);
                         }else{
-                            warehouseInfo.put("partialDeliveries", new ArrayList<>());
+                            warehouseInfo.put(PARTIAL_DELIVERIES_KEY, new ArrayList<>());
                         }
 
 
                         existWarehouseProp.put(warehouseKey, warehouseInfo);
-                        existItem.put("warehouses",existWarehouseProp);
+                        existItem.put(WAREHOUSES_KEY,existWarehouseProp);
                     }
                 }
             }
         });
 
         return items.stream().map(itm->{
-            Map<String,Object> warehouses = (Map<String,Object>)itm.get("warehouses");
-            itm.replace("warehouses", warehouses.values());
+            Map<String,Object> warehouses = (Map<String,Object>)itm.get(WAREHOUSES_KEY);
+            itm.replace(WAREHOUSES_KEY, warehouses.values());
             return itm;
         }).toList();
 
@@ -487,7 +506,7 @@ public class IndentServiceImpl implements IndentService{
     }
 
     @Override
-    public List<?> getIndentByIds(Optional<List<Long>> indentIds) {
+    public List<IndentRepository.IndentViewInfo> getIndentByIds(Optional<List<Long>> indentIds) {
         return indentRepository.getIndentByIds(
                 indentIds.orElseThrow(()->new RuntimeException("Indent ids should not empty"))
         );
@@ -614,8 +633,9 @@ public class IndentServiceImpl implements IndentService{
         indent.setReviewPrevStatus(null);
         indent.setReviewDate(LocalDateTime.now());
 
+
         commentService.addComment(commentService.prepareComment(
-                claimResolver.getEmployee().get(),
+                getEmp(),
                 reviewDto.getDomainType(),
                 indent.getId(),
                 reviewDto.getMessage(),

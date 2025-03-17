@@ -5,7 +5,7 @@ import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.inventory.entity.AttributeUnit;
 import com.agi.aesl.erpscm.inventory.repository.AttributeUnitRepository;
 import com.agi.aesl.erpscm.inventory.service.CategoryAttributeService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,17 +18,18 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/attributes")
+@RequiredArgsConstructor
 public class AttributeController extends BaseController{
 
-    @Autowired
-    private CategoryAttributeService categoryAttributeService;
 
-    @Autowired
-    private AttributeUnitRepository attributeUnitRepository;
+    private final CategoryAttributeService categoryAttributeService;
+
+
+    private final AttributeUnitRepository attributeUnitRepository;
 
 
     @GetMapping("/{categoryId}")
-    public ResponseEntity<?> getAttributes(@PathVariable("categoryId") Long categoryId){
+    public ResponseEntity<Object> getAttributes(@PathVariable("categoryId") Long categoryId){
         return new ResponseEntity<>(
               categoryAttributeService.getAttributesByCategory(categoryId),
               HttpStatus.OK
@@ -36,7 +37,7 @@ public class AttributeController extends BaseController{
     }
 
     @GetMapping("/units")
-    public ResponseEntity<?> getAttributeUnits(){
+    public ResponseEntity<Object> getAttributeUnits(){
         List<String> attributes = attributeUnitRepository.findAll().stream().map(AttributeUnit::getName).toList();
         return new ResponseEntity<>(
                 attributes,

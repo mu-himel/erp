@@ -319,6 +319,7 @@ public class AccountServiceImpl implements AccountService{
 
 
             if(appliedVADto.getVerifiers().isEmpty() && appliedVADto.getPanels().isEmpty()){
+                integrationWriterService.setWarehouseService(warehouseService);
                 integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
 
                 Warehouse warehouse = ledgerAccount.getWarehouse();
@@ -386,7 +387,7 @@ public class AccountServiceImpl implements AccountService{
                 ledgerAccount.setAccountStatus(AccountType.PENDING_APPROVAL);
             }else{
                 ledgerAccount.setAccountStatus(AccountType.VERIFIED);
-
+                integrationWriterService.setWarehouseService(warehouseService);
                 integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
 
                 Warehouse warehouse = ledgerAccount.getWarehouse();
@@ -433,7 +434,7 @@ public class AccountServiceImpl implements AccountService{
         if(ledgerAccountOp.isPresent()) {
             LedgerAccount ledgerAccount = ledgerAccountOp.get();
             ledgerAccount.setAccountStatus(AccountType.APPROVED);
-
+            integrationWriterService.setWarehouseService(warehouseService);
             integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
 
             Warehouse warehouse = ledgerAccount.getWarehouse();
@@ -475,6 +476,7 @@ public class AccountServiceImpl implements AccountService{
         ledgerAccount.setAccountStatus(AccountType.PENDING);
         ledgerAccount.setWarehouse(warehouse);
         ledgerAccount.setWarehouseStore(warehouseStore);
+        integrationWriterService.setWarehouseService(warehouseService);
         integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
 
     }
@@ -487,6 +489,7 @@ public class AccountServiceImpl implements AccountService{
         ledgerAccount.setAccountStatus(AccountType.PENDING);
         ledgerAccount.setWarehouse(warehouse);
         ledgerAccount.setWarehouseStore(warehouseStore);
+        integrationWriterService.setWarehouseService(warehouseService);
         integrationWriterService.createLedgerItem(claimResolver.getToken(),ledgerAccount);
     }
 

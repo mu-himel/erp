@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.internal_requisition.service;
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.internal_requisition.dto.request.ReceiveStockDto;
 import com.agi.aesl.erpscm.internal_requisition.dto.request.StoreIRReqDto;
 import com.agi.aesl.erpscm.internal_requisition.dto.request.TransferStockDto;
@@ -26,6 +27,7 @@ import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicatio
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,62 +42,73 @@ import java.util.*;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class IrStoreServiceImpl implements IrStoreService{
 
     private static final Integer PAGE_SIZE = 20;
 
-    @Autowired
-    private ClaimResolver claimResolver;
 
-    @Autowired
-    private StoreIrRepository storeIrRepository;
+    private final ClaimResolver claimResolver;
 
-    @Autowired
-    private InternalRequisitionRepository irRepository;
 
-    @Autowired
-    private StoreIrVAHistoryRepository storeIrVAHistoryRepository;
+    private final StoreIrRepository storeIrRepository;
 
-    @Autowired
-    private IrDetailWarehouseRepository irDetailWarehouseRepository;
 
-    @Autowired
-    private UserApplicationValidatorService<StoreIR> verificationService;
+    private final InternalRequisitionRepository irRepository;
 
-    @Autowired
-    private ItemService itemService;
 
-    @Autowired
-    private CommentService commentService;
+    private final StoreIrVAHistoryRepository storeIrVAHistoryRepository;
 
+
+    private final IrDetailWarehouseRepository irDetailWarehouseRepository;
+
+
+    private final UserApplicationValidatorService<StoreIR> verificationService;
+
+
+    private final ItemService itemService;
+
+
+    private final CommentService commentService;
+
+    private static final String DATE_TIME_START="T00:00:00";
+    private static final String DATE_TIME_END="T23:59:59";
+    private static final String WAREHOUSE_ID_KEY="warehouseId";
+    private static final String WAREHOUSE_STORE_ID_KEY="warehouseStoreId";
+
+    private Long getEmpWarehouseId(){
+        Employee emp = claimResolver.getEmployee().orElse(null);
+        return emp!=null? emp.getWarehouseId() : null;
+    }
 
     @Override
     @Transactional
     public void submit(Jwt token, String uri, StoreIRReqDto storeIRReqDto) {
         Optional<StoreIR> sIrOp = storeIrRepository.findById(storeIRReqDto.getId());
+        if(sIrOp.isPresent()) {
+            StoreIR sIR = sIrOp.get();
+            InternalRequisition ir = sIR.getIr();
+            List<String> cateIds = new ArrayList<>();
+            cateIds.add(ir.getCategory().getId().toString());
 
-        StoreIR sIR = sIrOp.get();
-        InternalRequisition ir = sIR.getIr();
-        List<String> cateIds = new ArrayList<>();
-        cateIds.add(ir.getCategory().getId().toString());
+            ir.getDetails().forEach(ird ->
+                    cateIds.add(ird.getSubCategory().getId().toString())
+            );
 
-        ir.getDetails().forEach(ird->
-            cateIds.add(ird.getSubCategory().getId().toString())
-        );
+            AppliedVADto appliedVADto = verificationService.applyVerifyApprovalProcess(sIR, DomainType.PSIR,
+                    IrStatus.APPROVED.toString(), uri, "CATEGORY", cateIds, null);
 
-        AppliedVADto appliedVADto = verificationService.applyVerifyApprovalProcess(sIR, DomainType.PSIR,
-                IrStatus.APPROVED.toString(), uri, "CATEGORY", cateIds, null);
-
-        if(appliedVADto.getPanels().isEmpty() && appliedVADto.getVerifiers().isEmpty()){
-            sIR.setIrStatus(IrStatus.COMPLETED);
+            if (appliedVADto.getPanels().isEmpty() && appliedVADto.getVerifiers().isEmpty()) {
+                sIR.setIrStatus(IrStatus.COMPLETED);
+            }
         }
     }
 
     @Override
-    public Optional<?> getStoreIRDetail(Long id) {
+    public Optional<Map<String,Object>> getStoreIRDetail(Long id) {
         Optional<StoreIR> sIROp = storeIrRepository.findById(id);
         if(sIROp.isEmpty()){
-            throw new RuntimeException("Sorry! Store IR not found");
+            throw new AesException("Sorry! Store IR not found");
         }
 
         StoreIR storeIR = sIROp.get();
@@ -103,7 +116,7 @@ public class IrStoreServiceImpl implements IrStoreService{
 
         var irOp = irRepository.findById(storeIR.getIr().getId(), InternalRequisitionRepository.IrDetail.class);
         Map<String,Object> detailMap = new HashMap<>();
-        if(irOp instanceof Optional){
+        if(irOp instanceof Optional && irOp.isPresent()){
             InternalRequisitionRepository.IrDetail irDetail = irOp.get();
             detailMap.put("priority",irDetail.getPriority());
             detailMap.put("id",storeIR.getId());
@@ -132,26 +145,26 @@ public class IrStoreServiceImpl implements IrStoreService{
             detailMap.put("approvers",approvers);
             detailMap.put("status",storeIR.getStatus());
         }
-        return Optional.ofNullable(detailMap);
+        return Optional.of(detailMap);
     }
 
     @Override
-    public Page<?> getPendingStoreIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                                      Optional<String> fromDateStr, Optional<String> toDateStr) {
+    public Page<StoreIrRepository.PendingStoreIR> getPendingStoreIrs(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                                     Optional<String> fromDateStr, Optional<String> toDateStr) {
         claimResolver.setToken(token);
         Optional<Employee> empOp = claimResolver.getEmployee();
         if(empOp.isEmpty()){
-            throw new RuntimeException("Sorry! Employee Profile required");
+            throw new AesException("Sorry! Employee Profile required");
         }
         Employee employee = empOp.get();
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
         LocalDateTime fromDate = null;
         LocalDateTime toDate = null;
         if(fromDateStr.isPresent()){
-            fromDate = LocalDateTime.parse(fromDateStr.get()+"T00:00:00");
+            fromDate = LocalDateTime.parse(fromDateStr.get()+DATE_TIME_START);
         }
         if(toDateStr.isPresent()){
-            toDate = LocalDateTime.parse(toDateStr.get()+"T23:59:59");
+            toDate = LocalDateTime.parse(toDateStr.get()+DATE_TIME_END);
         }
         return storeIrRepository.findAllPendingIrs(employee.getWarehouseId(),fromDate, toDate,pageable);
     }
@@ -178,8 +191,8 @@ public class IrStoreServiceImpl implements IrStoreService{
                         Map<String,Object> warehouseStoreInfo = warehouses.get(0);
 
                         itemService.stockOut(new Item(itemDetail.getId()), transferStockDto.getTransferQty(),
-                                (Long)warehouseStoreInfo.get("warehouseId"),
-                                (Long)warehouseStoreInfo.get("warehouseStoreId"));
+                                (Long)warehouseStoreInfo.get(WAREHOUSE_ID_KEY),
+                                (Long)warehouseStoreInfo.get(WAREHOUSE_STORE_ID_KEY));
                     }
 
                 }
@@ -210,8 +223,8 @@ public class IrStoreServiceImpl implements IrStoreService{
                     if(!warehouses.isEmpty()){
                         Map<String,Object> warehouseStoreInfo = warehouses.get(0);
                         itemService.stockIn(new Item(itemDetail.getId()), irdw.getReceivedQty(),
-                                (Long)warehouseStoreInfo.get("warehouseId"),
-                                (Long)warehouseStoreInfo.get("warehouseStoreId"));
+                                (Long)warehouseStoreInfo.get(WAREHOUSE_ID_KEY),
+                                (Long)warehouseStoreInfo.get(WAREHOUSE_STORE_ID_KEY));
                     }
                 }
             }
@@ -233,35 +246,35 @@ public class IrStoreServiceImpl implements IrStoreService{
     }
 
     @Override
-    public Page<?> getReadyForTransfer(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<StoreIrRepository.PendingStoreIR> getReadyForTransfer(Jwt token, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return storeIrRepository.findAllReadyForTransfer(claimResolver.getEmployee().get().getWarehouseId(),pageable);
+        return storeIrRepository.findAllReadyForTransfer(getEmpWarehouseId(),pageable);
     }
 
     @Override
-    public Page<?> getPendingStoreIrVerification(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<StoreIrRepository.PendingStoreIR> getPendingStoreIrVerification(Jwt token, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return storeIrRepository.findAllPendingIrsVerification(claimResolver.getEmployee().get().getWarehouseId(),
+        return storeIrRepository.findAllPendingIrsVerification(getEmpWarehouseId(),
                 claimResolver.getUserId(),
                 pageable);
     }
 
     @Override
-    public Page<?> getPendingStoreIrApproval(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<StoreIrRepository.PendingStoreIR> getPendingStoreIrApproval(Jwt token, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return storeIrRepository.findAllPendingIrsApproval(claimResolver.getEmployee().get().getWarehouseId()
+        return storeIrRepository.findAllPendingIrsApproval(getEmpWarehouseId()
                 ,claimResolver.getUserId(),
                 pageable);
     }
 
     @Override
-    public Page<?> getReceiveStoreRequisitions(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<StoreIrRepository.PendingStoreIR> getReceiveStoreRequisitions(Jwt token, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
-        return storeIrRepository.findAllReceiveRequisitions(claimResolver.getEmployee().get().getWarehouseId(),
+        return storeIrRepository.findAllReceiveRequisitions(getEmpWarehouseId(),
                 pageable);
     }
 
@@ -287,8 +300,8 @@ public class IrStoreServiceImpl implements IrStoreService{
                     if(!warehouses.isEmpty()){
                         Map<String,Object> warehouseStoreInfo = warehouses.get(0);
                         itemService.stockIn(new Item(itemDetail.getId()), irdw.getInTransitReturn(),
-                                (Long)warehouseStoreInfo.get("warehouseId"),
-                                (Long)warehouseStoreInfo.get("warehouseStoreId"));
+                                (Long)warehouseStoreInfo.get(WAREHOUSE_ID_KEY),
+                                (Long)warehouseStoreInfo.get(WAREHOUSE_STORE_ID_KEY));
                     }
                 }
             }

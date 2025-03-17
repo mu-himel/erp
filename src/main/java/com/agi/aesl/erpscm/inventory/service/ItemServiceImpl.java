@@ -54,7 +54,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class ItemServiceImpl implements ItemService {
@@ -134,7 +133,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Optional<?> getItemDetailWithWarehouse(Long id) {
+    public Optional<ItemDetail> getItemDetailWithWarehouse(Long id) {
         Optional<ItemRepository.ItemDetail> itemDetailOptional = itemRepository.findByIdWithWarehouse(id);
         if(itemDetailOptional.isEmpty()){
             throw new AesException("Sorry! Item not found");
@@ -182,7 +181,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Optional<?> getItemDetailWithWarehouseWithoutInTransit(Long id) {
+    public Optional<ItemDetail> getItemDetailWithWarehouseWithoutInTransit(Long id) {
         Optional<ItemRepository.ItemDetail> itemDetailOptional = itemRepository.findByIdWithWarehouse(id);
         if(itemDetailOptional.isEmpty()){
             throw new AesException("Sorry! Item not found");
@@ -227,7 +226,7 @@ public class ItemServiceImpl implements ItemService {
         });
         itemDetail.setWarehouses(warehouses);
 
-        return Optional.ofNullable(itemDetail);
+        return Optional.of(itemDetail);
     }
 
     private void processItemStock(ItemStock itemStock, Optional<BigDecimal> inTransit,
@@ -252,7 +251,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Page<?> getAllItems(
+    public Page<ItemRepository.PageItemList> getAllItems(
             Jwt token,
             String uri,
             Optional<Integer> page, Optional<Integer> size,
@@ -305,7 +304,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Page<?> getPendingAllItems(Jwt token,Optional<Integer> page, Optional<Integer> size, Optional<String> name, Optional<String> code, Optional<Integer> reorderPercentage, Optional<Integer> stockThresholdQty, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<Long> warehouseId, Optional<Long> warehouseStoreId) {
+    public Page<ItemRepository.PageItemList> getPendingAllItems(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> name, Optional<String> code, Optional<Integer> reorderPercentage, Optional<Integer> stockThresholdQty, Optional<Long> categoryId, Optional<Long> subCategoryId, Optional<Long> warehouseId, Optional<Long> warehouseStoreId) {
         claimResolver.setToken(token);
         String uri = "inventory-control/product";
 
@@ -343,7 +342,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Page<?> getPendingVerificationAllItems(
+    public Page<ItemRepository.PageItemList> getPendingVerificationAllItems(
             Jwt token,
             Optional<Integer> page, Optional<Integer> size, Optional<String> name, Optional<String> code, Optional<Integer> reorderPercentage, Optional<Integer> stockThresholdQty, Optional<Long> categoryId, Optional<Long> subCategoryId,
                                                   Optional<Long> warehouseId, Optional<Long> warehouseStoreId) {
@@ -385,22 +384,18 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<?> getAllItems(Optional<Long> categoryId, Optional<String> name, Optional<String> code) {
+    public List<ItemRepository.ItemInfo> getAllItems(Optional<Long> categoryId, Optional<String> name, Optional<String> code) {
 
 
-        if(categoryId.isPresent()){
-            List<?> result = new ArrayList<>();
-            if(name.isPresent()){
-                result = itemRepository
+        if(categoryId.isPresent() && name.isPresent()){
+                return  itemRepository
                         .findAllByActiveAndItemCategoryIdOrItemParentCategoryIdAndNameLikeIgnoreCaseOrCodeLikeIgnoreCase(
                         true,categoryId,categoryId,name.get()+"%",name.get()+"%");
 
-            }
-            return result;
+
         }
 
         if(name.isPresent() && code.isEmpty()){
-            System.out.println(name.get());
             return itemRepository.findAllByActiveAndNameLikeIgnoreCase(true,name.get()+"%");
         }
         if(name.isEmpty() && code.isPresent()){
@@ -410,7 +405,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<?> getAllItemsBySubCategoryAndAttribute(
+    public List<ItemListWithAttributesDto> getAllItemsBySubCategoryAndAttribute(
                                                         Optional<Long> warehouseId,
                                                         Optional<Long> brandId,
                                                         Optional<Long> subCategoryId,
@@ -911,7 +906,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<?> getByAttributes(Long brandId, String attribute,Long subCatId, Long warehouseId) {
+    public List<ItemRepository.ItemInfoByAttribute> getByAttributes(Long brandId, String attribute, Long subCatId, Long warehouseId) {
         return itemRepository.findByAttributes(brandId,attribute,subCatId,warehouseId);
     }
 

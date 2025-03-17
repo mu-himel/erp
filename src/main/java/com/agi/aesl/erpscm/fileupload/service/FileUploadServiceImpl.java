@@ -1,5 +1,6 @@
 package com.agi.aesl.erpscm.fileupload.service;
 
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,7 +32,7 @@ public class FileUploadServiceImpl implements FileUploadService{
                     .build();
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new AesException(e.getMessage());
         }
     }
 

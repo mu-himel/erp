@@ -237,7 +237,7 @@ public class IrServiceImpl implements IrService {
     public <T> Optional<Map<String,Object>> getDetail(Long id, Class<T> t) {
         var irOp = irRepository.findById(id,t);
         Map<String,Object> detailMap = new HashMap<>();
-        if(irOp instanceof Optional){
+        if(irOp instanceof Optional && irOp.isPresent()){
             InternalRequisitionRepository.IrDetail irDetail =    (InternalRequisitionRepository.IrDetail) irOp.get();
             detailMap.put("priority",irDetail.getPriority());
             detailMap.put("id",irDetail.getId());
@@ -365,7 +365,7 @@ public class IrServiceImpl implements IrService {
 
         List<Map<String,Object>> wMaps = new ArrayList<>();
         var itemDetailOp = itemService.getItemDetailWithWarehouse(id);
-        if(itemDetailOp instanceof Optional){
+        if(itemDetailOp instanceof Optional && itemDetailOp.isPresent()){
             ItemDetail itemDetail = (ItemDetail) itemDetailOp.get();
 
 

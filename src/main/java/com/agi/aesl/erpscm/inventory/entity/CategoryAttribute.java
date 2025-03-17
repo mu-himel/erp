@@ -1,8 +1,7 @@
 package com.agi.aesl.erpscm.inventory.entity;
 
 import com.agi.aesl.erpscm.common.CategoryAttributeInterface;
-import com.agi.aesl.erpscm.common.ItemAttributeInterface;
-import com.agi.aesl.erpscm.inventory.enums.AttributeUnit;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;

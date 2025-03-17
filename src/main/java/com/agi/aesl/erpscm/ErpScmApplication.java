@@ -12,6 +12,7 @@ public class ErpScmApplication {
 
 	public static void main(String[] args) {
 		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Dhaka"));
+
 		SpringApplication.run(ErpScmApplication.class, args);
 	}
 

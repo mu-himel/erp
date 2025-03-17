@@ -21,7 +21,7 @@ public class UploadInvoiceController extends BaseController {
     private final GrnInvoiceService grnInvoiceService;
 
     @PostMapping("/{id}")
-    public ResponseEntity<?> uploadInvoice(
+    public ResponseEntity<Object> uploadInvoice(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") String id,
             @RequestPart("file") Optional<MultipartFile> fileOp

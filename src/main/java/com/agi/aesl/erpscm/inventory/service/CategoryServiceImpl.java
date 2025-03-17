@@ -602,7 +602,7 @@ public class CategoryServiceImpl implements CategoryService {
 
 
     @Override
-    public List<?> getCategories(Optional<Long> warehouseId,Optional<Long> warehouseStoreId,  Optional<String> name, Optional<String> code) {
+    public List<CategoryRepository.MainCategoriesInfo> getCategories(Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name, Optional<String> code) {
 
         return categoryRepository.findAllMainCategories(
                 warehouseId.orElse(null),
@@ -611,8 +611,8 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Page<?> getCategories(Jwt token,Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name,
-                                 Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
+    public Page<CategoryRepository.ItemCategoryInfo> getCategories(Jwt token, Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name,
+                                                                   Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
 
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE));
@@ -637,7 +637,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public List<?> getCategoriesForInventoryControl(
+    public List<CategoryRepository.ItemCategoryInfo> getCategoriesForInventoryControl(
                                                     Jwt token,
                                                     Optional<Long> warehouseId,
                                                     Optional<Long> warehouseStoreId,
@@ -670,14 +670,14 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public List<?> getSubCategoriesAll(Optional<Long> categoryId, Optional<String> name, Optional<String> code) {
+    public List<CategoryRepository.ItemCategoryInfo> getSubCategoriesAll(Optional<Long> categoryId, Optional<String> name, Optional<String> code) {
         return categoryRepository.findAllSubCategories(
                 name.orElse(null),
                 code.orElse(null));
     }
 
     @Override
-    public List<?> getSubCategoriesForInventoryControl(
+    public List<CategoryRepository.ItemCategoryInfo> getSubCategoriesForInventoryControl(
             Jwt token,
             Optional<Long> categoryId,
             Optional<Long> warehouseId,
@@ -712,7 +712,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Page<?> getSubCategoriesForInventoryControl(Jwt token, Optional<Long> categoryId, Optional<Long> warehouseId, Optional<Long> storeId, Optional<String> name, Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
+    public Page<CategoryRepository.ItemCategoryInfo> getSubCategoriesForInventoryControl(Jwt token, Optional<Long> categoryId, Optional<Long> warehouseId, Optional<Long> storeId, Optional<String> name, Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
 

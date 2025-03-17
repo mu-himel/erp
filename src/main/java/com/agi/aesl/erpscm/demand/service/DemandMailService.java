@@ -21,10 +21,10 @@ public interface DemandMailService extends VerifierMailService<Demand> {
             <p style="color:#ff0000">N.B. This is a system generated email. Please do not reply!</p>
             """;
 
-//    void prepareMailContent(String name, String actionType, Demand demand);
+
     void prepareMailContentForInitiator(String name, String actionType, Demand demand);
 
-//    void sentMail(String to, String subject);
+
 
     void setClaimResolver(ClaimResolver claimResolver);
 

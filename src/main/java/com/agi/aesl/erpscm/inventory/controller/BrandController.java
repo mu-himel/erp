@@ -4,7 +4,7 @@ import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.inventory.dto.request.CategoryBrandDto;
 import com.agi.aesl.erpscm.inventory.service.CategoryBrandService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,13 +15,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/brands")
+@RequiredArgsConstructor
 public class BrandController extends BaseController {
 
-    @Autowired
-    private CategoryBrandService categoryBrandService;
+
+    private final CategoryBrandService categoryBrandService;
 
     @PostMapping
-    public ResponseEntity<?> saveBrands(
+    public ResponseEntity<Object> saveBrands(
             @AuthenticationPrincipal Jwt token,
             @RequestBody @Valid List<CategoryBrandDto> brands){
         return new ResponseEntity<>(categoryBrandService.createBrands(token,brands),

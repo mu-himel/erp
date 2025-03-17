@@ -9,6 +9,7 @@ import com.agi.aesl.erpscm.inventory.service.ItemService;
 
 import jakarta.validation.Valid;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,15 +25,16 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/items")
+@RequiredArgsConstructor
 public class ItemController extends BaseController{
 
-    @Autowired
-    private ItemService itemService;
+
+    private final ItemService itemService;
 
     private record SyncItemReqDto(Long warehouseId, Long warehouseStoreId, String subCatCode){}
 
     @PostMapping
-    public ResponseEntity<?> addItem(
+    public ResponseEntity<Void> addItem(
             @AuthenticationPrincipal Jwt loggedInUser,
             @RequestBody @Valid ItemRequestDto itemRequestDto){
         itemService.createItem(loggedInUser,itemRequestDto);
@@ -40,7 +42,7 @@ public class ItemController extends BaseController{
     }
 
     @PostMapping("/receive-from-cps")
-    public ResponseEntity<?> receiveItemFromCps(
+    public ResponseEntity<Void> receiveItemFromCps(
         @AuthenticationPrincipal Jwt loggedInUser,
         @RequestBody @Valid RemoteItemRequestDto remoteItemRequestDto
     ){
@@ -49,7 +51,7 @@ public class ItemController extends BaseController{
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateItem(
+    public ResponseEntity<Void> updateItem(
                                         @PathVariable("id") Long id,
                                         @RequestBody ItemRequestDto itemRequestDto){
         itemService.updateItem(id,itemRequestDto);
@@ -57,7 +59,7 @@ public class ItemController extends BaseController{
     }
 
     @GetMapping
-    public ResponseEntity<?> getItems(
+    public ResponseEntity<Object> getItems(
                                       @AuthenticationPrincipal Jwt token,
                                       @RequestHeader("uri") String uri,
                                       @RequestParam("page") Optional<Integer> page,
@@ -81,7 +83,7 @@ public class ItemController extends BaseController{
     }
 
     @GetMapping("/pending")
-    public ResponseEntity<?> getPendingItems(
+    public ResponseEntity<Object> getPendingItems(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
                                       @RequestParam("size") Optional<Integer> size,
@@ -105,7 +107,7 @@ public class ItemController extends BaseController{
     }
 
     @GetMapping("/pending-verifications")
-    public ResponseEntity<?> getPendingVerificationItems(
+    public ResponseEntity<Object> getPendingVerificationItems(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
                                              @RequestParam("size") Optional<Integer> size,
@@ -129,7 +131,7 @@ public class ItemController extends BaseController{
     }
 
     @GetMapping("/list")
-    public ResponseEntity<?> getItems(@RequestParam("categoryId") Optional<Long> categoryId,
+    public ResponseEntity<Object> getItems(@RequestParam("categoryId") Optional<Long> categoryId,
                                       @RequestParam("name") Optional<String> name,
                                       @RequestParam("code") Optional<String> code){
         return new ResponseEntity<>(
@@ -139,7 +141,7 @@ public class ItemController extends BaseController{
     }
 
     @GetMapping("/search")
-    public ResponseEntity<?> getItems(
+    public ResponseEntity<Object> getItems(
                                     @RequestParam("warehouseId") Optional<Long> warehouseId,
                                     @RequestParam("brandId") Optional<Long> brandId,
                                     @RequestParam("subCategoryId") Optional<Long> subCategoryId,
@@ -157,7 +159,7 @@ public class ItemController extends BaseController{
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getItem(
+    public ResponseEntity<Object> getItem(
                                      @PathVariable("id") Long id){
         return new ResponseEntity<>(
                 itemService.getItemDetailWithWarehouse(id),
@@ -166,7 +168,7 @@ public class ItemController extends BaseController{
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?>  deleteItem(
+    public ResponseEntity<Void>  deleteItem(
                 @PathVariable("id") Long id,
                 @RequestParam("warehouseId") Long warehouseId,
                 @RequestParam("warehouseStoreId") Long warehouseStoreId
@@ -176,7 +178,7 @@ public class ItemController extends BaseController{
     }
 
    @PutMapping("/sync-item")
-    public ResponseEntity<?> syncItem(
+    public ResponseEntity<Void> syncItem(
         @AuthenticationPrincipal Jwt token,
         @RequestBody SyncItemReqDto syncItemReqDto
    ){
@@ -189,7 +191,7 @@ public class ItemController extends BaseController{
    }
 
     @GetMapping("/next-id")
-    public ResponseEntity<?> getNextId(){
+    public ResponseEntity<Object> getNextId(){
         Map<String,Object> response = new HashMap<>();
         response.put("code",itemService.getNextItemCode());
         return new ResponseEntity<>(
@@ -199,7 +201,7 @@ public class ItemController extends BaseController{
     }
 
     @PostMapping("/import")
-    public ResponseEntity<?> importItems(
+    public ResponseEntity<Void> importItems(
         @RequestPart("file") Optional<MultipartFile> file
     ){
         itemService.importItems(file);
@@ -207,7 +209,7 @@ public class ItemController extends BaseController{
     }
 
     @PutMapping("/approve/{warehouseId}/acc/{id}")
-    public ResponseEntity<?> approveItemFromAcc(
+    public ResponseEntity<Void> approveItemFromAcc(
             @PathVariable("warehouseId") Long warehouseId,
             @PathVariable("id") Long id
     ){
@@ -216,7 +218,7 @@ public class ItemController extends BaseController{
     }
 
     @PutMapping("/reject/{warehouseId}/acc/{id}")
-    public ResponseEntity<?> rejectItemFromAcc(
+    public ResponseEntity<Void> rejectItemFromAcc(
             @PathVariable("warehouseId") Long warehouseId,
             @PathVariable("id") Long id
     ){
@@ -225,7 +227,7 @@ public class ItemController extends BaseController{
     }
 
     @PutMapping("/approve/{id}")
-    public ResponseEntity<?> approveItemFromCps(
+    public ResponseEntity<Void> approveItemFromCps(
                     @AuthenticationPrincipal Jwt token,
                     @PathVariable("id") Long id,
                     @RequestBody ItemApproveRequestDto approveRequestDto){
@@ -234,7 +236,7 @@ public class ItemController extends BaseController{
     }
 
     @PostMapping("/force-active")
-    public ResponseEntity<?> forceActive(
+    public ResponseEntity<Void> forceActive(
             @AuthenticationPrincipal Jwt token,
             @RequestBody ForceActiveRequestDto forceActiveRequestDto
     ){
@@ -243,7 +245,7 @@ public class ItemController extends BaseController{
     }
 
     @GetMapping("/download-template")
-    public ResponseEntity<?> downloadTemplate(
+    public ResponseEntity<Object> downloadTemplate(
             @RequestParam("categoryId") Optional<Long> categoryId,
             @RequestParam("subCategoryId") Optional<Long> subCategoryId,
             @RequestParam("warehouseId") Optional<Long> warehouseId,

@@ -1,8 +1,10 @@
 package com.agi.aesl.erpscm.inventory.repository;
 
-public interface ItemQuery {
-
-    String getItemsWithSearch = """
+public class ItemQuery {
+    private ItemQuery(){}
+    public static final String COUNT_START="SELECT COUNT(*) FROM (";
+    public static final String COUNT_END=") AS TOTAL";
+    public static final String GET_ITEMS_WITH_SEARCH = """
             SELECT i.id as id, i.name as name, i.code as code, i.item_unit as itemUnit,
             ic.id as subCategoryId, ic.name as subCategoryName, ic.code as subCategoryCode,
             ipc.id as categoryId, ipc.name as categoryName, ipc.code as categoryCode,
@@ -49,9 +51,9 @@ public interface ItemQuery {
             AND (:warehouseStoreId IS NULL OR ws.id = :warehouseStoreId)
             GROUP BY i.id ORDER BY i.name, i.item_attribute_name ASC""";
 
-    String countItemsWithSearch = "SELECT count(*) FROM ("+getItemsWithSearch+") as p";
+    public static final String COUNT_ITEMS_WITH_SEARCH = COUNT_START+GET_ITEMS_WITH_SEARCH+COUNT_END;
 
-    String getItemInTransit= """
+    public static final String GET_ITEM_IN_TRANSIT= """
             SELECT sum(p.approved_quantity) FROM (SELECT
                         sum(sdd.approved_quantity) as approved_quantity,
                         scb.name as brand_name,
@@ -70,7 +72,7 @@ public interface ItemQuery {
             """;
 
 
-    String getPendingItemsWithSearch = "SELECT i.id as id, i.name as name, i.code as code, " +
+    public static final String GET_PENDING_ITEMS_WITH_SEARCH = "SELECT i.id as id, i.name as name, i.code as code, " +
             "ic.id as subCategoryId, ic.name as subCategoryName, ic.code as subCategoryCode, " +
             "ipc.id as categoryId, ipc.name as categoryName, ipc.code as categoryCode," +
             "w.id as warehouseId, w.name as warehouseName, " +
@@ -99,10 +101,10 @@ public interface ItemQuery {
             "   AND (:warehouseStoreId IS NULL OR ws.id = :warehouseStoreId) " +
             "GROUP BY i.id";
 
-    String countAllPendingItems = "SELECT COUNT(*) FROM ("+getPendingItemsWithSearch+") as total";
+    public static final String COUNT_ALL_PENDING_ITEMS = COUNT_START+GET_PENDING_ITEMS_WITH_SEARCH+COUNT_END;
 
 
-    String getPendingVerificationItemsWithSearch = """
+    public static final String GET_PENDING_VERIFICATION_ITEMS_WITH_SEARCH = """
                         SELECT i.id as id, i.name as name, i.code as code,
                         ic.id as subCategoryId, ic.name as subCategoryName, ic.code as subCategoryCode,
                         i.item_attribute_name as itemAttributeName,
@@ -114,10 +116,10 @@ public interface ItemQuery {
                                              FROM ledger_accounts la WHERE la.item_id = i.id ) as status,
                         w.name as warehouseName,
                         ws.store_name as warehouseStoreName
-                        FROM scm_items i 
+                        FROM scm_items i
                         LEFT JOIN scm_item_import_logs siil ON siil.item_id = i.id AND siil.item_inactive_status = 'PENDING_VERIFICATION'
-                        LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id 
-                        LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id 
+                        LEFT JOIN scm_item_categories ic ON ic.id = i.item_category_id
+                        LEFT JOIN scm_item_categories ipc ON ipc.id = i.item_parent_category_id
                         LEFT JOIN scm_item_stocks s ON s.item_id = i.id 
                         LEFT JOIN scm_warehouses w ON s.warehouse_id = w.id 
                         LEFT JOIN scm_warehouse_stores ws ON s.warehouse_store_id = ws.id 
@@ -133,9 +135,9 @@ public interface ItemQuery {
                            AND (:stockThresholdQty IS NULL OR i.stock_threshold_qty = :stockThresholdQty) 
                         GROUP BY i.id""";
 
-    String countAllPendingVerificationItems = "SELECT COUNT(*) FROM ("+getPendingVerificationItemsWithSearch+") as total";
+    public static final String COUNT_ALL_PENDING_VERIFICATION_ITEMS = COUNT_START+GET_PENDING_VERIFICATION_ITEMS_WITH_SEARCH+COUNT_END;
 
-    String getItemsBySubCategoryAttributeAndName ="""
+    public static final String GET_ITEMS_BY_SUB_CATEGORY_ATTR_AND_NAME ="""
         SELECT p.id as id,
             p.name as name,
             p.code as code,
@@ -179,7 +181,7 @@ public interface ItemQuery {
             AND (:attributeValue IS NULL OR p.attribute_values LIKE CONCAT('%',:attributeValue,'%'))
         """;
 
-    String getItemsWithSearchForSales = """
+    public static final String GET_ITEMS_WITH_SEARCH_FOR_SALE = """
             SELECT i.id as id, i.name as brand, i.code as itemCode, i.item_unit as itemUnit,
             ic.id as subCategoryId, ic.name as subCategoryName, ic.code as subCategoryCode,
             ipc.id as categoryId, ipc.name as categoryName, ipc.code as categoryCode,
@@ -221,5 +223,5 @@ public interface ItemQuery {
             AND (COALESCE(:warehouseStoreId) IS NULL OR ws.id IN (:warehouseStoreId))
             GROUP BY i.id ORDER BY i.name, i.item_attribute_name ASC""";
 
-    String countItemsWithSearchForSales = "SELECT count(*) FROM ("+getItemsWithSearchForSales+") as p";
+    public static final String COUNT_ITEMS_WITH_SEARCH_FOR_SALE = COUNT_START+GET_ITEMS_WITH_SEARCH_FOR_SALE+COUNT_END;
 }

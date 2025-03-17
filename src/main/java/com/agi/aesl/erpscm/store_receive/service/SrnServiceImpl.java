@@ -12,27 +12,25 @@ import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
 import com.agi.aesl.erpscm.goods_receive.repository.GrnDetailRepository;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
-import com.agi.aesl.erpscm.inventory.dto.response.ItemDetail;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
-import com.agi.aesl.erpscm.modules.dto.VerifierConfig;
-import com.agi.aesl.erpscm.modules.dto.VerifierInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
 import com.agi.aesl.erpscm.store_receive.dto.SrnDto;
 import com.agi.aesl.erpscm.store_receive.entity.SrnVerifyApprovalHistory;
 import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveDetail;
 import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveNote;
 import com.agi.aesl.erpscm.store_receive.enums.SrnStatus;
+import com.agi.aesl.erpscm.store_receive.repository.SrnQuery;
 import com.agi.aesl.erpscm.store_receive.repository.SrnRepository;
 import com.agi.aesl.erpscm.store_receive.repository.SrnVerifyApprovalHistoryRepository;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RefDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.request.RejectDto;
 import com.agi.aesl.erpscm.user_application_validation.dto.response.AppliedVADto;
-import com.agi.aesl.erpscm.user_application_validation.dto.response.ApprovalPanel;
 import com.agi.aesl.erpscm.user_application_validation.entity.UserApplicationValidation;
 import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicationValidationRepository;
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -54,12 +52,9 @@ public class SrnServiceImpl implements SrnService{
 
     private final SrnRepository srnRepository;
 
-
     private final ItemService itemService;
 
-
     private final GrnService grnService;
-
 
     private final ClaimResolver claimResolver;
 
@@ -75,8 +70,16 @@ public class SrnServiceImpl implements SrnService{
 
     private final GrnDetailRepository grnDetailRepository;
 
+    @Resource
+    private SrnStoreService srnStoreService;
+
     private static final String DATE_TIME_START="T00:00:00";
     private static final String DATE_TIME_END="T23:59:59";
+
+    private Long getEmpWarehouseId(){
+        Employee emp = claimResolver.getEmployee().orElse(null);
+        return emp!=null? emp.getWarehouseId() : null;
+    }
 
     @Override
     @Transactional
@@ -96,37 +99,12 @@ public class SrnServiceImpl implements SrnService{
         GoodReceiveNote grn = goodReceiveNoteOp.get();
         storeReceiveNote.setCostCenter(srnDto.getCostCenter());
         storeReceiveNote.setGrn(grn);
-        storeReceiveNote.setSrnDetails(srnDto.getSrnDetails().stream().map(storeReceiveDetailDto -> {
-            StoreReceiveDetail storeReceiveDetail = new StoreReceiveDetail();
-            Optional<Item> itemOp = itemService.getItemDetail(storeReceiveDetailDto.getItem().getId());
-            if(itemOp.isEmpty()) {
-                throw new AesException("Sorry! Item not found");
-            }
-            Optional<GoodReceiveItemDetail> goodReceiveItemDetailOptional = grnDetailRepository.findById(storeReceiveDetailDto.getGoodReceiveItemDetail().getId());
-            if(goodReceiveItemDetailOptional.isEmpty()){
-                throw new AesException("Good Receive Detail not found");
-            }
-            Item item = itemOp.get();
-            storeReceiveDetail.setItem(item);
-            storeReceiveDetail.setWarehouse(storeReceiveDetailDto.getWarehouse());
-            storeReceiveDetail.setWarehouseStore(storeReceiveDetailDto.getWarehouseStore());
-
-            storeReceiveDetail.setGoodReceiveItemDetail(goodReceiveItemDetailOptional.get());
-            storeReceiveDetail.setStoreReceiveNote(storeReceiveNote);
-            storeReceiveDetail.setCostCenter(storeReceiveDetailDto.getCostCenter());
-            BigDecimal stockInQty = storeReceiveDetailDto.getStockInQty()!=null? storeReceiveDetailDto.getStockInQty(): new BigDecimal(0);
-            storeReceiveDetail.setStockInQty(stockInQty);
-            ids.add(item.getItemCategory().getId().toString());
-            ids.add(item.getItemParentCategory().getId().toString());
-
-
-            return storeReceiveDetail;
-        }).toList());
+        srnStoreService.setDetail(storeReceiveNote,itemService,srnDto,ids,grnDetailRepository);
 
         srnRepository.save(storeReceiveNote);
 
         String uri="inventory-management/good-receive/store-receive-note";
-        if(ids.isEmpty() && !uri.isBlank()) {
+        if(ids.isEmpty()) {
 
             AppliedVADto result = verificationService.applyVerifyApprovalProcess(storeReceiveNote, DomainType.SRN,
                     SrnStatus.APPROVED.toString(), uri,
@@ -137,7 +115,7 @@ public class SrnServiceImpl implements SrnService{
                 storeReceiveNote.getGrn().setGrnStatus(GrnStatus.COMPLETED);
                 storeReceiveNote.setSrnDetails(storeReceiveNote.getSrnDetails().stream().map(srnd->{
                     srnd.setStockInQty(srnd.getStockInQty());
-                    storeInItem(grn, srnd);
+                    srnStoreService.storeInItem(grn, srnd,itemService,getEmpWarehouseId());
                     return srnd;
                 }).toList());
 
@@ -153,38 +131,14 @@ public class SrnServiceImpl implements SrnService{
 
     }
 
-    @Transactional
-    private List<VerifierInfo> getVerifiers(StoreReceiveNote storeReceiveNote, Optional<VerifierConfig> verifierOp) {
-        List<VerifierInfo> verifiers = new ArrayList<>();
-        if(verifierOp.isPresent()){
-            VerifierConfig verification = verifierOp.get();
-            verifiers = verification.getVerifiers();
-            Boolean verificationRequired = verification.getVerificationRequired();
-            if(Boolean.TRUE.equals(verificationRequired) && !verifiers.isEmpty()){
-                storeReceiveNote.setSrnStatus(SrnStatus.PENDING_VERIFICATION);
-            }else{
-                storeReceiveNote.setSrnStatus(SrnStatus.VERIFIED);
-            }
-
-        }else{
-            storeReceiveNote.setSrnStatus(SrnStatus.VERIFIED);
-        }
-        return verifiers;
-    }
-
-    @Transactional
-    private List<ApprovalPanel> getApprovalPanels(ClaimResolver claimResolver,String uri, String categories) {
-        return moduleService.getModuleWiseApprovalSetting(claimResolver,uri,
-                Optional.ofNullable(categories),Optional.empty());
-    }
 
     @Override
-    public List<?> getPendingDemandListBySrnItems(Long id) {
+    public List<SrnQuery.PendingDemandList> getPendingDemandListBySrnItems(Long id) {
         return srnRepository.getPendingDemandsBySrnForSrnItems(id);
     }
 
     @Override
-    public List<?> getPendingDemandListBySrnItems(Jwt token, String attributes) {
+    public List<SrnQuery.PendingDemandList> getPendingDemandListBySrnItems(Jwt token, String attributes) {
         claimResolver.setToken(token);
         AtomicReference<Long> warehouseId= new AtomicReference<>();
 
@@ -199,15 +153,14 @@ public class SrnServiceImpl implements SrnService{
     }
 
     @Override
-    public Page<?> getAll(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                          Optional<String> grnNo,Optional<Long> categoryId, Optional<Long> receivedQty,
-                          Optional<String> fromDate, Optional<String> toDate) {
+    public Page<SrnRepository.StoreReceiveNoteInfo> getAll(Jwt token, Pageable pageable,
+                                                           Optional<String> grnNo, Optional<Long> categoryId, Optional<Long> receivedQty,
+                                                           Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
             throw new AesException("Sorry! Store Profile Required");
         }
-        Sort sort = Sort.by(Sort.Direction.DESC,"id");
-        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
+
         LocalDateTime fromDateObj = null;
         LocalDateTime toDateObj = null;
 
@@ -220,16 +173,15 @@ public class SrnServiceImpl implements SrnService{
         status.add(SrnStatus.PENDING_APPROVAL.toString());
         status.add(SrnStatus.REVIEW.toString());
 
-        Employee employee = claimResolver.getEmployee().get();
-        return srnRepository.findAllSrnByStatus(employee.getWarehouseId(),status, grnNo.orElse(null),
+        return srnRepository.findAllSrnByStatus(getEmpWarehouseId(),status, grnNo.orElse(null),
                 categoryId.orElse(null),receivedQty.orElse(null),
                 fromDateObj, toDateObj,
                 pageable);
     }
 
     @Override
-    public Page<?> getPendingVerifications(Jwt token, Optional<String> fromDate, Optional<String> toDate,
-                                           Optional<Integer> page, Optional<Integer> size) {
+    public Page<SrnRepository.StoreReceiveNoteInfo> getPendingVerifications(Jwt token, Optional<String> fromDate, Optional<String> toDate,
+                                                                            Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
@@ -244,8 +196,8 @@ public class SrnServiceImpl implements SrnService{
     }
 
     @Override
-    public Page<?> getPendingApprovals(Jwt token, Optional<String> fromDate, Optional<String> toDate,
-                                       Optional<Integer> page, Optional<Integer> size) {
+    public Page<SrnRepository.StoreReceiveNoteInfo> getPendingApprovals(Jwt token, Optional<String> fromDate, Optional<String> toDate,
+                                                                        Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
 
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
@@ -262,8 +214,8 @@ public class SrnServiceImpl implements SrnService{
     }
 
     @Override
-    public Page<?> getAllComplete(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                                  Optional<String> grnNo, Optional<String> fromDate, Optional<String> toDate) {
+    public Page<SrnRepository.StoreReceiveNoteInfo> getAllComplete(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                                   Optional<String> grnNo, Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
             throw new AesException("Sorry! Store Profile Required");
@@ -282,8 +234,7 @@ public class SrnServiceImpl implements SrnService{
         status.add(SrnStatus.VERIFIED.toString());
         status.add(SrnStatus.APPROVED.toString());
         status.add(SrnStatus.REJECTED.toString());
-        Employee employee = claimResolver.getEmployee().get();
-        return srnRepository.findCompletedSrnByStatus(employee.getWarehouseId(),status, grnNo.orElse(null),
+        return srnRepository.findCompletedSrnByStatus(getEmpWarehouseId(),status, grnNo.orElse(null),
                 fromDateObj, toDateObj,pageable);
     }
 
@@ -341,7 +292,7 @@ public class SrnServiceImpl implements SrnService{
                 grn.setGrnStatus(GrnStatus.COMPLETED);
                 srn.setSrnDetails(srn.getSrnDetails().stream().map(srnd->{
                     srnd.setStockInQty(srnd.getStockInQty());
-                    storeInItem(grn, srnd);
+                    srnStoreService.storeInItem(grn, srnd,itemService,getEmpWarehouseId());
                     return srnd;
                 }).toList());
 
@@ -367,7 +318,7 @@ public class SrnServiceImpl implements SrnService{
             grn.setGrnStatus(GrnStatus.COMPLETED);
             srn.setSrnDetails(srn.getSrnDetails().stream().map(srnd->{
                 srnd.setStockInQty(srnd.getStockInQty());
-                storeInItem(grn, srnd);
+                srnStoreService.storeInItem(grn, srnd,itemService,getEmpWarehouseId());
                 return srnd;
             }).toList());
 
@@ -388,32 +339,7 @@ public class SrnServiceImpl implements SrnService{
         }
     }
 
-    @Transactional
-    private void storeInItem(GoodReceiveNote grn, StoreReceiveDetail srnd) {
-        Optional<Item> itemOp = itemService.getItemDetail(srnd.getItem().getId());
-        if(itemOp.isEmpty()) {
-            throw new AesException("Sorry! Item not found");
-        }
-        Item item = itemOp.get();
-        Optional<ItemDetail> itemDetailOp = (Optional<ItemDetail>)itemService.getItemDetailWithWarehouseWithoutInTransit(item.getId());
-        if(itemDetailOp.isPresent()) {
-            grn.setIsReceivedByStore(true);
-            grn.setGrnStatus(GrnStatus.COMPLETED);
-            ItemDetail itemDetail = itemDetailOp.get();
-            List<Map<String,Object>> stores = itemDetail
-                    .getWarehouses().get(claimResolver.getEmployee().get().getWarehouseId().toString());
-            Optional<Map<String,Object>> store = stores.stream().filter(
-                    stringObjectMap -> !((String)stringObjectMap.get("warehouseStoreName"))
-                            .toLowerCase().contains("finish goods")
-            ).findFirst();
-            store.ifPresent(stringObjectMap -> {
-                Long warehouseStoreId = (Long)stringObjectMap.get("warehouseStoreId");
-                itemService.stockIn(item, srnd.getStockInQty(),
-                        claimResolver.getEmployee().get().getWarehouseId(),
-                        warehouseStoreId);
-            });
-        }
-    }
+
 
     @Override
     @Transactional
@@ -477,7 +403,7 @@ public class SrnServiceImpl implements SrnService{
     }
 
     @Override
-    public Optional<?> getDetail(Long id) {
+    public Optional<Map<String,Object>> getDetail(Long id) {
         Optional<SrnRepository.SrnDetail> srnOp = srnRepository.findById(id, SrnRepository.SrnDetail.class);
         if(srnOp.isPresent()){
             SrnRepository.SrnDetail srn = srnOp.get();

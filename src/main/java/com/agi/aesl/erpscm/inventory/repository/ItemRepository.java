@@ -18,8 +18,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.agi.aesl.erpscm.inventory.repository.ItemQuery.*;
+
 @Repository
-public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
+public interface ItemRepository extends JpaRepository<Item,Long> {
 
     @Query("SELECT i FROM Item i LEFT JOIN FETCH i.itemCategory ic " +
             "LEFT JOIN FETCH i.itemParentCategory ipc " +
@@ -34,13 +36,13 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             "WHERE i.id=:id")
     Optional<ItemDetail> findByIdWithWarehouse(@Param("id") Long id);
 
-    @Query(value = getItemInTransit, nativeQuery = true)
+    @Query(value = GET_ITEM_IN_TRANSIT, nativeQuery = true)
     Optional<BigDecimal> findInTransitByItemAndWarehouse(@Param("itemId") Long itemId,
                                                      @Param("warehouseId") Long warehouseId);
 
 
-    @Query(value = getItemsWithSearch,
-            countQuery = countItemsWithSearch, nativeQuery = true)
+    @Query(value = GET_ITEMS_WITH_SEARCH,
+            countQuery = COUNT_ITEMS_WITH_SEARCH, nativeQuery = true)
     Page<PageItemList> findAllItems(
             @Param("name") String name,
             @Param("code") String code,
@@ -53,7 +55,7 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             Pageable pageable
     );
 
-    @Query(value = getItemsWithSearch,nativeQuery = true)
+    @Query(value = GET_ITEMS_WITH_SEARCH,nativeQuery = true)
     List<PageItemList> findAllItemList(
             @Param("name") String name,
             @Param("code") String code,
@@ -65,8 +67,8 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             @Param("warehouseStoreId") Long warehouseStoreId
     );
 
-    @Query(value = getPendingItemsWithSearch,
-            countQuery = countAllPendingItems, nativeQuery = true)
+    @Query(value = GET_PENDING_ITEMS_WITH_SEARCH,
+            countQuery = COUNT_ALL_PENDING_ITEMS, nativeQuery = true)
     Page<PageItemList> findAllPendingItems(
             @Param("name") String name,
             @Param("code") String code,
@@ -79,8 +81,8 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
             Pageable pageable
     );
 
-    @Query(value = getPendingVerificationItemsWithSearch,
-            countQuery = countAllPendingVerificationItems, nativeQuery = true)
+    @Query(value = GET_PENDING_VERIFICATION_ITEMS_WITH_SEARCH,
+            countQuery = COUNT_ALL_PENDING_VERIFICATION_ITEMS, nativeQuery = true)
     Page<PageItemList> findAllPendingVerificationItems(
             @Param("name") String name,
             @Param("code") String code,
@@ -104,7 +106,7 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
     @Query("select max(i.id) from Item i")
     Optional<Item> findMaxOrderById();
 
-    @Query(value = getItemsBySubCategoryAttributeAndName,nativeQuery = true)
+    @Query(value = GET_ITEMS_BY_SUB_CATEGORY_ATTR_AND_NAME,nativeQuery = true)
     List<ItemInfoExt> findAllItemBySubCategoryAndAttributeAndName(
             @Param("warehouseId") Long warehouseId,
             @Param("brandId") Long brandId,
@@ -284,7 +286,7 @@ public interface ItemRepository extends JpaRepository<Item,Long>,ItemQuery {
 
     List<Item> findByBrandIdAndItemCategoryIdAndItemAttributeName(Long id, Long id2, String itemAttributeName);
 
-    @Query(value = getItemsWithSearchForSales,countQuery = countItemsWithSearchForSales,nativeQuery = true)
+    @Query(value = GET_ITEMS_WITH_SEARCH_FOR_SALE,countQuery = COUNT_ITEMS_WITH_SEARCH_FOR_SALE,nativeQuery = true)
     Page<SalesItems> findAllItemListForSales(
             @Param("name") String name,
             @Param("code") String code,

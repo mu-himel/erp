@@ -6,6 +6,9 @@ import com.agi.aesl.erpscm.store_receive.dto.SrnDemandAttrDto;
 import com.agi.aesl.erpscm.store_receive.dto.SrnDto;
 import com.agi.aesl.erpscm.store_receive.service.SrnService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,8 +45,10 @@ public class SrnController  extends BaseController {
             @RequestParam("toDate") Optional<String> toDate,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size){
+        Sort sort = Sort.by(Sort.Direction.DESC,"id");
+        Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10),sort);
         return new ResponseEntity<>(
-                srnService.getAll(token, page,size, grnNo,categoryId,receivedQty,  fromDate, toDate),
+                srnService.getAll(token, pageable, grnNo,categoryId,receivedQty,  fromDate, toDate),
                 HttpStatus.OK
         );
     }

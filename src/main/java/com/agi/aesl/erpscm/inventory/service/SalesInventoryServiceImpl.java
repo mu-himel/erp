@@ -32,6 +32,8 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
 
     private final ItemRepository itemRepository;
 
+    private static final String FINISH_TYPE="finish";
+
     @Override
     public Page<WarehouseRepository.WarehouseInfoExt> getWarehouses(Optional<String> name, Optional<Integer>page,
                                                                     Optional<Integer>size){
@@ -53,7 +55,7 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
         List<WarehouseStore> stores = warehouseStoreService.getStoresByWarehouseIdIn(warehouseIds);
         List<Long> finisGoodStoreIds = new ArrayList<>();
         stores.forEach(s -> {
-          if( s.getStoreName().toLowerCase().contains("finish")){
+          if( s.getStoreName().toLowerCase().contains(FINISH_TYPE)){
               finisGoodStoreIds.add(s.getId());
           }
         });
@@ -81,7 +83,7 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
         List<WarehouseStore> stores = warehouseStoreService.getStoresByWarehouseIdIn(warehouseIds);
         List<Long> finisGoodStoreIds = new ArrayList<>();
          stores.forEach(s -> {
-            if(s.getStoreName().toLowerCase().contains("finish")){
+            if(s.getStoreName().toLowerCase().contains(FINISH_TYPE)){
                 finisGoodStoreIds.add(s.getId());
             }
         });
@@ -98,7 +100,7 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
     public List<SubCategoryInfo> getSubCategories(Long warehouseId, String categoryCode) {
         List<WarehouseStore> stores = warehouseStoreService.getStoresByWarehouseId(warehouseId);
         Optional<WarehouseStore> finishGood = stores.stream().filter(s ->
-            s.getStoreName().toLowerCase().contains("finish")
+            s.getStoreName().toLowerCase().contains(FINISH_TYPE)
         ).findFirst();
         if(finishGood.isPresent()){
             List<SubCategoryInfo> subCategories = new ArrayList<>();
@@ -132,7 +134,7 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
         warehouseIds.add(warehouseId);
         List<WarehouseStore> stores = warehouseStoreService.getStoresByWarehouseId(warehouseId);
         Optional<WarehouseStore> finishGood = stores.stream().filter(s ->
-            s.getStoreName().toLowerCase().contains("finish")
+            s.getStoreName().toLowerCase().contains(FINISH_TYPE)
         ).findFirst();
         if(finishGood.isPresent()){
             List<ItemRepository.PageItemList> allItemList = itemRepository.findAllItemList(null, null,
@@ -185,7 +187,7 @@ public class SalesInventoryServiceImpl implements SalesInventoryService{
         List<WarehouseStore> stores = warehouseStoreService.getStoresByWarehouseIdIn(warehouseIds);
         List<Long> finisGoodStoreIds = new ArrayList<>();
         stores.forEach(s -> {
-            if(s.getStoreName().toLowerCase().contains("finish")){
+            if(s.getStoreName().toLowerCase().contains(FINISH_TYPE)){
                 finisGoodStoreIds.add(s.getId());
             }
         });

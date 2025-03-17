@@ -5,6 +5,7 @@ import com.agi.aesl.erpscm.email.dto.request.EmailSentRequestDto;
 import com.agi.aesl.erpscm.email.dto.response.EmailLoginResponse;
 import com.agi.aesl.erpscm.email.dto.response.EmailSentResponse;
 import com.agi.aesl.erpscm.network.NetworkService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -18,15 +19,16 @@ import java.util.*;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class EmailSenderServiceImpl implements EmailSenderService{
 
     private List<String> recipients = new ArrayList<>();
 
-    @Autowired
-    private EmailServerConfig emailServerConfig;
 
-    @Autowired
-    private NetworkService networkService;
+    private final EmailServerConfig emailServerConfig;
+
+
+    private final NetworkService networkService;
 
     @Override
     public void refreshRecipient() {
@@ -58,10 +60,9 @@ public class EmailSenderServiceImpl implements EmailSenderService{
         HttpEntity<Map<String,Object>> payload = new HttpEntity<>(loginDto,headers);
         ResponseEntity<EmailLoginResponse> response = networkService.post(emailServerConfig.getLoginUrl(),
                 payload,EmailLoginResponse.class);
-        if(response.getBody()!=null){
+        if(response!=null && response.getBody()!=null){
             LinkedHashMap<String,Object> content = (LinkedHashMap<String, Object>) response.getBody().getContent();
             return (String) content.get("token");
-
         }
         return null;
     }
@@ -76,10 +77,8 @@ public class EmailSenderServiceImpl implements EmailSenderService{
         ResponseEntity<EmailSentResponse> response = networkService.post(emailServerConfig.getSentUrl(),
                 payload, EmailSentResponse.class);
         if(response!=null && response.getBody()!=null){
-            response.getBody().getStatus();
+
             log.info("email sent successfully");
-        }else{
-            log.info(response.getBody().getErrorMessage());
         }
     }
 }

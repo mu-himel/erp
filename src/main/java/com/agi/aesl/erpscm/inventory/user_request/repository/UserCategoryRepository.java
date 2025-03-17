@@ -10,50 +10,52 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
-public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>, UserCategoryQuery {
+import static com.agi.aesl.erpscm.inventory.user_request.repository.UserCategoryQuery.*;
 
-    @Query(value = getMyCategories, countQuery = countMyCategories, nativeQuery = true)
+@Repository
+public interface UserCategoryRepository extends JpaRepository<UserCategory,Long> {
+
+    @Query(value = GET_MY_CATEGORIES, countQuery = COUNT_MY_CATEGORIES, nativeQuery = true)
     Page<UserCategory> findAllCategoryByCreatedById(String userId, Pageable pageable);
 
-    @Query(value = getGetMySubCategories, countQuery = countGetMySubCategories, nativeQuery = true)
+    @Query(value = GET_MY_SUB_CATEGORIES, countQuery = COUNT_MY_SUB_CATEGORIES, nativeQuery = true)
     Page<UserSubCategory> findAllSubCategoryByCreatedById(String userId,Long categoryId, Pageable pageable);
 
     Boolean existsByName(String name);
 
-    @Query(value = getCategoryPVs,countQuery = countCategoryPVs,nativeQuery = true)
+    @Query(value = GET_CATEGORY_PVS,countQuery = COUNT_CATEGORY_PVS,nativeQuery = true)
     Page<UserCategory> findAllCategoryByNextVerifierId(String userId, Pageable pageable);
 
-    @Query(value = getSubCategoryPVs,countQuery = countSubCategoryPVs, nativeQuery = true)
+    @Query(value = GET_SUB_CATEGORY_PVS,countQuery = COUNT_SUB_CATEGORY_PVS, nativeQuery = true)
     Page<UserSubCategory> findAllSubCategoryByNextVerifierId(String userId,Long categoryId, Pageable pageable);
 
-    @Query(value = getCategoryPAs,countQuery = countCategoryPAs, nativeQuery = true)
+    @Query(value = GET_CATEGORY_PAS,countQuery = COUNT_CATEGORY_PAS, nativeQuery = true)
     Page<UserCategory> findAllCategoryByNextApproverId(String userId, Pageable pageable);
 
-    @Query(value = getSubCategoryPAs, countQuery = countSubCategoryPAs, nativeQuery = true)
+    @Query(value = GET_SUB_CATEGORY_PAS, countQuery = COUNT_SUB_CATEGORY_PAS, nativeQuery = true)
     Page<UserSubCategory> findAllSubCategoryByNextApproverId(String userId, Long categoryId, Pageable pageable);
 
-    @Query(value = closedCategories,countQuery = countClosedCategories, nativeQuery = true)
+    @Query(value = CLOSED_CATEGORIES,countQuery = COUNT_CLOSED_CATEGORIES, nativeQuery = true)
     Page<UserCategory> findAllClosed(String userId, Pageable pageable);
-    @Query(value = pendingApprovalFromStoreCategories,countQuery = countPendingApprovalByStoreCategories, nativeQuery = true)
+    @Query(value = PENDING_APPROVAL_FROM_STORE_CATEGORIES,countQuery = COUNT_PENDING_APPROVAL_FROM_STORE_CATEGORIES, nativeQuery = true)
     Page<PendingApprovalStore> findAllPendingApprovalByStore(Long categoryId,
                                                              String name,
                                                              Long warehouseId,Long warehouseStoreId,
                                                              Pageable pageable);
 
-    @Query(value = pendingApprovalFromStoreSubCategories,countQuery = countPendingApprovalByStoreSubCategories, nativeQuery = true)
+    @Query(value = PENDING_APPROVAL_FROM_STORE_SUB_CATEGORIES,countQuery = COUNT_PENDING_APPROVAL_FROM_STORE_SUB_CATEGORIES, nativeQuery = true)
     Page<PendingApprovalStore> findAllPendingApprovalSubCatByStore(Long categoryId,
                                                              String name,
                                                              Long warehouseId,Long warehouseStoreId,
                                                              Pageable pageable);
 
-    @Query(value = closedSubCategories,countQuery = countClosedSubCategories, nativeQuery = true)
+    @Query(value = CLOSED_SUB_CATEGORIES,countQuery = COUNT_CLOSED_SUB_CATEGORIES, nativeQuery = true)
     Page<UserSubCategory> findAllClosedSubCategory(String userId,Long categoryId, Pageable pageable);
 
-    @Query(value = getListCategories,nativeQuery = true)
+    @Query(value = GET_LIST_CATEGORIES,nativeQuery = true)
     List<UserCategoryInfo> getAllCategories(String name, String code, Long warehouseId, Long storeId);
 
-    @Query(value = getListSubCategories ,nativeQuery = true)
+    @Query(value = GET_LIST_SUB_CATEGORIES ,nativeQuery = true)
     List<UserCategoryInfo> getAllSubCategories(Long categoryId, String name, String code, Long warehouseId);
 
     interface UserCategoryInfo{

@@ -55,18 +55,18 @@ public interface CategoryService {
 
     void deleteCategory(Long id, Long warehouseId, Long storeId);
 
-    List<?> getCategories(Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name, Optional<String> code);
-    Page<?> getCategories(Jwt token,Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name,
-                          Optional<String> code,Optional<Integer> page, Optional<Integer> size);
+    List<CategoryRepository.MainCategoriesInfo> getCategories(Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name, Optional<String> code);
+    Page<CategoryRepository.ItemCategoryInfo> getCategories(Jwt token, Optional<Long> warehouseId, Optional<Long> warehouseStoreId, Optional<String> name,
+                                                            Optional<String> code, Optional<Integer> page, Optional<Integer> size);
 
-    List<?> getCategoriesForInventoryControl(Jwt token,Optional<Long> warehouse, Optional<Long> warehouseStore, Optional<String> name, Optional<String> code);
+    List<CategoryRepository.ItemCategoryInfo> getCategoriesForInventoryControl(Jwt token, Optional<Long> warehouse, Optional<Long> warehouseStore, Optional<String> name, Optional<String> code);
 
 
     List<CategoryRepository.ItemCategoryInfo> getSubCategories(Optional<Long> storeId, Optional<Long> categoryId, Optional<String> name, Optional<String> code);
 
-    List<?> getSubCategoriesAll(Optional<Long> categoryId, Optional<String> name, Optional<String> code);
+    List<CategoryRepository.ItemCategoryInfo> getSubCategoriesAll(Optional<Long> categoryId, Optional<String> name, Optional<String> code);
 
-    List<?> getSubCategoriesForInventoryControl(
+    List<CategoryRepository.ItemCategoryInfo> getSubCategoriesForInventoryControl(
             Jwt token,
             Optional<Long> categoryId,
             Optional<Long> warehouseId,
@@ -74,7 +74,7 @@ public interface CategoryService {
             Optional<String> name,
             Optional<String> code);
 
-    Page<?> getSubCategoriesForInventoryControl(
+    Page<CategoryRepository.ItemCategoryInfo> getSubCategoriesForInventoryControl(
             Jwt token,
             Optional<Long> categoryId,
             Optional<Long> warehouseId,

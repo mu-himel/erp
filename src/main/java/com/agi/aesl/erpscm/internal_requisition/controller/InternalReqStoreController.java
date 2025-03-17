@@ -5,7 +5,7 @@ import com.agi.aesl.erpscm.internal_requisition.dto.request.ReceiveStockDto;
 import com.agi.aesl.erpscm.internal_requisition.dto.request.StoreIRReqDto;
 import com.agi.aesl.erpscm.internal_requisition.dto.request.TransferStockDto;
 import com.agi.aesl.erpscm.internal_requisition.service.IrStoreService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,13 +16,14 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/ir-store")
+@RequiredArgsConstructor
 public class InternalReqStoreController extends BaseController {
 
-    @Autowired
-    private IrStoreService irStoreService;
+
+    private final IrStoreService irStoreService;
 
     @PostMapping
-    public ResponseEntity<?> submit(
+    public ResponseEntity<Void> submit(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @RequestBody StoreIRReqDto storeIRReqDto
@@ -32,7 +33,7 @@ public class InternalReqStoreController extends BaseController {
     }
 
     @GetMapping("/pending")
-    public ResponseEntity<?> pendingStoreIR(
+    public ResponseEntity<Object> pendingStoreIR(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -43,7 +44,7 @@ public class InternalReqStoreController extends BaseController {
     }
 
     @GetMapping("/pending-verification")
-    public ResponseEntity<?> pendingStoreIrVerification(
+    public ResponseEntity<Object> pendingStoreIrVerification(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
@@ -52,7 +53,7 @@ public class InternalReqStoreController extends BaseController {
     }
 
     @GetMapping("/pending-approval")
-    public ResponseEntity<?> pendingStoreIrApproval(
+    public ResponseEntity<Object> pendingStoreIrApproval(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
@@ -61,7 +62,7 @@ public class InternalReqStoreController extends BaseController {
     }
 
     @GetMapping("/receive-requisitions")
-    public ResponseEntity<?> receiveRequisition(
+    public ResponseEntity<Object> receiveRequisition(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
@@ -71,14 +72,14 @@ public class InternalReqStoreController extends BaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getStoreIrDetail(
+    public ResponseEntity<Object> getStoreIrDetail(
             @PathVariable("id") Long id
     ){
         return new ResponseEntity<>(irStoreService.getStoreIRDetail(id), HttpStatus.OK);
     }
 
     @GetMapping("/ready-for-transfer")
-    public ResponseEntity<?> readyForTransfer(
+    public ResponseEntity<Object> readyForTransfer(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page") Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size
@@ -87,7 +88,7 @@ public class InternalReqStoreController extends BaseController {
     }
 
     @PutMapping("/transfer")
-    public ResponseEntity<?> updateTransferStock(
+    public ResponseEntity<Void> updateTransferStock(
             @RequestBody TransferStockDto transferStockDto
     ){
         irStoreService.transferStock(transferStockDto);
@@ -95,19 +96,19 @@ public class InternalReqStoreController extends BaseController {
     }
 
     @PutMapping("/receive")
-    public ResponseEntity<?> receiveNote(@RequestBody ReceiveStockDto receiveStockDto){
+    public ResponseEntity<Void> receiveNote(@RequestBody ReceiveStockDto receiveStockDto){
         irStoreService.receiveStock(receiveStockDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/decline")
-    public ResponseEntity<?> declineByStore(@RequestBody ReceiveStockDto receiveStockDto){
+    public ResponseEntity<Void> declineByStore(@RequestBody ReceiveStockDto receiveStockDto){
         irStoreService.declineStock(receiveStockDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PutMapping("/accept-return")
-    public ResponseEntity<?> acceptReturn(@RequestBody ReceiveStockDto receiveStockDto){
+    public ResponseEntity<Void> acceptReturn(@RequestBody ReceiveStockDto receiveStockDto){
         irStoreService.acceptReturn(receiveStockDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

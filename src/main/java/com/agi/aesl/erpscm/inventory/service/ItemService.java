@@ -7,10 +7,13 @@ import com.agi.aesl.erpscm.inventory.dto.request.ForceActiveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemApproveRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.ItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.request.RemoteItemRequestDto;
+import com.agi.aesl.erpscm.inventory.dto.response.ItemDetail;
+import com.agi.aesl.erpscm.inventory.dto.response.ItemListWithAttributesDto;
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemStock;
 import com.agi.aesl.erpscm.inventory.enums.StockType;
 
+import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -33,16 +36,16 @@ public interface ItemService {
 
     Optional<Item> getItemDetail(Long id);
 
-    List<?> getByAttributes(Long brandId,String attribute,Long subCategoryId,Long warehouseId);
-    Optional<?> getItemDetailWithWarehouse(Long id);
-    Optional<?> getItemDetailWithWarehouseWithoutInTransit(Long id);
+    List<ItemRepository.ItemInfoByAttribute> getByAttributes(Long brandId, String attribute, Long subCategoryId, Long warehouseId);
+    Optional<ItemDetail> getItemDetailWithWarehouse(Long id);
+    Optional<ItemDetail> getItemDetailWithWarehouseWithoutInTransit(Long id);
 
     <T extends Item> void sendItemToCps(ClaimResolver claimResolver, String employee,T item,
                                                  List<ItemAttributeInterface> attributes,
                                                  WarehouseStore warehouseStore
     );
 
-    Page<?> getAllItems(
+    Page<ItemRepository.PageItemList> getAllItems(
             Jwt token, String uri,Optional<Integer> page, Optional<Integer> size,
                                    Optional<String> name,
                                    Optional<String> code,
@@ -55,7 +58,7 @@ public interface ItemService {
 
     );
 
-    Page<?> getPendingAllItems(
+    Page<ItemRepository.PageItemList> getPendingAllItems(
             Jwt token,
             Optional<Integer> page, Optional<Integer> size,
                         Optional<String> name,
@@ -69,7 +72,7 @@ public interface ItemService {
 
     );
 
-    Page<?> getPendingVerificationAllItems(
+    Page<ItemRepository.PageItemList> getPendingVerificationAllItems(
             Jwt token,
             Optional<Integer> page, Optional<Integer> size,
                         Optional<String> name,
@@ -83,8 +86,8 @@ public interface ItemService {
 
     );
 
-    List<?> getAllItems(Optional<Long> categoryId,Optional<String> name, Optional<String> code);
-    List<?> getAllItemsBySubCategoryAndAttribute(
+    List<ItemRepository.ItemInfo> getAllItems(Optional<Long> categoryId, Optional<String> name, Optional<String> code);
+    List<ItemListWithAttributesDto> getAllItemsBySubCategoryAndAttribute(
             Optional<Long> warehouseId,
             Optional<Long> brandId,
             Optional<Long> subCategoryId,

@@ -20,7 +20,8 @@ import com.agi.aesl.erpscm.purchase_order.entity.PurchaseOrder;
 import com.agi.aesl.erpscm.purchase_order.repository.PurchaseOrderRepository;
 import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveNote;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.*;
@@ -31,15 +32,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
-    @Autowired
-    private ClaimResolver claimResolver;
-    @Autowired
-    private NetworkService networkService;
 
-    @Autowired
-    @Lazy
+    private final ClaimResolver claimResolver;
+
+    private final NetworkService networkService;
+
+
+    @Setter
     private WarehouseService warehouseService;
 
     @Value("${app.hr.create.warehouse}")
@@ -63,19 +65,20 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     @Value("${service.acc}")
     private String clientId;
 
-    @Autowired
-    private IntegrationReaderService integrationReaderService;
 
-    @Autowired
-    private PurchaseOrderRepository purchaseOrderRepository;
+    private final IntegrationReaderService integrationReaderService;
 
-    @Autowired
-    private CsAccountRepository csAccountRepository;
 
-    @Autowired
-    private ItemImportLogRepository itemImportLogRepository;
+    private final PurchaseOrderRepository purchaseOrderRepository;
+
+
+    private final CsAccountRepository csAccountRepository;
+
+
+    private final ItemImportLogRepository itemImportLogRepository;
 
     private static final String PATH_SEPARATOR="/";
+    private static final String WAREHOUSE_NAME_KEY="warehouseName";
 
     @Override
     @Transactional
@@ -83,7 +86,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
         HttpHeaders headers = networkService.setHttpHeadersForHr(token);
         Map<String,Object> data = new HashMap<>();
-        data.put("warehouseName",warehouse.getName());
+        data.put(WAREHOUSE_NAME_KEY,warehouse.getName());
         data.put("warehouseLocation",warehouse.getLocation());
         data.put("warehouseId",warehouse.getId());
         HttpEntity<?> payload = new HttpEntity<>(data,headers);
@@ -100,7 +103,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     public void deleteWarehouse(Jwt token, String warehouseName) {
         HttpHeaders headers = networkService.setHttpHeadersForHr(token);
         Map<String,Object> data = new HashMap<>();
-        data.put("warehouseName",warehouseName);
+        data.put(WAREHOUSE_NAME_KEY,warehouseName);
         HttpEntity<?> payload = new HttpEntity<>(data,headers);
         Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
         if(serviceExist.isPresent()) {
@@ -115,7 +118,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         HttpHeaders headers = networkService.setHttpHeadersForHr(token);
         Map<String,Object> data = new HashMap<>();
         data.put("oldName",oldName);
-        data.put("warehouseName",warehouse.getName());
+        data.put(WAREHOUSE_NAME_KEY,warehouse.getName());
         data.put("warehouseLocation",warehouse.getLocation());
         HttpEntity<?> payload = new HttpEntity<>(data,headers);
         Optional<?> serviceExist = integrationReaderService.getActiveServiceByClientId(token,clientId);
@@ -134,7 +137,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         claimResolver.setToken(token);
         Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(ledgerAccount.getWarehouse().getId());
         if(warehouseOp.isEmpty()){
-            throw new RuntimeException("Sorry! warehouse not found");
+            throw new AesException("Sorry! warehouse not found");
         }
 
         HttpHeaders headers = networkService.setHttpHeaders(token);
@@ -156,23 +159,6 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
         remoteLedgerAccountDto.setSubCategoryId(subCategory.getId());
         remoteLedgerAccountDto.setSubCategory(subCategory.getName());
         remoteLedgerAccountDto.setSubCategoryCode(subCategory.getCode());
-//        LedgerInitiatorDto ledgerInitiatorDto = new LedgerInitiatorDto();
-//        ledgerInitiatorDto.setEmployeeId(employee.getEmployeeId());
-//        ledgerInitiatorDto.setEmployeeName(employee.getEmployeeName());
-//        ledgerInitiatorDto.setEmployeeDepartment(employee.getDepartmentName());
-//        ledgerInitiatorDto.setEmployeeDesignation(employee.getDesignationName());
-//        ledgerInitiatorDto.setReportingManager(employee.getReportingManager());
-//        ledgerInitiatorDto.setEmployeeWarehouse(employee.getWarehouseName());
-//        ledgerInitiatorDto.setWarehouseLocation(warehouse.getLocation());
-//        remoteLedgerAccountDto.setInitiatorDetailsDto(ledgerInitiatorDto);
-
-//        remoteLedgerAccountDto.setUom(item.getItemUnit());
-//        remoteLedgerAccountDto.setItemName(item.getItemAttributeName());
-//        remoteLedgerAccountDto.setItemGroup(category.getName());
-//        remoteLedgerAccountDto.setItemSubGroup(subCategory.getName());
-//        remoteLedgerAccountDto.setWarehouse(ledgerAccount.getStore());
-//        remoteLedgerAccountDto.setOpeningCredit(ledgerAccount.getOpeningCreditAmount());
-//        remoteLedgerAccountDto.setOpeningDebit(ledgerAccount.getOpeningDebitAmount());
 
         HttpEntity<RemoteLedgerAccDto> payload = new HttpEntity<>(remoteLedgerAccountDto,headers);
 
@@ -191,7 +177,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
                 csAccountOp = csAccountRepository.findByCsId(poOp.get().getPoGroup().getCs().getId());
             }
             if(csAccountOp.isEmpty()){
-                throw new RuntimeException("Sorry! Vat Type not found in Account Cs");
+                throw new AesException("Sorry! Vat Type not found in Account Cs");
             }
             CsAccount csAccount = csAccountOp.get();
             PurchaseRequest purchaseRequest = new PurchaseRequest();
@@ -201,28 +187,10 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
             purchaseRequest.setVendorCpsId(grn.getVendorId().toString());
             List<PurchaseRequestItem> items = new ArrayList<>();
             if(csAccount.getVatType()!=null) {
-                purchaseRequest.setVatType(csAccount.getVatType().replaceAll("_", "").trim().toUpperCase());
+                purchaseRequest.setVatType(csAccount.getVatType().replace("_", "").trim().toUpperCase());
             }
             purchaseRequest.setInvoice(grn.getInvoicePath());
-            receiveNote.getSrnDetails().forEach(srnd->{
-                Item item = srnd.getItem();
-                Optional<GoodReceiveItemDetail> grndetailOp = grn.getGoodReceiveItemDetails().stream().filter(grnd->grnd.getItem().getId().equals(item.getId())).findFirst();
-
-                PurchaseRequestItem pri = new PurchaseRequestItem();
-                pri.setItemCode(srnd.getItem().getCode());
-                pri.setQty(srnd.getStockInQty());
-                pri.setTransactionType(grn.getPaymentType());
-                if(grn.getDays()!=null) {
-                    pri.setCreditDays(grn.getDays().toString());
-                }
-                pri.setPricePerUnit(srnd.getGoodReceiveItemDetail().getPricePerUnit());
-                if(grndetailOp.isPresent()){
-                    pri.setEstDeliveryTime(grndetailOp.get().getEstimatedDeliveryDays().toString());
-                    pri.setVat(grndetailOp.get().getVatAmount());
-                    pri.setDeliveryCharge(grndetailOp.get().getDeliveryCharge());
-                }
-                items.add(pri);
-            });
+            setSrnDetail(receiveNote,grn,items);
             purchaseRequest.setItemList(items);
 
             HttpHeaders headers = networkService.setHttpHeaders(token);
@@ -245,6 +213,27 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
     }
 
 
+    private void setSrnDetail(StoreReceiveNote receiveNote, GoodReceiveNote grn,List<PurchaseRequestItem> items){
+        receiveNote.getSrnDetails().forEach(srnd->{
+            Item item = srnd.getItem();
+            Optional<GoodReceiveItemDetail> grndetailOp = grn.getGoodReceiveItemDetails().stream().filter(grnd->grnd.getItem().getId().equals(item.getId())).findFirst();
+
+            PurchaseRequestItem pri = new PurchaseRequestItem();
+            pri.setItemCode(srnd.getItem().getCode());
+            pri.setQty(srnd.getStockInQty());
+            pri.setTransactionType(grn.getPaymentType());
+            if(grn.getDays()!=null) {
+                pri.setCreditDays(grn.getDays().toString());
+            }
+            pri.setPricePerUnit(srnd.getGoodReceiveItemDetail().getPricePerUnit());
+            if(grndetailOp.isPresent()){
+                pri.setEstDeliveryTime(grndetailOp.get().getEstimatedDeliveryDays().toString());
+                pri.setVat(grndetailOp.get().getVatAmount());
+                pri.setDeliveryCharge(grndetailOp.get().getDeliveryCharge());
+            }
+            items.add(pri);
+        });
+    }
 
     @Override
     @Transactional
@@ -261,7 +250,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
 
             purchaseRequest.setVatType(receiveNote.getGrn().getVatType());
             purchaseRequest.setInvoice(grn.getInvoicePath());
-            receiveNote.getSrnDetails().stream().forEach(srnd->{
+            receiveNote.getSrnDetails().forEach(srnd->{
                 Item item = srnd.getItem();
                 Optional<GoodReceiveItemDetail> grndetailOp = grn.getGoodReceiveItemDetails().stream().filter(grnd->grnd.getItem().getId().equals(item.getId())).findFirst();
 
@@ -296,7 +285,7 @@ public class IntegrationWriterServiceImpl implements IntegrationWriterService{
                 String match = "["+receiveNote.getGrn().getVendorId()+"]";
                 errorMsg = errorMsg.contains(match)?
                 errorMsg.replaceAll(match,"["+receiveNote.getGrn().getVendorId()+"]"):errorMsg;
-                throw new RuntimeException(errorMsg);
+                throw new AesException(errorMsg);
             }
         }
     }

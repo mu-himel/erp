@@ -1,8 +1,10 @@
 package com.agi.aesl.erpscm.inventory.user_request.repository;
 
-public interface UserCategoryQuery {
-
-    String getMyCategories = """
+public class UserCategoryQuery {
+    private UserCategoryQuery(){}
+    public static final String COUNT_START="SELECT COUNT(*) FROM (";
+    public static final String COUNT_END=") AS TOTAL";
+    public static final String GET_MY_CATEGORIES = """
             select id as id, name as categoryName, (
                 SELECT COUNT(*) FROM user_categories uc1
                 WHERE uc1.parent_category_id=uc.id
@@ -14,17 +16,10 @@ public interface UserCategoryQuery {
             AND uc.category_status NOT IN ('VERIFIED','APPROVED','COMPLETED','REJECTED','MERGED')
             AND (uc.parent_category_id IS NULL AND uc.active_parent_category_id IS NULL)
             """;
-    String countMyCategories="SELECT COUNT(*) FROM ("+ getMyCategories+") as total";
+    public static final String COUNT_MY_CATEGORIES=COUNT_START+ GET_MY_CATEGORIES+COUNT_END;
 
-    String getMySubCategories= """
-            select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
-            uc.category_status as status
-             FROM user_categories uc
-             LEFT JOIN user_categories puc ON puc.id = uc.parent_category_id
-             WHERE uc.created_by_id=:userId AND uc.parent_category_id = :categoryId
-            """;
 
-    String getGetMySubCategories = """
+    public static final String GET_MY_SUB_CATEGORIES = """
             select uc.id as id, 
             (select count(id) from scm_item_categories ic WHERE ic.active=1 AND ic.user_category_id = uc.id) as active, 
             puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
@@ -36,9 +31,9 @@ public interface UserCategoryQuery {
              AND (uc.active_parent_category_id IS NOT NULL OR uc.parent_category_id IS NOT NULL)
              AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId OR uc.active_parent_category_id = :categoryId)
             """;
-    String countGetMySubCategories = "SELECT COUNT(*) FROM ("+getGetMySubCategories+") as total";
+    public static final String COUNT_MY_SUB_CATEGORIES = COUNT_START+GET_MY_SUB_CATEGORIES+COUNT_END;
 
-    String getCategoryPVs = """
+    public static final String GET_CATEGORY_PVS = """
             select uc.id as id, name as categoryName, (
                 SELECT COUNT(*) FROM user_categories uc1
                 WHERE uc1.parent_category_id=uc.id
@@ -58,9 +53,9 @@ public interface UserCategoryQuery {
             )
             AND uc.parent_category_id IS NULL
             """;
-    String countCategoryPVs = "SELECT COUNT(*) FROM ("+getCategoryPVs+") as total";
+    public static final String COUNT_CATEGORY_PVS = COUNT_START+GET_CATEGORY_PVS+COUNT_END;
 
-    String getSubCategoryPVs="""
+    public static final String GET_SUB_CATEGORY_PVS="""
             select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
             CASE WHEN uc.category_status != 'REVIEW' AND (uch.id IS NOT NULL AND uch.employee_id = :userId) THEN
                     uch.category_status
@@ -78,9 +73,9 @@ public interface UserCategoryQuery {
              )
              AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId)
             """;
-    String countSubCategoryPVs = "SELECT COUNT(*) FROM ("+getSubCategoryPVs+") as total";
+    public static final String COUNT_SUB_CATEGORY_PVS= COUNT_START+GET_SUB_CATEGORY_PVS+COUNT_END;
 
-    String getCategoryPAs="""
+    public static final String GET_CATEGORY_PAS="""
             select uc.id as id, name as categoryName, (
                 SELECT COUNT(*) FROM user_categories uc1
                 WHERE uc1.parent_category_id=uc.id
@@ -100,9 +95,9 @@ public interface UserCategoryQuery {
             )
             AND uc.parent_category_id IS NULL
             """;
-    String countCategoryPAs = "SELECT COUNT(*) FROM ("+getCategoryPAs+") as total";
+    public static final String COUNT_CATEGORY_PAS = COUNT_START+GET_CATEGORY_PAS+COUNT_END;
 
-    String getSubCategoryPAs="""
+    public static final String GET_SUB_CATEGORY_PAS="""
             select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 0 as productCount,
             CASE WHEN uc.category_status != 'REVIEW' AND (uch.id IS NOT NULL AND uch.employee_id = :userId) THEN
                     uch.category_status
@@ -120,9 +115,9 @@ public interface UserCategoryQuery {
             )
             AND (:categoryId IS NULL OR uc.parent_category_id = :categoryId)
             """;
-    String countSubCategoryPAs = "SELECT COUNT(*) FROM ("+getSubCategoryPAs+") as total";
+    public static final String COUNT_SUB_CATEGORY_PAS = COUNT_START+GET_SUB_CATEGORY_PAS+COUNT_END;
 
-    String closedCategories="""
+    public static final String CLOSED_CATEGORIES="""
             select uc.id as id, name as categoryName, (
                 SELECT COUNT(*) FROM user_categories uc1
                 WHERE uc1.active_parent_category_id in (SELECT id FROM scm_item_categories ipc
@@ -137,9 +132,9 @@ public interface UserCategoryQuery {
             WHERE uc.created_by_id=:userId AND (uc.parent_category_id IS NULL AND uc.active_parent_category_id IS NULL)
             AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED','REJECTED','MERGED')
             """;
-    String countClosedCategories = "SELECT COUNT(*) FROM ("+closedCategories+") as total";
+    public static final String COUNT_CLOSED_CATEGORIES = COUNT_START+CLOSED_CATEGORIES+COUNT_END;
 
-    String pendingApprovalFromStoreCategories="""
+    public static final String PENDING_APPROVAL_FROM_STORE_CATEGORIES="""
             select uc.id as id, e.employee_name as employeeName, uc.name as categoryName, (
                 SELECT COUNT(*) FROM user_categories uc1
                 WHERE uc1.parent_category_id=uc.id
@@ -171,9 +166,9 @@ public interface UserCategoryQuery {
             AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED','PENDING')
             AND (uc.is_approved_by_store IS NULL OR uc.is_approved_by_store=false)
             """;
-    String countPendingApprovalByStoreCategories = "SELECT COUNT(*) FROM ("+pendingApprovalFromStoreCategories+") as total";
+    public static final String COUNT_PENDING_APPROVAL_FROM_STORE_CATEGORIES = COUNT_START+PENDING_APPROVAL_FROM_STORE_CATEGORIES+COUNT_END;
 
-    String pendingApprovalFromStoreSubCategories="""
+    public static final String PENDING_APPROVAL_FROM_STORE_SUB_CATEGORIES="""
             select uc.id as id, e.employee_name as employeeName, uc.name as categoryName, (
                 SELECT COUNT(*) FROM user_categories uc1
                 WHERE uc1.parent_category_id=uc.id
@@ -205,9 +200,9 @@ public interface UserCategoryQuery {
             AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED','PENDING')
             AND (uc.is_approved_by_store IS NULL OR uc.is_approved_by_store=false)
             """;
-    String countPendingApprovalByStoreSubCategories = "SELECT COUNT(*) FROM ("+pendingApprovalFromStoreSubCategories+") as total";
+    public static final String COUNT_PENDING_APPROVAL_FROM_STORE_SUB_CATEGORIES = COUNT_START+PENDING_APPROVAL_FROM_STORE_SUB_CATEGORIES+COUNT_END;
 
-    String closedSubCategories="""
+    public static final String CLOSED_SUB_CATEGORIES="""
             select uc.id as id, puc.name as categoryName, uc.name as subCategoryName, 
             (SELECT COUNT(*) FROM user_items ui WHERE
             ui.sub_category_id IN (SELECT id from scm_item_categories ic WHERE ic.user_category_id = uc.id)
@@ -221,14 +216,10 @@ public interface UserCategoryQuery {
              AND (:categoryId IS NULL OR uc.active_parent_category_id = :categoryId)
              AND uc.category_status IN ('VERIFIED','APPROVED','COMPLETED','REJECTED','MERGED')
             """;
-    String countClosedSubCategories = "SELECT COUNT(*) FROM ("+closedSubCategories+") as total";
+    public static final String COUNT_CLOSED_SUB_CATEGORIES = COUNT_START+CLOSED_SUB_CATEGORIES+COUNT_END;
 
-//    SELECT 'USER_MANAGED' as `type`, ua.id, ua.name, ua.code FROM user_categories ua
-    //            WHERE (:name IS NULL OR LOWER(ua.name) LIKE LOWER(CONCAT('%',:name,'%')))
-//            AND (:code IS NULL OR LOWER(ua.code) LIKE LOWER(CONCAT('%',:code,'%')))
-//            AND ua.created_by_id = :userId
-//            UNION
-    String getListCategories="""
+
+    public static final String GET_LIST_CATEGORIES="""
             SELECT 'STORE_MANAGED' as `type`, scws.warehouse_store_id as storeId, ic.user_category_id as userCategoryId, ic.id,ic.name,ic.code 
             FROM scm_item_categories ic
             LEFT JOIN scm_category_warehouse_stores scws ON scws.category_id = ic.id
@@ -241,13 +232,8 @@ public interface UserCategoryQuery {
             AND ic.parent_category_id IS NULL
             """;
 
-//    SELECT 'USER_MANAGED' as `type`, ua.id, ua.name, ua.code FROM user_categories ua
-//    WHERE (:name IS NULL OR LOWER(ua.name) LIKE LOWER(CONCAT('%',:name,'%')))
-//    AND (:code IS NULL OR LOWER(ua.code) LIKE LOWER(CONCAT('%',:code,'%')))
-//    AND ua.parent_category_id = :categoryId
-//    AND ua.created_by_id = :userId
-//            UNION
-    String getListSubCategories="""
+
+    public static final String GET_LIST_SUB_CATEGORIES="""
             SELECT 'STORE_MANAGED' as `type`, ic.user_category_id as userCategoryId, ic.id,ic.name,ic.code 
             FROM scm_item_categories ic
             LEFT JOIN scm_category_warehouse_stores scws ON scws.category_id = ic.id

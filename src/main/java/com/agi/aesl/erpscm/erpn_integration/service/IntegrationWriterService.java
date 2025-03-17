@@ -1,6 +1,7 @@
 package com.agi.aesl.erpscm.erpn_integration.service;
 
 import com.agi.aesl.erpscm.account_finance.entity.LedgerAccount;
+import com.agi.aesl.erpscm.control_panel.inventory_control.service.WarehouseService;
 import com.agi.aesl.erpscm.store_receive.entity.StoreReceiveNote;
 import org.springframework.security.oauth2.jwt.Jwt;
 
@@ -16,4 +17,5 @@ public interface IntegrationWriterService {
     void purchaseReceived(Jwt token, StoreReceiveNote receiveNote);
     void purchaseReceivedManual(Jwt token, StoreReceiveNote receiveNote);
     void createLedgerItemWithoutWarehouseId(Jwt token, LedgerAccount ledgerAccount);
+    void setWarehouseService(WarehouseService warehouseService);
 }
