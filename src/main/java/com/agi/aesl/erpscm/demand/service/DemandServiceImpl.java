@@ -721,7 +721,7 @@ public class DemandServiceImpl implements DemandService{
                 Item item = demandDetail.getItem();
                 List<Map<String,Object>> stocks = null;
                 Long warehouseStoreId = null;
-                Optional<ItemDetail> itemDetailOp = (Optional<ItemDetail>) itemService.getItemDetailWithWarehouse(item.getId());
+                Optional<ItemDetail> itemDetailOp = itemService.getItemDetailWithWarehouse(item.getId());
                 if(itemDetailOp.isPresent()){
                     ItemDetail itemDetail = itemDetailOp.get();
                     stocks = itemDetail.getWarehouses().get(demandReceiveDto.getWarehouseId().toString());

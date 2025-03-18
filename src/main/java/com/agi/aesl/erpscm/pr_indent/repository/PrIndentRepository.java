@@ -15,11 +15,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Repository
-public interface PrIndentRepository extends JpaRepository<PrIndent, Long>, PrIndentQuery {
+import static com.agi.aesl.erpscm.pr_indent.repository.PrIndentQuery.*;
 
-    @Query(value = getReadyIndentWithSearch,
-            countQuery = countReadyPrIndentWithSearch,
+@Repository
+public interface PrIndentRepository extends JpaRepository<PrIndent, Long> {
+
+    @Query(value = GET_READY_INDENT_WITH_SEARCH,
+            countQuery = COUNT_READY_INDENT_WITH_SEARCH,
             nativeQuery = true
     )
     Page<PrIndentInfo> getAllPrIndents(
@@ -30,14 +32,14 @@ public interface PrIndentRepository extends JpaRepository<PrIndent, Long>, PrInd
             Pageable pageable
     );
 
-    @Query(value = getPrIndentByIdWithSearch,
+    @Query(value = GET_PR_INDENT_BY_ID_WITH_SEARCH,
             nativeQuery = true
     )
     List<PrIndentViewInfo> getPrIndentById(
             @Param("id") Long id
     );
 
-    @Query(value = getPrIndentByIdsWithSearch,
+    @Query(value = GET_PER_INDENT_BY_IDS_WITH_SEARCH,
             nativeQuery = true
     )
     List<PrIndentViewInfo> getPrIndentByIds(

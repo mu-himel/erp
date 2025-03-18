@@ -1,10 +1,11 @@
 package com.agi.aesl.erpscm.store_receive.repository;
 
-import java.time.LocalDate;
 
-public interface SrnQuery {
-
-    String getAll= """
+public class SrnQuery {
+    private SrnQuery(){}
+    public static final String COUNT_START="SELECT COUNT(*) FROM (";
+    public static final String COUNT_END=") AS TOTAL";
+    public static final String GET_ALL= """
             select p.id,p.grnNo,p.srnId,p.createdAt,p.grnStatus,p.isReceivedByStore,p.categoryName,
                                        p.receivedQty,p.itemAttributes,p.brandId,
                                        p.items as items,
@@ -52,7 +53,7 @@ public interface SrnQuery {
             """;
 
 
-    String getPendingVerifications= """
+    public static final String GET_PENDING_VERIFICATIONS= """
             select p.id,p.grnNo,p.srnId,p.createdAt,p.grnStatus,p.isReceivedByStore,p.categoryName,
                                        p.receivedQty,p.itemAttributes,p.brandId,
                                        p.items as items,
@@ -107,7 +108,7 @@ public interface SrnQuery {
                                        GROUP BY grn.id) p
             """;
 
-    String getPendingApprovals= """
+    public static final String GET_PENDING_APPROVALS= """
             select p.id,p.grnNo,p.srnId,p.createdAt,p.grnStatus,p.isReceivedByStore,p.categoryName,
                                        p.receivedQty,p.itemAttributes,p.brandId,
                                        p.items as items,
@@ -162,7 +163,7 @@ public interface SrnQuery {
                                        GROUP BY grn.id) p
             """;
 
-    String getAllCompleted= """
+    public static final String GET_ALL_COMPLETED= """
             select p.id,p.grnNo,p.srnId,p.createdAt,p.grnStatus,p.isReceivedByStore,p.categoryName,
                                        p.receivedQty,p.itemAttributes,p.brandId,
                                        p.items as items,
@@ -206,19 +207,19 @@ public interface SrnQuery {
             """;
 
 
-    String countAll="SELECT COUNT(*) FROM ("+getAll+") as total";
-    String countAllCompleted="SELECT COUNT(*) FROM ("+getAllCompleted+") as total";
-    String countPendingVerifications="SELECT COUNT(*) FROM ("+getPendingVerifications+") as total";
-    String countPendingApprovals="SELECT COUNT(*) FROM ("+getPendingApprovals+") as total";
+    public static final String COUNT_ALL=COUNT_START+GET_ALL+COUNT_END;
+    public static final String COUNT_ALL_COMPLETED=COUNT_START+GET_ALL_COMPLETED+COUNT_END;
+    public static final String COUNT_PENDING_VERIFICATIONS=COUNT_START+GET_PENDING_VERIFICATIONS+COUNT_END;
+    public static final String COUNT_PENDING_APPROVALS=COUNT_START+GET_PENDING_APPROVALS+COUNT_END;
 
-    String getPendingDemandsBySrnForSrnItems = """
-            SELECT 
+    public static final String GET_PENDING_DEMANDS_BY_SRN_FOR_SRN_ITEMS = """
+            SELECT
                 d.id as id,
                 d.demand_no as demandNo,
                 e.name as employeeName,
                 e.department_name as departmentName,
                 d.demand_date as demandDate,
-                count(dd.id) as items 
+                count(dd.id) as items
             FROM scm_demand_details dd
             LEFT JOIN scm_demands d ON d.id = dd.demand_id
             LEFT JOIN acl_users e ON e.id=d.requested_by_id
@@ -229,7 +230,7 @@ public interface SrnQuery {
             """;
 
 
-    String getGetPendingDemandsByAttributes= """
+    public static final String GET_PENDING_DEMANDS_BY_ATTRIBUTE= """
             SELECT
             p.id as id,
             p.demand_no as demandNo,
@@ -261,14 +262,5 @@ public interface SrnQuery {
             GROUP BY p.demand_attributes, p.id
             """;
 
-    interface PendingDemandList{
 
-        Long getId();
-        String getDemandNo();
-        String getEmployeeName();
-        String getWarehouseName();
-        String getDepartmentName();
-        LocalDate getDemandDate();
-        Long getItems();
-    }
 }

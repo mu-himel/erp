@@ -183,16 +183,18 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
         StringBuilder sb = new StringBuilder();
 
         attributes.forEach(itemAttribute -> {
-            sb.append(itemAttribute.getAttributeType().trim()
+            String s = "";
+            s=s.concat(itemAttribute.getAttributeType().trim()
                     +" "+itemAttribute.getAttributeValue().trim()
                     +" "+itemAttribute.getAttributeUnit().trim());
-            sb.append(" - ");
+            s=s.concat(" - ");
+            sb.append(s);
         });
 
         return (sb.isEmpty())? "" :  sb.substring(0,sb.length()-3);
     }
 
-    private List<?> getByAttributes(Long brandId, String attribute) {
+    private List<UserItemRepository.UserItemByAttribute> getByAttributes(Long brandId, String attribute) {
         return userItemRepository.findByAttributes(brandId,attribute);
     }
 

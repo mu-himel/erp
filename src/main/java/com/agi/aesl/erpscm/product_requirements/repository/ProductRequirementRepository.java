@@ -18,11 +18,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.transaction.Transactional;
 
-@Repository
-public interface ProductRequirementRepository extends JpaRepository<ProductRequirement,Long>, ProductRequirementQuery{
+import static com.agi.aesl.erpscm.product_requirements.repository.ProductRequirementQuery.*;
 
-    @Query(value = getProductRequirementWithSearch,
-    countQuery = countProductRequirementWithSearch,
+@Repository
+public interface ProductRequirementRepository extends JpaRepository<ProductRequirement,Long>{
+
+    @Query(value = GET_PRODUCT_REQUIREMENT_WITH_SEARCH,
+    countQuery = COUNT_PRODUCT_REQUIREMENT_WITH_SEARCH,
     nativeQuery = true)
     Page<ProductRequirementInfo> findAllProductRequirements(
             Long categoryId, 
@@ -32,14 +34,14 @@ public interface ProductRequirementRepository extends JpaRepository<ProductRequi
             Integer daysRemain,
             Pageable pageable);
 
-    @Query(value = getProductRequirementViewWithSearchV2,nativeQuery = true)
+    @Query(value = GET_PRODUCT_REQUIREMENT_VIEW_WITH_SEARCH_V2,nativeQuery = true)
     List<ProductRequirementViewInfoV2> getAllProductRequirementView(Long categoryId, Long subCategoryId);
 
     @Modifying
     @Query(value = "UPDATE product_requirements pr SET pr.status='OPEN' WHERE pr.id IN :ids",nativeQuery = true)
     void updateStatusByIds(List<Long> ids);
 
-    @Query(value = getDemandWithSearch,
+    @Query(value = GET_DEMAND_WITH_SEARCH,
             nativeQuery = true
     )
     List<PrDemandView> getDemandByProductRequirementIds(
@@ -166,7 +168,7 @@ public interface ProductRequirementRepository extends JpaRepository<ProductRequi
         Integer getInTransit();
     }
 
-    @Query(value = getWarehouseRequirements,nativeQuery = true)
+    @Query(value = GET_WAREHOUSE_REQUIREMENTS,nativeQuery = true)
     List<WarehouseRequirement> getWarehouseRequirements(String attribute);
 
     @Transactional

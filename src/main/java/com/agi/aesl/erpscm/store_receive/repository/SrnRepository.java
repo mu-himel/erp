@@ -18,35 +18,46 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
-public interface SrnRepository extends JpaRepository<StoreReceiveNote, Long>, SrnQuery {
+import static com.agi.aesl.erpscm.store_receive.repository.SrnQuery.*;
 
-    @Query(value = getAll, countQuery = countAll, nativeQuery = true)
+@Repository
+public interface SrnRepository extends JpaRepository<StoreReceiveNote, Long> {
+
+    @Query(value = GET_ALL, countQuery = COUNT_ALL, nativeQuery = true)
     Page<StoreReceiveNoteInfo> findAllSrnByStatus(Long warehouseId, List<String> status, String grnNo,
                                                   Long categoryId, Long receivedQty,
                                                   LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
 
-    @Query(value = getAllCompleted, countQuery = countAllCompleted, nativeQuery = true)
+    @Query(value = GET_ALL_COMPLETED, countQuery = COUNT_ALL_COMPLETED, nativeQuery = true)
     Page<StoreReceiveNoteInfo> findCompletedSrnByStatus(Long warehouseId,List<String> status, String grnNo, LocalDateTime fromDate,
                                                   LocalDateTime toDate, Pageable pageable);
 
-    @Query(value = getPendingDemandsBySrnForSrnItems,nativeQuery = true)
+    @Query(value = GET_PENDING_DEMANDS_BY_SRN_FOR_SRN_ITEMS,nativeQuery = true)
     List<PendingDemandList> getPendingDemandsBySrnForSrnItems(@Param("id") Long id);
 
-    @Query(value = getGetPendingDemandsByAttributes, nativeQuery = true)
+    @Query(value = GET_PENDING_DEMANDS_BY_ATTRIBUTE, nativeQuery = true)
     List<PendingDemandList> getPendingDemandsBySrnForSrnItems(@Param("warehouseId") Long warehouseId,
                                                               @Param("attributes") String attributes);
 
-    @Query(value = getPendingVerifications, countQuery = countPendingVerifications, nativeQuery = true)
+    @Query(value = GET_PENDING_VERIFICATIONS, countQuery = COUNT_PENDING_VERIFICATIONS, nativeQuery = true)
     Page<StoreReceiveNoteInfo> findAllPendingVerification(String nextVerifierId, LocalDateTime fromDate,
                                                           LocalDateTime toDate, Pageable pageable);
 
-    @Query(value = getPendingApprovals, countQuery = countPendingApprovals, nativeQuery = true)
+    @Query(value = GET_PENDING_APPROVALS, countQuery = COUNT_PENDING_APPROVALS, nativeQuery = true)
     Page<StoreReceiveNoteInfo> findAllPendingApproval(String nextApproverId, LocalDateTime fromDate,
                                                       LocalDateTime toDate, Pageable pageable);
 
     <T> Optional<T> findById(Long id, Class<T> srnDetailClass);
+    interface PendingDemandList{
 
+        Long getId();
+        String getDemandNo();
+        String getEmployeeName();
+        String getWarehouseName();
+        String getDepartmentName();
+        LocalDate getDemandDate();
+        Long getItems();
+    }
     interface StoreReceiveNoteInfo{
         String getGrnNo();
         Long getId();

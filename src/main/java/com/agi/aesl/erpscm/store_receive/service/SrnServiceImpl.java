@@ -133,12 +133,12 @@ public class SrnServiceImpl implements SrnService{
 
 
     @Override
-    public List<SrnQuery.PendingDemandList> getPendingDemandListBySrnItems(Long id) {
+    public List<SrnRepository.PendingDemandList> getPendingDemandListBySrnItems(Long id) {
         return srnRepository.getPendingDemandsBySrnForSrnItems(id);
     }
 
     @Override
-    public List<SrnQuery.PendingDemandList> getPendingDemandListBySrnItems(Jwt token, String attributes) {
+    public List<SrnRepository.PendingDemandList> getPendingDemandListBySrnItems(Jwt token, String attributes) {
         claimResolver.setToken(token);
         AtomicReference<Long> warehouseId= new AtomicReference<>();
 

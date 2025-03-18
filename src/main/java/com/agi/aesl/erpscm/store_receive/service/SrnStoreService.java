@@ -62,7 +62,7 @@ public class SrnStoreService {
             throw new AesException("Sorry! Item not found");
         }
         Item item = itemOp.get();
-        Optional<ItemDetail> itemDetailOp = (Optional<ItemDetail>)itemService.getItemDetailWithWarehouseWithoutInTransit(item.getId());
+        Optional<ItemDetail> itemDetailOp = itemService.getItemDetailWithWarehouseWithoutInTransit(item.getId());
         if(itemDetailOp.isPresent()) {
             grn.setIsReceivedByStore(true);
             grn.setGrnStatus(GrnStatus.COMPLETED);

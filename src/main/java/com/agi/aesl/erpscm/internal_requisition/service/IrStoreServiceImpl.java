@@ -183,7 +183,7 @@ public class IrStoreServiceImpl implements IrStoreService{
                 Item item = itemOp.get();
                 var itemDetailOp = itemService.getItemDetailWithWarehouse(item.getId());
                 if(itemDetailOp instanceof Optional && itemDetailOp.isPresent()){
-                    ItemDetail itemDetail = (ItemDetail) itemDetailOp.get();
+                    ItemDetail itemDetail = itemDetailOp.get();
                     List<Map<String,Object>> warehouses = itemDetail
                             .getWarehouses()
                             .get(transferStockDto.getWarehouseId().toString());
@@ -216,7 +216,7 @@ public class IrStoreServiceImpl implements IrStoreService{
                 Item item = itemOp.get();
                 var itemDetailOp = itemService.getItemDetailWithWarehouse(item.getId());
                 if(itemDetailOp instanceof Optional && itemDetailOp.isPresent()){
-                    ItemDetail itemDetail = (ItemDetail) itemDetailOp.get();
+                    ItemDetail itemDetail = itemDetailOp.get();
                     List<Map<String,Object>> warehouses = itemDetail
                             .getWarehouses()
                             .get(receiveStockDto.getWarehouseId().toString());
@@ -293,7 +293,7 @@ public class IrStoreServiceImpl implements IrStoreService{
                 Item item = itemOp.get();
                 var itemDetailOp = itemService.getItemDetailWithWarehouse(item.getId());
                 if(itemDetailOp instanceof Optional && itemDetailOp.isPresent()){
-                    ItemDetail itemDetail = (ItemDetail) itemDetailOp.get();
+                    ItemDetail itemDetail = itemDetailOp.get();
                     List<Map<String,Object>> warehouses = itemDetail
                             .getWarehouses()
                             .get(receiveStockDto.getWarehouseId().toString());

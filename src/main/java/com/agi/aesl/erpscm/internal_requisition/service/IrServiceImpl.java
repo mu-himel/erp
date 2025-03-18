@@ -366,7 +366,7 @@ public class IrServiceImpl implements IrService {
         List<Map<String,Object>> wMaps = new ArrayList<>();
         var itemDetailOp = itemService.getItemDetailWithWarehouse(id);
         if(itemDetailOp instanceof Optional && itemDetailOp.isPresent()){
-            ItemDetail itemDetail = (ItemDetail) itemDetailOp.get();
+            ItemDetail itemDetail =  itemDetailOp.get();
 
 
             itemDetail.getWarehouses().values().forEach(w->{

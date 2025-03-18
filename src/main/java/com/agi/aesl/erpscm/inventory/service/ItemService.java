@@ -113,8 +113,8 @@ public interface ItemService {
 
     void approveItemFromCps(Jwt token, Long id, ItemApproveRequestDto approveRequestDto);
 
-    List<?> getTemplateData(Long categoryId, Long subCategoryId,
-                            Long warehouseId, Long warehouseStoreId);
+    List<ItemRepository.ItemTemplateInfo> getTemplateData(Long categoryId, Long subCategoryId,
+                                                          Long warehouseId, Long warehouseStoreId);
 
     void approveItemFromAcc(Long id, Long warehouseId);
 
