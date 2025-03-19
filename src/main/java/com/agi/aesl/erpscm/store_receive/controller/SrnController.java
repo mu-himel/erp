@@ -5,7 +5,7 @@ import com.agi.aesl.erpscm.demand.dto.request.ReviewDto;
 import com.agi.aesl.erpscm.store_receive.dto.SrnDemandAttrDto;
 import com.agi.aesl.erpscm.store_receive.dto.SrnDto;
 import com.agi.aesl.erpscm.store_receive.service.SrnService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -19,13 +19,14 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/srn")
+@RequiredArgsConstructor
 public class SrnController  extends BaseController {
 
-    @Autowired
-    private SrnService srnService;
+
+    private final SrnService srnService;
 
     @PostMapping
-    public ResponseEntity<?> addSrn(
+    public ResponseEntity<Void> addSrn(
             @AuthenticationPrincipal Jwt token,
             @RequestBody SrnDto srnDto
     ){
@@ -36,7 +37,7 @@ public class SrnController  extends BaseController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllFromQc(
+    public ResponseEntity<Object> getAllFromQc(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("grnNo") Optional<String> grnNo,
             @RequestParam("categoryId") Optional<Long> categoryId,
@@ -53,7 +54,7 @@ public class SrnController  extends BaseController {
         );
     }
     @GetMapping("/complete")
-    public ResponseEntity<?> getAllComplete(
+    public ResponseEntity<Object> getAllComplete(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("grnNo") Optional<String> grnNo,
             @RequestParam("fromDate") Optional<String> fromDate,
@@ -67,7 +68,7 @@ public class SrnController  extends BaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getDetail(
+    public ResponseEntity<Object> getDetail(
             @AuthenticationPrincipal Jwt token,
            @PathVariable("id") Long id){
 
@@ -78,7 +79,7 @@ public class SrnController  extends BaseController {
     }
 
     @GetMapping("demands/{id}")
-    public ResponseEntity<?> getPendingDemandListBySrnItems(@PathVariable("id") Long id){
+    public ResponseEntity<Object> getPendingDemandListBySrnItems(@PathVariable("id") Long id){
         return new ResponseEntity<>(
                 srnService.getPendingDemandListBySrnItems(id),
                 HttpStatus.OK
@@ -86,11 +87,10 @@ public class SrnController  extends BaseController {
     }
 
     @PostMapping("/by-attribute")
-    public ResponseEntity<?> getPendingDemandListBySrnItems(
+    public ResponseEntity<Object> getPendingDemandListBySrnItems(
             @AuthenticationPrincipal Jwt token,
             @RequestBody SrnDemandAttrDto attributeDto
     ){
-        System.out.println(attributeDto.getAttributeName());
         return new ResponseEntity<>(
                 srnService.getPendingDemandListBySrnItems(token,attributeDto.getAttributeName()),
                 HttpStatus.OK
@@ -98,7 +98,7 @@ public class SrnController  extends BaseController {
     }
 
     @GetMapping("/pending-verifications")
-    public ResponseEntity<?> getPendingVerifications(
+    public ResponseEntity<Object> getPendingVerifications(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("fromDate") Optional<String> fromDate,
             @RequestParam("toDate") Optional<String> toDate,
@@ -113,7 +113,7 @@ public class SrnController  extends BaseController {
     }
 
     @GetMapping("/pending-approvals")
-    public ResponseEntity<?> getPendingApprovals(
+    public ResponseEntity<Object> getPendingApprovals(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("fromDate") Optional<String> fromDate,
             @RequestParam("toDate") Optional<String> toDate,
@@ -127,7 +127,7 @@ public class SrnController  extends BaseController {
     }
 
     @PutMapping("/review/{id}")
-    public ResponseEntity<?> review(
+    public ResponseEntity<Void> review(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody ReviewDto reviewDto

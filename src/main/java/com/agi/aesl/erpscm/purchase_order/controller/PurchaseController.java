@@ -4,7 +4,7 @@ import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.purchase_order.dto.request.PurchaseRequestDto;
 import com.agi.aesl.erpscm.purchase_order.service.PurchaseOrderService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,13 +15,14 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/po")
+@RequiredArgsConstructor
 public class PurchaseController extends BaseController {
 
-    @Autowired
-    private PurchaseOrderService purchaseOrderService;
+
+    private final PurchaseOrderService purchaseOrderService;
 
     @PostMapping
-    public ResponseEntity<?> addPurchaseOrder(
+    public ResponseEntity<Void> addPurchaseOrder(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @RequestBody PurchaseRequestDto purchaseRequestDto
@@ -31,7 +32,7 @@ public class PurchaseController extends BaseController {
     }
 
     @GetMapping("/pending")
-    public ResponseEntity<?> getPendingPurchaseOrders(
+    public ResponseEntity<Object> getPendingPurchaseOrders(
             @RequestParam("vendor") Optional<String> vendor,
             @RequestParam("csNo") Optional<String> csNo,
             @RequestParam("poNo") Optional<String> poNo,
@@ -52,7 +53,7 @@ public class PurchaseController extends BaseController {
     }
 
     @GetMapping("/pending-verification")
-    public ResponseEntity<?> getPendingVerificationPurchaseOrders(
+    public ResponseEntity<Object> getPendingVerificationPurchaseOrders(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("csNo") Optional<String> csNo,
             @RequestParam("poNo") Optional<String> poNo,
@@ -74,7 +75,7 @@ public class PurchaseController extends BaseController {
     }
 
     @GetMapping("/pending-approval")
-    public ResponseEntity<?> getPendingApprovalPurchaseOrders(
+    public ResponseEntity<Object> getPendingApprovalPurchaseOrders(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("csNo") Optional<String> csNo,
             @RequestParam("poNo") Optional<String> poNo,
@@ -96,7 +97,7 @@ public class PurchaseController extends BaseController {
     }
 
     @GetMapping("/approved")
-    public ResponseEntity<?> getApprovedPurchaseOrders(
+    public ResponseEntity<Object> getApprovedPurchaseOrders(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("vendor") Optional<String> vendor,
             @RequestParam("csNo") Optional<String> csNo,
@@ -119,7 +120,7 @@ public class PurchaseController extends BaseController {
     }
 
     @GetMapping("/closed")
-    public ResponseEntity<?> getClosedPurchaseOrders(
+    public ResponseEntity<Object> getClosedPurchaseOrders(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("vendor") Optional<String> vendor,
             @RequestParam("csNo") Optional<String> csNo,
@@ -142,7 +143,7 @@ public class PurchaseController extends BaseController {
     }
 
     @GetMapping("/{csId}")
-    public ResponseEntity<?> getPoDetail(@PathVariable("csId") Long csId){
+    public ResponseEntity<Object> getPoDetail(@PathVariable("csId") Long csId){
         return new ResponseEntity<>(
                 purchaseOrderService.getPurchaseOrderDetail(csId),
                 HttpStatus.OK
@@ -150,7 +151,7 @@ public class PurchaseController extends BaseController {
     }
 
     @PutMapping("/submit-for-verification/{csId}")
-    public ResponseEntity<?> submitForVerification(
+    public ResponseEntity<Void> submitForVerification(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @PathVariable("csId") Long csId
@@ -162,7 +163,7 @@ public class PurchaseController extends BaseController {
     }
 
     @PutMapping("/{id}/review")
-    public ResponseEntity<?> reviewPo(
+    public ResponseEntity<Void> reviewPo(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody NoteDto noteDto
@@ -172,7 +173,7 @@ public class PurchaseController extends BaseController {
     }
 
     @PutMapping("/{id}/reject")
-    public ResponseEntity<?> rejectPo(
+    public ResponseEntity<Void> rejectPo(
             @AuthenticationPrincipal Jwt loggedInUser,
             @PathVariable("id") Long id,
             @RequestBody NoteDto noteDto
@@ -180,12 +181,4 @@ public class PurchaseController extends BaseController {
         purchaseOrderService.rejectPo(loggedInUser, id, noteDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
-
-//    @GetMapping("/test")
-//    public ResponseEntity<?> test(){
-//        PoGroup poGroup = new PoGroup();
-//        poGroup.setId(5L);
-//        purchaseOrderService.sentPoToVendors(poGroup);
-//        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-//    }
 }

@@ -5,7 +5,6 @@ import com.agi.aesl.erpscm.control_panel.inventory_control.entity.WarehouseStore
 import com.agi.aesl.erpscm.inventory.entity.Item;
 import com.agi.aesl.erpscm.inventory.entity.ItemStock;
 import com.agi.aesl.erpscm.inventory.enums.StockType;
-import com.agi.aesl.erpscm.inventory.repository.ItemRepository;
 import com.agi.aesl.erpscm.inventory.repository.ItemStockRepository;
 import lombok.Setter;
 import org.springframework.stereotype.Service;

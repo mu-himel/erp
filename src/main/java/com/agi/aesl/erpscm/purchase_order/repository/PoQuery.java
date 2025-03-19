@@ -1,7 +1,10 @@
 package com.agi.aesl.erpscm.purchase_order.repository;
 
-public interface PoQuery {
-    String getPendingPOs= """
+public class PoQuery {
+    private PoQuery(){}
+    public static final String COUNT_START="SELECT COUNT(*) FROM (";
+    public static final String COUNT_END=") AS TOTAL";
+    public static final String GET_PENDING_POS= """
             SELECT * FROM (
             SELECT 
             po.po_group_id as id,
@@ -31,9 +34,9 @@ public interface PoQuery {
             WHERE (:vendor IS NULL OR LOWER(r.vendorName) LIKE CONCAT('%',LOWER(:vendor),'%'))
             """;
 
-    String countPendingPOs="SELECT COUNT(*) FROM ("+ getPendingPOs + ") as total";
+    public static final String COUNT_PENDING_POS=COUNT_START+ GET_PENDING_POS + COUNT_END;
 
-    String getPendingVerificationPOs = """
+    public static final String GET_PENDING_VERIFICATION_POS = """
             SELECT * FROM (SELECT
                    cpo.id as id,
                    cpo.po_date as poDate,
@@ -69,9 +72,9 @@ public interface PoQuery {
                WHERE (:vendor IS NULL OR LOWER(r.vendorName) LIKE CONCAT('%',LOWER(:vendor),'%'))
                     """;
 
-    String countGetPendingVerificationPOs = "SELECT COUNT(*) FROM ("+getPendingVerificationPOs+") as total";
+    public static final String COUNT_PENDING_VERIFICATION_POS = COUNT_START+GET_PENDING_VERIFICATION_POS+COUNT_END;
 
-    String getPendingApprovalPOs= """
+    public static final String GET_PENDING_APPROVAL_POS= """
             SELECT * FROM (SELECT
                    cpo.id as id,
                    cpo.po_date as poDate,
@@ -107,9 +110,9 @@ public interface PoQuery {
                WHERE (:vendor IS NULL OR LOWER(r.vendorName) LIKE CONCAT('%',LOWER(:vendor),'%'))
             """;
 
-    String countGetPendingApprovalPOs="SELECT COUNT(*) FROM ("+getPendingApprovalPOs+") as total";
+    public static final String COUNT_PENDING_APPROVAL_POS=COUNT_START+GET_PENDING_APPROVAL_POS+COUNT_END;
 
-    String getClosedPOs= """
+    public static final String GET_CLOSED_POS= """
          SELECT * FROM (SELECT
                    cpo.id as id,
                    cpo.po_date as poDate,
@@ -139,9 +142,9 @@ public interface PoQuery {
                WHERE (:vendor IS NULL OR LOWER(r.vendorName) LIKE CONCAT('%',LOWER(:vendor),'%'))
             """;
 
-    String countClosedPOs="SELECT COUNT(*) FROM ("+getClosedPOs+") as total";
+    public static final String COUNT_CLOSED_POS=COUNT_START+GET_CLOSED_POS+COUNT_END;
 
-    String getApprovedPOs= """
+    public static final String GET_APPROVED_POS= """
         SELECT * FROM (SELECT 
         po.id as id,
         po.po_date                       as poDate,
@@ -172,9 +175,9 @@ public interface PoQuery {
         WHERE (:vendor IS NULL OR LOWER(r.vendorName) LIKE CONCAT('%', LOWER(:vendor), '%'))
             """;
 
-    String countApprovedPOs="SELECT COUNT(*) FROM ("+ getApprovedPOs+") as total";
+    public static final String COUNT_APPROVED_POS=COUNT_START+ GET_APPROVED_POS+COUNT_END;
 
-    String purchaseOrderDetail= """
+    public static final String PURCHASE_ORDER_DETAIL= """
                 SELECT 
                 po1.id as poId,
                 cvd.transaction_type as transactionType, 

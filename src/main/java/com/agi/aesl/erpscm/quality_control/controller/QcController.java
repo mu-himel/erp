@@ -27,7 +27,7 @@ public class QcController extends BaseController {
     private final GrnService grnService;
 
     @GetMapping
-    public ResponseEntity<?> getAllForQc(
+    public ResponseEntity<Object> getAllForQc(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("grnNo") Optional<String> grnNo,
             @RequestParam("items") Optional<Integer> qty,
@@ -47,7 +47,7 @@ public class QcController extends BaseController {
     }
 
     @GetMapping("/pending-verifications")
-    public ResponseEntity<?> getAllPendingVerifications(
+    public ResponseEntity<Object> getAllPendingVerifications(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("grnNo") Optional<String> grnNo,
             @RequestParam("items") Optional<Integer> qty,
@@ -66,7 +66,7 @@ public class QcController extends BaseController {
     }
 
     @GetMapping("/pending-approvals")
-    public ResponseEntity<?> getAllPendingApprovals(@AuthenticationPrincipal Jwt token,
+    public ResponseEntity<Object> getAllPendingApprovals(@AuthenticationPrincipal Jwt token,
                                                     @RequestParam("grnNo") Optional<String> grnNo,
                                                     @RequestParam("items") Optional<Integer> qty,
                                                     @RequestParam("receivedQty") Optional<Integer> receivedQty,
@@ -83,7 +83,7 @@ public class QcController extends BaseController {
     }
 
     @GetMapping("/complete")
-    public ResponseEntity<?> getAllClosed(@AuthenticationPrincipal Jwt token,
+    public ResponseEntity<Object> getAllClosed(@AuthenticationPrincipal Jwt token,
                                                     @RequestParam("grnNo") Optional<String> grnNo,
                                                     @RequestParam("items") Optional<Integer> qty,
                                                     @RequestParam("receivedQty") Optional<Integer> receivedQty,
@@ -100,7 +100,7 @@ public class QcController extends BaseController {
     }
 
     @PutMapping("/review/{id}")
-    public ResponseEntity<?> review(
+    public ResponseEntity<Void> review(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody ReviewDto reviewDto
@@ -112,7 +112,7 @@ public class QcController extends BaseController {
     }
 
     @GetMapping("/rejected")
-    public ResponseEntity<?> getAllRejected(@AuthenticationPrincipal Jwt token,
+    public ResponseEntity<Object> getAllRejected(@AuthenticationPrincipal Jwt token,
                                           @RequestParam("grnNo") Optional<String> grnNo,
                                           @RequestParam("items") Optional<Integer> qty,
                                           @RequestParam("receivedQty") Optional<Integer> receivedQty,
@@ -129,7 +129,7 @@ public class QcController extends BaseController {
     }
 
     @PostMapping
-    public ResponseEntity<?> addQc(
+    public ResponseEntity<Void> addQc(
             @AuthenticationPrincipal Jwt token,
             @RequestHeader("uri") String uri,
             @RequestBody QcDto qualityControlDto) throws IllegalAccessException {
@@ -139,7 +139,7 @@ public class QcController extends BaseController {
     }
 
     @PutMapping("/reject/{id}")
-    public ResponseEntity<?> rejectQc(
+    public ResponseEntity<Void> rejectQc(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id,
             @RequestBody NoteDto noteDto
@@ -150,7 +150,7 @@ public class QcController extends BaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getQcDetail(@PathVariable("id") Long id){
+    public ResponseEntity<Object> getQcDetail(@PathVariable("id") Long id){
         qcService.setGrnService(grnService);
         return new ResponseEntity<>(qcService.getDetailByGrnId(id),
                 HttpStatus.OK);

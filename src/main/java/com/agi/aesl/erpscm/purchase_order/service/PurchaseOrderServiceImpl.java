@@ -12,6 +12,7 @@ import com.agi.aesl.erpscm.cs.entity.CsVendorDetail;
 import com.agi.aesl.erpscm.cs.repository.CsRepository;
 import com.agi.aesl.erpscm.cs.repository.CsVendorDetailRepository;
 import com.agi.aesl.erpscm.employee.entity.Employee;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.indent.entity.Indent;
 import com.agi.aesl.erpscm.inventory.dto.request.PendingItemAttributeDto;
 import com.agi.aesl.erpscm.inventory.dto.request.PendingItemRequestDto;
@@ -44,7 +45,7 @@ import com.agi.aesl.erpscm.user_application_validation.repository.UserApplicatio
 import com.agi.aesl.erpscm.user_application_validation.service.UserApplicationValidatorService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -58,61 +59,68 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     private static final Integer PAGE_SIZE = 20;
 
-    @Autowired
-    private ClaimResolver claimResolver;
 
-    @Autowired
-    private PurchaseOrderRepository purchaseOrderRepository;
+    private final ClaimResolver claimResolver;
 
-    @Autowired
-    private PoGroupRepository poGroupRepository;
 
-    @Autowired
-    private UserApplicationValidatorService<PoGroup> verificationService;
+    private final PurchaseOrderRepository purchaseOrderRepository;
 
-    @Autowired
-    private CommentService commentService;
 
-    @Autowired
-    private PqTermAndConditionRepository pqTermAndConditionRepository;
+    private final PoGroupRepository poGroupRepository;
 
-    @Autowired
-    private ItemService itemService;
+
+    private final UserApplicationValidatorService<PoGroup> verificationService;
+
+
+    private final CommentService commentService;
+
+
+    private final PqTermAndConditionRepository pqTermAndConditionRepository;
+
+
+    private final ItemService itemService;
     List<PqTermsAndCondition> termsAndConditions = new ArrayList<>();
 
-    @Autowired
-    private PoVaHistoryRepository poVaHistoryRepository;
 
-    @Autowired
-    private CsVendorDetailRepository csVendorDetailRepository;
+    private final PoVaHistoryRepository poVaHistoryRepository;
 
-    @Autowired
-    private CategoryService categoryService;
 
-    @Autowired
-    private OrgService orgService;
+    private final CsVendorDetailRepository csVendorDetailRepository;
 
-    @Autowired
-    private CsRepository csRepository;
+
+    private final CategoryService categoryService;
+
+
+    private final OrgService orgService;
+
+
+    private final CsRepository csRepository;
     
-    @Autowired
-    private NetworkService networkService;
 
-    @Autowired
-    private CpsServerConfig cpsServerConfig;
+    private final NetworkService networkService;
 
-    @Autowired
-    private PqRepository pqRepository;
 
-    @Autowired
-    private WarehouseRepository warehouseRepository;
+    private final CpsServerConfig cpsServerConfig;
 
+
+    private final PqRepository pqRepository;
+
+
+    private final WarehouseRepository warehouseRepository;
+
+    private static final String VENDOR_PARTIAL_VAT_AMT_KEY="vendorPartialVatAmount";
+    private static final String DATE_TIME_END="23:59:59";
+    private static final String ERR_PO_NOT_FOUND="Sorry! PO not found";
+
+    private Employee getEmp(){
+        return claimResolver.getEmployee().orElse(null);
+    }
 
     @Override
     @Transactional
@@ -130,17 +138,17 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     public void generatePurchaseOrder(Jwt token, String uri, PurchaseRequestDto purchaseRequestDto){
             claimResolver.setToken(token);
             Optional<Employee> empOp = claimResolver.getEmployee();
-            Employee employee = empOp.get();
             if(empOp.isEmpty()){
-                throw new RuntimeException("Sorry! Employee Profile required");
+                throw new AesException("Sorry! Employee Profile required");
             }
+            Employee employee = empOp.get();
             Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
             if(orgOp.isEmpty()){
-                throw new RuntimeException("Sorry! Organization not found");
+                throw new AesException("Sorry! Organization not found");
             }
             Optional<Cs> csOp = csRepository.findById(purchaseRequestDto.getCsId());
             if(csOp.isEmpty()){
-                throw new RuntimeException("Sorry! Cs not found");
+                throw new AesException("Sorry! Cs not found");
             }
             Cs cs = csOp.get();
             List<CsVendorDetailRepository.PendingItemBrandInfo> itemBrandInfos = csVendorDetailRepository.getPendingItemAndBrandInfoByCsId(purchaseRequestDto.getCsId());
@@ -151,7 +159,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
                     Optional<ItemCategory> subCatOp = categoryService.getItemCategory(csDetail.getSubCatId());
                     if(subCatOp.isEmpty()){
-                        throw new RuntimeException("Sorry! Sub Cat missing");
+                        throw new AesException("Sorry! Sub Cat missing");
                     }
                     ItemCategory subCat = subCatOp.get();
 
@@ -203,7 +211,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             po.setTermsConditions(purchaseRequestDto.getTermsConditions().stream().map(tnc->{
                 tnc.setPurchaseOrder(po);
                 return tnc;
-            }).collect(Collectors.toList()));
+            }).toList());
             List<String> ids = new ArrayList<>();
             List<PurchaseOrderDetail> pods = new ArrayList<>();
             for(PoDetailReqDto poDetailReqDto: purchaseRequestDto.getDetails()){
@@ -231,7 +239,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     i.updateAndGet(w->w.add(wd.getQty()));
                     wd.setPurchaseOrderDetail(pod);
                     return wd;
-                }).collect(Collectors.toList()));
+                }).toList());
                 pod.setDeliveryQty(i.get());
                 pods.add(pod);
                 ids.add(poDetailReqDto.getCategoryId().toString());
@@ -247,7 +255,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         AppliedVADto vaResult = verificationService.applyVerifyApprovalProcess(poGroup, DomainType.PO, PurchaseOrderStatus.APPROVED.toString(),
                 uri, "CATEGORY", ids, null);
         if(vaResult.getVerifiers().isEmpty() && vaResult.getPanels().isEmpty()){
-            throw new RuntimeException("Sorry! PO generation required Verify or Approval process");
+            throw new AesException("Sorry! PO generation required Verify or Approval process");
         }
     }
 
@@ -256,19 +264,19 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         try{
             HttpHeaders headers = new HttpHeaders();
             Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
-            if(orgOp.isPresent()){
-                headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
-            }
+            orgOp.ifPresent(org->
+                headers.set("orgId",org.getCpsVendorRegistrationId().toString())
+            );
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(payloadDto,headers);
             String url = cpsServerConfig.getPendingItemReqEndpoint();
             ResponseEntity<Void> response = networkService.post(url, payload,Void.class);
             if(!response.getStatusCode().equals(HttpStatus.CREATED)){
-                throw new RuntimeException("Sorry! Something wrong");
+                throw new AesException("Sorry! Something wrong");
             }
         }catch(Exception ex){
-            throw new RuntimeException(ex.getMessage());
+            throw new AesException(ex.getMessage());
         }
     }
 
@@ -312,14 +320,14 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
 
     @Override
-    public Page<?> getPendingPOs(Optional<String>vendor,Optional<String>csNo,
-                                 Optional<String> poNo,Optional<Long> categoryId,
-                                 Optional<Long> subCategoryId, Optional<String> fromDateStr,
-                                 Optional<String> toDateStr, Optional<String> status,
-                                 Optional<Integer> page, Optional<Integer> size) {
+    public Page<PurchaseOrderRepository.PendingPOItemDetail> getPendingPOs(Optional<String>vendor, Optional<String>csNo,
+                                                                           Optional<String> poNo, Optional<Long> categoryId,
+                                                                           Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                                                                           Optional<String> toDateStr, Optional<String> status,
+                                                                           Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> statuses = Arrays.asList(
                 PurchaseOrderStatus.PENDING.name(),
                 PurchaseOrderStatus.PENDING_VERIFICATION.name(),
@@ -343,16 +351,16 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     }
 
     @Override
-    public Page<?> getPendingVerificationPOs(Jwt token,
-                                             Optional<String>vendor,Optional<String>csNo,
-                                             Optional<String> poNo,Optional<Long> categoryId,
-                                             Optional<Long> subCategoryId, Optional<String> fromDateStr,
-                                             Optional<String> toDateStr, Optional<String> status,
-                                             Optional<Integer> page, Optional<Integer> size) {
+    public Page<PurchaseOrderRepository.PendingPOItemDetail> getPendingVerificationPOs(Jwt token,
+                                                                                       Optional<String>vendor, Optional<String>csNo,
+                                                                                       Optional<String> poNo, Optional<Long> categoryId,
+                                                                                       Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                                                                                       Optional<String> toDateStr, Optional<String> status,
+                                                                                       Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> statuses = Arrays.asList(
                 PurchaseOrderStatus.PENDING_VERIFICATION.name(),
                 PurchaseOrderStatus.VERIFIED.name(),
@@ -373,16 +381,16 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     }
 
     @Override
-    public Page<?> getPendingApprovalPOs(Jwt token,
-                                         Optional<String>vendor,Optional<String>csNo,
-                                         Optional<String> poNo,Optional<Long> categoryId,
-                                         Optional<Long> subCategoryId, Optional<String> fromDateStr,
-                                         Optional<String> toDateStr, Optional<String> status,
-                                         Optional<Integer> page, Optional<Integer> size) {
+    public Page<PurchaseOrderRepository.PendingPOItemDetail> getPendingApprovalPOs(Jwt token,
+                                                                                   Optional<String>vendor, Optional<String>csNo,
+                                                                                   Optional<String> poNo, Optional<Long> categoryId,
+                                                                                   Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                                                                                   Optional<String> toDateStr, Optional<String> status,
+                                                                                   Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> statuses = Arrays.asList(
                 PurchaseOrderStatus.PENDING_APPROVAL.name(),
                 PurchaseOrderStatus.APPROVED.name(),
@@ -402,15 +410,15 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     }
 
     @Override
-    public Page<?> getApprovedPOs(Jwt token,
-                                  Optional<String>vendor,Optional<String>csNo,
-                                  Optional<String> poNo,Optional<Long> categoryId,
-                                  Optional<Long> subCategoryId, Optional<String> fromDateStr,
-                                  Optional<String> toDateStr, Optional<String> status,
-                                  Optional<Integer> page, Optional<Integer> size) {
+    public Page<PurchaseOrderRepository.ClosedPOListItem> getApprovedPOs(Jwt token,
+                                                                         Optional<String>vendor, Optional<String>csNo,
+                                                                         Optional<String> poNo, Optional<Long> categoryId,
+                                                                         Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                                                                         Optional<String> toDateStr, Optional<String> status,
+                                                                         Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(PAGE_SIZE));
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> statuses = Arrays.asList(
                 PurchaseOrderStatus.APPROVED.name(),
                 PurchaseOrderStatus.VERIFIED.name(),
@@ -430,15 +438,15 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     }
 
     @Override
-    public Page<?> getClosedPOs(Jwt token,
-                                Optional<String>vendor,Optional<String>csNo,
-                                Optional<String> poNo,Optional<Long> categoryId,
-                                Optional<Long> subCategoryId, Optional<String> fromDateStr,
-                                Optional<String> toDateStr, Optional<String> status,
-                                Optional<Integer> page, Optional<Integer> size) {
+    public Page<PurchaseOrderRepository.PendingPOItemDetail> getClosedPOs(Jwt token,
+                                                                          Optional<String>vendor, Optional<String>csNo,
+                                                                          Optional<String> poNo, Optional<Long> categoryId,
+                                                                          Optional<Long> subCategoryId, Optional<String> fromDateStr,
+                                                                          Optional<String> toDateStr, Optional<String> status,
+                                                                          Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE));
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> statuses = Arrays.asList(
                 PurchaseOrderStatus.APPROVED.name(),
                 PurchaseOrderStatus.VERIFIED.name(),
@@ -459,9 +467,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
     @Override
     public Map<String, Object> getPurchaseOrderDetail(Long csId) {
-        // Need to update here cause now po verifing based on collection of po
+        // Need to update here cause now po verifying based on collection of po
         // first find poGroup from csId
-        System.out.println("HEREEEE "+ csId);
         Optional<PoGroup> poGroupOp = poGroupRepository.findById(csId);
         Map<String,Object> map = new HashMap<>();
         if(poGroupOp.isPresent()){
@@ -529,15 +536,14 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 List<PurchaseOrderRepository.PqDetailInfo> pqDetailInfo = purchaseOrderRepository.getPurchaseOrderDetail(po.getId());
                 poItem.put("poNo", po.getPoNo());
                 poItem.put("date", po.getPoDate());
-                poItem.put("vendorPartialVatAmount", po.getPoDate());
+                poItem.put(VENDOR_PARTIAL_VAT_AMT_KEY, po.getPoDate());
                 AtomicReference<BigDecimal> vendorPartialVatAmount = new AtomicReference<>();
-//                AtomicReference<BigDecimal> totalPrice = new AtomicReference<>(new BigDecimal(0));
                 for (PurchaseOrderRepository.PqDetailInfo pqDetail : pqDetailInfo){
                     Optional<PurchaseOrderRepository.POD> podOp = po.getPurchaseOrderDetails().stream()
                             .filter(pod->pod.getId().equals(pqDetail.getPodId())).findFirst();
                     Map<String,Object> detailMap = new HashMap<>();
                     detailMap.put("poId",pqDetail.getPoId());
-                    detailMap.put("vendorPartialVatAmount", pqDetail.getVendorPartialVatAmount());
+                    detailMap.put(VENDOR_PARTIAL_VAT_AMT_KEY, pqDetail.getVendorPartialVatAmount());
                     detailMap.put("itemAttribute", pqDetail.getItemName());
                     detailMap.put("unitPrice", pqDetail.getUnitPrice());
                     detailMap.put("deliveryCharge", pqDetail.getDeliveryCharge());
@@ -554,11 +560,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     detailMap.put("warehouseId", pqDetail.getWarehouseId());
                     detailMap.put("isAitAdded",pqDetail.getIsAitAdded());
                     detailMap.put("isVatAdded" , pqDetail.getIsVatAdded());
-                    if(podOp.isPresent()){
-                        detailMap.put("warehouses", podOp.get().getWarehouseDetailList());
-                    }
-
-//                    totalPrice.set(pqDetail.getTotalPrice());
+                    podOp.ifPresent(pod->
+                        detailMap.put("warehouses", pod.getWarehouseDetailList())
+                    );
                     vendorPartialVatAmount.set(pqDetail.getVendorPartialVatAmount());
 
                     String[] summary = pqDetail.getSummary().split(",");
@@ -566,10 +570,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     termsAndConditions = pqTermAndConditionRepository.findAllByVendorIdAndPriceQuotationId(Long.parseLong(summary[1]),Long.parseLong(summary[16]));
 
 
-                    String itemAttributeToMatch = (summary[12].trim()!="")? summary[10].trim()+" - "+ summary[12].trim() : summary[10].trim();
-                    System.out.println("brandName:"+summary[11].trim());
-                    System.out.println("itemAttributeToMatch:"+itemAttributeToMatch);
-                    System.out.println("subCat:"+indent.getSubCategory().getId());
+                    String itemAttributeToMatch = (!summary[12].trim().isEmpty())? summary[10].trim()+" - "+ summary[12].trim() : summary[10].trim();
+
                     Optional<Item> itemOp = itemService
                             .getByBrandAndAttributeName(summary[11].trim(),
                                     indent.getSubCategory().getId(),
@@ -582,7 +584,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     }
                     poItem.put("isAitAdded",pqDetail.getIsAitAdded());
                     poItem.put("isVatAdded",pqDetail.getIsVatAdded());
-//                    detailMap.put("transactionType",pqDetail.getTransactionType());
                     poItem.put("transactionType",pqDetail.getTransactionType());
 
                     poItem.put("vendorName",summary[0]);
@@ -611,11 +612,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 map.put("requestedBy",po.getRequestedBy());
                 poItem.put("details",poDetailList);
                 poItem.put("termsAndConditions", termsAndConditions);
-
-//                poItem.put("totalPrice",totalPrice.get());
-                poItem.put("vendorPartialVatAmount",vendorPartialVatAmount);
+                poItem.put(VENDOR_PARTIAL_VAT_AMT_KEY,vendorPartialVatAmount);
                 return poItem;
-            }).collect(Collectors.toList());
+            }).toList();
 
             map.put("purchaseOrder",polist.stream().findFirst());
         }
@@ -627,7 +626,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         claimResolver.setToken(token);
         Optional<PoGroup> poGroupOp = poGroupRepository.findByCsId(csId);
         if(poGroupOp.isEmpty()){
-            throw new RuntimeException("Sorry! Po not found");
+            throw new AesException("Sorry! Po not found");
         }
 
         PoGroup po = poGroupOp.get();
@@ -649,7 +648,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         claimResolver.setToken(token);
         Optional<PoGroup> poGroupOp = poGroupRepository.findById(id);
         if(poGroupOp.isEmpty()){
-            throw new RuntimeException("Sorry! PO not found");
+            throw new AesException(ERR_PO_NOT_FOUND);
         }
 
         PoGroup po = poGroupOp.get();
@@ -663,7 +662,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         }
 
         commentService.addComment(
-                commentService.prepareComment(claimResolver.getEmployee().get(),DomainType.PO,po.getId(),noteDto.getNote(),
+                commentService.prepareComment(getEmp(),DomainType.PO,po.getId(),noteDto.getNote(),
                         noteDto.getAttachments())
         );
 
@@ -678,7 +677,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         Optional<PoGroup> poGroupOp = poGroupRepository.findById(id);
 
         if(poGroupOp.isEmpty()){
-            throw new RuntimeException("Sorry! PO not found");
+            throw new AesException(ERR_PO_NOT_FOUND);
         }
         PoGroup poGroup = poGroupOp.get();
         List<PurchaseOrderRepository.PurchaseOrderDetailInfo> pos = purchaseOrderRepository.findAllByPoGroupId(id);
@@ -688,7 +687,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 poOp.ifPresent(po->{
                     po.setStatus(PurchaseOrderStatus.REJECTED);
                     commentService.addComment(
-                            commentService.prepareComment(claimResolver.getEmployee().get(),DomainType.PO,po.getId(),noteDto.getNote(),
+                            commentService.prepareComment(getEmp(),DomainType.PO,po.getId(),noteDto.getNote(),
                                     noteDto.getAttachments())
                     );
                 });
@@ -715,7 +714,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         if(poGroupOp.isPresent()){
             PoGroup po = poGroupOp.get();
             po.setNextVerifierId(nextVerifier.getVerifier().getId());
-//            po.setPurchaseOrderStatus(PurchaseOrderStatus.VERIFIED);
             setVAHistory(po,verification.getVerifier(),PurchaseOrderStatus.VERIFIED);
         }
     }
@@ -773,21 +771,17 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         for(PurchaseOrderRepository.PurchaseOrderDetailInfo po : purchaseOrders){
             PoRemoteReqDto poRemoteReqDto = new PoRemoteReqDto();
             List<PoRemoteDetailReqDto> orderDetails = new ArrayList<>();
-//          List<PurchaseOrderRepository.PqDetailInfo> pqDetailInfos = purchaseOrderRepository.getPurchaseOrderDetail(po.getId());
             poRemoteReqDto.setId(po.getId());
             poRemoteReqDto.setPoNo(po.getPoNo());
-//            System.out.println(po.getCreatedAt().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
             poRemoteReqDto.setPoDate(po.getCreatedAt().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
             poRemoteReqDto.setCategoryCode(po.getCs().getIndent().getSubCategory().getCode().substring(2));
             poRemoteReqDto.setTenderNo(po.getCs().getIndent().getIndentNo());
             poRemoteReqDto.setDeliveryChargeType(po.getDeliveryChargeType());
             poRemoteReqDto.setDeliveryDate(po.getPoDate().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
-            po.getPurchaseOrderDetails().stream().forEach(podi->{
-//                if(po.getId().equals(pqdi.get)){
+            po.getPurchaseOrderDetails().forEach(podi->{
                     PoRemoteDetailReqDto prdr = new PoRemoteDetailReqDto();
-//                    prdr.setWarehouse(new ReferenceObjectDto(pqdi.getWarehouse().getId()));
                     List<PoRemoteDeliveryDetailDto> prdds = new ArrayList<>();
-                    podi.getWarehouseDetailList().stream().forEach(wd->{
+                    podi.getWarehouseDetailList().forEach(wd->{
                         PoRemoteDeliveryDetailDto prdd = new PoRemoteDeliveryDetailDto();
                         prdd.setItemQty(wd.getQty());
                         prdd.setDeliveryCharge(wd.getDeliveryCharge());
@@ -801,11 +795,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     prdr.setSubTotal(podi.getSubTotal());
                     prdr.setTotalPrice(podi.getTotalPrice());
                     prdr.setItemQty(podi.getDeliveryQty());
-//                    List<ItemInfo> items = pqdi.getCsVendorDetail().getPriceQuotation().getQuotationDetails().stream().map(
-//                            q->{
-//                               return new ItemInfo(q.getBrandName(),q.getItemAttribute(),q.getExtendedAttributes());
-//                            }).collect(Collectors.toList());
-//                    String[] summary = pqdi.getSummary().split(",");
+
                     prdr.setItemName(podi.getItemName());
                     Long warehouseId=null;
                     if(podi.getCsVendorDetail().getCsDetail().getIndentDetail().getIndent()
@@ -821,7 +811,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     poRemoteReqDto.setVendorId(podi.getCsVendorDetail().getVendorId());
                     poRemoteReqDto.setOfferId(podi.getCsVendorDetail().getPriceQuotation().getRemoteOfferId());
                     orderDetails.add(prdr);
-//                }
+
 
             });
             poRemoteReqDto.setOrderDetails(orderDetails);
@@ -831,9 +821,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         try{
             HttpHeaders headers = new HttpHeaders();
             Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
-            if(orgOp.isPresent()){
-                headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
-            }
+            orgOp.ifPresent(org->
+                headers.set("orgId",org.getCpsVendorRegistrationId().toString())
+            );
             headers.setContentType(MediaType.APPLICATION_JSON);
             Map<String,List<PoRemoteReqDto>> payloadMap = new HashMap<>();
             payloadMap.put("purchaseOrders",remotePos);
@@ -841,10 +831,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             String url = cpsServerConfig.getSentPoEndpoint();
             ResponseEntity<Void> response = networkService.post(url, payload,Void.class);
             if(!response.getStatusCode().equals(HttpStatus.CREATED)){
-                throw new RuntimeException("Sorry! Something wrong");
+                throw new AesException("Sorry! Something wrong");
             }
         }catch(Exception ex){
-            throw new RuntimeException(ex.getMessage());
+            throw new AesException(ex.getMessage());
         }
     }
 
@@ -865,7 +855,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     public void onRejected(Employee verifier, Long domainId, RejectDto rejectDto) {
         Optional<PoGroup> poOp = poGroupRepository.findById(domainId);
         if(poOp.isEmpty()){
-            throw new RuntimeException("Sorry! PO not found");
+            throw new AesException(ERR_PO_NOT_FOUND);
         }
         PoGroup po = poOp.get();
         po.setStatus(PurchaseOrderStatus.REJECTED.name());

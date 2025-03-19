@@ -4,7 +4,7 @@ import com.agi.aesl.erpscm.common.BaseController;
 import com.agi.aesl.erpscm.rfq.dto.RfqRequestDto;
 import com.agi.aesl.erpscm.rfq.service.service.RfqService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,14 +15,14 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/rfq")
+@RequiredArgsConstructor
 public class RfqController extends BaseController {
 
 
-    @Autowired
-    private RfqService rfqService;
+    private final RfqService rfqService;
 
     @PostMapping
-    public ResponseEntity<?> createRfQ(
+    public ResponseEntity<Void> createRfQ(
             @AuthenticationPrincipal Jwt token,
             @Valid @RequestBody RfqRequestDto requestDto){
         rfqService.createRfq(token,requestDto);
@@ -30,7 +30,7 @@ public class RfqController extends BaseController {
     }
 
     @GetMapping("/pending")
-    public ResponseEntity<?> getAllPendingRFQs(
+    public ResponseEntity<Object> getAllPendingRFQs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam Optional<String> indentNo,
             @RequestParam Optional<Long> categoryId,
@@ -51,7 +51,7 @@ public class RfqController extends BaseController {
     }
 
     @GetMapping("/sent")
-    public ResponseEntity<?> getAllOpenRfqs(
+    public ResponseEntity<Object> getAllOpenRfqs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("indentNo") Optional<String> indentNo,
             @RequestParam("categoryId") Optional<Long> category,
@@ -74,7 +74,7 @@ public class RfqController extends BaseController {
     }
 
     @GetMapping("/closed")
-    public ResponseEntity<?> getClosedRfqs(
+    public ResponseEntity<Object> getClosedRfqs(
             @AuthenticationPrincipal Jwt token,
             @RequestParam Optional<String> indentNo,
             @RequestParam Optional<String> category,
@@ -96,7 +96,7 @@ public class RfqController extends BaseController {
     }
 
     @GetMapping("/{id}/get-vendors-count")
-    public ResponseEntity<?> getAvailableVendorsCount(
+    public ResponseEntity<Object> getAvailableVendorsCount(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id
     ) {
@@ -105,7 +105,7 @@ public class RfqController extends BaseController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> expire(@AuthenticationPrincipal Jwt token,
+    public ResponseEntity<Void> expire(@AuthenticationPrincipal Jwt token,
                                     @PathVariable("id") Long id){
         rfqService.expire(token,id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

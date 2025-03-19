@@ -27,10 +27,10 @@ public class StatisticsServiceImpl implements StatisticsService{
         return date;
     }
     @Override
-    public List<?> getDemandStatistics(Jwt token, Optional<Long> categoryId,
-                                       Optional<Long> subCategoryId,
-                                       Optional<String> fromDateStr,
-                                       Optional<String> toDateStr) {
+    public List<DemandStatisticsRepository.DemandStats> getDemandStatistics(Jwt token, Optional<Long> categoryId,
+                                                                            Optional<Long> subCategoryId,
+                                                                            Optional<String> fromDateStr,
+                                                                            Optional<String> toDateStr) {
         claimResolver.setToken(token);
         Long warehouseId=null;
         if(claimResolver.getEmployee().isPresent()){

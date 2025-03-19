@@ -14,6 +14,7 @@ import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnMode;
 import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
 import com.agi.aesl.erpscm.goods_receive.enums.QcType;
+import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository;
 import com.agi.aesl.erpscm.goods_receive.service.GrnService;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
 import com.agi.aesl.erpscm.network.NetworkService;
@@ -224,10 +225,10 @@ public class QcServiceImpl implements QcService{
     }
 
     @Override
-    public Optional<?> getDetailByGrnId(Long id) {
-        Optional<?> detailOp = grnService.getGrnById(id,false);
+    public Optional<Map<String,Object>> getDetailByGrnId(Long id) {
+        Optional<Map<String, Object>> detailOp = grnService.getGrnById(id,false);
         if(detailOp.isPresent()){
-            Map<String,Object> detail = (Map<String,Object>)detailOp.get();
+            Map<String,Object> detail = detailOp.get();
             List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
             List<UserApplicationValidationRepository.VerificationResponse> approvers = new ArrayList<>();
             List<UserApplicationValidationRepository.VerificationResponse> vrs = verificationService
@@ -248,13 +249,9 @@ public class QcServiceImpl implements QcService{
             detail.put("verifiers",verifiers);
             return Optional.of(detail);
         }
-        return detailOp;
+        return Optional.empty();
     }
 
-    @Override
-    public Optional<?> getByGrnId(Long id) {
-        return grnService.getGrn(id, true);
-    }
 
     @Override
     public List<QcQuery.QcResultItem> getQcResultByGrn(Long id) {
@@ -504,10 +501,10 @@ public class QcServiceImpl implements QcService{
     }
 
     @Override
-    public Page<?> getAllPendingVerificationQC(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                                               Optional<String> grnNo, Optional<Integer> qty,
-                                               Optional<Integer> receivedQty, Optional<String> fromDate,
-                                               Optional<String> toDate) {
+    public Page<GrnRepository.GoodReceiveNoteInfo> getAllPendingVerificationQC(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                                               Optional<String> grnNo, Optional<Integer> qty,
+                                                                               Optional<Integer> receivedQty, Optional<String> fromDate,
+                                                                               Optional<String> toDate) {
         claimResolver.setToken(token);
 
         String uri="inventory-management/good-receive/quality-check-pending-verification";
@@ -543,7 +540,7 @@ public class QcServiceImpl implements QcService{
     }
 
     @Override
-    public Page<?> getAllPendingApprovalQC(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty, Optional<String> fromDate, Optional<String> toDate) {
+    public Page<GrnRepository.GoodReceiveNoteInfo> getAllPendingApprovalQC(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty, Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
 
         String uri="inventory-management/good-receive/quality-check-pending-approval";
@@ -579,9 +576,9 @@ public class QcServiceImpl implements QcService{
     }
 
     @Override
-    public Page<?> getAllClosed(Jwt token, Optional<Integer> page, Optional<Integer> size,
-                                Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty,
-                                Optional<String> fromDate, Optional<String> toDate) {
+    public Page<GrnRepository.GoodReceiveNoteInfo> getAllClosed(Jwt token, Optional<Integer> page, Optional<Integer> size,
+                                                                Optional<String> grnNo, Optional<Integer> qty, Optional<Integer> receivedQty,
+                                                                Optional<String> fromDate, Optional<String> toDate) {
         claimResolver.setToken(token);
         if(claimResolver.getEmployee().isEmpty()){
             throw new AesException("Sorry! Qc Relevant Employee Profile Required");
@@ -615,9 +612,9 @@ public class QcServiceImpl implements QcService{
     }
 
     @Override
-    public Page<?> getAllRejected(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> grnNo,
-                                  Optional<Integer> qty, Optional<Integer> receivedQty, Optional<String> fromDate,
-                                  Optional<String> toDate) {
+    public Page<GrnRepository.GoodReceiveNoteInfo> getAllRejected(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<String> grnNo,
+                                                                  Optional<Integer> qty, Optional<Integer> receivedQty, Optional<String> fromDate,
+                                                                  Optional<String> toDate) {
 
         claimResolver.setToken(token);
         String uri="inventory-management/good-receive/quality-check-rejected";

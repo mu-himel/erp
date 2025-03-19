@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseRepository;
 import com.agi.aesl.erpscm.control_panel.inventory_control.repository.WarehouseStoreRepository;
-import com.agi.aesl.erpscm.erpn_integration.service.IntegrationWriterService;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.repository.CategoryWarehouseStoreRepository;
 
@@ -38,9 +37,6 @@ public class WarehouseServiceImpl implements WarehouseService{
     private final WarehouseStoreRepository warehouseStoreRepository;
 
 
-    private final IntegrationWriterService integrationWriterService;
-
-
     private final IntegrationReaderService integrationReaderService;
 
 
@@ -48,7 +44,6 @@ public class WarehouseServiceImpl implements WarehouseService{
 
 
     private final ClaimResolver claimResolver;
-
 
     @Override
     @Transactional

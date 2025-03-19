@@ -15,7 +15,7 @@ import com.agi.aesl.erpscm.organization.service.OrgService;
 import com.agi.aesl.erpscm.price_quotation.dto.request.CounterPqDto;
 import com.agi.aesl.erpscm.rfq.dto.*;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,29 +33,34 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class RfqServiceImpl implements RfqService{
 
     private static final Integer PAGE_SIZE = 20;
-    @Autowired
-    private IndentRepository indentRepository;
 
-    @Autowired
-    private ClaimResolver claimResolver;
+    private final IndentRepository indentRepository;
 
-    @Autowired
-    private OrgService orgService;
 
-    @Autowired
-    private CpsServerConfig cpsConfig;
+    private final ClaimResolver claimResolver;
 
-    @Autowired
-    private NetworkService networkService;
 
-    @Autowired
-    private WarehouseService warehouseService;
+    private final OrgService orgService;
+
+
+    private final CpsServerConfig cpsConfig;
+
+
+    private final NetworkService networkService;
+
+
+    private final WarehouseService warehouseService;
+
+    private static final String DATE_TIME_START="T00:00:00";
+    private static final String DATE_TIME_END="T23:59:59";
+    private static final String MSG_FOR_DATE_FILTER="Please select both date filter";
+    private static final String ORG_ID_KEY="orgId";
 
     @Override
     @Transactional
@@ -64,12 +69,12 @@ public class RfqServiceImpl implements RfqService{
         Optional<Indent> indentOp = indentRepository.findById(requestDto.getId());
 
         if(indentOp.isEmpty()){
-            throw new RuntimeException("Sorry! Indent not found");
+            throw new AesException("Sorry! Indent not found");
         }
 
         Indent indent = indentOp.get();
         if(indent.getRfqStatus()!=null && !indent.getRfqStatus().equals(RfqStatus.INIT)){
-            throw new RuntimeException("Sorry! this rfq already sent");
+            throw new AesException("Sorry! this rfq already sent");
         }
 
         LocalDateTime currenDateTime = LocalDateTime.now();
@@ -112,11 +117,10 @@ public class RfqServiceImpl implements RfqService{
         tenderRequestDto.setTenderItems(requestDto.getItems().stream().map(item->{
             TenderItemDto tenderItemDto = new TenderItemDto();
             tenderItemDto.setOrderQuantity(item.getOrderQty());
-            // AtomicLong totalOrderQty = new AtomicLong();
             tenderItemDto.setDeliveryDetails(item.getWarehouses().stream().map(w->{
                 Optional<Warehouse> warehosueOp = warehouseService.getWarehouse(w.getWarehouseId());
                 if(warehosueOp.isEmpty()){
-                    throw new RuntimeException("Sorry! Warehouse not found");
+                    throw new AesException("Sorry! Warehouse not found");
                 }
 
                 TenderItemDeliveryDetail tid = new TenderItemDeliveryDetail();
@@ -138,22 +142,22 @@ public class RfqServiceImpl implements RfqService{
     private void createTender(TenderRequestDto tender){
         HttpHeaders headers = new HttpHeaders();
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
-        if(orgOp.isPresent()){
-            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
-        }
+        orgOp.ifPresent(org->
+            headers.set(ORG_ID_KEY,org.getCpsVendorRegistrationId().toString())
+        );
         HttpEntity<TenderRequestDto> payload = new HttpEntity<>(tender,headers);
         String url = cpsConfig.getTenderEndpoint();
         ResponseEntity<?> response = networkService.post(url, payload, Void.class);
         if(response.getStatusCode()!=HttpStatus.CREATED){
-            throw new RuntimeException("Tender Unable to send to CPS");
+            throw new AesException("Tender Unable to send to CPS");
         }
     }
 
     @Override
-    public Page<?> getAllPendingRFQs(Jwt token, Optional<String> indentNo, Optional<Long> categoryId,
-                                     Optional<Long> subCategoryId, Optional<String> priority,
-                                     Optional<Integer> daysRemain, Optional<String> fromDateOp,
-                                     Optional<String> toDateOp, Optional<Integer> page, Optional<Integer> size) {
+    public Page<IndentRepository.IndentInfo> getAllPendingRFQs(Jwt token, Optional<String> indentNo, Optional<Long> categoryId,
+                                                               Optional<Long> subCategoryId, Optional<String> priority,
+                                                               Optional<Integer> daysRemain, Optional<String> fromDateOp,
+                                                               Optional<String> toDateOp, Optional<Integer> page, Optional<Integer> size) {
 
         claimResolver.setToken(token);
 
@@ -161,13 +165,13 @@ public class RfqServiceImpl implements RfqService{
 
         if((fromDateOp.isPresent() && toDateOp.isEmpty()) ||
                 (fromDateOp.isEmpty() && toDateOp.isPresent())){
-            throw new RuntimeException("Please select both date filter");
+            throw new AesException(MSG_FOR_DATE_FILTER);
         }
         LocalDateTime fromDate = null;
         LocalDateTime toDate = null;
-        if(fromDateOp.isPresent() && toDateOp.isPresent()){
-            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
-            toDate   = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+        if(fromDateOp.isPresent()){
+            fromDate = LocalDateTime.parse(fromDateOp.get()+DATE_TIME_START);
+            toDate   = LocalDateTime.parse(toDateOp.get()+DATE_TIME_END);
         }
 
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
@@ -185,21 +189,21 @@ public class RfqServiceImpl implements RfqService{
     }
 
     @Override
-    public Page<?> getAllSentRfqs(Jwt token, Optional<String> indentNo, Optional<Long> category,
-                                  Optional<Long> subCategory, Optional<String> priority, Optional<Integer> daysRemain,
-                                  Optional<String> fromDateOp, Optional<String> toDateOp, Optional<Integer> page,
-                                  Optional<Integer> size) {
+    public Page<IndentRepository.SentRfqListItem> getAllSentRfqs(Jwt token, Optional<String> indentNo, Optional<Long> category,
+                                                                 Optional<Long> subCategory, Optional<String> priority, Optional<Integer> daysRemain,
+                                                                 Optional<String> fromDateOp, Optional<String> toDateOp, Optional<Integer> page,
+                                                                 Optional<Integer> size) {
 
         claimResolver.setToken(token);
         if((fromDateOp.isPresent() && toDateOp.isEmpty()) ||
                 (fromDateOp.isEmpty() && toDateOp.isPresent())){
-            throw new RuntimeException("Please select both date filter");
+            throw new AesException(MSG_FOR_DATE_FILTER);
         }
         LocalDateTime fromDate = null;
         LocalDateTime toDate = null;
-        if(fromDateOp.isPresent() && toDateOp.isPresent()){
-            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
-            toDate   = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+        if(fromDateOp.isPresent()){
+            fromDate = LocalDateTime.parse(fromDateOp.get()+DATE_TIME_START);
+            toDate   = LocalDateTime.parse(toDateOp.get()+DATE_TIME_END);
         }
 
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
@@ -216,21 +220,21 @@ public class RfqServiceImpl implements RfqService{
     }
 
     @Override
-    public Page<?> getAllClosedRFQs(Jwt token, Optional<String> indentNo, Optional<String> category,
-                                    Optional<String> subCategory, Optional<String> priority,
-                                    Optional<Integer> daysRemain, Optional<String> fromDateOp,
-                                    Optional<String> toDateOp, Optional<Integer> page, Optional<Integer> size) {
+    public Page<IndentRepository.CsListInfo> getAllClosedRFQs(Jwt token, Optional<String> indentNo, Optional<String> category,
+                                                              Optional<String> subCategory, Optional<String> priority,
+                                                              Optional<Integer> daysRemain, Optional<String> fromDateOp,
+                                                              Optional<String> toDateOp, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
 
         if((fromDateOp.isPresent() && toDateOp.isEmpty()) ||
                 (fromDateOp.isEmpty() && toDateOp.isPresent())){
-            throw new AesException("Please select both date filter");
+            throw new AesException(MSG_FOR_DATE_FILTER);
         }
         LocalDateTime fromDate = null;
         LocalDateTime toDate = null;
-        if(fromDateOp.isPresent() && toDateOp.isPresent()){
-            fromDate = LocalDateTime.parse(fromDateOp.get()+"T00:00:00");
-            toDate   = LocalDateTime.parse(toDateOp.get()+"T23:59:59");
+        if(fromDateOp.isPresent()){
+            fromDate = LocalDateTime.parse(fromDateOp.get()+DATE_TIME_START);
+            toDate   = LocalDateTime.parse(toDateOp.get()+DATE_TIME_END);
         }
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE), sort);
@@ -246,7 +250,7 @@ public class RfqServiceImpl implements RfqService{
     }
 
     @Override
-    public Optional<?> getAvailableVendorsCount(Jwt token, Long id) {
+    public Optional<AvailableVendorCount> getAvailableVendorsCount(Jwt token, Long id) {
         Optional<Indent> indentOp = indentRepository.findById(id);
 
         claimResolver.setToken(token);
@@ -263,11 +267,11 @@ public class RfqServiceImpl implements RfqService{
         return getVendorCount(subCategory.getCode().substring(2));
     }
 
-    private Optional<?> getVendorCount(String subCatCode){
+    private Optional<AvailableVendorCount> getVendorCount(String subCatCode){
         HttpHeaders headers = new HttpHeaders();
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
         orgOp.ifPresent(org->
-            headers.set("orgId",org.getCpsVendorRegistrationId().toString())
+            headers.set(ORG_ID_KEY,org.getCpsVendorRegistrationId().toString())
         );
         HttpEntity<?> payload = new HttpEntity<>(headers);
         ResponseEntity<AvailableVendorCount> response = networkService.get(
@@ -296,7 +300,7 @@ public class RfqServiceImpl implements RfqService{
         HttpHeaders headers = new HttpHeaders();
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
         orgOp.ifPresent(org->
-            headers.set("orgId",org.getCpsVendorRegistrationId().toString())
+            headers.set(ORG_ID_KEY,org.getCpsVendorRegistrationId().toString())
         );
         HttpEntity<CounterPqDto> payload = new HttpEntity<>(headers);
         String url = cpsConfig.getTenderEndpoint()+"/expire/"+indent.getIndentNo();

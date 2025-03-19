@@ -2,7 +2,9 @@ package com.agi.aesl.erpscm.quality_control.repository;
 
 public interface QcQuery {
 
-    String qcResultByGrnId= """
+    String COUNT_START="SELECT COUNT(*) FROM (";
+    String COUNT_END=") AS TOTAL";
+    String QC_RESULT_BY_GRN_ID= """
             SELECT qc.id as id, qc.qc_status as qcStatus,qc.comment as comment, 
                     qck.name as name,
                     qck.remark as remark,
@@ -22,7 +24,7 @@ public interface QcQuery {
                 WHERE qc.good_receive_note_id = :id
             """;
 
-    String getPendingVerificationsQc = """
+    String GET_PENDING_VERIFICATIONS_QC = """
             SELECT 
                     p.id as id,
                     p.qcId as qcId,
@@ -95,11 +97,11 @@ public interface QcQuery {
             AND (:receivedQty IS NULL OR p.receivedQty = :receivedQty)  
             """;
 
-    String countPendingVerifications = "SELECT COUNT(*) FROM ("+getPendingVerificationsQc+") as total";
+    String COUNT_PENDING_VERIFICATIONS_QC = COUNT_START+GET_PENDING_VERIFICATIONS_QC+COUNT_END;
 
 
-    String getPendingApprovalsQc = """
-            SELECT 
+    String GET_PENDING_APPROVALS_QC = """
+            SELECT
                     p.id as id,
                     p.qcId as qcId,
                     p.createdAt as createdAt,
@@ -169,9 +171,9 @@ public interface QcQuery {
             AND (:receivedQty IS NULL OR p.receivedQty = :receivedQty)  
             """;
 
-    String countPendingApprovals = "SELECT COUNT(*) FROM ("+getPendingApprovalsQc+") as total";
+    String COUNT_PENDING_APPROVALS_QC = COUNT_START+GET_PENDING_APPROVALS_QC+COUNT_END;
 
-    String getClosedQc = """
+    String GET_CLOSED_QC = """
             SELECT 
                     p.id as id,
                     p.createdAt as createdAt,
@@ -230,9 +232,9 @@ public interface QcQuery {
             AND (:receivedQty IS NULL OR p.receivedQty = :receivedQty)  
             """;
 
-    String countClosed = "SELECT COUNT(*) FROM ("+getClosedQc+") as total";
+    String COUNT_CLOSED = COUNT_START+GET_CLOSED_QC+COUNT_END;
 
-    String getRejectedQc = """
+    String GET_REJECTED_QC = """
             SELECT 
                     p.id as id,
                     p.createdAt as createdAt,
@@ -290,7 +292,7 @@ public interface QcQuery {
             AND (:receivedQty IS NULL OR p.receivedQty = :receivedQty)  
             """;
 
-    String countRejected = "SELECT COUNT(*) FROM ("+getRejectedQc+") as total";
+    String COUNT_REJECTED_QC = COUNT_START+GET_REJECTED_QC+COUNT_END;
 
     interface QcResultItem{
         Long getId();
