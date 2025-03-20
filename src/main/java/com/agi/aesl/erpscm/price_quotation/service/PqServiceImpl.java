@@ -321,14 +321,14 @@ public class PqServiceImpl implements PqService{
     }
 
     @Override
-    public List<?> getPriceQuotationsByIndent(Long id) {
+    public List<PqRepository.PriceQuotationInfo> getPriceQuotationsByIndent(Long id) {
         return pqRepository.getPriceQuotationsByIndentId(id);
     }
     @Override
-    public Optional<?> getDetail(Long id) {
+    public Optional<Map<String,Object>> getDetail(Long id) {
         Optional<PriceQuotation> pqOptional = pqRepository.findById(id);
         if(pqOptional.isEmpty()){
-            throw new RuntimeException("Sorry! Price quotation not found by this id");
+            throw new AesException("Sorry! Price quotation not found by this id");
         }
         Map<String,Object> result = new HashMap<>();
         PriceQuotation pq = pqOptional.get();
@@ -384,14 +384,14 @@ public class PqServiceImpl implements PqService{
         });
 
         result.put("details",details);
-        return Optional.ofNullable(result);
+        return Optional.of(result);
     }
 
     @Override
-    public List<?> getHistoriesByRfq(Long id, Long vendorId) {
+    public List<NegotiationHistory> getHistoriesByRfq(Long id, Long vendorId) {
         List<PriceQuotation> priceQuotations = pqRepository.findByRfqIdAndVendorId(id,vendorId);
 
-        record NegotiationHistory(Long id, String title){ }
+
 
         return priceQuotations.stream().map(priceQuotation->{
             String sb = "";

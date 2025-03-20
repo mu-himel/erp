@@ -113,6 +113,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final UserCategoryAttributeRepository userCategoryAttributeRepository;
 
+    private static final String ORG_ID_KEY="orgId";
+    private static final String URI_INVENTORY_CONTROL_CATEGORIES="inventory-control/categories";
+
     private FileUploadService fileUploadService;
     @Value("${upload.dir}")
     private String uploadDir;
@@ -189,7 +192,7 @@ public class CategoryServiceImpl implements CategoryService {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
-                orgOp.ifPresent(organization -> headers.set("orgId", organization.getCpsVendorRegistrationId().toString()));
+                orgOp.ifPresent(organization -> headers.set(ORG_ID_KEY, organization.getCpsVendorRegistrationId().toString()));
                 HttpEntity<List<ScmIdUpdateDto>> payload = new HttpEntity<>(dtos,headers);
                 String url = cpsServerConfig.getItemCategoriesEndpoint().concat("/update-scm-id");
                 networkService.put(url,payload,Void.class);
@@ -427,9 +430,9 @@ public class CategoryServiceImpl implements CategoryService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
-        if(orgOp.isPresent()){
-            headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
-        }
+        orgOp.ifPresent(org->
+            headers.set(ORG_ID_KEY, org.getCpsVendorRegistrationId().toString())
+        );
         HttpEntity<RemoteCategoryRequestDto> payload = new HttpEntity<>(remoteCategoryRequestDto,headers);
         String url = cpsServerConfig.getItemCategoriesEndpoint();
         ResponseEntity<?> response = networkService.post(url,payload,Void.class);
@@ -644,12 +647,11 @@ public class CategoryServiceImpl implements CategoryService {
                                                     Optional<String> name,
                                                     Optional<String> code) {
         claimResolver.setToken(token);
-        String uri="inventory-control/categories";
         List<Long> warehouseIds = new ArrayList<>();
         if(warehouseId.isPresent()){
             warehouseIds.add(warehouseId.get());
         }else{
-            DataFilter dataFilter = new DataFilter(uri,claimResolver);
+            DataFilter dataFilter = new DataFilter(URI_INVENTORY_CONTROL_CATEGORIES,claimResolver);
             dataFilter.setReaderService(integrationReaderService);
             warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
         }
@@ -928,8 +930,7 @@ public class CategoryServiceImpl implements CategoryService {
     ) {
 
         claimResolver.setToken(token);
-        String uri="inventory-control/categories";
-        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        DataFilter dataFilter = new DataFilter(URI_INVENTORY_CONTROL_CATEGORIES,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> warehouseIds = new ArrayList<>();
         if(warehouseId.isPresent()){
@@ -947,8 +948,7 @@ public class CategoryServiceImpl implements CategoryService {
                                                                           Optional<String> code, Optional<Integer> page, Optional<Integer> size) {
 
         claimResolver.setToken(token);
-        String uri="inventory-control/categories";
-        DataFilter dataFilter = new DataFilter(uri,claimResolver);
+        DataFilter dataFilter = new DataFilter(URI_INVENTORY_CONTROL_CATEGORIES,claimResolver);
         dataFilter.setReaderService(integrationReaderService);
         List<Long> warehouseIds = new ArrayList<>();
         if(warehouseId.isPresent()){
@@ -1065,7 +1065,7 @@ public class CategoryServiceImpl implements CategoryService {
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
                 orgOp.ifPresent(org->
-                    headers.set("orgId", org.getCpsVendorRegistrationId().toString())
+                    headers.set(ORG_ID_KEY, org.getCpsVendorRegistrationId().toString())
                 );
                 List<ScmIdUpdateDto> dtos  = new ArrayList<>();
                 ScmIdUpdateDto scmIdUpdateDto = new ScmIdUpdateDto();
@@ -1347,7 +1347,7 @@ public class CategoryServiceImpl implements CategoryService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(token.getTokenValue());
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
-        orgOp.ifPresent(organization -> headers.set("orgId", organization.getCpsVendorRegistrationId().toString()));
+        orgOp.ifPresent(organization -> headers.set(ORG_ID_KEY, organization.getCpsVendorRegistrationId().toString()));
         HttpEntity<Map<String,Object>> payload = new HttpEntity<>(data,headers);
         String url = cpsServerConfig.getItemCategoriesEndpoint().concat("/bulk");
         networkService.post(url,payload,Void.class);

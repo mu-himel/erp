@@ -10,15 +10,17 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import static com.agi.aesl.erpscm.price_quotation.repository.PqQuery.*;
+
 @Repository
-public interface PqRepository extends JpaRepository<PriceQuotation,Long>,PqQuery {
+public interface PqRepository extends JpaRepository<PriceQuotation,Long> {
 
     Optional<PriceQuotation> findByRemoteOfferId(Long id);
 
-    @Query(value=prevPriceQuotationByVendorId,nativeQuery = true)
+    @Query(value=PREV_PRICE_QUOTATION_BY_VENDOR_ID,nativeQuery = true)
     Optional<PriceQuotationInfo> getPrevPqByVendorId(Long vendorId);
 
-    @Query(value = getPriceQuotationsByIndentId,nativeQuery = true)
+    @Query(value = GET_PRICE_QUOTATION_BY_INDENT_ID,nativeQuery = true)
     List<PriceQuotationInfo> getPriceQuotationsByIndentId(@Param("indentId") Long id);
 
     List<PriceQuotation> findByRfqIdAndVendorId(Long id, Long vendorId);

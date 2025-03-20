@@ -1,8 +1,9 @@
 package com.agi.aesl.erpscm.statistics.service;
 
+import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.statistics.repository.DemandStatisticsRepository;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -11,12 +12,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class StatisticsServiceImpl implements StatisticsService{
 
-    @Autowired
-    private ClaimResolver claimResolver;
-    @Autowired
-    private DemandStatisticsRepository demandStatisticsRepository;
+
+    private final ClaimResolver claimResolver;
+
+    private final DemandStatisticsRepository demandStatisticsRepository;
 
     private LocalDateTime parseDate(Optional<String> dateStr,String endTime){
         LocalDateTime date = null;
@@ -26,6 +28,12 @@ public class StatisticsServiceImpl implements StatisticsService{
         }
         return date;
     }
+
+    private Long getEmpWarehouseId(){
+        Employee employee =  claimResolver.getEmployee().orElse(null);
+        return (employee!=null)? employee.getWarehouseId() : null;
+    }
+
     @Override
     public List<DemandStatisticsRepository.DemandStats> getDemandStatistics(Jwt token, Optional<Long> categoryId,
                                                                             Optional<Long> subCategoryId,
@@ -34,9 +42,8 @@ public class StatisticsServiceImpl implements StatisticsService{
         claimResolver.setToken(token);
         Long warehouseId=null;
         if(claimResolver.getEmployee().isPresent()){
-            warehouseId = claimResolver.getEmployee().get().getWarehouseId();
+            warehouseId = getEmpWarehouseId();
         }
-        System.out.println("WAREHOUSE: "+warehouseId);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
         LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
         return demandStatisticsRepository.getDemandStatistics(categoryId.orElse(null),

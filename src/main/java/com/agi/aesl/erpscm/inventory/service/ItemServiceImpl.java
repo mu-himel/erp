@@ -132,6 +132,7 @@ public class ItemServiceImpl implements ItemService {
     private static final String ERR_WAREHOUSE_NOT_FOUND="Sorry! Warehouse not found";
     private static final String WAREHOUSE_ID_KEY="warehouseId";
     private static final String WAREHOUSE_STORE_ID_KEY="warehouseStoreId";
+    private static final String ORG_ID_KEY="orgId";
 
     @Override
     public Optional<Item> getItemDetail(Long id) {
@@ -481,7 +482,7 @@ public class ItemServiceImpl implements ItemService {
         List<ItemListWithAttributesDto> filteredList  = itemListWithAttributesDtos;
         
         if(sattributes.isPresent()){
-            String attrStr = sattributes.get().replaceAll("  "," ");
+            String attrStr = sattributes.get().replace("  "," ");
             
             filteredList = itemListWithAttributesDtos.stream().filter(itemListWithAttributesDto->{
                 String perItemAttr = "";
@@ -532,11 +533,11 @@ public class ItemServiceImpl implements ItemService {
                claimResolver.getEmployee().get().getWarehouseId();
         Optional<Warehouse> wOp = warehouseService.getWarehouse(warehouseId);
         if(wOp.isEmpty()){
-            throw new AesException("Sorry! Warehouse not found");
+            throw new AesException(ERR_WAREHOUSE_NOT_FOUND);
         }
         Optional<WarehouseStore> wsOp = warehouseStoreRepository.findById(itemRequestDto.getWarehouseStore().getId());
         if(wsOp.isEmpty()){
-            throw new AesException("Sorry! Warehouse Store not found");
+            throw new AesException(ERR_WAREHOUSE_STORE_NOT_FOUND);
         }
         warehouse= wOp.get();
         warehouseStore = wsOp.get();
@@ -650,7 +651,7 @@ public class ItemServiceImpl implements ItemService {
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
         if(orgOp.isPresent()){
             pendingItemRequestDto.setOrganizationId(orgOp.get().getCpsVendorRegistrationId());
-            headers.set("orgId", orgOp.get().getCpsVendorRegistrationId().toString());
+            headers.set(ORG_ID_KEY, orgOp.get().getCpsVendorRegistrationId().toString());
         }
         HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(pendingItemRequestDto,headers);
         String url = cpsConfig.getPendingItemReqEndpoint();
@@ -1011,7 +1012,7 @@ public class ItemServiceImpl implements ItemService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
             orgOp.ifPresent(org->
-                headers.set("orgId", org.getCpsVendorRegistrationId().toString())
+                headers.set(ORG_ID_KEY, org.getCpsVendorRegistrationId().toString())
             );
             HttpEntity<List<ScmItemUpdateDto>> payload = new HttpEntity<>(dtos,headers);
             String url = cpsConfig.getItemsEndpoint().concat("/update-scm-id");
@@ -1034,12 +1035,12 @@ public class ItemServiceImpl implements ItemService {
 
         Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(warehouseId);
         if(warehouseOp.isEmpty()){
-            throw new AesException("Sorry! Warehouse not found");
+            throw new AesException(ERR_WAREHOUSE_NOT_FOUND);
         }
 
         Optional<WarehouseStore> warehouseStoreOp = warehouseStoreService.getStoreById(warehouseStoreId);
         if(warehouseStoreOp.isEmpty()){
-            throw new AesException("Sorry! Warehouse Store not found");
+            throw new AesException(ERR_WAREHOUSE_STORE_NOT_FOUND);
         }
 
         Warehouse warehouse = warehouseOp.get();
@@ -1196,7 +1197,7 @@ public class ItemServiceImpl implements ItemService {
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
         if(orgOp.isPresent()){
             headers.setBearerAuth(token.getTokenValue());
-            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
+            headers.set(ORG_ID_KEY,orgOp.get().getCpsVendorRegistrationId().toString());
         }
         HttpEntity<?> payload = new HttpEntity<>(headers);
         String url = cpsConfig.getItemFetchEndpoint(subCatCode);
@@ -1320,7 +1321,7 @@ public class ItemServiceImpl implements ItemService {
 
         Optional<WarehouseStore> wsOp = warehouseStoreRepository.findById(warehouseStoreId);
         if(wsOp.isEmpty()){
-            throw new AesException("Sorry! Warehouse Store not found");
+            throw new AesException(ERR_WAREHOUSE_STORE_NOT_FOUND);
         }
         WarehouseStore ws = wsOp.get();
         Optional<ItemCategory> categoryOp = categoryService.getAnyItemCategory(itemMergeRequestDto.getItemParentCategory().getId());

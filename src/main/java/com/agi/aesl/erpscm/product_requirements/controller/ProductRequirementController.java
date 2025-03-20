@@ -32,7 +32,7 @@ public class ProductRequirementController extends BaseController{
     }
 
     @PostMapping
-    public ResponseEntity<?> addProductRequirement(
+    public ResponseEntity<Void> addProductRequirement(
         @AuthenticationPrincipal Jwt token,
         @RequestBody @Valid ProductRequirementRequestDto productRequirementRequestDto
     ){
@@ -41,7 +41,7 @@ public class ProductRequirementController extends BaseController{
     }
 
     @GetMapping
-    public ResponseEntity<?> getProductRequirement(
+    public ResponseEntity<Object> getProductRequirement(
         @AuthenticationPrincipal Jwt token,
         @RequestParam("page") Optional<Integer> page,
         @RequestParam("size") Optional<Integer> size,
@@ -59,7 +59,7 @@ public class ProductRequirementController extends BaseController{
     }
 
     @GetMapping("/{categoryId}/{subCategoryId}")
-    public ResponseEntity<?> getProductRequirementView(
+    public ResponseEntity<Object> getProductRequirementView(
         @PathVariable("categoryId") Optional<Long> categoryId,
         @PathVariable("subCategoryId") Optional<Long> subCategoryId
     ){
@@ -70,7 +70,7 @@ public class ProductRequirementController extends BaseController{
     }
 
     @PostMapping("/warehouse-requirements")
-    public ResponseEntity<?> getWarehouseRequirements(
+    public ResponseEntity<Object> getWarehouseRequirements(
         @RequestBody WarehouseRequirementDto dto
     ){
         return new ResponseEntity<>(
@@ -80,7 +80,7 @@ public class ProductRequirementController extends BaseController{
     }
 
     @GetMapping("/demand-by-ids")
-    public ResponseEntity<?> getDemandInfoByIds(
+    public ResponseEntity<Object> getDemandInfoByIds(
             @RequestParam("prIds") String prIds
     ) {
         return new ResponseEntity<>(

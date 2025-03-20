@@ -1,7 +1,7 @@
 package com.agi.aesl.erpscm.network;
 
 import com.agi.aesl.erpscm.organization.entity.Organization;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -12,14 +12,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 @Service
+@RequiredArgsConstructor
 public class NetworkService {
     
-    @Autowired
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
+
+    private static final String BEARER="Bearer ";
 
     public HttpHeaders setHttpHeaders(Jwt token){
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization","Bearer "+token.getTokenValue());
+        headers.set("Authorization",BEARER+token.getTokenValue());
         headers.setContentType(MediaType.APPLICATION_JSON);
         return headers;
     }
@@ -35,14 +37,14 @@ public class NetworkService {
 
     public HttpHeaders setHttpHeaders(String token){
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization","Bearer "+ token);
+        headers.set("Authorization",BEARER+ token);
         headers.setContentType(MediaType.APPLICATION_JSON);
         return headers;
     }
 
     public HttpHeaders setHttpHeadersForHr(Jwt token){
         HttpHeaders headers = new HttpHeaders();
-        headers.set("KCAuthorization","Bearer "+token.getTokenValue());
+        headers.set("KCAuthorization",BEARER+token.getTokenValue());
         headers.setContentType(MediaType.APPLICATION_JSON);
         return headers;
     }

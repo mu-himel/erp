@@ -18,20 +18,6 @@ public class Verifier {
 
     String designation;
 
-    public Verifier(String id, String name, Boolean verified,
-                    Long departmentId,  Long parentDepartmentId,
-                    String departmentName, Integer departmentLevel,
-                    Long designationId, String designation) {
 
-        this.id = id;
-        this.name = name;
-        this.verified = verified;
-        this.departmentId = departmentId;
-        this.parentDepartmentId = parentDepartmentId;
-        this.departmentName = departmentName;
-        this.departmentLevel = departmentLevel;
-        this.designationId = designationId;
-        this.designation = designation;
-    }
 
 }

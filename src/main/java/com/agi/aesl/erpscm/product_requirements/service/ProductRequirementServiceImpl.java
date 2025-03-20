@@ -2,13 +2,13 @@ package com.agi.aesl.erpscm.product_requirements.service;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import com.agi.aesl.erpscm.demand.entity.DemandDetail;
 import com.agi.aesl.erpscm.demand.repository.DemandDetailRepository;
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.product_requirements.dto.response.PrItemInfo;
 import com.agi.aesl.erpscm.product_requirements.dto.response.PrWarehouseInfo;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,16 +27,17 @@ import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class ProductRequirementServiceImpl implements ProductRequirementService{
 
-    @Autowired
-    private ClaimResolver claimResolver;
 
-    @Autowired
-    private ProductRequirementRepository productRequirementRepository;
+    private final ClaimResolver claimResolver;
 
-    @Autowired
-    private DemandDetailRepository demandDetailRepository;
+
+    private final ProductRequirementRepository productRequirementRepository;
+
+
+    private final DemandDetailRepository demandDetailRepository;
 
 
     @Override
@@ -45,7 +46,7 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
         claimResolver.setToken(token);
         Optional<Employee> empOp = claimResolver.getEmployee();
         if(empOp.isEmpty()){
-            throw new RuntimeException("sorry! employee not found");
+            throw new AesException("sorry! employee not found");
         }
         Optional<DemandDetail> ddOp = demandDetailRepository.findById(productRequirementRequestDto.getDemandDetail().getId());
         if(ddOp.isPresent()){
@@ -53,9 +54,7 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
             demandDetail.setPrQty(productRequirementRequestDto.getDemandDetail().getPrQty());
         }
         ProductRequirement productRequirement = productRequirementRequestDto.getEntity();
-//        productRequirement.setDemandDeadline(getPRDeadline(
-//            productRequirementRequestDto.getDemandDate(),
-//            productRequirementRequestDto.getDemandPriority()));
+
         productRequirement.setDemandDeadline(
                 productRequirementRequestDto.getDemandDate().atTime(LocalDateTime.now().toLocalTime()));
         productRequirement.setRequestedBy(empOp.get());
@@ -85,29 +84,25 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
         return date;
     }
     @Override
-    public Page<?> getAllProductRequirements(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
-            Optional<Long> subCategoryId, Optional<String> startDate, Optional<String> endDate,
-                                             Optional<Integer> daysRemain) {
+    public Page<ProductRequirementRepository.ProductRequirementInfo> getAllProductRequirements(Jwt token, Optional<Integer> page, Optional<Integer> size, Optional<Long> categoryId,
+                                                                                               Optional<Long> subCategoryId, Optional<String> startDate, Optional<String> endDate,
+                                                                                               Optional<Integer> daysRemain) {
 
         claimResolver.setToken(token);
 
-
-//        Sort sort = Sort.by(Sort.Direction.DESC, "categoryId");
-        Page<?> result = null;
         Pageable pageable = PageRequest.of(page.orElse(0),size.orElse(10));
         LocalDateTime fromDate = parseDate(startDate,null);
         LocalDateTime toDate = parseDate(endDate,"23:59:59");
-        result = productRequirementRepository.findAllProductRequirements(categoryId.orElse(null),
+        return productRequirementRepository.findAllProductRequirements(categoryId.orElse(null),
         subCategoryId.orElse(null),
             fromDate,
             toDate,
         daysRemain.orElse(null),
         pageable);
-        return result;
     }
 
     @Override
-    public List<?> getAllProductRequirementView(Optional<Long> categoryId, Optional<Long> subCategoryId) {
+    public List<PrItemInfo> getAllProductRequirementView(Optional<Long> categoryId, Optional<Long> subCategoryId) {
         List<ProductRequirementRepository.ProductRequirementViewInfoV2> result = productRequirementRepository.getAllProductRequirementView(
             categoryId.orElseThrow(()-> new RuntimeException("Sorry! Category should not empty")),
             subCategoryId.orElseThrow(()->new RuntimeException("Sorry! Sub Category should not empty"))
@@ -138,14 +133,11 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
                 itemInfo.setProductRequirementIds(res.getProductRequirementsIds());
                 itemInfo.setPrQty(itemInfo.getPrQty().add(res.getPrQty()));
                 itemInfo.setDaysRemain(res.getDaysRemain());
-//                warehouses.add(warehouseInfo);
             }else{
 
-//                List<PrWarehouseInfo> warehouseInfos= new ArrayList<>();
                 PrWarehouseInfo warehouseInfo=new PrWarehouseInfo(res.getWarehouseIds(),
                         res.getWarehouses(),res.getCurrentStock(),res.getSafetytStock(),res.getPrQty(),
                         res.getTransitQty(),res.getItemsQty());
-//                warehouseInfos.add(warehouseInfo);
 
                 PrItemInfo itemInfo  = new PrItemInfo(res.getProductRequirementsIds(),res.getBrandName(),
                         res.getCategoryName(),res.getSubCategoryName(),
@@ -161,7 +153,7 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
     }
 
     @Override
-    public List<?> getWarehouseRequirements(String attribute) {
+    public List<ProductRequirementRepository.WarehouseRequirement> getWarehouseRequirements(String attribute) {
         return productRequirementRepository.getWarehouseRequirements(attribute);
     }
 
@@ -170,7 +162,7 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
     public void reOpen(String productRequirementsIds) {
         List<Long> ids = List.of(productRequirementsIds.split(",")).stream()
         .map(Long::parseLong)
-        .collect(Collectors.toList());
+        .toList();
         productRequirementRepository.updateStatusByIds(ids);
     }
 
@@ -184,7 +176,7 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
     }
 
     @Override
-    public List<?> getDemandByProductRequirementIds(String prIds) {
+    public List<ProductRequirementRepository.PrDemandView> getDemandByProductRequirementIds(String prIds) {
         List<Long> ids = Arrays.stream(prIds.split(",")).map(Long::parseLong).toList();
 
         Optional<List<Long>> indentIds = Optional.of(ids);

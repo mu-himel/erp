@@ -5,7 +5,7 @@ import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStateStatus;
 import com.agi.aesl.erpscm.price_quotation.enums.PriceQuotationStatus;
 import com.agi.aesl.erpscm.price_quotation.service.PqService;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,13 +14,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/pq/vendor")
+@RequiredArgsConstructor
 public class VendorPriceQuotationController {
 
-    @Autowired
-    private PqService pqService;
+
+    private final PqService pqService;
 
     @PostMapping
-    public ResponseEntity<?> onInitialPriceQuotation(
+    public ResponseEntity<Void> onInitialPriceQuotation(
             @AuthenticationPrincipal Jwt token,
             @RequestBody PriceQuotationReqDto pqDto){
         pqService.onReceivePq(token,pqDto);
@@ -28,7 +29,7 @@ public class VendorPriceQuotationController {
     }
 
     @PostMapping("/receive-counter")
-    public ResponseEntity<?> onReceiveCounter(
+    public ResponseEntity<Void> onReceiveCounter(
             @AuthenticationPrincipal Jwt token,
             @RequestBody PriceQuotationReqDto pqDto){
         pqService.onReceiveCounterPq(token,pqDto);
@@ -36,7 +37,7 @@ public class VendorPriceQuotationController {
     }
 
     @PutMapping("/{id}/lock")
-    public ResponseEntity<?> onAcceptPriceQuotation(
+    public ResponseEntity<Void> onAcceptPriceQuotation(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id
     ){
@@ -45,7 +46,7 @@ public class VendorPriceQuotationController {
     }
 
     @PutMapping("/{id}/decline")
-    public ResponseEntity<?> onDeclinePriceQuotation(
+    public ResponseEntity<Void> onDeclinePriceQuotation(
             @AuthenticationPrincipal Jwt token,
             @PathVariable("id") Long id, @RequestBody NoteDto noteDto){
         pqService.onDeclinePq(token, id,noteDto, PriceQuotationStateStatus.DECLINED, PriceQuotationStatus.COUNTER_TO_COMPANY);

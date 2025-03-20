@@ -1,6 +1,6 @@
 package com.agi.aesl.erpscm.organization.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,13 +13,14 @@ import com.agi.aesl.erpscm.organization.service.OrgService;
 
 @RestController
 @RequestMapping("/api/v1/organization")
+@RequiredArgsConstructor
 public class OrganizationController {
 
-    @Autowired
-    private OrgService orgService;
+
+    private final OrgService orgService;
 
     @PostMapping
-    public ResponseEntity<?> createOrg(@RequestBody OrgRequestDto orgDto){
+    public ResponseEntity<Void> createOrg(@RequestBody OrgRequestDto orgDto){
         orgService.createOrg(orgDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }

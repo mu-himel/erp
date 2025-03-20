@@ -78,9 +78,9 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     record MyProduct(Long id, String categoryName,String subCategoryName, String productName, String status){}
 
     @Override
-    public Page<?> getMyProducts(Jwt token,
-                                 Optional<Long> categoryId, Optional<Long> subCategoryId,
-                                 Optional<Integer> page, Optional<Integer> size) {
+    public Page<UserItemRepository.UserItem> getMyProducts(Jwt token,
+                                                           Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                                           Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
@@ -92,8 +92,8 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     }
 
     @Override
-    public Page<?> getPendingVerifications(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
-                                           Optional<Integer> page, Optional<Integer> size) {
+    public Page<UserItemRepository.UserItem> getPendingVerifications(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                                                     Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
@@ -102,8 +102,8 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     }
 
     @Override
-    public Page<?> getPendingApprovals(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
-                                       Optional<Integer> page, Optional<Integer> size) {
+    public Page<UserItemRepository.UserItem> getPendingApprovals(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                                                 Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
@@ -112,8 +112,8 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     }
 
     @Override
-    public Page<?> getClosed(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
-                             Optional<Integer> page, Optional<Integer> size) {
+    public Page<UserItemRepository.UserItem> getClosed(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                                       Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
@@ -122,9 +122,9 @@ public class InventoryRequestServiceImpl implements InventoryRequestService{
     }
 
     @Override
-    public Page<?> getPendingApprovalItemsByStore(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
-                                                  Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
-                                                  Optional<Integer> page, Optional<Integer> size) {
+    public Page<UserItemRepository.PendingApprovalUserItem> getPendingApprovalItemsByStore(Jwt token, Optional<Long> categoryId, Optional<Long> subCategoryId,
+                                                                                           Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
+                                                                                           Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);

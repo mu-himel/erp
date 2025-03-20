@@ -77,12 +77,12 @@ public class PrIndentServiceImpl implements PrIndentService {
     }
 
     @Override
-    public Page<?> getAllPrIndents(Optional<Integer> page,
-                                   Optional<Integer> size,
-                                   Optional<Long> categoryId,
-                                   Optional<Long> subCategoryId,
-                                   Optional<String> fromDateStr,
-                                   Optional<String> toDateStr
+    public Page<PrIndentRepository.PrIndentInfo> getAllPrIndents(Optional<Integer> page,
+                                                                 Optional<Integer> size,
+                                                                 Optional<Long> categoryId,
+                                                                 Optional<Long> subCategoryId,
+                                                                 Optional<String> fromDateStr,
+                                                                 Optional<String> toDateStr
                                    ) {
         Sort sort = Sort.by(Sort.Direction.DESC, "id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(10), sort);
@@ -97,7 +97,7 @@ public class PrIndentServiceImpl implements PrIndentService {
     }
 
     @Override
-    public List<?> getPrIndentById(Optional<Long> prIndentId) {
+    public List<Map<String,Object>> getPrIndentById(Optional<Long> prIndentId) {
         List<PrIndentRepository.PrIndentViewInfo> result = prIndentRepository.getPrIndentById(
                 prIndentId.orElseThrow(() -> new RuntimeException("PrIndent id should not empty"))
         );
@@ -106,14 +106,14 @@ public class PrIndentServiceImpl implements PrIndentService {
     }
 
     @Override
-    public List<?> getPrIndentByIds(Optional<List<Long>> prIndentIds) {
+    public List<Map<String,Object>> getPrIndentByIds(Optional<List<Long>> prIndentIds) {
         List<PrIndentRepository.PrIndentViewInfo> result = prIndentRepository.getPrIndentByIds(
                 prIndentIds.orElseThrow(() -> new RuntimeException("PrIndent id should not empty"))
         );
         return getProcessedResults(result);
     }
 
-    private List<?> getProcessedResult(List<PrIndentRepository.PrIndentViewInfo> result) {
+    private List<Map<String,Object>> getProcessedResult(List<PrIndentRepository.PrIndentViewInfo> result) {
         List<Map<String, Object>> items = new ArrayList<>();
         Map<String, Object> warehousKeyMap = new HashMap<>();
         for (PrIndentRepository.PrIndentViewInfo prIndentViewInfo : result) {
@@ -244,7 +244,7 @@ public class PrIndentServiceImpl implements PrIndentService {
 
     }
 
-    private List<?> getProcessedResults(List<PrIndentRepository.PrIndentViewInfo> result) {
+    private List<Map<String,Object>> getProcessedResults(List<PrIndentRepository.PrIndentViewInfo> result) {
         List<Map<String, Object>> items = new ArrayList<>();
         Map<String, Object> warehousKeyMap = new HashMap<>();
         for (PrIndentRepository.PrIndentViewInfo prIndentViewInfo : result) {

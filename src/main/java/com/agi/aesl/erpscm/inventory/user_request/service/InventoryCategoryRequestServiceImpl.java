@@ -37,6 +37,7 @@ import com.agi.aesl.erpscm.utils.ClaimResolver;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -48,44 +49,44 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class InventoryCategoryRequestServiceImpl implements InventoryCategoryRequestService{
 
     private static final Integer PAGE_SIZE = 20;
-    @Autowired
-    private UserCategoryRepository userCategoryRepository;
 
-    @Autowired
-    private ClaimResolver claimResolver;
+    private final UserCategoryRepository userCategoryRepository;
 
-    @Autowired
-    private UserApplicationValidatorService<UserCategory> verificationService;
 
-    @Autowired
-    private CommentService commentService;
+    private final ClaimResolver claimResolver;
 
-    @Autowired
-    private WarehouseService warehouseService;
 
-    @Autowired
-    private OrgService orgService;
+    private final UserApplicationValidatorService<UserCategory> verificationService;
 
-    @Autowired
-    private NetworkService networkService;
 
-    @Autowired
-    private CpsServerConfig cpsServerConfig;
+    private final CommentService commentService;
 
-    @Autowired
-    private CategoryService categoryService;
 
-    @Autowired
-    private IntegrationReaderService integrationReaderService;
+    private final WarehouseService warehouseService;
 
-    @Autowired
-    private UserCategoryHistoryRepository userCategoryHistoryRepository;
+
+    private final OrgService orgService;
+
+
+    private final NetworkService networkService;
+
+
+    private final CpsServerConfig cpsServerConfig;
+
+
+    private final CategoryService categoryService;
+
+
+    private final IntegrationReaderService integrationReaderService;
+
+
+    private final UserCategoryHistoryRepository userCategoryHistoryRepository;
 
     @Override
     @Transactional
@@ -128,9 +129,9 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
-    public List<?> getCategories(Jwt token, Optional<String> name, Optional<String> code,
-                                 Optional<Long>warehouseIdOp,
-                                 Optional<Long>storeId) {
+    public List<UserCategoryRepository.UserCategoryInfo> getCategories(Jwt token, Optional<String> name, Optional<String> code,
+                                                                       Optional<Long>warehouseIdOp,
+                                                                       Optional<Long>storeId) {
         claimResolver.setToken(token);
         Long warehouseId = null;
         if(warehouseIdOp.isPresent()){
@@ -144,7 +145,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
-    public List<?> getSubCategories(Jwt token, Long categoryId, Optional<String> name, Optional<String> code) {
+    public List<UserCategoryRepository.UserCategoryInfo> getSubCategories(Jwt token, Long categoryId, Optional<String> name, Optional<String> code) {
         claimResolver.setToken(token);
         Long warehouseId = null;
         if(claimResolver.getEmployee().isPresent()){
@@ -155,7 +156,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
-    public Page<?> getMyCategories(Jwt token, Optional<Integer> page, Optional<Integer> size) {
+    public Page<UserCategoryRepository.UserCategory> getMyCategories(Jwt token, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
@@ -163,7 +164,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
-    public Page<?> getMySubCategories(Jwt token,Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size) {
+    public Page<UserCategoryRepository.UserSubCategory> getMySubCategories(Jwt token, Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
@@ -171,17 +172,17 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
-    public Page<?> getPendingVerifications(Jwt token, Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size, Boolean isCategory) {
+    public <T> T getPendingVerifications(Jwt token, Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size, Boolean isCategory) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
         if(Boolean.TRUE.equals(isCategory)){
-            return userCategoryRepository.findAllCategoryByNextVerifierId(
+            return (T) userCategoryRepository.findAllCategoryByNextVerifierId(
                     claimResolver.getUserId(),
                     pageable
             );
         }
-        return userCategoryRepository.findAllSubCategoryByNextVerifierId(
+        return (T) userCategoryRepository.findAllSubCategoryByNextVerifierId(
                 claimResolver.getUserId(),
                 categoryId.orElse(null),
                 pageable
@@ -189,17 +190,17 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
-    public Page<?> getPendingApprovals(Jwt token, Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+    public <T> T getPendingApprovals(Jwt token, Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
         if(isCategory){
-            return userCategoryRepository.findAllCategoryByNextApproverId(
+            return (T) userCategoryRepository.findAllCategoryByNextApproverId(
                     claimResolver.getUserId(),
                     pageable
             );
         }
-        return userCategoryRepository.findAllSubCategoryByNextApproverId(
+        return (T) userCategoryRepository.findAllSubCategoryByNextApproverId(
                 claimResolver.getUserId(),
                 categoryId.orElse(null),
                 pageable
@@ -207,14 +208,14 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
-    public Page<?> getClosed(Jwt token,Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+    public <T> T getClosed(Jwt token,Optional<Long> categoryId, Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
         if(isCategory){
-            return userCategoryRepository.findAllClosed(claimResolver.getUserId(),pageable);
+            return (T) userCategoryRepository.findAllClosed(claimResolver.getUserId(),pageable);
         }
-        return userCategoryRepository.findAllClosedSubCategory(
+        return  (T) userCategoryRepository.findAllClosedSubCategory(
                 claimResolver.getUserId(),
                 categoryId.orElse(null),
                 pageable
@@ -222,10 +223,10 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
-    public Page<?> getPendingApprovalCategoriesFromStore(Jwt token, Optional<Long> categoryId,
-        Optional<String> name,
-        Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
-        Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+    public Page<UserCategoryRepository.PendingApprovalStore> getPendingApprovalCategoriesFromStore(Jwt token, Optional<Long> categoryId,
+                                                                                                   Optional<String> name,
+                                                                                                   Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
+                                                                                                   Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
         claimResolver.setToken(token);
         String uri="inventory-control/categories";
         DataFilter dataFilter = new DataFilter(uri,claimResolver);
@@ -246,10 +247,10 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     }
 
     @Override
-    public Page<?> getPendingApprovalSubCategoriesFromStore(Jwt token, Optional<Long> categoryId,
-                                Optional<String> name,
-                                Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
-                                Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
+    public Page<UserCategoryRepository.PendingApprovalStore> getPendingApprovalSubCategoriesFromStore(Jwt token, Optional<Long> categoryId,
+                                                                                                      Optional<String> name,
+                                                                                                      Optional<Long> warehouseId, Optional<Long> warehouseStoreId,
+                                                                                                      Optional<Integer> page, Optional<Integer> size, boolean isCategory) {
         claimResolver.setToken(token);
         Sort sort = Sort.by(Sort.Direction.DESC,"id");
         Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(PAGE_SIZE),sort);
@@ -266,7 +267,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
     public Map<String, Object> getDetail(Long id) {
         Optional<UserCategory> catOp = userCategoryRepository.findById(id);
         if(catOp.isEmpty()){
-            throw new RuntimeException("Sorry! Category not found");
+            throw new AesException("Sorry! Category not found");
         }
         Map<String,Object> detail = new HashMap<>();
         UserCategory category = catOp.get();

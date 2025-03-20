@@ -5,7 +5,7 @@ import com.agi.aesl.erpscm.pr_indent.dto.reqeust.PrIndentRequestDto;
 import com.agi.aesl.erpscm.pr_indent.dto.reqeust.UpdatePrIndentDetailRequestDto;
 import com.agi.aesl.erpscm.pr_indent.service.PrIndentService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,13 +17,13 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/pr-indents")
+@RequiredArgsConstructor
 public class PrIndentController extends BaseController {
 
-    @Autowired
-    private PrIndentService prIndentService;
+    private final PrIndentService prIndentService;
 
     @PostMapping
-    public ResponseEntity<?> addIndent(
+    public ResponseEntity<Void> addIndent(
             @AuthenticationPrincipal Jwt token,
             @RequestBody PrIndentRequestDto prIndentRequestDto
             ){
@@ -32,7 +32,7 @@ public class PrIndentController extends BaseController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getIndents(
+    public ResponseEntity<Object> getIndents(
             @AuthenticationPrincipal Jwt token,
             @RequestParam("page")Optional<Integer> page,
             @RequestParam("size") Optional<Integer> size,
@@ -48,7 +48,7 @@ public class PrIndentController extends BaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getPrIndentById(
+    public ResponseEntity<Object> getPrIndentById(
             @PathVariable("id") Optional<Long> id
     ){
         return new ResponseEntity<>(
@@ -58,7 +58,7 @@ public class PrIndentController extends BaseController {
     }
 
     @GetMapping("/getByIds")
-    public ResponseEntity<?> getPrIndentByIds(
+    public ResponseEntity<Object> getPrIndentByIds(
             @RequestParam("ids") Optional<List<Long>> ids
     ){
         return new ResponseEntity<>(
@@ -68,7 +68,7 @@ public class PrIndentController extends BaseController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateOrderDetailsOrderQty(
+    public ResponseEntity<Object> updateOrderDetailsOrderQty(
             @PathVariable("id") @Valid Optional<Long> id,
             @RequestBody @Valid UpdatePrIndentDetailRequestDto updatePrIndentDetailRequestDto
             ){

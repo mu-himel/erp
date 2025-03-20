@@ -1,8 +1,8 @@
 package com.agi.aesl.erpscm.price_quotation.repository;
 
-public interface PqQuery {
-
-    String prevPriceQuotationByVendorId = """
+public class PqQuery {
+    private PqQuery(){}
+    public static final String PREV_PRICE_QUOTATION_BY_VENDOR_ID = """
         SELECT 
         MAX(pq.id)                 as id,
         vendor_id                  as vendorId,
@@ -19,7 +19,7 @@ public interface PqQuery {
     ORDER BY id DESC LIMIT 1
             """;
 
-    String getPriceQuotationsByIndentId = """
+    public static final String GET_PRICE_QUOTATION_BY_INDENT_ID = """
             SELECT 
             MAX(pq.id)                 as id,
             vendor_id                  as vendorId,
