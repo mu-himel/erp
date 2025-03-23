@@ -244,12 +244,13 @@ public class CsAccountServiceImpl implements CsAccountService{
         csStatus.add(CsStatus.PENDING_VERIFICATION.toString());
         csStatus.add(CsStatus.REVIEW.toString());
         csStatus.add(CsStatus.VERIFIED.toString());
-        if(status.isPresent()){
-            csStatus=new ArrayList<>();
-            csStatus.add(status.get());
-        }
+//
+//        if(status.isPresent()){
+//            csStatus=new ArrayList<>();
+//            csStatus.add(status.get());
+//        }
         return csAccountRepository.findAllPendingVerificationAcs(indentNo,
-                claimResolver.getUserId(),csStatus,fromDate,toDate,pageable);
+                claimResolver.getUserId(),csStatus,status.orElse(null),fromDate,toDate,pageable);
     }
 
     @Override
