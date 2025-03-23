@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.inventory.enums.CategoryStatus;
 import org.springframework.beans.BeanUtils;
 
@@ -67,8 +68,8 @@ public class CategoryRequestDto implements EntityConvertable<ItemCategory>{
     public ItemCategory getEntity() {
         ItemCategory category = new ItemCategory(id);
         BeanUtils.copyProperties(this,category);
-        if(category.getName().trim().equals("")){
-            throw new RuntimeException("Sorry! Name field should not blank");
+        if(category.getName().trim().isEmpty()){
+            throw new AesException("Sorry! Name field should not blank");
         }
         category.setName(category.getName().trim());
         return category;

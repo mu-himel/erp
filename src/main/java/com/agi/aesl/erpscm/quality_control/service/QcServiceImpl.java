@@ -100,8 +100,19 @@ public class QcServiceImpl implements QcService{
 
     private final IntegrationReaderService readerService;
 
+    private final QcSentService qcSentService;
+
     private static final String DATE_TIME_START="T00:00:00";
     private static final String DATE_TIME_END="T23:59:59";
+
+    private Employee getEmp(){
+        return claimResolver.getEmployee().orElse(null);
+    }
+
+    private Long getEmpWarehouseId(){
+        Employee emp = claimResolver.getEmployee().orElse(null);
+        return (emp!=null)? emp.getWarehouseId() : null;
+    }
 
     @Override
     @Transactional
@@ -138,7 +149,7 @@ public class QcServiceImpl implements QcService{
         GoodReceiveNote grn = goodReceiveNoteOptional.get();
 
         List<String> ids = new ArrayList<>();
-        controlDto.getQcItemDetails().stream().forEach(qcItemDetail -> {
+        controlDto.getQcItemDetails().forEach(qcItemDetail -> {
             Optional<GoodReceiveItemDetail> grnItemDetail = grn.getGoodReceiveItemDetails().stream().filter(
                     goodReceiveItemDetail -> goodReceiveItemDetail.getId().equals(qcItemDetail.getId())
             ).findFirst();
@@ -295,31 +306,15 @@ public class QcServiceImpl implements QcService{
                 throw new AesException(e.getMessage());
             }
             if(grn.getGrnMode().equals(GrnMode.AUTO)) {
-                sentQcStatus(token.getTokenValue(), grn.getRemotePoId(), GrnStatus.QC_FAILED, new ArrayList<>(), noteDto, kpi);
+                qcSentService.setOrgService(orgService);
+                qcSentService.setCpsServerConfig(cpsServerConfig);
+                qcSentService.setNetworkService(networkService);
+                qcSentService.sentQcStatus(token.getTokenValue(), grn.getRemotePoId(), GrnStatus.QC_FAILED, new ArrayList<>(), noteDto, kpi);
             }
         }
     }
 
-    @Transactional
-    public void sentQcStatus(String token, Long id,GrnStatus status, List<?> qcDetails, NoteDto noteDto, String qcResult){
-        HttpHeaders headers = new HttpHeaders();
-        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token);
-        orgOp.ifPresent(organization -> headers.set("orgId", organization.getCpsVendorRegistrationId().toString()));
 
-        Map<String,Object> map = new HashMap<>();
-        map.put("note",noteDto.getNote());
-        map.put("status",status);
-        map.put("qcDetails",qcDetails);
-        map.put("qcResult",qcResult);
-        HttpEntity<Map<String,Object>> payload = new HttpEntity<>(map,headers);
-        String url = (status.equals(GrnStatus.QC_PASS))? cpsServerConfig.getPoQcPassEndpoint(id):
-                cpsServerConfig.getPoQcFailEndpoint(id);
-        ResponseEntity<?> response = networkService.put(url, payload, Void.class);
-        if(response.getStatusCode()!= HttpStatus.NO_CONTENT){
-            throw new AesException("Sorry! Something wrong");
-        }
-
-    }
 
     private QualityControlKpi getKpi(String name, QualityControl qc){
         QualityControlKpi qck  = new QualityControlKpi();
@@ -464,7 +459,10 @@ public class QcServiceImpl implements QcService{
                 }
                 if(grn.getGrnMode().equals(GrnMode.AUTO)) {
                     NoteDto note = new NoteDto(rejectDto.getComment());
-                    sentQcStatus(claimResolver.getToken().getTokenValue(), grn.getRemotePoId(), GrnStatus.QC_FAILED,
+                    qcSentService.setOrgService(orgService);
+                    qcSentService.setCpsServerConfig(cpsServerConfig);
+                    qcSentService.setNetworkService(networkService);
+                    qcSentService.sentQcStatus(claimResolver.getToken().getTokenValue(), grn.getRemotePoId(), GrnStatus.QC_FAILED,
                             new ArrayList<>(), note, kpi);
                 }
             }
@@ -491,7 +489,7 @@ public class QcServiceImpl implements QcService{
         qc.setReviewDate(LocalDateTime.now());
 
         commentService.addComment(commentService.prepareComment(
-                claimResolver.getEmployee().get(),
+                getEmp(),
                 reviewDto.getDomainType(),
                 reviewDto.getActionType(),
                 qc.getId(),
@@ -599,7 +597,9 @@ public class QcServiceImpl implements QcService{
         dataFilter.setReaderService(readerService);
         List<Long> warehouseIds = dataFilter.getFilterConfig(DataFilter.FILTER_BY_WAREHOUSE);
         List<Long> categoryIds = dataFilter.getCategoryIds();
-        warehouseIds.add(claimResolver.getEmployee().get().getWarehouseId());
+        if(getEmpWarehouseId()!=null) {
+            warehouseIds.add(getEmpWarehouseId());
+        }
         return qcRepository.findAllClosed(
                 warehouseIds,categoryIds,
                 grnNo.orElse(null),

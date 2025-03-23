@@ -61,5 +61,5 @@ public interface PurchaseOrderService extends VerificationDomainService {
     void createPurchaseOrder(List<PurchaseOrder> purchaseOrders);
 
     void generatePurchaseOrder(Jwt token, String uri , PurchaseRequestDto purchaseRequestDto);
-    void sentPoToVendors(PoGroup poGroup);
+
 }

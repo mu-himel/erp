@@ -28,6 +28,5 @@ public class ItemDetail {
     BigDecimal reorderPercentage;
     List<ItemAttribute> attributes;
     List<ItemFunctionalUnit> functionalUnits;
-//    List<ItemStock> stocks;
     Map<String,List<Map<String,Object>>> warehouses;
 }

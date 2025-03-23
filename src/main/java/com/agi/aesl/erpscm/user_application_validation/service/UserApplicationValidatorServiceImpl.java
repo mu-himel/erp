@@ -182,11 +182,10 @@ public class UserApplicationValidatorServiceImpl<T extends VerifyableEntity> imp
             verification.setVerified(true);
             verification.setVerificationDate(LocalDateTime.now());
             verificationRepository.save(verification);
-            if(count!=null && count.size()>1 && verificationDomainService!=null){
-                if(count.get(1)!=null) {
-                    verificationDomainService.onVerify(domainId, verification, count.get(1));
-                }
+            if(count!=null && count.size()>1 && verificationDomainService!=null && count.get(1)!=null) {
+                verificationDomainService.onVerify(domainId, verification, count.get(1));
             }
+
 
             if(count!=null && count.size()==1 && verificationDomainService!=null){
                 List<VerificationResponse> approvalCount = verificationRepository

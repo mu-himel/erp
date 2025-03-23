@@ -7,6 +7,7 @@ import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class QcMailServiceImpl implements QcMailService{
 
     private String template;
@@ -28,17 +30,17 @@ public class QcMailServiceImpl implements QcMailService{
 
     private List<UserAssignInfo> users = new ArrayList<>();
 
-    @Autowired
-    private EmailSenderService emailSenderService;
 
-    @Autowired
-    private ModuleService moduleService;
+    private final EmailSenderService emailSenderService;
+
+
+    private final ModuleService moduleService;
 
     @Override
     @Transactional
     public void prepareMailContentForInitiator(String name, String actionType, GoodReceiveNote qualityControl) {
         template = setMailFor(name);
-        template.replaceAll("pending demand","pending qc");
+        template = template.replace("pending demand","pending qc");
         processTemplate(actionType,qualityControl);
     }
 
@@ -50,14 +52,14 @@ public class QcMailServiceImpl implements QcMailService{
     }
 
     private String setMailFor(String mailFor){
-        return qcMailTpl.replaceAll("\\{mailFor\\}",mailFor);
+        return QC_MAIL_TPL.replaceAll("\\{mailFor\\}",mailFor);
     }
 
     private String setInitiatorName(String tmp, String name){
         return tmp.replaceAll("\\{initiatorName\\}",name);
     }
 
-    @Transactional
+
     private void processTemplate(String actionType, GoodReceiveNote domain){
         template = setInitiatorName(
                 setActionType(template,actionType),domain.getCreatedBy().getEmployeeName()
@@ -75,9 +77,6 @@ public class QcMailServiceImpl implements QcMailService{
         }
 
         template = setProductDetail(template,productDetail);
-//        DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy");
-//        template = setQcDate(template,domain.getDemandDate().format(dateFormat));
-//        template = setDemandViewLink(template,demandDetailLink+demand.getId());
     }
 
     private String generateItemAttribute(List<ItemAttribute> attributes){
@@ -94,15 +93,11 @@ public class QcMailServiceImpl implements QcMailService{
     }
 
     private String setActionType(String tmp, String actionType){
-        return tmp.replaceAll("\\{actionType\\}",(actionType!=null)? actionType:"");
+        return tmp.replace("\\{actionType\\}",(actionType!=null)? actionType:"");
     }
 
     private String setProductDetail(String tmp, String productDetail){
-        return tmp.replaceAll("\\{itemList\\}",productDetail);
-    }
-
-    private String setQcDate(String tmp, String date){
-        return tmp.replaceAll("\\{demandDate\\}",date);
+        return tmp.replace("\\{itemList\\}",productDetail);
     }
 
     @Override

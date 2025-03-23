@@ -24,9 +24,7 @@ import java.util.List;
 @Table(name = "internal_requisitions")
 public class InternalRequisition extends VerifyableEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+
 
     private String internalRequisitionNo;
 

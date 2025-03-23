@@ -17,10 +17,6 @@ import java.time.LocalDateTime;
 @Table(name = "store_irs")
 public class StoreIR extends VerifyableEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @ManyToOne
     private InternalRequisition ir;
 

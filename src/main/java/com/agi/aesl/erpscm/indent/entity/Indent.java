@@ -24,9 +24,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Indent extends VerifyableEntity {
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-//    private Long id;
+
 
     private String indentNo;
 

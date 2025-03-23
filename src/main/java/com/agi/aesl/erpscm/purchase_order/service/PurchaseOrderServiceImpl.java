@@ -114,6 +114,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
     private final WarehouseRepository warehouseRepository;
 
+    private final PurchseOrderSentService purchseOrderSentService;
+
     private static final String VENDOR_PARTIAL_VAT_AMT_KEY="vendorPartialVatAmount";
     private static final String DATE_TIME_END="23:59:59";
     private static final String ERR_PO_NOT_FOUND="Sorry! PO not found";
@@ -130,7 +132,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
     private String generatePoNo(Cs cs){
         Long count = purchaseOrderRepository.countAllByCsId(cs.getId());
-        count = ++count;
+        count = count+1;
         return cs.getCsNo()+"-"+ ((count<10)? "0"+count.toString() : count.toString());
     }
     @Override
@@ -260,7 +262,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     }
 
     @Async
-    private void sendPendingItemRequest(PendingItemRequestDto payloadDto) {
+    public void sendPendingItemRequest(PendingItemRequestDto payloadDto) {
         try{
             HttpHeaders headers = new HttpHeaders();
             Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
@@ -475,7 +477,6 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             PoGroup poGroup = poGroupOp.get();
             // then get list of PO and its child using pogroup id
             List<PurchaseOrderRepository.PurchaseOrderDetailInfo> purchaseOrders = purchaseOrderRepository.findAllByPoGroupId(poGroup.getId());
-            List<Map<String,Object>> polist = new ArrayList<>();
 
             if(!poGroup.getPurchaseOrderStatus().equals(PurchaseOrderStatus.PENDING)) {
                 List<UserApplicationValidationRepository.VerificationResponse> verifiers = new ArrayList<>();
@@ -530,7 +531,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             map.put("categories",indent.getCategory().getId()+","+indent.getSubCategory().getId());
             map.put("categoryName", indent.getCategory().getName()+"-"+indent.getSubCategory().getName());
 
-            polist = purchaseOrders.stream().map(po->{
+            List<Map<String,Object>> polist = purchaseOrders.stream().map(po->{
                 Map<String,Object> poItem = new HashMap<>();
                 List<Map<String,Object>> poDetailList = new ArrayList<>();
                 List<PurchaseOrderRepository.PqDetailInfo> pqDetailInfo = purchaseOrderRepository.getPurchaseOrderDetail(po.getId());
@@ -741,7 +742,8 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 poGroup.setPurchaseOrderStatus(PurchaseOrderStatus.PENDING_APPROVAL);
             }else {
                 poGroup.setPurchaseOrderStatus(PurchaseOrderStatus.VERIFIED);
-                sentPoToVendors(poGroup);
+                setPOSentServices();
+                purchseOrderSentService.sentPoToVendors(poGroup);
             }
             setVAHistory(poGroup,new Employee(poGroup.getNextVerifierId()),PurchaseOrderStatus.VERIFIED);
         }
@@ -755,88 +757,20 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             PoGroup po = poGroup.get();
             po.setPurchaseOrderStatus(PurchaseOrderStatus.APPROVED);
             setVAHistory(po,new Employee(po.getNextApproverId()),PurchaseOrderStatus.APPROVED);
-            sentPoToVendors(po);
+            setPOSentServices();
+            purchseOrderSentService.sentPoToVendors(po);
         }
     }
 
-    @Async
-    public void sentPoToVendors(PoGroup poGroup) {
-        // Replace Purchase Order Reference with Po group for this method
-        // Get List of Purchase Orders and process sent po to vendor for that collection of po items
-        List<PoRemoteReqDto> remotePos = new ArrayList<>();
-
-
-        List<PurchaseOrderRepository.PurchaseOrderDetailInfo> purchaseOrders = purchaseOrderRepository.findAllByPoGroupId(poGroup.getId());
-
-        for(PurchaseOrderRepository.PurchaseOrderDetailInfo po : purchaseOrders){
-            PoRemoteReqDto poRemoteReqDto = new PoRemoteReqDto();
-            List<PoRemoteDetailReqDto> orderDetails = new ArrayList<>();
-            poRemoteReqDto.setId(po.getId());
-            poRemoteReqDto.setPoNo(po.getPoNo());
-            poRemoteReqDto.setPoDate(po.getCreatedAt().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
-            poRemoteReqDto.setCategoryCode(po.getCs().getIndent().getSubCategory().getCode().substring(2));
-            poRemoteReqDto.setTenderNo(po.getCs().getIndent().getIndentNo());
-            poRemoteReqDto.setDeliveryChargeType(po.getDeliveryChargeType());
-            poRemoteReqDto.setDeliveryDate(po.getPoDate().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
-            po.getPurchaseOrderDetails().forEach(podi->{
-                    PoRemoteDetailReqDto prdr = new PoRemoteDetailReqDto();
-                    List<PoRemoteDeliveryDetailDto> prdds = new ArrayList<>();
-                    podi.getWarehouseDetailList().forEach(wd->{
-                        PoRemoteDeliveryDetailDto prdd = new PoRemoteDeliveryDetailDto();
-                        prdd.setItemQty(wd.getQty());
-                        prdd.setDeliveryCharge(wd.getDeliveryCharge());
-                        prdd.setWarehouse(new ReferenceObjectDto(wd.getWarehouse().getId()));
-                        prdds.add(prdd);
-                    });
-                    prdr.setPoDeliveryDetailsDtoList(prdds);
-                    prdr.setDeliveryCharge(podi.getDeliveryCharge());
-                    prdr.setVatAmount(podi.getVatAmount());
-                    prdr.setVatPercent(podi.getVatPercent());
-                    prdr.setSubTotal(podi.getSubTotal());
-                    prdr.setTotalPrice(podi.getTotalPrice());
-                    prdr.setItemQty(podi.getDeliveryQty());
-
-                    prdr.setItemName(podi.getItemName());
-                    Long warehouseId=null;
-                    if(podi.getCsVendorDetail().getCsDetail().getIndentDetail().getIndent()
-                            .getSingleWarehouse()!=null) {
-                        warehouseId = podi.getCsVendorDetail().getCsDetail().getIndentDetail().getIndent()
-                                .getSingleWarehouse().getId();
-                    }
-                    if(warehouseId==null){
-                        warehouseId = podi.getCsVendorDetail().getCsDetail().getIndentDetail().getIndent().getWarehouse().getId();
-                    }
-
-
-                    poRemoteReqDto.setVendorId(podi.getCsVendorDetail().getVendorId());
-                    poRemoteReqDto.setOfferId(podi.getCsVendorDetail().getPriceQuotation().getRemoteOfferId());
-                    orderDetails.add(prdr);
-
-
-            });
-            poRemoteReqDto.setOrderDetails(orderDetails);
-            remotePos.add(poRemoteReqDto);
-        }
-
-        try{
-            HttpHeaders headers = new HttpHeaders();
-            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
-            orgOp.ifPresent(org->
-                headers.set("orgId",org.getCpsVendorRegistrationId().toString())
-            );
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            Map<String,List<PoRemoteReqDto>> payloadMap = new HashMap<>();
-            payloadMap.put("purchaseOrders",remotePos);
-            HttpEntity<Map<String,List<PoRemoteReqDto>>> payload = new HttpEntity<>(payloadMap,headers);
-            String url = cpsServerConfig.getSentPoEndpoint();
-            ResponseEntity<Void> response = networkService.post(url, payload,Void.class);
-            if(!response.getStatusCode().equals(HttpStatus.CREATED)){
-                throw new AesException("Sorry! Something wrong");
-            }
-        }catch(Exception ex){
-            throw new AesException(ex.getMessage());
-        }
+    private void setPOSentServices(){
+        purchseOrderSentService.setClaimResolver(claimResolver);
+        purchseOrderSentService.setOrgService(orgService);
+        purchseOrderSentService.setPurchaseOrderRepository(purchaseOrderRepository);
+        purchseOrderSentService.setCpsServerConfig(cpsServerConfig);
+        purchseOrderSentService.setNetworkService(networkService);
     }
+
+
 
     @Override
     @Transactional

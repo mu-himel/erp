@@ -1,8 +1,6 @@
 package com.agi.aesl.erpscm.inventory.entity;
 
 
-// import io.swagger.annotations.ApiModelProperty;
-// import io.swagger.annotations.ApiParam;
 import com.agi.aesl.erpscm.common.BrandInterface;
 import com.agi.aesl.erpscm.common.CategoryAttributeInterface;
 import com.agi.aesl.erpscm.common.CategoryInterface;
@@ -77,7 +75,7 @@ public class ItemCategory implements CategoryInterface {
       brandInterface.setId(b.getId());
       brandInterface.setName(b.getName());
       return brandInterface;
-    }).collect(Collectors.toList());
+    }).toList();
   }
 
   @Override
@@ -88,7 +86,7 @@ public class ItemCategory implements CategoryInterface {
       cai.setAttributeUnit(attr.getAttributeUnit());
       cai.setAttributeType(attr.getAttributeType());
       return cai;
-    }).collect(Collectors.toList());
+    }).toList();
   }
 }
 

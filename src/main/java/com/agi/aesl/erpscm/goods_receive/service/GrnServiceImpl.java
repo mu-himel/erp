@@ -3,6 +3,7 @@ package com.agi.aesl.erpscm.goods_receive.service;
 import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
+import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.goods_receive.dto.request.GrnManualItemDetailDto;
@@ -38,13 +39,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -80,6 +79,10 @@ public class GrnServiceImpl implements GrnService{
 
     private final NetworkService networkService;
 
+    private Employee getEmp(){
+        return claimResolver.getEmployee().orElse(null);
+    }
+
     @Override
     public String getNextGrnNumber() {
         Optional<Long> grnOp = grnRepository.findMaxOrderById();
@@ -109,7 +112,7 @@ public class GrnServiceImpl implements GrnService{
 
         grn.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
         if(token != null && claimResolver.getEmployee().isPresent()){
-            grn.setCreatedBy(claimResolver.getEmployee().get());
+            grn.setCreatedBy(getEmp());
         }
 
 
@@ -238,7 +241,7 @@ public class GrnServiceImpl implements GrnService{
                 grnDetailInfo.setDeclineNote(detailInfo.getDeclineNote());
 
                 List<GoodReceiveNoteItemDetailInfo> detailInfos = new ArrayList<>();
-                detailInfo.getGoodReceiveItemDetails().stream().forEach(goodReceiveNoteItemDetailInfo -> {
+                detailInfo.getGoodReceiveItemDetails().forEach(goodReceiveNoteItemDetailInfo -> {
                     GoodReceiveNoteItemDetailInfo grnidi = new GoodReceiveNoteItemDetailInfo();
 
                     grnidi.setApproveComment(goodReceiveNoteItemDetailInfo.getApproveComment());

@@ -9,11 +9,11 @@ import java.util.List;
 
 public interface QcMailService extends VerifierMailService<GoodReceiveNote> {
 
-    String removed= """
+    String REMOVED= """
             <p>Demand Initiate Date: {demandDate}</p>
             <p><strong>Demand Link: <a href="{demandViewLink}"><u>Click here to view the full demand</u></a></strong></p>
             """;
-    String qcMailTpl = """
+    String QC_MAIL_TPL = """
             <h5>{mailFor},</h5>
             <p>Greetings from Anwar Enterprise system. There is a pending QC waiting for 
             you.</p>

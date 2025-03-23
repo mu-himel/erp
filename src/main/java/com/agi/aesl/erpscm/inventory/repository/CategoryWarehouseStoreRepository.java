@@ -12,7 +12,6 @@ import java.util.Optional;
 public interface CategoryWarehouseStoreRepository extends JpaRepository<CategoryWarehouseStore,Long> {
     void deleteByCategoryIdAndWarehouseIdAndWarehouseStoreId(Long id, Long warehouseId, Long storeId);
 
-//    Optional<CategoryWarehouseStore> findByCategoryIdAndWarehouseStoreId(Long id, Long storeId);
 
     Boolean existsByWarehouseId(Long id);
 

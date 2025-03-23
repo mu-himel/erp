@@ -21,7 +21,7 @@ import com.agi.aesl.erpscm.price_quotation.repository.PqSummaryRepository;
 import com.agi.aesl.erpscm.quality_control.dto.request.NoteDto;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -35,40 +35,40 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class PqServiceImpl implements PqService{
 
-    @Autowired
-    private IndentService indentService;
 
-    @Autowired
-    private WarehouseService warehouseService;
+    private final IndentService indentService;
 
-    @Autowired
-    private TenderService tenderService;
 
-    @Autowired
-    private PqRepository pqRepository;
+    private final WarehouseService warehouseService;
 
-    @Autowired
-    private PqSummaryRepository pqSummaryRepository;
 
-    @Autowired
-    private ClaimResolver claimResolver;
+    private final TenderService tenderService;
 
-    @Autowired
-    private CpsServerConfig cpsConfig;
 
-    @Autowired
-    private NetworkService networkService;
+    private final PqRepository pqRepository;
 
-    @Autowired
-    private OrgService orgService;
 
-    @Autowired
-    private FileUploadService fileUploadService;
+    private final PqSummaryRepository pqSummaryRepository;
+
+
+    private final ClaimResolver claimResolver;
+
+
+    private final CpsServerConfig cpsConfig;
+
+
+    private final NetworkService networkService;
+
+
+    private final OrgService orgService;
+
+
+    private final FileUploadService fileUploadService;
 
     @Value("${upload.dir}")
     private String uploadDir;
@@ -88,7 +88,7 @@ public class PqServiceImpl implements PqService{
     public void onDeclinePq(Jwt token, Long id, NoteDto noteDto, PriceQuotationStateStatus status, PriceQuotationStatus actionFrom) {
         claimResolver.setToken(token);
         if(noteDto.getNote()==null || noteDto.getNote().isEmpty()){
-            throw new RuntimeException("Sorry! Decline Note Required");
+            throw new AesException("Sorry! Decline Note Required");
         }
         Optional<PriceQuotation> pqOptional =
                 ((actionFrom.equals(PriceQuotationStatus.COUNTER_TO_COMPANY))?
@@ -301,7 +301,7 @@ public class PqServiceImpl implements PqService{
 
         });
         offerRequestDto.setTermsAndConditions(pqDto.getTermsAndConditions()
-                .stream().map(CounterTermAndConditionDto::new).collect(Collectors.toList())
+                .stream().map(CounterTermAndConditionDto::new).toList()
         );
         offerRequestDto.setOfferItems(offerItems);
         offerRequestDto.setWarehouses(pqDto.getWarehouses().stream().map(pd->{
@@ -347,7 +347,7 @@ public class PqServiceImpl implements PqService{
         result.put("isRecommendedForCs",pq.getIsRecommendForCs());
         List<String> termsAndConditions = pq.getTermsAndConditions().stream().filter(
                 tnc->tnc.getVendorId().equals(pq.getVendorId())
-        ).map(tnc->tnc.getTermAndCondition()).collect(Collectors.toList());
+        ).map(tnc->tnc.getTermAndCondition()).toList();
         result.put("termsAndConditions",termsAndConditions);
 
         if(sOptional.isPresent()){
@@ -357,7 +357,7 @@ public class PqServiceImpl implements PqService{
         }
 
         List<Map<String,Object>> details = new ArrayList<>();
-        pq.getQuotationDetails().stream().forEach(pqd->{
+        pq.getQuotationDetails().forEach(pqd->{
             Map<String,Object> itemDef = new HashMap<>();
             itemDef.put("itemAttribute",pqd.getItemAttribute());
             itemDef.put("brandName", pqd.getBrandName());
@@ -369,7 +369,7 @@ public class PqServiceImpl implements PqService{
             itemDef.put("unitPrice",pqd.getUnitPrice());
             itemDef.put("totalPrice",pqd.getTotalPrice());
             List<Map<String,Object>> warehouses = new ArrayList<>();
-            pqd.getDeliveryDetails().stream().forEach(pqdd->{
+            pqd.getDeliveryDetails().forEach(pqdd->{
                 Map<String,Object> itemWDef = new HashMap<>();
                 itemWDef.put("warehouseId",pqdd.getWarehouse().getId());
                 itemWDef.put("warehouseName",pqdd.getWarehouse().getName());
@@ -426,7 +426,7 @@ public class PqServiceImpl implements PqService{
                            NoteDto noteDto) {
         Optional<PriceQuotation> pqOptional = pqRepository.findById(id);
         if(pqOptional.isEmpty()){
-            throw new RuntimeException("Sorry! Price Quotation not found");
+            throw new AesException("Sorry! Price Quotation not found");
         }
 
         PriceQuotation priceQuotation = pqOptional.get();
@@ -450,9 +450,9 @@ public class PqServiceImpl implements PqService{
     private void setRemoteOfferStatus(PriceQuotationStateStatus status,Long remoteOfferId, Long venodrId, NoteDto noteDto){
         HttpHeaders headers = new HttpHeaders();
         Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
-        if(orgOp.isPresent()){
-            headers.set("orgId",orgOp.get().getCpsVendorRegistrationId().toString());
-        }
+        orgOp.ifPresent(org->
+            headers.set("orgId",org.getCpsVendorRegistrationId().toString())
+        );
 
         ResponseEntity<?> response=null;
         String url = "";
@@ -464,7 +464,6 @@ public class PqServiceImpl implements PqService{
         if(status.equals(PriceQuotationStateStatus.DECLINED)){
             HttpEntity<NoteDto> payload = new HttpEntity<>(noteDto,headers);
             url = cpsConfig.getDeclineOfferEndpoint(remoteOfferId,venodrId);
-            System.out.println(url);
             response = networkService.put(url, payload, Void.class);
         }
         if(status.equals(PriceQuotationStateStatus.AWARDED)){
@@ -474,7 +473,7 @@ public class PqServiceImpl implements PqService{
         }
 
         if(response!=null && response.getStatusCode()!= HttpStatus.NO_CONTENT){
-            throw new RuntimeException("Unable to send Offer to CPS");
+            throw new AesException("Unable to send Offer to CPS");
         }
     }
 
@@ -513,11 +512,10 @@ public class PqServiceImpl implements PqService{
         claimResolver.setToken(token);
         Optional<PriceQuotation> pqOp = pqRepository.findByRemoteOfferId(id);
         if(pqOp.isEmpty()){
-            throw new RuntimeException("Sorry! Price Quotation not exist");
+            throw new AesException("Sorry! Price Quotation not exist");
         }
         PriceQuotation priceQuotation = pqOp.get();
         priceQuotation.setStatus(PriceQuotationStateStatus.LOCKED);
-//        priceQuotation.setPriceQuotationStatus(PriceQuotationStatus.COUNTER_TO_COMPANY);
     }
 
     @Override
@@ -537,7 +535,7 @@ public class PqServiceImpl implements PqService{
                 "application/vnd.ms-excel",
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 "text/csv"))){
-            throw new RuntimeException("Sorry! not file not a valid type (pdf,odt,doc,docx,xls,xlsx,csv)");
+            throw new AesException("Sorry! not file not a valid type (pdf,odt,doc,docx,xls,xlsx,csv)");
         }
         Path path = Path.of(uploadDir+DIR_SEPARATOR+rfqId+"/pq/", file.getOriginalFilename());
         return fileUploadService.uploadFile(path, file);
