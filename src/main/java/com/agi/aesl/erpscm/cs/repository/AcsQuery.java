@@ -33,7 +33,7 @@ public interface AcsQuery {
     String countByIndentNoAndStatusAcs="SELECT COUNT(*) as total FROM ("+getAllAcsByIndentNoAndStatus+") as t";
 
     String getAllPVAcsByIndentNoAndStatus = """
-            SELECT
+            SELECT * FROM (SELECT
             acs.id as acsId,
             csheet.validity_date as validityDate,
             i.id as id,
@@ -65,10 +65,10 @@ public interface AcsQuery {
             (
                     (acs.next_verifier_id = :nextVerifierId AND (COALESCE(:status) IS NULL OR acs.acs_status IN (:status)))
                     OR 
-                    (cavah.employee_id = :nextVerifierId AND cavah.acs_status IN ('REVIEW','VERIFIED'))
+                    (cavah.employee_id = :nextVerifierId AND  cavah.acs_status IN ('REVIEW','VERIFIED'))
             )
             AND (COALESCE(:fromDate) IS NULL OR acs.created_at BETWEEN :fromDate AND :toDate)
-            GROUP BY acs.id
+            GROUP BY acs.id) p WHERE (:searchStatus IS NULL OR p.status = :searchStatus)
             """;
 
     String countByPVAcsIndentNoAndStatusAcs="SELECT COUNT(*) FROM ("+ getAllPVAcsByIndentNoAndStatus +") as t";

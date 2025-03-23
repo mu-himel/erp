@@ -26,6 +26,7 @@ public interface CsAccountRepository extends JpaRepository<CsAccount,Long>, AcsQ
     @Query(value = getAllPVAcsByIndentNoAndStatus, countQuery = countByPVAcsIndentNoAndStatusAcs, nativeQuery = true)
     Page<AcsPendingItem> findAllPendingVerificationAcs(Optional<String> indentNo,
                                                        String nextVerifierId, List<String> status,
+                                                       String searchStatus,
                                                        LocalDateTime fromDate,
                                                        LocalDateTime toDate,
                                                        Pageable pageable);
