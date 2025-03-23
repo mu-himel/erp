@@ -36,7 +36,7 @@ public class AcsQuery {
     public static final String COUNT_BY_INDENT_NO_AND_STATUS_ACS=COUNT_START+GET_ALL_ACS_BY_INDENT_NO_AND_STATUS+COUNT_END;
 
     public static final String GET_ALL_PV_ACS_BY_INDENT_NO_AND_STATUS = """
-            SELECT
+            SELECT * FROM (SELECT
             acs.id as acsId,
             csheet.validity_date as validityDate,
             i.id as id,
@@ -71,7 +71,7 @@ public class AcsQuery {
                     (cavah.employee_id = :nextVerifierId AND cavah.acs_status IN ('REVIEW','VERIFIED'))
             )
             AND (COALESCE(:fromDate) IS NULL OR acs.created_at BETWEEN :fromDate AND :toDate)
-            GROUP BY acs.id
+            GROUP BY acs.id) p WHERE (:searchStatus IS NULL OR p.status = :searchStatus)
             """;
 
     public static final String COUNT_ALL_PV_ACS_BY_INDENT_NO_AND_STATUS=COUNT_START+ GET_ALL_PV_ACS_BY_INDENT_NO_AND_STATUS +COUNT_END;

@@ -243,12 +243,8 @@ public class CsAccountServiceImpl implements CsAccountService{
         csStatus.add(CsStatus.PENDING_VERIFICATION.toString());
         csStatus.add(CsStatus.REVIEW.toString());
         csStatus.add(CsStatus.VERIFIED.toString());
-        if(status.isPresent()){
-            csStatus=new ArrayList<>();
-            csStatus.add(status.get());
-        }
         return csAccountRepository.findAllPendingVerificationAcs(indentNo,
-                claimResolver.getUserId(),csStatus,fromDate,toDate,pageable);
+                claimResolver.getUserId(),csStatus,status.orElse(null),fromDate,toDate,pageable);
     }
 
     @Override
@@ -280,7 +276,7 @@ public class CsAccountServiceImpl implements CsAccountService{
                                   Optional<Integer> page,Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(fromDateStr,DATE_TIME_END);
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> csStatus = new ArrayList<>();
         csStatus.add(CsStatus.APPROVED.toString());
         csStatus.add(CsStatus.COMPLETED.toString());
@@ -299,7 +295,7 @@ public class CsAccountServiceImpl implements CsAccountService{
                                   Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(fromDateStr,DATE_TIME_END);
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> csStatus = new ArrayList<>();
         csStatus.add(CsStatus.REJECTED.toString());
         if(status.isPresent()){
@@ -316,7 +312,7 @@ public class CsAccountServiceImpl implements CsAccountService{
                                 Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(fromDateStr,DATE_TIME_END);
+        LocalDateTime toDate = parseDate(toDateStr,DATE_TIME_END);
         List<String> csStatus = new ArrayList<>();
         if(status.isEmpty()) {
             csStatus.add(CsStatus.APPROVED.toString());
