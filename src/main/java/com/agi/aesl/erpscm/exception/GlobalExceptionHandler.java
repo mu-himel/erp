@@ -82,10 +82,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({DataIntegrityViolationException.class})
     public ResponseEntity<Object> handleAesExceptions(DataIntegrityViolationException re) {
         Map<String,Object> response = new HashMap<>();
-        if( re.getRootCause() !=null) {
-            response.put(MESSAGE_KEY, re.getRootCause().getLocalizedMessage());
-        }
+
+            response.put(MESSAGE_KEY, getMessage(re));
+
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    private String getMessage(DataIntegrityViolationException ex){
+        Throwable th = ex.getRootCause();
+        if(th!=null){
+            return th.getLocalizedMessage();
+        }
+        return "";
     }
 
 }

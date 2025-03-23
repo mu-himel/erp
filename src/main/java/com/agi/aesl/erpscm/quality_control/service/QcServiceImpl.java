@@ -114,11 +114,7 @@ public class QcServiceImpl implements QcService{
         return (emp!=null)? emp.getWarehouseId() : null;
     }
 
-    @Override
-    @Transactional
-    public void addQc(Jwt token, String uri, QcDto controlDto) throws IllegalAccessException {
-
-        claimResolver.setToken(token);
+    private void validate(QcDto controlDto){
         if(claimResolver.getEmployee().isEmpty()){
             throw new AesException("Store Manager/Executive profile required to perform this");
         }
@@ -141,11 +137,21 @@ public class QcServiceImpl implements QcService{
             throw new AesException("Good Receive Note Reference missing");
         }
 
+
+
+    }
+
+    @Override
+    @Transactional
+    public void addQc(Jwt token, String uri, QcDto controlDto) throws IllegalAccessException {
+
+        claimResolver.setToken(token);
+
+        validate(controlDto);
         Optional<GoodReceiveNote> goodReceiveNoteOptional = grnService.getGrn(controlDto.getGrn().getId(),true);
         if(goodReceiveNoteOptional.isEmpty()){
             throw new AesException("Good Receive note not found");
         }
-
         GoodReceiveNote grn = goodReceiveNoteOptional.get();
 
         List<String> ids = new ArrayList<>();

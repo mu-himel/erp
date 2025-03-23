@@ -14,7 +14,6 @@ public class CounterPqDto {
     private CreditType creditType;
     private boolean mushakIncluded;
     private BigDecimal totalDeliveryChargeAmount;
-    // private boolean deliveryChargeIncluded;
     private boolean vatIncluded;
     private boolean aitIncluded;
     private BigDecimal vatAmount;

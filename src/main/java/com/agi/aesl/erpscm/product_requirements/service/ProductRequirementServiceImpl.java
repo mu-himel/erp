@@ -63,18 +63,6 @@ public class ProductRequirementServiceImpl implements ProductRequirementService{
         productRequirementRepository.save(productRequirement);
     }
 
-    private LocalDateTime getPRDeadline(LocalDateTime demandDate, DemandPriority demandPriority) {
-        if (demandPriority.equals(DemandPriority.URGENT)) {
-            return demandDate.plusDays(7L);
-        } else if (demandPriority.equals(DemandPriority.MEDIUM)) {
-            return demandDate.plusDays(14L);
-        } else if (demandPriority.equals(DemandPriority.REGULAR)) {
-            return demandDate.plusDays(20L);
-        } else {
-            return LocalDateTime.now();
-        }
-    }
-
     private LocalDateTime parseDate(Optional<String> dateStr,String endTime){
         LocalDateTime date = null;
         if(dateStr.isPresent()){

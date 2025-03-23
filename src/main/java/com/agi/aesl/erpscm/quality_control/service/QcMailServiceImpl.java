@@ -8,7 +8,6 @@ import com.agi.aesl.erpscm.modules.dto.UserAssignInfo;
 import com.agi.aesl.erpscm.modules.service.ModuleService;
 import com.agi.aesl.erpscm.utils.ClaimResolver;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,11 +51,11 @@ public class QcMailServiceImpl implements QcMailService{
     }
 
     private String setMailFor(String mailFor){
-        return QC_MAIL_TPL.replaceAll("\\{mailFor\\}",mailFor);
+        return QC_MAIL_TPL.replace("\\{mailFor\\}",mailFor);
     }
 
     private String setInitiatorName(String tmp, String name){
-        return tmp.replaceAll("\\{initiatorName\\}",name);
+        return tmp.replace("\\{initiatorName\\}",name);
     }
 
 
@@ -123,7 +122,7 @@ public class QcMailServiceImpl implements QcMailService{
         if(template!=null){
             emailSenderService.refreshRecipient();
             emailSenderService.addRecipient(to);
-//                emailSenderService.sendEmail(subject,template);
+                emailSenderService.sendEmail(subject,template);
         }else{
             if(!this.users.isEmpty() && to==null){
                 for(UserAssignInfo uai :users){
@@ -131,7 +130,7 @@ public class QcMailServiceImpl implements QcMailService{
                     template = setMailFor(uai.getUser().getEmployeeName());
                     emailSenderService.addRecipient(uai.getUser().getEmail());
                     processTemplate(null,qualityControl);
-//                    emailSenderService.sendEmail(subject,template);
+                    emailSenderService.sendEmail(subject,template);
                 }
             }
         }

@@ -107,7 +107,7 @@ public class UserCategory extends VerifyableEntity implements CategoryInterface 
             brandInterface.setId(b.getId());
             brandInterface.setName(b.getName());
             return brandInterface;
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     @Override
@@ -118,6 +118,6 @@ public class UserCategory extends VerifyableEntity implements CategoryInterface 
             cai.setAttributeUnit(attr.getAttributeUnit());
             cai.setAttributeType(attr.getAttributeType());
             return cai;
-        }).collect(Collectors.toList());
+        }).toList();
     }
 }

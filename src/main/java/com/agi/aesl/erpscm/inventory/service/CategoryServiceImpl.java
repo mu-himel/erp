@@ -149,7 +149,7 @@ public class CategoryServiceImpl implements CategoryService {
                                     .getCountCategoryCodeExistsInWarehouse(categoryRequestDto.getCode(),
                                             categoryRequestDto.getWarehouse().getId());
 
-                            if (cwsOp>0 && !categoryRequestDto.getIsSync()) {
+                            if (cwsOp>0 && Boolean.FALSE.equals(categoryRequestDto.getIsSync())) {
                                 throw new AesException("Sorry! This Category[" + codeExist.get().getName() + "] Already Imported in this Warehouse");
                             }
 
@@ -181,7 +181,7 @@ public class CategoryServiceImpl implements CategoryService {
                Optional<ItemCategory> catOp = Optional.empty();
                if(Boolean.TRUE.equals(cr.getIsActive())){
                    cr.setBudgetId(Optional.empty());
-                    this.updateCategoryDuringImport(cr.getId(),cr);
+                    updateCategoryDuringImport(cr.getId(),cr);
                 }else {
                     catOp = this.addCategory(null, cr);
                 }
@@ -1136,7 +1136,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Transactional
-    private void approveAndUpdateCategory(MergePendingCategoryDto mergePendingCategoryDto, UserCategory replacedCategory) {
+    public void approveAndUpdateCategory(MergePendingCategoryDto mergePendingCategoryDto, UserCategory replacedCategory) {
 
 
         if(mergePendingCategoryDto.getName()!=null){

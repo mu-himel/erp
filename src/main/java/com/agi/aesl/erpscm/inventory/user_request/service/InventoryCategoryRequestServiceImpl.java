@@ -38,7 +38,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -87,6 +86,15 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
 
 
     private final UserCategoryHistoryRepository userCategoryHistoryRepository;
+
+    private Employee getEmp(){
+        return claimResolver.getEmployee().orElse(null);
+    }
+
+    private Long getEmpWarehouseId(){
+        Employee emp = claimResolver.getEmployee().orElse(null);
+        return (emp!=null)? emp.getWarehouseId() : null;
+    }
 
     @Override
     @Transactional
@@ -138,7 +146,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
             warehouseId = warehouseIdOp.get();
         }
         if(claimResolver.getEmployee().isPresent()){
-            warehouseId = claimResolver.getEmployee().get().getWarehouseId();
+            warehouseId = getEmpWarehouseId();
         }
         return userCategoryRepository.getAllCategories(name.orElse(null),code.orElse(null),
                warehouseId, storeId.orElse(null));
@@ -149,7 +157,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         claimResolver.setToken(token);
         Long warehouseId = null;
         if(claimResolver.getEmployee().isPresent()){
-            warehouseId = claimResolver.getEmployee().get().getWarehouseId();
+            warehouseId = getEmpWarehouseId();
         }
         return userCategoryRepository.getAllSubCategories(categoryId,
                 name.orElse(null),code.orElse(null), warehouseId);
@@ -242,7 +250,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
 
         return userCategoryRepository.findAllPendingApprovalByStore(null,
                 name.orElse(null),
-                warehouseId.orElse(null),warehouseStoreId.orElse(null),pageable);
+                warehouseIds,warehouseStoreId.orElse(null),pageable);
 
     }
 
@@ -382,7 +390,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         claimResolver.setToken(token);
         Optional<UserCategory> userCatOp = userCategoryRepository.findById(id);
         if(userCatOp.isEmpty()){
-            throw new RuntimeException("QC not found");
+            throw new AesException("QC not found");
         }
         UserCategory userCategory = userCatOp.get();
         userCategory.setReviewerId(null);
@@ -393,7 +401,7 @@ public class InventoryCategoryRequestServiceImpl implements InventoryCategoryReq
         userCategory.setReviewDate(LocalDateTime.now());
 
         commentService.addComment(commentService.prepareComment(
-                claimResolver.getEmployee().get(),
+                getEmp(),
                 reviewDto.getDomainType(),
                 reviewDto.getActionType(),
                 userCategory.getId(),

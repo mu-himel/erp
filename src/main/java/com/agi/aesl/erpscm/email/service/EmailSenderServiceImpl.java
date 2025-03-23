@@ -7,7 +7,6 @@ import com.agi.aesl.erpscm.email.dto.response.EmailSentResponse;
 import com.agi.aesl.erpscm.network.NetworkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -49,7 +48,11 @@ public class EmailSenderServiceImpl implements EmailSenderService{
             loginDto.put("password", emailServerConfig.getPassword());
             String token = login(loginDto);
             if(token != null){
-                send(token, subject, mailContent, recipients);
+                try {
+                    send(token, subject, mailContent, recipients);
+                }catch (RuntimeException ex){
+                    log.error(ex.getMessage());
+                }
             }
         }
     }
@@ -61,8 +64,12 @@ public class EmailSenderServiceImpl implements EmailSenderService{
         ResponseEntity<EmailLoginResponse> response = networkService.post(emailServerConfig.getLoginUrl(),
                 payload,EmailLoginResponse.class);
         if(response!=null && response.getBody()!=null){
-            LinkedHashMap<String,Object> content = (LinkedHashMap<String, Object>) response.getBody().getContent();
-            return (String) content.get("token");
+
+            EmailLoginResponse body = response.getBody();
+            LinkedHashMap<String,Object> content = body!=null? (LinkedHashMap<String, Object>) body.getContent() : null;
+            if(content!=null) {
+                return (String) content.get("token");
+            }
         }
         return null;
     }

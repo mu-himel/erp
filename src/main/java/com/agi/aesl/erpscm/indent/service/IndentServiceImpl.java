@@ -98,7 +98,6 @@ public class IndentServiceImpl implements IndentService{
         return String.format("%06d", 1);
     }
 
-    @Transactional
     private void setIndentDetail(Indent indent, IndentRequestDto indentRequestDto, List<String> ids, Boolean isNew){
         indent.setIndentDetails(indentRequestDto.getItems().stream().map(item->{
 

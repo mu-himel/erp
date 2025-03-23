@@ -40,7 +40,7 @@ public interface UserCategoryRepository extends JpaRepository<UserCategory,Long>
     @Query(value = PENDING_APPROVAL_FROM_STORE_CATEGORIES,countQuery = COUNT_PENDING_APPROVAL_FROM_STORE_CATEGORIES, nativeQuery = true)
     Page<PendingApprovalStore> findAllPendingApprovalByStore(Long categoryId,
                                                              String name,
-                                                             Long warehouseId,Long warehouseStoreId,
+                                                             List<Long> warehouseId,Long warehouseStoreId,
                                                              Pageable pageable);
 
     @Query(value = PENDING_APPROVAL_FROM_STORE_SUB_CATEGORIES,countQuery = COUNT_PENDING_APPROVAL_FROM_STORE_SUB_CATEGORIES, nativeQuery = true)

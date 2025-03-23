@@ -153,7 +153,7 @@ public class UserCategoryQuery {
             LEFT JOIN scm_warehouses sw ON sw.id = sws.warehouse_id
             LEFT JOIN acl_users e ON uc.created_by_id=e.id
             WHERE 
-            (:warehouseId IS NULL OR sws.warehouse_id = :warehouseId)
+            (COALESCE(:warehouseId) IS NULL OR sws.warehouse_id IN :warehouseId)
             AND 
             (:warehouseStoreId IS NULL OR sws.id = :warehouseStoreId)
             AND
