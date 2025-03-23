@@ -51,6 +51,10 @@ public class CsAccountServiceImpl implements CsAccountService{
 
     private static final String DATE_TIME_END="23:59:59";
 
+    private Employee getEmp(){
+        return claimResolver.getEmployee().orElse(null);
+    }
+
     private LocalDateTime parseDate(Optional<String> dateStr,String endTime){
         LocalDateTime date = null;
         if(dateStr.isPresent()){
@@ -378,7 +382,7 @@ public class CsAccountServiceImpl implements CsAccountService{
         csAccount.setReviewPrevStatus(null);
 
         commentService.addComment(
-                commentService.prepareComment(claimResolver.getEmployee().get(),
+                commentService.prepareComment(getEmp(),
                         DomainType.ACS,csAccount.getId(),noteDto.getNote(),noteDto.getAttachments())
         );
     }
