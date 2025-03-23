@@ -300,7 +300,7 @@ public class CsAccountServiceImpl implements CsAccountService{
                                   Optional<Integer> page, Optional<Integer> size) {
         Pageable pageable = getPageable(page, size);
         LocalDateTime fromDate = parseDate(fromDateStr,null);
-        LocalDateTime toDate = parseDate(fromDateStr,"23:59:59");
+        LocalDateTime toDate = parseDate(toDateStr,"23:59:59");
         List<String> csStatus = new ArrayList<>();
         csStatus.add(CsStatus.REJECTED.toString());
         if(status.isPresent()){
