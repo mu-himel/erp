@@ -136,9 +136,32 @@ public class QcServiceImpl implements QcService{
         if(controlDto.getGrn()==null || controlDto.getGrn().getId() == null){
             throw new AesException("Good Receive Note Reference missing");
         }
+    }
 
+    public void changeGrnStatus(QualityControl qualityControl, GoodReceiveNote grn){
+        if(qualityControl.getQcStatus().equals(QcStatus.PARTIALLY_APPROVED)){
+            grn.setGrnStatus(GrnStatus.QC_PARTIAL);
+        }
+        if(qualityControl.getQcStatus().equals(QcStatus.APPROVED)){
+            grn.setGrnStatus(GrnStatus.QC_PASS);
+        }
+        if(qualityControl.getQcStatus().equals(QcStatus.REJECTED)){
+            grn.setGrnStatus(GrnStatus.QC_FAILED);
+        }
+    }
 
+    private void updateGrnItemDetail(QcDto controlDto, GoodReceiveNote grn){
+        controlDto.getQcItemDetails().forEach(qcItemDetail -> {
+            Optional<GoodReceiveItemDetail> grnItemDetail = grn.getGoodReceiveItemDetails().stream().filter(
+                    goodReceiveItemDetail -> goodReceiveItemDetail.getId().equals(qcItemDetail.getId())
+            ).findFirst();
 
+            if(grnItemDetail.isPresent()){
+                GoodReceiveItemDetail goodReceiveItemDetail = grnItemDetail.get();
+                goodReceiveItemDetail.setTotalApprovedQty(qcItemDetail.getDeclaredQty());
+                grnService.updateGrnItemDetail(goodReceiveItemDetail);
+            }
+        });
     }
 
     @Override
@@ -206,34 +229,17 @@ public class QcServiceImpl implements QcService{
 
 
         qcRepository.save(qualityControl);
-        if(qualityControl.getQcStatus().equals(QcStatus.PARTIALLY_APPROVED)){
-            grn.setGrnStatus(GrnStatus.QC_PARTIAL);
-        }
-        if(qualityControl.getQcStatus().equals(QcStatus.APPROVED)){
-            grn.setGrnStatus(GrnStatus.QC_PASS);
-        }
-        if(qualityControl.getQcStatus().equals(QcStatus.REJECTED)){
-            grn.setGrnStatus(GrnStatus.QC_FAILED);
-        }
+        changeGrnStatus(qualityControl,grn);
 
         if(!ids.isEmpty() && !uri.isBlank() && !qualityControl.getQcStatus().equals(QcStatus.REJECTED)) {
 
-            AppliedVADto result = verificationService.applyVerifyApprovalProcess(qualityControl, DomainType.QC, QcStatus.APPROVED.toString(), uri, "CATEGORY", ids,
+            AppliedVADto result = verificationService.applyVerifyApprovalProcess(qualityControl, DomainType.QC,
+                    QcStatus.APPROVED.toString(), uri, "CATEGORY", ids,
                     null);
 
             if(result.getVerifiers().isEmpty() && result.getPanels().isEmpty()){
 
-                controlDto.getQcItemDetails().forEach(qcItemDetail -> {
-                    Optional<GoodReceiveItemDetail> grnItemDetail = grn.getGoodReceiveItemDetails().stream().filter(
-                            goodReceiveItemDetail -> goodReceiveItemDetail.getId().equals(qcItemDetail.getId())
-                    ).findFirst();
-
-                    if(grnItemDetail.isPresent()){
-                        GoodReceiveItemDetail goodReceiveItemDetail = grnItemDetail.get();
-                        goodReceiveItemDetail.setTotalApprovedQty(qcItemDetail.getDeclaredQty());
-                        grnService.updateGrnItemDetail(goodReceiveItemDetail);
-                    }
-                });
+                updateGrnItemDetail(controlDto,grn);
                 qualityControl.setQcStatus(QcStatus.COMPLETED);
                 grn.setGrnStatus(GrnStatus.READY_FOR_STORE);
             }
