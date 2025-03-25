@@ -2,7 +2,6 @@ package com.agi.aesl.erpscm.purchase_order.service;
 
 import com.agi.aesl.erpscm.comment.enums.DomainType;
 import com.agi.aesl.erpscm.comment.service.CommentService;
-import com.agi.aesl.erpscm.common.ReferenceObjectDto;
 import com.agi.aesl.erpscm.common.enums.DeliveryCharge;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
 import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
@@ -49,14 +48,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.*;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -115,6 +111,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
     private final WarehouseRepository warehouseRepository;
 
     private final PurchseOrderSentService purchseOrderSentService;
+    private final PurchaseOrderSendService purchaseOrderSendService;
 
     private static final String VENDOR_PARTIAL_VAT_AMT_KEY="vendorPartialVatAmount";
     private static final String DATE_TIME_END="23:59:59";
@@ -135,6 +132,38 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         count = count+1;
         return cs.getCsNo()+"-"+ ((count<10)? "0"+count.toString() : count.toString());
     }
+
+    private PendingItemRequestDto preparePurchaseOrderSentPayload(Employee employee,
+                                                                  Optional<Organization> orgOp,
+                                                                  CsVendorDetailRepository.PendingItemBrandInfo csDetail){
+        Optional<ItemCategory> subCatOp = categoryService.getItemCategory(csDetail.getSubCatId());
+        if(subCatOp.isEmpty()){
+            throw new AesException("Sorry! Sub Cat missing");
+        }
+        ItemCategory subCat = subCatOp.get();
+
+        PendingItemRequestDto pendingItemRequestDto = new PendingItemRequestDto();
+        pendingItemRequestDto.setSubCategoryCode(csDetail.getSubCategoryCode());
+        pendingItemRequestDto.setDepartment(employee.getDepartmentName());
+        pendingItemRequestDto.setDesignation(employee.getDesignationName());
+        pendingItemRequestDto.setEmployeeId(employee.getEmployeeId());
+        if(employee.getReportingManager()!=null){
+            pendingItemRequestDto.setReportingManager(employee.getReportingManager());
+        }
+        pendingItemRequestDto.setRequestedBy(employee.getEmployeeName());
+        pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
+        pendingItemRequestDto.setWarehouseLocation(employee.getWarehouseName());
+        pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
+        pendingItemRequestDto.setBrand(csDetail.getBrandName());
+
+        List<PendingItemAttributeDto> attributes = extractAttributesFromItemAttributeName(subCat,csDetail.getItemAttributeName());
+        List<PendingItemAttributeDto> attributesFromItemAttributeName = extractAttributesFromItemAttributeName(subCat,csDetail.getExtendedAttributes());
+        attributes.addAll(attributesFromItemAttributeName);
+        pendingItemRequestDto.setAttributes(attributes);
+        orgOp.ifPresent(org->pendingItemRequestDto.setOrganizationId(org.getCpsVendorRegistrationId()));
+        pendingItemRequestDto.setExtendedAttributes(csDetail.getExtendedAttributes());
+        return pendingItemRequestDto;
+    }
     @Override
     @Transactional
     public void generatePurchaseOrder(Jwt token, String uri, PurchaseRequestDto purchaseRequestDto){
@@ -153,39 +182,18 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 throw new AesException("Sorry! Cs not found");
             }
             Cs cs = csOp.get();
-            List<CsVendorDetailRepository.PendingItemBrandInfo> itemBrandInfos = csVendorDetailRepository.getPendingItemAndBrandInfoByCsId(purchaseRequestDto.getCsId());
+            List<CsVendorDetailRepository.PendingItemBrandInfo> itemBrandInfos = csVendorDetailRepository
+                    .getPendingItemAndBrandInfoByCsId(purchaseRequestDto.getCsId());
             for(CsVendorDetailRepository.PendingItemBrandInfo csDetail : itemBrandInfos){
                 String itemAttributeName = (csDetail.getExtendedAttributes()!=null)? csDetail.getItemAttributeName()+" - "+csDetail.getExtendedAttributes() : csDetail.getItemAttributeName();
-                Optional<Item> itemOp = itemService.getByBrandAndAttributeName(csDetail.getBrandName(),csDetail.getSubCatId(),itemAttributeName);
+                Optional<Item> itemOp = itemService.getByBrandAndAttributeName(
+                                                csDetail.getBrandName(),
+                                                csDetail.getSubCatId(),itemAttributeName
+                                        );
                 if(itemOp.isEmpty()){
-
-                    Optional<ItemCategory> subCatOp = categoryService.getItemCategory(csDetail.getSubCatId());
-                    if(subCatOp.isEmpty()){
-                        throw new AesException("Sorry! Sub Cat missing");
-                    }
-                    ItemCategory subCat = subCatOp.get();
-
-                    PendingItemRequestDto pendingItemRequestDto = new PendingItemRequestDto();
-                    pendingItemRequestDto.setSubCategoryCode(csDetail.getSubCategoryCode());
-                    pendingItemRequestDto.setDepartment(employee.getDepartmentName());
-                    pendingItemRequestDto.setDesignation(employee.getDesignationName());
-                    pendingItemRequestDto.setEmployeeId(employee.getEmployeeId());
-                    if(employee.getReportingManager()!=null){
-                        pendingItemRequestDto.setReportingManager(employee.getReportingManager());
-                    }
-                    pendingItemRequestDto.setRequestedBy(employee.getEmployeeName());
-                    pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
-                    pendingItemRequestDto.setWarehouseLocation(employee.getWarehouseName());
-                    pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
-                    pendingItemRequestDto.setBrand(csDetail.getBrandName());
-
-                    List<PendingItemAttributeDto> attributes = extractAttributesFromItemAttributeName(subCat,csDetail.getItemAttributeName());
-                    List<PendingItemAttributeDto> attributesFromItemAttributeName = extractAttributesFromItemAttributeName(subCat,csDetail.getExtendedAttributes());
-                    attributes.addAll(attributesFromItemAttributeName);
-                    pendingItemRequestDto.setAttributes(attributes);
-                    pendingItemRequestDto.setOrganizationId(orgOp.get().getCpsVendorRegistrationId());
-                    pendingItemRequestDto.setExtendedAttributes(csDetail.getExtendedAttributes());
-                    sendPendingItemRequest(pendingItemRequestDto);
+                    purchaseOrderSendService.sendPendingItemRequest(
+                            preparePurchaseOrderSentPayload(employee,orgOp,csDetail)
+                    );
                 }
 
             }
@@ -261,26 +269,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         }
     }
 
-    @Async
-    public void sendPendingItemRequest(PendingItemRequestDto payloadDto) {
-        try{
-            HttpHeaders headers = new HttpHeaders();
-            Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(claimResolver.getToken().getTokenValue());
-            orgOp.ifPresent(org->
-                headers.set("orgId",org.getCpsVendorRegistrationId().toString())
-            );
-            headers.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<PendingItemRequestDto> payload = new HttpEntity<>(payloadDto,headers);
-            String url = cpsServerConfig.getPendingItemReqEndpoint();
-            ResponseEntity<Void> response = networkService.post(url, payload,Void.class);
-            if(!response.getStatusCode().equals(HttpStatus.CREATED)){
-                throw new AesException("Sorry! Something wrong");
-            }
-        }catch(Exception ex){
-            throw new AesException(ex.getMessage());
-        }
-    }
 
     private List<PendingItemAttributeDto> extractAttributesFromItemAttributeName(ItemCategory cat, String itemAttributeName){
 
@@ -467,6 +456,50 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 fromDate,toDate,statuses,pageable);
     }
 
+    private void setSummaryDetail(PurchaseOrderRepository.PqDetailInfo pqDetail, Indent indent,
+                                  Map<String,Object> poItem, Map<String,Object> detailMap,
+                                  PurchaseOrderRepository.PurchaseOrderDetailInfo po){
+        String[] summary = pqDetail.getSummary().split(",");
+
+        termsAndConditions = pqTermAndConditionRepository
+                .findAllByVendorIdAndPriceQuotationId(Long.parseLong(summary[1]),Long.parseLong(summary[16]));
+
+
+        String itemAttributeToMatch = (!summary[12].trim().isEmpty())? summary[10].trim()+" - "+ summary[12].trim() : summary[10].trim();
+
+        Optional<Item> itemOp = itemService
+                .getByBrandAndAttributeName(summary[11].trim(),
+                        indent.getSubCategory().getId(),
+                        itemAttributeToMatch);
+        poItem.put("orderQty",pqDetail.getOrderQty());
+        if(po.getPoDate().equals(pqDetail.getDeliveryDate())) {
+            poItem.put("deliveryOrderQty", pqDetail.getDeliveryOrderQty());
+            poItem.put("deliveryDate", pqDetail.getDeliveryDate());
+            poItem.put("warehouseId", pqDetail.getWarehouseId());
+        }
+        poItem.put("isAitAdded",pqDetail.getIsAitAdded());
+        poItem.put("isVatAdded",pqDetail.getIsVatAdded());
+        poItem.put("transactionType",pqDetail.getTransactionType());
+
+        poItem.put("vendorName",summary[0]);
+        poItem.put("vendorId",summary[1]);
+        poItem.put("creditDays",summary[2]);
+        poItem.put("estDeliveryDays",summary[4]);
+        poItem.put("deliveryChargeType",summary[6].equals("1")? DeliveryCharge.INCLUDED.toString():
+                DeliveryCharge.EXCLUDED.toString());
+        detailMap.put("vatPercent",summary[8]);
+        detailMap.put("itemName",summary[10]);
+        detailMap.put("brandName",summary[11]);
+        detailMap.put("extendedAttribute",summary[12]);
+        detailMap.put("isItemExist",itemOp.isPresent());
+        detailMap.put("warrantyDuration",summary[13]);
+        detailMap.put("warrantyUnit",summary[14]);
+        poItem.put("vendorType",summary[15]);
+        poItem.put("pqId",summary[16]);
+        poItem.put("vendorEmail" , summary[17]);
+        poItem.put("vendorPhoneNo" , summary[18]);
+    }
+
     @Override
     public Map<String, Object> getPurchaseOrderDetail(Long csId) {
         // Need to update here cause now po verifying based on collection of po
@@ -566,44 +599,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                     );
                     vendorPartialVatAmount.set(pqDetail.getVendorPartialVatAmount());
 
-                    String[] summary = pqDetail.getSummary().split(",");
-
-                    termsAndConditions = pqTermAndConditionRepository.findAllByVendorIdAndPriceQuotationId(Long.parseLong(summary[1]),Long.parseLong(summary[16]));
-
-
-                    String itemAttributeToMatch = (!summary[12].trim().isEmpty())? summary[10].trim()+" - "+ summary[12].trim() : summary[10].trim();
-
-                    Optional<Item> itemOp = itemService
-                            .getByBrandAndAttributeName(summary[11].trim(),
-                                    indent.getSubCategory().getId(),
-                                    itemAttributeToMatch);
-                    poItem.put("orderQty",pqDetail.getOrderQty());
-                    if(po.getPoDate().equals(pqDetail.getDeliveryDate())) {
-                        poItem.put("deliveryOrderQty", pqDetail.getDeliveryOrderQty());
-                        poItem.put("deliveryDate", pqDetail.getDeliveryDate());
-                        poItem.put("warehouseId", pqDetail.getWarehouseId());
-                    }
-                    poItem.put("isAitAdded",pqDetail.getIsAitAdded());
-                    poItem.put("isVatAdded",pqDetail.getIsVatAdded());
-                    poItem.put("transactionType",pqDetail.getTransactionType());
-
-                    poItem.put("vendorName",summary[0]);
-                    poItem.put("vendorId",summary[1]);
-                    poItem.put("creditDays",summary[2]);
-                    poItem.put("estDeliveryDays",summary[4]);
-                    poItem.put("deliveryChargeType",summary[6].equals("1")? DeliveryCharge.INCLUDED.toString():
-                            DeliveryCharge.EXCLUDED.toString());
-                    detailMap.put("vatPercent",summary[8]);
-                    detailMap.put("itemName",summary[10]);
-                    detailMap.put("brandName",summary[11]);
-                    detailMap.put("extendedAttribute",summary[12]);
-                    detailMap.put("isItemExist",itemOp.isPresent());
-                    detailMap.put("warrantyDuration",summary[13]);
-                    detailMap.put("warrantyUnit",summary[14]);
-                    poItem.put("vendorType",summary[15]);
-                    poItem.put("pqId",summary[16]);
-                    poItem.put("vendorEmail" , summary[17]);
-                    poItem.put("vendorPhoneNo" , summary[18]);
+                    setSummaryDetail(pqDetail,indent,poItem,detailMap,po);
                     poItem.put("totalPrice",pqDetail.getTotalPrice());
                     poDetailList.add(detailMap);
                 }
