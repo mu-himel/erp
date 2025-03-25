@@ -32,11 +32,6 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class UserCategory extends VerifyableEntity implements CategoryInterface {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(updatable = false)
-    private Long id;
-
     private String name;
 
     @Column(unique = true, name="code")

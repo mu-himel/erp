@@ -9,7 +9,6 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,9 +17,7 @@ import java.util.List;
 @Table(name = "store_receive_notes")
 public class StoreReceiveNote extends VerifyableEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+
 
     @ManyToOne
     private GoodReceiveNote grn;
@@ -42,16 +39,11 @@ public class StoreReceiveNote extends VerifyableEntity {
     @ManyToOne
     private Employee employee;
 
-    private String nextVerifierId;
-    private String nextApproverId;
-
     private String costCenter;
 
     @Enumerated(EnumType.STRING)
     private SrnStatus reviewPrevStatus;
 
-    private String reviewerId;
-    private LocalDateTime reviewDate;
 
     @Override
     public void setStatus(String status) {

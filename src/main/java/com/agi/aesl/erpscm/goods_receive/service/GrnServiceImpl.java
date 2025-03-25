@@ -78,114 +78,32 @@ public class GrnServiceImpl implements GrnService{
 
 
     private final NetworkService networkService;
+    private CreateGrnService createGrnService;
 
     private Employee getEmp(){
         return claimResolver.getEmployee().orElse(null);
     }
 
-    @Override
-    public String getNextGrnNumber() {
-        Optional<Long> grnOp = grnRepository.findMaxOrderById();
-        if(grnOp.isPresent()){
-            Long grnNo = grnOp.get();
-            Long newGrnNo = grnNo +1;
-            return String.format("%05d",newGrnNo);
-        }
-        return String.format("%05d",1);
+    private void setCreateServiceDependencies(CreateGrnService createGrnService){
+        createGrnService.setClaimResolver(claimResolver);
+        createGrnService.setItemService(itemService);
+        createGrnService.setCreatedBy(getEmp());
+        createGrnService.setGrnRepository(grnRepository);
+        createGrnService.setQcMailService(qcMailService);
     }
 
     @Override
     @Transactional
     public String createManualGrn(Jwt token, GrnManualRequestDto grnManualDto, GrnMode mode) {
-        claimResolver.setToken(token);
-        String uri = "";
-
-        GoodReceiveNote grn = new GoodReceiveNote();
-        grn.setGrnDate(LocalDate.now());
-        if(mode.equals(GrnMode.AUTO)) {
-            grn.setRemotePoId(grnManualDto.getPoId());
-        }
-        grn.setGrnStatus(GrnStatus.PENDING);
-        grn.setPoNo(grnManualDto.getPoNo());
-        grn.setIndentNo(grnManualDto.getIndentNo() );
-        grn.setGrnMode(mode);
-
-        grn.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
-        if(token != null && claimResolver.getEmployee().isPresent()){
-            grn.setCreatedBy(getEmp());
-        }
-
-
-        grn.setGoodReceiveItemDetails(grnManualDto.getGrnDetails().stream().map(detailDto->{
-            GoodReceiveItemDetail grid = new GoodReceiveItemDetail();
-
-                Optional<Item> itemOp = Optional.empty();
-                if(mode.equals(GrnMode.MANUAL)) {
-                    itemOp = itemService.getItemDetail(detailDto.getItem().getId());
-                }else if (mode.equals(GrnMode.AUTO)){
-                    List<Item> items = itemService.getByCode(detailDto.getItemCode());
-                    List<Long> itemIds = items.stream().filter(Item::getActive).map(Item::getId).toList();
-                    List<ItemStock> stocks = itemService.getByItemAndWarehouse(itemIds,grnManualDto.getWarehouseId());
-                    if(!stocks.isEmpty()){
-                       ItemStock stock = stocks.get(0);
-                        itemOp = Optional.of(stock.getItem());
-                    }
-                }
-                if(itemOp.isPresent()){
-                    Item item = itemOp.get();
-                    grid.setItem(item);
-                    grid.setBrandName(item.getName());
-                    grid.setCategory(item.getItemParentCategory());
-                    grid.setSubCategory(item.getItemCategory());
-                }
-                grid.setVatAmount(detailDto.getVatAmount());
-                grid.setExpireDate(detailDto.getExpireDate());
-                grid.setManufactureDate(detailDto.getProductionDate());
-                grid.setEstimatedDeliveryDays(detailDto.getEstDeliveryDays());
-                grid.setReceiveQty(detailDto.getOrderQty());
-                grid.setPricePerUnit(detailDto.getPricePerUnit());
-                grid.setDeliveryCharge(detailDto.getDeliveryChargeAmount());
-                grid.setWarehouse(new Warehouse(grnManualDto.getWarehouseId()));
-                grid.setGoodReceiveNote(grn);
-                return grid;
-            }).toList()
-        );
-
-
-
-        grn.setAitOption(grnManualDto.getAitOption());
-        grn.setVatOption(grnManualDto.getVatOption());
-        grn.setVatType(grnManualDto.getVatType()!=null?grnManualDto.getVatType().toUpperCase():null);
-        grn.setVat(grnManualDto.getTotalVat());
-        grn.setVatPctg(grnManualDto.getVatPctg());
-        grn.setDeliveryChargeAmount(grnManualDto.getDeliveryChargeAmount());
-        grn.setDeliveryCharge(grnManualDto.getDeliveryCharge());
-        grn.setDays(grnManualDto.getDays());
-        grn.setInvoicePath(grnManualDto.getInvoicePath());
-        grn.setSubTotal(grnManualDto.getInTotal());
-        grn.setTotalPrice(grnManualDto.getTotalPrice());
-
-        grn.setVendorId(grnManualDto.getVendor().getId());
-        grn.setVendorName(grnManualDto.getVendor().getName());
-        grn.setVendorPhone(grnManualDto.getVendor().getVendorPhone());
-        grn.setVendorEmail(grnManualDto.getVendor().getVendorEmail());
-
-        grn.setMushak(grnManualDto.getMushak());
-        grn.setPaymentType(grnManualDto.getPayment());
-        grn.setGrnNo(getNextGrnNumber());
-        grnRepository.save(grn);
-
-        qcMailService.setClaimResolver(claimResolver);
-        qcMailService.setQualityControl(grn);
-        qcMailService.getAuthorizedUsers(uri);
-        qcMailService.sentMail(null,"Pending QC");
-        return grn.getGrnNo();
+        setCreateServiceDependencies(createGrnService);
+        return createGrnService.createGrn(token,grnManualDto,mode);
     }
 
     @Override
     @Transactional
     public void createAutoGrn(Jwt token, GrnManualRequestDto grnManualDto) {
-        createManualGrn(token,grnManualDto,GrnMode.AUTO);
+        setCreateServiceDependencies(createGrnService);
+        createGrnService.createGrn(token,grnManualDto,GrnMode.AUTO);
     }
 
     @Override

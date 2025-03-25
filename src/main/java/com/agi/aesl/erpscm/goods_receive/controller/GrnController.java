@@ -29,15 +29,6 @@ public class GrnController extends BaseController {
 
     private final GrnService grnService;
 
-    @GetMapping("/next-id")
-    public ResponseEntity<Object> getNextGrnNumber(){
-        Map<String,Object> response = new HashMap<>();
-        response.put("code", grnService.getNextGrnNumber());
-        return new ResponseEntity<>(
-                response, HttpStatus.OK
-        );
-    }
-
     @PostMapping
     public ResponseEntity<Void> createGrn(
             @AuthenticationPrincipal Jwt token,

@@ -16,7 +16,6 @@ import java.util.Optional;
 
 public interface GrnService {
 
-    String getNextGrnNumber();
 
     Page<GrnRepository.GoodReceiveNoteInfo> getAllGrn(Jwt token, Optional<Integer> page, Optional<Integer> size,
                                                       Optional<String> grnNo, Optional<Integer> qty,
