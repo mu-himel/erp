@@ -110,8 +110,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
 
     private final WarehouseRepository warehouseRepository;
 
-    private final PurchseOrderSentService purchseOrderSentService;
-    private final PurchaseOrderSendService purchaseOrderSendService;
+    private final PurchaseOrderSentService purchaseOrderSentService;
 
     private static final String VENDOR_PARTIAL_VAT_AMT_KEY="vendorPartialVatAmount";
     private static final String DATE_TIME_END="23:59:59";
@@ -191,7 +190,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                                                 csDetail.getSubCatId(),itemAttributeName
                                         );
                 if(itemOp.isEmpty()){
-                    purchaseOrderSendService.sendPendingItemRequest(
+                    purchaseOrderSentService.sendPendingItemRequest(
                             preparePurchaseOrderSentPayload(employee,orgOp,csDetail)
                     );
                 }
@@ -739,7 +738,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             }else {
                 poGroup.setPurchaseOrderStatus(PurchaseOrderStatus.VERIFIED);
                 setPOSentServices();
-                purchseOrderSentService.sentPoToVendors(poGroup);
+                purchaseOrderSentService.sentPoToVendors(poGroup);
             }
             setVAHistory(poGroup,new Employee(poGroup.getNextVerifierId()),PurchaseOrderStatus.VERIFIED);
         }
@@ -754,16 +753,16 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
             po.setPurchaseOrderStatus(PurchaseOrderStatus.APPROVED);
             setVAHistory(po,new Employee(po.getNextApproverId()),PurchaseOrderStatus.APPROVED);
             setPOSentServices();
-            purchseOrderSentService.sentPoToVendors(po);
+            purchaseOrderSentService.sentPoToVendors(po);
         }
     }
 
     private void setPOSentServices(){
-        purchseOrderSentService.setClaimResolver(claimResolver);
-        purchseOrderSentService.setOrgService(orgService);
-        purchseOrderSentService.setPurchaseOrderRepository(purchaseOrderRepository);
-        purchseOrderSentService.setCpsServerConfig(cpsServerConfig);
-        purchseOrderSentService.setNetworkService(networkService);
+        purchaseOrderSentService.setClaimResolver(claimResolver);
+        purchaseOrderSentService.setOrgService(orgService);
+        purchaseOrderSentService.setPurchaseOrderRepository(purchaseOrderRepository);
+        purchaseOrderSentService.setCpsServerConfig(cpsServerConfig);
+        purchaseOrderSentService.setNetworkService(networkService);
     }
 
 

@@ -10,6 +10,7 @@ import com.agi.aesl.erpscm.inventory.dto.request.RemoteItemRequestDto;
 import com.agi.aesl.erpscm.inventory.dto.response.ItemDetail;
 import com.agi.aesl.erpscm.inventory.dto.response.ItemListWithAttributesDto;
 import com.agi.aesl.erpscm.inventory.entity.Item;
+import com.agi.aesl.erpscm.inventory.entity.ItemAttribute;
 import com.agi.aesl.erpscm.inventory.entity.ItemStock;
 import com.agi.aesl.erpscm.inventory.enums.StockType;
 
@@ -126,4 +127,6 @@ public interface ItemService {
     void forceActive();
 
     void rejectItemFromAcc(Long id, Long warehouseId);
+
+    String generateItemAttributeName(List<ItemAttribute> attributes);
 }

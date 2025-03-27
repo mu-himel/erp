@@ -37,7 +37,6 @@ import com.agi.aesl.erpscm.utils.ClaimResolver;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -124,6 +123,7 @@ public class ItemServiceImpl implements ItemService {
     private final UserItemRepository userItemRepository;
 
     private final ItemStockService itemStockService;
+    private final ItemSyncService itemSyncService;
 
     @Value("${upload.dir}")
     private String uploadDir;
@@ -133,6 +133,11 @@ public class ItemServiceImpl implements ItemService {
     private static final String WAREHOUSE_ID_KEY="warehouseId";
     private static final String WAREHOUSE_STORE_ID_KEY="warehouseStoreId";
     private static final String ORG_ID_KEY="orgId";
+
+    private Long getEmpWarehouseId(){
+        Employee employee = claimResolver.getEmployee().orElse(null);
+        return (employee!=null)? employee.getWarehouseId():null;
+    }
 
     @Override
     public Optional<Item> getItemDetail(Long id) {
@@ -410,6 +415,45 @@ public class ItemServiceImpl implements ItemService {
         return new ArrayList<>();
     }
 
+    private ItemListWithAttributesDto prepareItemWithAttribute(ItemRepository.ItemInfoExt itemInfoExt){
+        StringBuilder sb = new StringBuilder();
+        ItemListWithAttributesDto dto = new ItemListWithAttributesDto();
+        dto.setId(itemInfoExt.getId());
+        dto.setCode(itemInfoExt.getCode());
+        dto.setName(itemInfoExt.getName());
+        dto.setBrandId(itemInfoExt.getBrandId());
+        dto.setBrandName(itemInfoExt.getBrandName());
+        dto.setWarehouseId(itemInfoExt.getWarehouseId());
+        dto.setWarehouseStoreId(itemInfoExt.getWarehouseStoreId());
+        List<Map<String,Object>> attributes = new ArrayList<>();
+        String[] attrTypes = itemInfoExt.getAttributeTypes().split(",");
+        String[] attrValues = itemInfoExt.getAttributeValues().split(",");
+        String[] attrUnits = itemInfoExt.getAttributeUnits().split(",");
+        for(int i=0; i<attrTypes.length; i++){
+            Map<String,Object> attrs = new HashMap<>();
+
+            String attributeType = attrTypes[i];
+            String attributeValue = attrValues[i];
+            String attributeUnit = attrUnits[i];
+
+            attributeType = attributeType.substring(0, attributeType.indexOf("_"));
+            attributeValue = attributeValue.substring(0, attributeValue.indexOf("_"));
+            attributeUnit = attributeUnit.substring(0, attributeUnit.indexOf("_"));
+
+            if(!attrs.containsKey(attributeType)){
+                attrs.put("attributeValue",attributeValue);
+                attrs.put("attributeType",attributeType);
+                attrs.put("attributeUnit",attributeUnit);
+                attributes.add(attrs);
+                sb.append(attributeType).append(" ").append(attributeValue).append(" ").append(attributeUnit)
+                        .append(" - ");
+            }
+            dto.setAttributes(attributes);
+        }
+        dto.setItemAttribute(sb.substring(0,sb.length()-3));
+        return dto;
+    }
+
     @Override
     public List<ItemListWithAttributesDto> getAllItemsBySubCategoryAndAttribute(
                                                         Optional<Long> warehouseId,
@@ -441,43 +485,7 @@ public class ItemServiceImpl implements ItemService {
             if(itemInfoExt.getAttributeTypes()==null){
                 continue;
             }
-            StringBuilder sb = new StringBuilder();
-            ItemListWithAttributesDto dto = new ItemListWithAttributesDto();
-            dto.setId(itemInfoExt.getId());
-            dto.setCode(itemInfoExt.getCode());
-            dto.setName(itemInfoExt.getName());
-            dto.setBrandId(itemInfoExt.getBrandId());
-            dto.setBrandName(itemInfoExt.getBrandName());
-            dto.setWarehouseId(itemInfoExt.getWarehouseId());
-            dto.setWarehouseStoreId(itemInfoExt.getWarehouseStoreId());
-            List<Map<String,Object>> attributes = new ArrayList<>();
-            String[] attrTypes = itemInfoExt.getAttributeTypes().split(",");
-            String[] attrValues = itemInfoExt.getAttributeValues().split(",");
-            String[] attrUnits = itemInfoExt.getAttributeUnits().split(",");
-            for(int i=0; i<attrTypes.length; i++){
-                Map<String,Object> attrs = new HashMap<>();
-
-                String attributeType = attrTypes[i];
-                String attributeValue = attrValues[i];
-                String attributeUnit = attrUnits[i];
-                
-                attributeType = attributeType.substring(0, attributeType.indexOf("_"));
-                attributeValue = attributeValue.substring(0, attributeValue.indexOf("_"));
-                attributeUnit = attributeUnit.substring(0, attributeUnit.indexOf("_"));
-
-                if(!attrs.containsKey(attributeType)){
-                    attrs.put("attributeValue",attributeValue);
-                    attrs.put("attributeType",attributeType);
-                    attrs.put("attributeUnit",attributeUnit);
-                    attributes.add(attrs);
-                    sb.append(attributeType).append(" ").append(attributeValue).append(" ").append(attributeUnit)
-                    .append(" - ");
-                }
-                dto.setAttributes(attributes);
-            }
-            dto.setItemAttribute(sb.substring(0,sb.length()-3));
-            itemListWithAttributesDtos.add(dto);
-
+            itemListWithAttributesDtos.add(prepareItemWithAttribute(itemInfoExt));
         }
         List<ItemListWithAttributesDto> filteredList  = itemListWithAttributesDtos;
         
@@ -487,7 +495,7 @@ public class ItemServiceImpl implements ItemService {
             filteredList = itemListWithAttributesDtos.stream().filter(itemListWithAttributesDto->{
                 String perItemAttr = "";
                 if(attrStr.contains(itemListWithAttributesDto.getBrandName()) &&  itemListWithAttributesDto.getBrandName()!=null){
-                    perItemAttr = itemListWithAttributesDto.getBrandName() + " - " + itemListWithAttributesDto.getItemAttribute().replaceAll("  ", " ");
+                    perItemAttr = itemListWithAttributesDto.getBrandName() + " - " + itemListWithAttributesDto.getItemAttribute().replaceAll(" {2}", " ");
                 }else{
                     perItemAttr = itemListWithAttributesDto.getItemAttribute();
                 }
@@ -501,7 +509,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
 
-    private String generateItemAttributeName(List<ItemAttribute> attributes){
+    public String generateItemAttributeName(List<ItemAttribute> attributes){
         StringBuilder sb = new StringBuilder();
 
         attributes.forEach(itemAttribute -> {
@@ -530,7 +538,7 @@ public class ItemServiceImpl implements ItemService {
        Warehouse warehouse = null;
        WarehouseStore warehouseStore = null;
        Long warehouseId = (itemRequestDto.getWarehouse().getId()!=null)?itemRequestDto.getWarehouse().getId():
-               claimResolver.getEmployee().get().getWarehouseId();
+               getEmpWarehouseId();
         Optional<Warehouse> wOp = warehouseService.getWarehouse(warehouseId);
         if(wOp.isEmpty()){
             throw new AesException(ERR_WAREHOUSE_NOT_FOUND);
@@ -610,29 +618,32 @@ public class ItemServiceImpl implements ItemService {
                                                          List<ItemAttributeInterface> attributes,
                                                          WarehouseStore warehouseStore
                                                          ) {
+        if(warehouseStore==null){
+            throw new AesException("Sorry! Warehouse Store Information Required");
+        }
         PendingItemRequestDto pendingItemRequestDto = new PendingItemRequestDto();
         Employee employee = claimResolver.getEmployee().orElse(null);
         pendingItemRequestDto.setItemAttributeName(item.getItemAttributeName());
+
+        pendingItemRequestDto.setWarehouseStoreId(warehouseStore.getId());
+
         if(employee!=null) {
             pendingItemRequestDto.setRequestedBy(emp);
             pendingItemRequestDto.setDesignation(employee.getDesignationName());
             pendingItemRequestDto.setDepartment(employee.getDepartmentName());
             pendingItemRequestDto.setWarehouseId(employee.getWarehouseId());
-            if(warehouseStore!=null){
-                pendingItemRequestDto.setWarehouseStoreId(warehouseStore.getId());
-            }
-
             pendingItemRequestDto.setWarehouseName(employee.getWarehouseName());
         }else{
             throw new AesException("Sorry! Employee Info missing");
         }
         Optional<ItemCategory> catOp = categoryService.getAnyItemCategory(item.getCategory().getId());
 
-
-        pendingItemRequestDto.setSubCategoryCode(catOp.get().getCode().substring(2));
+        catOp.ifPresent(cat->
+                pendingItemRequestDto.setSubCategoryCode(cat.getCode().substring(2))
+        );
         if(item.getBrand()!=null) {
             Optional<CategoryBrand> brandOp = categoryBrandRepository.findById(item.getBrand().getId());
-            pendingItemRequestDto.setBrand(brandOp.get().getName());
+            brandOp.ifPresent(brand->pendingItemRequestDto.setBrand(brand.getName()));
         }
         pendingItemRequestDto.setReportingManager(employee.getReportingManager());
         pendingItemRequestDto.setEmployeeId(employee.getId());
@@ -989,6 +1000,18 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public void syncItemsBySubCatCode(Jwt token, Long warehouseId, Long warehouseStoreId, String subCatCode) {
+        itemSyncService.setClaimResolver(claimResolver);
+        itemSyncService.setCpsConfig(cpsConfig);
+        itemSyncService.setOrgService(orgService);
+        itemSyncService.setNetworkService(networkService);
+        itemSyncService.setAccountService(accountService);
+        itemSyncService.setItemService(this);
+        itemSyncService.setCategoryService(categoryService);
+        itemSyncService.setWarehouseService(warehouseService);
+        itemSyncService.setWarehouseStoreService(warehouseStoreService);
+        itemSyncService.setItemRepository(itemRepository);
+        itemSyncService.setItemImportLogRepository(itemImportLogRepository);
+        itemSyncService.setCategoryBrandRepository(categoryBrandRepository);
 
         Optional<ItemCategory> categoryOp = categoryService.getCategoryByCode(subCatCode);
 
@@ -998,11 +1021,12 @@ public class ItemServiceImpl implements ItemService {
         ItemCategory category = categoryOp.get();
         categoryService.syncCategories(token, cpsConfig, warehouseId, warehouseStoreId,
                 Collections.singletonList(category.getCpsCategoryId()));
-        List<SyncItemDetail> items = this.fetchItemsBySubCat(token,subCatCode.substring(2));
+
+        List<SyncItemDetail> items = itemSyncService.fetchItemsBySubCat(token,subCatCode.substring(2),ORG_ID_KEY);
         List<ScmItemUpdateDto> dtos = new ArrayList<>();
         items.forEach(i->{
            ScmItemUpdateDto scmItemUpdateDto = new ScmItemUpdateDto();
-           Item item = this.createItem(token,warehouseId,warehouseStoreId,i);
+           Item item = itemSyncService.createItem(token,warehouseId,warehouseStoreId,i);
            scmItemUpdateDto.setItemIdCps(i.getId());
            scmItemUpdateDto.setItemIdScm(item.getId());
            dtos.add(scmItemUpdateDto);
@@ -1020,197 +1044,9 @@ public class ItemServiceImpl implements ItemService {
         }
     }
 
-    /**
-     * @Description import from cps
-     * @param warehouseId
-     * @param warehouseStoreId
-     * @param syncItemDetail
-     * @return
-     */
-    @Transactional
-    private Item createItem(Jwt token,Long warehouseId, Long warehouseStoreId, SyncItemDetail syncItemDetail){
-        claimResolver.setToken(token);
-        Item item = syncItemDetail.getEntity();
-        String itemAttributeName = generateItemAttributeName(syncItemDetail.getAttributes());
-
-        Optional<Warehouse> warehouseOp = warehouseService.getWarehouse(warehouseId);
-        if(warehouseOp.isEmpty()){
-            throw new AesException(ERR_WAREHOUSE_NOT_FOUND);
-        }
-
-        Optional<WarehouseStore> warehouseStoreOp = warehouseStoreService.getStoreById(warehouseStoreId);
-        if(warehouseStoreOp.isEmpty()){
-            throw new AesException(ERR_WAREHOUSE_STORE_NOT_FOUND);
-        }
-
-        Warehouse warehouse = warehouseOp.get();
-        WarehouseStore warehouseStore = warehouseStoreOp.get();
-
-        item.setCode(warehouseStore.getStoreName().substring(0,1).toUpperCase()+"-"+item.getCode());
-
-        String subCategoryCode = warehouseStore.getStoreName().substring(0,1).toUpperCase()+"-"+syncItemDetail.getItemCategory().code();
-        // Get Subcategory By Code
-        Optional<ItemCategory> subCatOp = categoryService.getCategoryByCode(subCategoryCode);
-        if(subCatOp.isEmpty()){
-            throw new AesException("Sorry! Sub Category not found");
-        }
-        ItemCategory subCat = subCatOp.get();
-
-        // Get Category Brand
-        CategoryBrand catBrand = null;
-        if(syncItemDetail.getBrand()!=null) {
-            Optional<CategoryBrand> catBrandOp = categoryBrandRepository.findByCategoryIdAndName(subCat.getId(), syncItemDetail.getBrand().name());
-            if (catBrandOp.isEmpty()) {
-                catBrand = new CategoryBrand();
-                catBrand.setCategory(subCat);
-                catBrand.setName(syncItemDetail.getBrand().name());
-                categoryBrandRepository.save(catBrand);
-            } else {
-                catBrand = catBrandOp.get();
-            }
-        }
-
-        item.setItemCategory(subCat);
-        item.setItemParentCategory(subCat.getParentCategory());
-        item.setBrand(catBrand);
-        item.setCpsItemId(syncItemDetail.getId());
-
-        List<?> itemExistByAttr = this.getByAttributes(catBrand.getId(),itemAttributeName,subCat.getId(),warehouseId);
-        if(!itemExistByAttr.isEmpty()){
-            List<Item> items = itemRepository.findByBrandIdAndItemCategoryIdAndItemAttributeName(catBrand.getId(), subCat.getId(), itemAttributeName);
-            for(Item i : items){
-                Optional<ItemImportLog> itemImportExistOp = itemImportLogRepository.findByItemIdAndWarehouseId(i.getId(), warehouseId);
-                if(itemImportExistOp.isPresent()){
-                    ItemImportLog iil = itemImportExistOp.get();
-
-                    i.setActive(iil.getItemInactiveStatus().equals(ItemInactiveStatus.APPROVED));
-
-                }else{
-                    i.setActive(false);
-                }
-            }
-        } else {
-
-            Optional<Item> itemExistByCode = itemRepository.findByCode(item.getCode());
-            if(itemExistByCode.isPresent()){
-                item = itemExistByCode.get();
-                List<ItemStock> stocks = item.getStocks();
-                if(stocks.isEmpty()) {
-                    stocks.add(new ItemStock(
-                            new BigDecimal(0l),
-                            item,
-                            StockType.STOCK_IN,
-                            warehouse,
-                            warehouseStore
-                    ));
-                    item.setStocks(stocks);
-                }else{
-                    Boolean warehouseExist=false;
-                    for(ItemStock s : stocks){
-                        if(s.getWarehouse().getId().equals(warehouseId)){
-                            warehouseExist=true;
-                        }
-                        Optional<ItemImportLog> importLogExist = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),s.getWarehouse().getId());
-                        if(importLogExist.isPresent()) {
-                            ItemImportLog itemImportLog = importLogExist.get();
-                            ItemImportLog iil = new ItemImportLog();
-                            iil.setItem(itemImportLog.getItem());
-                            iil.setWarehouse(warehouse);
-                            iil.setItemInactiveStatus(itemImportLog.getItemInactiveStatus());
-                            itemImportLogRepository.save(iil);
-                        }
-                    }
-                    if(Boolean.FALSE.equals(warehouseExist)){
-                        stocks.add(new ItemStock(
-                                new BigDecimal(0L),
-                                item,
-                                StockType.STOCK_IN,
-                                warehouse,
-                                warehouseStore
-                        ));
-                        item.setStocks(stocks);
-                    }
-                }
 
 
-            }else{
-                item.setItemUnit(syncItemDetail.getItemUnit());
-                item.setManufacturer(syncItemDetail.getManufacturer());
-                item.setName(syncItemDetail.getName());
-                item.setItemAttributeName(itemAttributeName);
-                item.setActive(false);
-                item.setStocks(Arrays.asList(new ItemStock(
-                        new BigDecimal(0l),
-                        item,
-                        StockType.STOCK_IN,
-                        warehouse,
-                        warehouseStore
-                )));
-//                item.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
 
-                if(syncItemDetail.getAttributes()!=null && !syncItemDetail.getAttributes().isEmpty()) {
-
-                    Item finalItem = item;
-                    item.setAttributes(syncItemDetail.getAttributes().stream().map(itemAttribute -> {
-
-                        itemAttribute.setId(null);
-                        itemAttribute.setItem(finalItem);
-                        return itemAttribute;
-                    }).toList());
-                }
-
-                if(syncItemDetail.getFunctionalUnits()!=null && !syncItemDetail.getFunctionalUnits().isEmpty()) {
-                    Item finalItem = item;
-                    item.setItemFunctionalUnits(syncItemDetail.getFunctionalUnits().stream().map(itemFunctionalUnit -> {
-                        itemFunctionalUnit.setId(null);
-                        itemFunctionalUnit.setItem(finalItem);
-                        return itemFunctionalUnit;
-                    }).toList());
-                }
-
-                itemRepository.save(item);
-
-                Optional<ItemImportLog> importLogExist = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseId);
-                if(importLogExist.isEmpty()) {
-                    ItemImportLog iil = new ItemImportLog();
-                    iil.setItem(item);
-                    iil.setWarehouse(warehouse);
-                    iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
-                    // added for inactive account service
-                    item.setActive(false);
-                    itemImportLogRepository.save(iil);
-                }
-                accountService.setItemService(this);
-                accountService.createItemLedger(claimResolver,item,warehouse,warehouseStore);
-            }
-
-
-    
-
-        }
-        return item;
-    }
-
-    @Transactional
-    private List<SyncItemDetail> fetchItemsBySubCat(Jwt token, String subCatCode){
-        HttpHeaders headers = new HttpHeaders();
-        Optional<Organization> orgOp = orgService.getOrgByCodeFromAcl(token.getTokenValue());
-        if(orgOp.isPresent()){
-            headers.setBearerAuth(token.getTokenValue());
-            headers.set(ORG_ID_KEY,orgOp.get().getCpsVendorRegistrationId().toString());
-        }
-        HttpEntity<?> payload = new HttpEntity<>(headers);
-        String url = cpsConfig.getItemFetchEndpoint(subCatCode);
-        ResponseEntity<?> response = networkService.get(url, payload, SyncItemDto.class);
-        if(response.getStatusCode()!=HttpStatus.OK){
-            throw new AesException("Unable to fetch Items from CPS");
-        }
-        var responseBody = response.getBody();
-        
-        SyncItemDto syncItemDto = (SyncItemDto)responseBody;
-        
-        return syncItemDto.getItems();
-    }
 
     @Override
     public Optional<Item> getByBrandAndAttributeName(String brandName, Long subCatId, String itemAttributeName) {
@@ -1278,7 +1114,6 @@ public class ItemServiceImpl implements ItemService {
                 }
             }else if(approveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)){
                 UserItem ui = null;
-//                item.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
                 Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseOp.get().getId());
                 if(iilOp.isPresent()){
                     ItemImportLog iil = iilOp.get();
@@ -1326,12 +1161,8 @@ public class ItemServiceImpl implements ItemService {
         WarehouseStore ws = wsOp.get();
         Optional<ItemCategory> categoryOp = categoryService.getAnyItemCategory(itemMergeRequestDto.getItemParentCategory().getId());
         Optional<ItemCategory> subCategoryOp = categoryService.getAnyItemCategory(itemMergeRequestDto.getItemCategory().getId());
-        if(categoryOp.isPresent()){
-            item.setItemCategory(subCategoryOp.get());
-        }
-        if(subCategoryOp.isPresent()){
-            item.setItemParentCategory(categoryOp.get());
-        }
+        categoryOp.ifPresent(item::setItemParentCategory);
+        subCategoryOp.ifPresent(item::setItemCategory);
         item.setName(itemMergeRequestDto.getName());
         item.setItemAttributeName(itemMergeRequestDto.getItemAttributeName());
         List<ItemAttribute> attributes = itemMergeRequestDto.getAttributes().stream().map(attr->{
