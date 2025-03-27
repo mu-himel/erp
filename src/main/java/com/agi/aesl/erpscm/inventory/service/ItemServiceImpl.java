@@ -20,7 +20,6 @@ import com.agi.aesl.erpscm.inventory.dto.request.*;
 import com.agi.aesl.erpscm.inventory.dto.response.ItemDetail;
 import com.agi.aesl.erpscm.inventory.dto.response.ItemListWithAttributesDto;
 import com.agi.aesl.erpscm.inventory.dto.response.SyncItemDetail;
-import com.agi.aesl.erpscm.inventory.dto.response.SyncItemDto;
 import com.agi.aesl.erpscm.inventory.entity.*;
 import com.agi.aesl.erpscm.inventory.enums.ItemHeader;
 import com.agi.aesl.erpscm.inventory.enums.ItemInactiveStatus;
@@ -54,6 +53,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
@@ -133,10 +133,11 @@ public class ItemServiceImpl implements ItemService {
     private static final String WAREHOUSE_ID_KEY="warehouseId";
     private static final String WAREHOUSE_STORE_ID_KEY="warehouseStoreId";
     private static final String ORG_ID_KEY="orgId";
+    private static final String ERR_ITEM_NOT_FOUND="Sorry! Item not found";
 
-    private Long getEmpWarehouseId(){
+    private Long getEmpWarehouseId(Long defaultWarehouseId){
         Employee employee = claimResolver.getEmployee().orElse(null);
-        return (employee!=null)? employee.getWarehouseId():null;
+        return (employee!=null)? employee.getWarehouseId():defaultWarehouseId;
     }
 
     @Override
@@ -148,7 +149,7 @@ public class ItemServiceImpl implements ItemService {
     public Optional<ItemDetail> getItemDetailWithWarehouse(Long id) {
         Optional<ItemRepository.ItemDetail> itemDetailOptional = itemRepository.findByIdWithWarehouse(id);
         if(itemDetailOptional.isEmpty()){
-            throw new AesException("Sorry! Item not found");
+            throw new AesException(ERR_ITEM_NOT_FOUND);
         }
 
         ItemRepository.ItemDetail detail = itemDetailOptional.get();
@@ -196,7 +197,7 @@ public class ItemServiceImpl implements ItemService {
     public Optional<ItemDetail> getItemDetailWithWarehouseWithoutInTransit(Long id) {
         Optional<ItemRepository.ItemDetail> itemDetailOptional = itemRepository.findByIdWithWarehouse(id);
         if(itemDetailOptional.isEmpty()){
-            throw new AesException("Sorry! Item not found");
+            throw new AesException(ERR_ITEM_NOT_FOUND);
         }
 
         ItemRepository.ItemDetail detail = itemDetailOptional.get();
@@ -525,6 +526,14 @@ public class ItemServiceImpl implements ItemService {
         return (sb.isEmpty())? "" : sb.toString().substring(0,sb.length()-3);
     }
 
+    private void validateDuplicateItemCreationUsingCode(Item itemExist, Warehouse warehouse){
+
+            Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(itemExist.getId(),warehouse.getId());
+            if(iilOp.isPresent()){
+                throw new AesException("Item already exist with code("+itemExist.getCode()+") and status is "+iilOp.get().getItemInactiveStatus());
+            }
+    }
+
     @Override
     @Transactional
     public void createItem(Jwt loggedInUser, ItemRequestDto itemRequestDto) {
@@ -538,7 +547,7 @@ public class ItemServiceImpl implements ItemService {
        Warehouse warehouse = null;
        WarehouseStore warehouseStore = null;
        Long warehouseId = (itemRequestDto.getWarehouse().getId()!=null)?itemRequestDto.getWarehouse().getId():
-               getEmpWarehouseId();
+               getEmpWarehouseId(null);
         Optional<Warehouse> wOp = warehouseService.getWarehouse(warehouseId);
         if(wOp.isEmpty()){
             throw new AesException(ERR_WAREHOUSE_NOT_FOUND);
@@ -556,14 +565,8 @@ public class ItemServiceImpl implements ItemService {
        }
 
         Optional<Item> itemOp = itemRepository.findByCode(item.getCode());
-        if(itemOp.isPresent()){
-            Item itemExist = itemOp.get();
-            Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(itemExist.getId(),warehouse.getId());
-            if(iilOp.isPresent()){
-                throw new AesException("Item already exist with code("+itemExist.getCode()+") and status is "+iilOp.get().getItemInactiveStatus());
-            }
-
-        }
+        Warehouse finalWarehouse = warehouse;
+        itemOp.ifPresent(itm->validateDuplicateItemCreationUsingCode(itm, finalWarehouse));
 
        if(item.getItemParentCategory()==null && item.getItemCategory()==null){
            throw new AesException("Item Sub Category Missing");
@@ -578,11 +581,11 @@ public class ItemServiceImpl implements ItemService {
             item.setBrand(new CategoryBrand(itemRequestDto.getBrand().getId()));
         }
 
-        item.setStocks(Arrays.asList(new ItemStock(
-                ((itemRequestDto.getCurrentStockQty()!=null)? itemRequestDto.getCurrentStockQty() : new BigDecimal(0)),
+        item.setStocks(List.of(new ItemStock(
+                ((itemRequestDto.getCurrentStockQty() != null) ? itemRequestDto.getCurrentStockQty() : new BigDecimal(0)),
                 item,
-                StockType.STOCK_IN,warehouse,warehouseStore
-                )));
+                StockType.STOCK_IN, warehouse, warehouseStore
+        )));
         if(itemRequestDto.getAttributes()!=null && !itemRequestDto.getAttributes().isEmpty()) {
             item.setAttributes(itemRequestDto.getAttributes().stream().map(itemAttribute -> {
                 itemAttribute.setItem(item);
@@ -752,22 +755,9 @@ public class ItemServiceImpl implements ItemService {
         
     }
 
-    @Override
-    @Transactional
-    public void updateItem(Long id, ItemRequestDto itemRequestDto) {
-        Optional<Item> itemOptional = itemRepository.findById(id);
-        if(itemOptional.isEmpty()){
-            throw new AesException("Item not found");
-        }
-        Item item = itemOptional.get();
-
+    private void setItemInfo(ItemRequestDto itemRequestDto, Item item){
         if(itemRequestDto.getName()!=null) {
             item.setName(itemRequestDto.getName());
-        }
-
-        itemOptional = itemRepository.findByCodeAndActive(itemRequestDto.getCode(),true);
-        if(itemOptional.isPresent() && !id.equals(itemOptional.get().getId())){
-            throw new AesException("Item already exist with same attributes");
         }
 
         if(itemRequestDto.getCode()!=null){
@@ -790,6 +780,26 @@ public class ItemServiceImpl implements ItemService {
         if(itemRequestDto.getReorderPercentage()!=null) {
             item.setReorderPercentage(itemRequestDto.getReorderPercentage());
         }
+    }
+    @Override
+    @Transactional
+    public void updateItem(Long id, ItemRequestDto itemRequestDto) {
+        Optional<Item> itemOptional = itemRepository.findById(id);
+        if(itemOptional.isEmpty()){
+            throw new AesException("Item not found");
+        }
+
+        itemOptional = itemRepository.findByCodeAndActive(itemRequestDto.getCode(),true);
+        if(itemOptional.isEmpty()){
+            throw new AesException("Item not found");
+        }
+        if(!id.equals(itemOptional.get().getId())){
+            throw new AesException("Item already exist with same attributes");
+        }
+
+        Item item = itemOptional.get();
+
+        setItemInfo(itemRequestDto,item);
 
         if(itemRequestDto.getCurrentStockQty()!=null){
             List<ItemStock> itemStocks = item.getStocks();
@@ -921,6 +931,66 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.findByAttributes(brandId,attribute,subCatId,warehouseId);
     }
 
+    private ItemCategory validSubCategoryByName(String subCatName){
+        Optional<ItemCategory> subCatOp = categoryService.getItemCategoryByName(subCatName);
+        if(subCatOp.isEmpty()){
+            throw new AesException("Item Sub Category Not found");
+        }
+        return subCatOp.get();
+    }
+
+    private CategoryBrand validateCategoryBrand(ItemCategory subCat, String brandName){
+        Optional<CategoryBrand> catBrandOp = catBrandRepo.findByCategoryIdAndName(subCat.getId(),brandName);
+        if(catBrandOp.isEmpty()){
+            throw new AesException("Brand not found");
+        }
+        return catBrandOp.get();
+    }
+
+    private void setItemInfo(Item item,BigDecimal stockQty,String currentStock,
+                                      String safetyStock, String unitMeasurement, String reorderPercent,
+                             WarehouseStore ws){
+        for(ItemStock stock : item.getStocks()){
+            stockQty = stockQty.add(stock.getStockQty());
+        }
+        if(stockQty.compareTo(new BigDecimal(0)) == 0){
+            stockIn(item, BigDecimal.valueOf(Double.parseDouble(currentStock)), ws.getWarehouse().getId(), ws.getId());
+        }
+        if(!safetyStock.isEmpty()){
+            item.setStockThresholdQty(BigDecimal.valueOf(Double.parseDouble(safetyStock)));
+        }
+        if(!unitMeasurement.isEmpty()){
+            item.setItemUnit(unitMeasurement);
+        }
+
+        if(!reorderPercent.isEmpty()){
+            item.setReorderPercentage(BigDecimal.valueOf(Double.parseDouble(reorderPercent)));
+        }
+    }
+
+    private void processItemImport(ItemCategory subCat,CSVRecord r){
+        String currentStock = r.get("CURRENT_STOCK");
+        String safetyStock = r.get("SAFETY_STOCK");
+        String unitMeasurement = r.get("UNIT_MEASUREMENT");
+        String reorderPercent = r.get("REORDER_PERCENTAGE");
+        String brandName = r.get("BRAND_NAME");
+        String itemAttribute = r.get("ITEM_ATTRIBUTE_NAME");
+        String storeId = r.get("STORE_ID");
+        CategoryBrand catBrand = validateCategoryBrand(subCat,brandName);
+        Optional<Item> itemOp = itemRepository.findByBrandIdAndItemAttributeName(catBrand.getId(),itemAttribute);
+        if(itemOp.isEmpty()){
+            throw new AesException(ERR_ITEM_NOT_FOUND);
+        }
+        Optional<WarehouseStore> wsOp = warehouseStoreRepository.findById(Long.parseLong(storeId));
+        if(wsOp.isPresent()){
+            WarehouseStore ws = wsOp.get();
+            Item item = itemOp.get();
+            BigDecimal stockQty = new BigDecimal(0);
+            setItemInfo(item,stockQty,currentStock,safetyStock,unitMeasurement,reorderPercent,ws);
+        }
+    }
+
+
     @Override
     @Transactional
     public void importItems(Optional<MultipartFile> fileOp) {
@@ -932,54 +1002,14 @@ public class ItemServiceImpl implements ItemService {
                 Iterable<CSVRecord> records = getItemRecords(fileUploadResponse);
                 for(CSVRecord r : records){
                     String subCatName = r.get("SUB_CATEGORY");
-                    String brandName = r.get("BRAND_NAME");
                     String itemAttribute = r.get("ITEM_ATTRIBUTE_NAME");
-                    String storeId = r.get("STORE_ID");
-                    String currentStock = r.get("CURRENT_STOCK");
-                    String safetyStock = r.get("SAFETY_STOCK");
-                    String unitMeasurement = r.get("UNIT_MEASUREMENT");
-                    String reorderPercent = r.get("REORDER_PERCENTAGE");
 
-                    Optional<ItemCategory> subCatOp = categoryService.getItemCategoryByName(subCatName);
-                    if(subCatOp.isEmpty()){
-                        throw new AesException("Item Sub Category Not found");
-                    }
 
-                    ItemCategory subCat = subCatOp.get();
-                    Optional<CategoryBrand> catBrandOp = catBrandRepo.findByCategoryIdAndName(subCat.getId(),brandName);
-                    if(catBrandOp.isEmpty()){
-                        throw new AesException("Brand not found");
-                    }
+                    ItemCategory subCat = validSubCategoryByName(subCatName);
 
                     if(!itemAttribute.isEmpty()){
-                        CategoryBrand catBrand = catBrandOp.get();
-                        Optional<Item> itemOp = itemRepository.findByBrandIdAndItemAttributeName(catBrand.getId(),itemAttribute);
-                        if(itemOp.isPresent() && storeId !=null){
-                            Optional<WarehouseStore> wsOp = warehouseStoreRepository.findById(Long.parseLong(storeId));
-                            if(wsOp.isPresent()){
-                                WarehouseStore ws = wsOp.get();
-                                Item item = itemOp.get();
-                                BigDecimal stockQty = new BigDecimal(0);
-                                for(ItemStock stock : item.getStocks()){
-                                    stockQty = stockQty.add(stock.getStockQty());
-                                }
-                                if(stockQty.compareTo(new BigDecimal(0)) == 0){
-                                    stockIn(itemOp.get(), BigDecimal.valueOf(Double.parseDouble(currentStock)), ws.getWarehouse().getId(), ws.getId());
-                                }
-                                if(!safetyStock.isEmpty()){
-                                    item.setStockThresholdQty(BigDecimal.valueOf(Double.parseDouble(safetyStock)));
-                                }
-                                if(!unitMeasurement.isEmpty()){
-                                    item.setItemUnit(unitMeasurement);
-                                }
+                        processItemImport(subCat,r);
 
-                                if(!reorderPercent.isEmpty()){
-                                    item.setReorderPercentage(BigDecimal.valueOf(Double.parseDouble(reorderPercent)));
-                                }
-
-
-                            }
-                        }
                     }
                 }
             } catch (FileNotFoundException e) {
@@ -1059,6 +1089,65 @@ public class ItemServiceImpl implements ItemService {
         return Optional.empty();
     }
 
+    private UserItem setItemStatusOnMerge(Item item, Warehouse warehouse,
+                                      ItemInactiveStatus itemInactiveStatus,
+                                      UserCategoryStatus userCategoryStatus,
+                                      Boolean isMerged){
+        AtomicReference<UserItem> userItem = new AtomicReference<>();
+        Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouse.getId());
+        if(iilOp.isPresent()){
+            ItemImportLog iil = iilOp.get();
+            iil.setItemInactiveStatus(itemInactiveStatus);
+            item.setActive(false);
+            if(item.getUserItemId()!=null){
+                Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
+                userItemOp.ifPresent(ui->
+                        {
+                            userItem.set(ui);
+                            if(Boolean.TRUE.equals(isMerged)) {
+                                ui.setItemStatus(UserCategoryStatus.MERGED);
+                            }else{
+                                ui.setItemStatus(userCategoryStatus);
+                            }
+                        }
+                );
+            }
+        }
+        return userItem.get();
+    }
+
+    private void setUserMergedItem(UserItem ui, Item existItem){
+        if(ui!=null){
+            String itemName = (existItem.getName()!=null)? existItem.getName().trim():"";
+            if(!itemName.isEmpty()){
+                itemName+="-";
+            }
+            itemName += (existItem.getItemAttributeName()!=null)? existItem.getItemAttributeName().trim():"";
+            ui.setMergedItem(itemName);
+        }
+    }
+
+    private void onItemApprovedFromCps(ItemApproveRequestDto approveRequestDto,
+                                       Item item, Warehouse warehouse,
+                                       WarehouseStore warehouseStore,
+                                       ItemMergeRequestDto itemMergeRequestDto){
+        if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()==null) {
+            setItemStatusOnMerge(item,warehouse,
+                    ItemInactiveStatus.PENDING,UserCategoryStatus.PENDING_FROM_ACCOUNT,false);
+            accountService.setItemService(this);
+            accountService.createItemLedger(item, warehouse,warehouseStore);
+        }
+        if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()!=null){
+            item.setItemInactiveStatus(null);
+            setItemStatusOnMerge(item,warehouse,
+                    ItemInactiveStatus.PENDING,UserCategoryStatus.PENDING_FROM_ACCOUNT,false);
+            mergeItem(item, approveRequestDto.getWarehouseStoreId(), itemMergeRequestDto);
+            accountService.setItemService(this);
+            accountService.createItemLedger(item, warehouse,warehouseStore);
+
+        }
+    }
+
     @Override
     @Transactional
     public void approveItemFromCps(Jwt token, Long id, ItemApproveRequestDto approveRequestDto) {
@@ -1077,60 +1166,11 @@ public class ItemServiceImpl implements ItemService {
             Item item = itemOp.get();
             ItemMergeRequestDto itemMergeRequestDto = approveRequestDto.getItemMergeRequestDto();
             if(approveRequestDto.getApproveStatus().equals(ApproveStatus.APPROVED)) {
-                if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()==null) {
-                    Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseOp.get().getId());
-                    if(iilOp.isPresent()){
-                        ItemImportLog iil = iilOp.get();
-                        iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
-                        item.setActive(false);
-                        if(item.getUserItemId()!=null){
-                            Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
-                            userItemOp.ifPresent(ui->
-                                ui.setItemStatus(UserCategoryStatus.PENDING_FROM_ACCOUNT)
-                            );
-                        }
-                    }
-                    accountService.setItemService(this);
-                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
-                }
-                if(approveRequestDto.getCode()==null && approveRequestDto.getItemMergeRequestDto()!=null){
-                    item.setItemInactiveStatus(null);
-                    Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseOp.get().getId());
-                    if(iilOp.isPresent()){
-                        ItemImportLog iil = iilOp.get();
-                        iil.setItemInactiveStatus(ItemInactiveStatus.PENDING_VERIFICATION);
-                        item.setActive(false);
-                        if(item.getUserItemId()!=null){
-                            Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
-                            userItemOp.ifPresent(ui->
-                                ui.setItemStatus(UserCategoryStatus.PENDING_FROM_ACCOUNT)
-                            );
-                        }
-                    }
-                    mergeItem(item, approveRequestDto.getWarehouseStoreId(), itemMergeRequestDto);
-                    accountService.setItemService(this);
-                    accountService.createItemLedger(item, warehouseOp.get(),warehouseStoreOp.get());
-
-                }
+                onItemApprovedFromCps(approveRequestDto,item,warehouseOp.get(),warehouseStoreOp.get(),itemMergeRequestDto);
             }else if(approveRequestDto.getApproveStatus().equals(ApproveStatus.REJECTED)){
-                UserItem ui = null;
-                Optional<ItemImportLog> iilOp = itemImportLogRepository.findByItemIdAndWarehouseId(item.getId(),warehouseOp.get().getId());
-                if(iilOp.isPresent()){
-                    ItemImportLog iil = iilOp.get();
-                    iil.setItemInactiveStatus(ItemInactiveStatus.REJECTED);
-                    if(item.getUserItemId()!=null){
-                        Optional<UserItem> userItemOp = userItemRepository.findById(item.getUserItemId());
-                        if(userItemOp.isPresent()){
-                            ui = userItemOp.get();
-                                if(Boolean.TRUE.equals(approveRequestDto.getIsMerged())) {
-                                    ui.setItemStatus(UserCategoryStatus.MERGED);
-                                }else{
-                                    ui.setItemStatus(UserCategoryStatus.REJECTED);
-                                }
-                        }
+                UserItem ui = setItemStatusOnMerge(item,warehouseOp.get(),ItemInactiveStatus.REJECTED,UserCategoryStatus.REJECTED,
+                        approveRequestDto.getIsMerged());
 
-                    }
-                }
                 if(approveRequestDto.getItemMergeRequestDto()!=null) {
                     String storePrefixedItemCode = ws.getStoreName().substring(0,1)+"-"+approveRequestDto.getCode();
                     itemOp = itemRepository.findByCodeAndActive(storePrefixedItemCode,true);
@@ -1138,14 +1178,7 @@ public class ItemServiceImpl implements ItemService {
                         throw new AesException("Sorry! Item not found using code ["+approveRequestDto.getCode()+"]");
                     }
                     Item existItem = itemOp.get();
-                    if(ui!=null){
-                        String itemName = (existItem.getName().trim()!=null)? existItem.getName():"";
-                        if(!itemName.isEmpty()){
-                            itemName+="-";
-                        }
-                        itemName += (existItem.getItemAttributeName().trim()!=null)? existItem.getItemAttributeName():"";
-                        ui.setMergedItem(itemName);
-                    }
+                    setUserMergedItem(ui,existItem);
                     mergeItem(existItem, approveRequestDto.getWarehouseStoreId(), itemMergeRequestDto);
                 }
             }

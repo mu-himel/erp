@@ -650,10 +650,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
         PoGroup po = poGroupOp.get();
         po.setReviewerId(null);
         po.setReviewDate(LocalDateTime.now());
-        if(po.getNextApproverId()!=null && po.getNextApproverId() == null){
+        if(po.getNextVerifierId()!=null && po.getNextApproverId() == null){
             po.setPurchaseOrderStatus(PurchaseOrderStatus.PENDING_VERIFICATION);
         }
-        if(po.getNextVerifierId()!=null && po.getNextApproverId() != null){
+        if(po.getNextApproverId() != null){
             po.setPurchaseOrderStatus(PurchaseOrderStatus.PENDING_APPROVAL);
         }
 

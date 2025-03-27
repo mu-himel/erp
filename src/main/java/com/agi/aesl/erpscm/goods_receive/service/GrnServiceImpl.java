@@ -2,7 +2,6 @@ package com.agi.aesl.erpscm.goods_receive.service;
 
 import com.agi.aesl.erpscm.common.DataFilter;
 import com.agi.aesl.erpscm.config.CpsServerConfig;
-import com.agi.aesl.erpscm.control_panel.inventory_control.entity.Warehouse;
 import com.agi.aesl.erpscm.employee.entity.Employee;
 import com.agi.aesl.erpscm.erpn_integration.service.IntegrationReaderService;
 import com.agi.aesl.erpscm.exception.AesException;
@@ -17,8 +16,6 @@ import com.agi.aesl.erpscm.goods_receive.enums.GrnStatus;
 import com.agi.aesl.erpscm.goods_receive.repository.GrnDetailRepository;
 import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository;
 import com.agi.aesl.erpscm.goods_receive.repository.GrnRepository.GoodReceiveNoteDetailInfo;
-import com.agi.aesl.erpscm.inventory.entity.Item;
-import com.agi.aesl.erpscm.inventory.entity.ItemStock;
 import com.agi.aesl.erpscm.inventory.service.ItemService;
 import com.agi.aesl.erpscm.network.NetworkService;
 import com.agi.aesl.erpscm.organization.entity.Organization;
@@ -41,7 +38,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -180,12 +176,8 @@ public class GrnServiceImpl implements GrnService{
                 List<QcQuery.QcResultItem> qcResultByGrn = qcService.getQcResultByGrn(detailInfo.getId());
 
                 detailInfoMap.put("detailInfo", grnDetailInfo);
-                detailInfoMap.put("qcComment", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getComment():""));
-                detailInfoMap.put("qcId", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getId():null));
-                detailInfoMap.put("reviewerId", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getReviewerId():null));
-                detailInfoMap.put("qcStatus", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getQcStatus():""));
-                detailInfoMap.put("prevStatus", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getPrevStatus():""));
-                detailInfoMap.put("qcResult", qcResultByGrn);
+                updateGrnDetail(detailInfoMap,qcResultByGrn);
+
             }
                 return (T) Optional.of(detailInfoMap);
             }
@@ -193,7 +185,14 @@ public class GrnServiceImpl implements GrnService{
 
     }
 
-
+    private void updateGrnDetail(Map<String,Object> detailInfoMap,List<QcQuery.QcResultItem> qcResultByGrn){
+        detailInfoMap.put("qcComment", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getComment():""));
+        detailInfoMap.put("qcId", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getId():null));
+        detailInfoMap.put("reviewerId", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getReviewerId():null));
+        detailInfoMap.put("qcStatus", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getQcStatus():""));
+        detailInfoMap.put("prevStatus", ((!qcResultByGrn.isEmpty()) ? qcResultByGrn.get(0).getPrevStatus():""));
+        detailInfoMap.put("qcResult", qcResultByGrn);
+    }
 
     @Override
     public Page<GrnRepository.GoodReceiveNoteInfo> getAllGrnPendingQC(Jwt token, Optional<Integer> page, Optional<Integer> size,
