@@ -365,17 +365,17 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 PurchaseOrderStatus.VERIFIED.name(),
                 PurchaseOrderStatus.REVIEW.name()
         );
-        if(status.isPresent()){
-            statuses = statuses.stream().filter(st->{
-                return st.equals(status.get());
-            }).toList();
-        }
+//        if(status.isPresent()){
+//            statuses = statuses.stream().filter(st->{
+//                return st.equals(status.get());
+//            }).toList();
+//        }
         return purchaseOrderRepository.findAllPendingVerificationPOs(
                 claimResolver.getUserId(),
                 vendor.orElse(null),
                 csNo.orElse(null), poNo.orElse(null),
                 categoryId.orElse(null), subCategoryId.orElse(null),
-                fromDate,toDate,statuses,
+                fromDate,toDate,statuses,status.orElse(null),
                 pageable);
     }
 
@@ -395,16 +395,16 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 PurchaseOrderStatus.APPROVED.name(),
                 PurchaseOrderStatus.REVIEW.name()
         );
-        if(status.isPresent()){
-            statuses = statuses.stream().filter(st->{
-                return st.equals(status.get());
-            }).toList();
-        }
+//        if(status.isPresent()){
+//            statuses = statuses.stream().filter(st->{
+//                return st.equals(status.get());
+//            }).toList();
+//        }
         return purchaseOrderRepository.findAllPendingApprovalPOs(
                 claimResolver.getUserId(), vendor.orElse(null),
                 csNo.orElse(null), poNo.orElse(null),
                 categoryId.orElse(null), subCategoryId.orElse(null),
-                fromDate,toDate,statuses,
+                fromDate,toDate,statuses,status.orElse(null),
                 pageable);
     }
 
