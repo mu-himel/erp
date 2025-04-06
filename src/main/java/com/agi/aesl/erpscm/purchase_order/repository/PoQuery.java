@@ -59,7 +59,7 @@ public class PoQuery {
                LEFT JOIN indents i ON csheet.indent_id = i.id
                LEFT JOIN scm_item_categories c ON i.category_id = c.id
                LEFT JOIN scm_item_categories sc ON i.sub_category_id = sc.id
-               LEFT JOIN po_verification_approval_histories pvah ON pvah.po_id = po.id
+               LEFT JOIN po_verification_approval_histories pvah ON pvah.po_id = cpo.id
                WHERE (:csNo IS NULL OR i.indent_no LIKE CONCAT('%',:csNo,'%'))
                 AND (:poNo IS NULL OR po.po_no LIKE CONCAT('%',:poNo,'%')) 
                 AND (:categoryId IS NULL OR i.category_id = :categoryId)
@@ -70,6 +70,7 @@ public class PoQuery {
                AND csheet.cs_status IN ('VERIFIED','APPROVED','COMPLETED')
                GROUP BY cpo.id) r 
                WHERE (:vendor IS NULL OR LOWER(r.vendorName) LIKE CONCAT('%',LOWER(:vendor),'%'))
+               AND :searchStatus IS NULL OR r.status IN (:searchStatus)
                     """;
 
     public static final String COUNT_PENDING_VERIFICATION_POS = COUNT_START+GET_PENDING_VERIFICATION_POS+COUNT_END;
@@ -97,7 +98,7 @@ public class PoQuery {
                LEFT JOIN indents i ON csheet.indent_id = i.id
                LEFT JOIN scm_item_categories c ON i.category_id = c.id
                LEFT JOIN scm_item_categories sc ON i.sub_category_id = sc.id
-               LEFT JOIN po_verification_approval_histories pvah ON pvah.po_id = po.id
+               LEFT JOIN po_verification_approval_histories pvah ON pvah.po_id = cpo.id
                WHERE (:csNo IS NULL OR i.indent_no LIKE CONCAT('%',:csNo,'%'))
                 AND (:poNo IS NULL OR po.po_no LIKE CONCAT('%',:poNo,'%')) 
                 AND (:categoryId IS NULL OR i.category_id = :categoryId)
@@ -108,6 +109,7 @@ public class PoQuery {
                AND csheet.cs_status IN ('VERIFIED','APPROVED','COMPLETED')
                GROUP BY cpo.id) r
                WHERE (:vendor IS NULL OR LOWER(r.vendorName) LIKE CONCAT('%',LOWER(:vendor),'%'))
+               AND :searchStatus IS NULL OR r.status IN (:searchStatus)
             """;
 
     public static final String COUNT_PENDING_APPROVAL_POS=COUNT_START+GET_PENDING_APPROVAL_POS+COUNT_END;

@@ -366,7 +366,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 vendor.orElse(null),
                 csNo.orElse(null), poNo.orElse(null),
                 categoryId.orElse(null), subCategoryId.orElse(null),
-                fromDate,toDate,statuses,
+                fromDate,toDate,statuses,status.orElse(null),
                 pageable);
     }
 
@@ -395,7 +395,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService{
                 claimResolver.getUserId(), vendor.orElse(null),
                 csNo.orElse(null), poNo.orElse(null),
                 categoryId.orElse(null), subCategoryId.orElse(null),
-                fromDate,toDate,statuses,
+                fromDate,toDate,statuses,status.orElse(null),
                 pageable);
     }
 

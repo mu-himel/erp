@@ -34,7 +34,7 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
                                         String csNo, String poNo,
                                         Long categoryId, Long subCategoryId,
                                         LocalDateTime fromDate, LocalDateTime toDate,
-                                        List<String> status,Pageable pageable);
+                                        List<String> status,String searchStatus, Pageable pageable);
 
 
     @Query(value = GET_PENDING_APPROVAL_POS, countQuery = COUNT_PENDING_APPROVAL_POS, nativeQuery = true)
@@ -42,7 +42,7 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder,Lon
                                                         String csNo, String poNo,
                                                         Long categoryId, Long subCategoryId,
                                                         LocalDateTime fromDate, LocalDateTime toDate,
-                                                        List<String> status, Pageable pageable);
+                                                        List<String> status, String searchStatus, Pageable pageable);
 
     @Query(value = GET_CLOSED_POS, countQuery = COUNT_CLOSED_POS, nativeQuery = true)
     Page<PendingPOItemDetail> findAllClosedPOs( String vendor,
