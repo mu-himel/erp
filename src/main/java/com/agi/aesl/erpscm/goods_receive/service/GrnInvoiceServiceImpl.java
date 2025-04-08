@@ -2,9 +2,14 @@ package com.agi.aesl.erpscm.goods_receive.service;
 
 import com.agi.aesl.erpscm.exception.AesException;
 import com.agi.aesl.erpscm.fileupload.dto.FileUploadResponse;
+import com.agi.aesl.erpscm.fileupload.service.FileDownloadService;
 import com.agi.aesl.erpscm.fileupload.service.FileUploadService;
 import com.agi.aesl.erpscm.goods_receive.entity.GoodReceiveNote;
+import com.agi.aesl.erpscm.goods_receive.exception.FileDownloadException;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -14,11 +19,13 @@ import org.springframework.web.multipart.MultipartFile;
 import java.nio.file.Path;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GrnInvoiceServiceImpl implements GrnInvoiceService{
 
     private final FileUploadService fileUploadService;
+    private final FileDownloadService fileDownloadService;
 
     private final GrnService grnService;
 
@@ -54,5 +61,16 @@ public class GrnInvoiceServiceImpl implements GrnInvoiceService{
         }
 
         return null;
+    }
+
+    @Override
+    public void downloadInvoice(Optional<String> fileUriOp, HttpServletResponse response  ) {
+        if ( fileUriOp.isEmpty()) {
+            log.info(" Header \"File_Uri\" not provided.");
+            throw new FileDownloadException(" Header \"File_Uri\" not provided.");
+        }
+
+         fileDownloadService.downloadFile(fileUriOp.get(), response);
+
     }
 }
